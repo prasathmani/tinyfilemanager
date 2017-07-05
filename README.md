@@ -1,6 +1,7 @@
 # Tiny PHP File Manager
 Tiny file manager in single php file
 <hr>
+<img src="tinyfilemanager.jpg" alt="H3k | Tiny File Manager">
 <h3>How to use</h3>
 
 Download ZIP with latest version from master branch.
