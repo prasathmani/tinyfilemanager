@@ -212,8 +212,9 @@ if (isset($_GET['del']) && !FM_READONLY) {
 }
 
 // Create folder
-if (isset($_GET['new']) && !FM_READONLY) {
+if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
     $new = $_GET['new'];
+    $type = $_GET['type'];
     $new = fm_clean_path($new);
     $new = str_replace('/', '', $new);
     if ($new != '' && $new != '..' && $new != '.') {
@@ -221,12 +222,21 @@ if (isset($_GET['new']) && !FM_READONLY) {
         if (FM_PATH != '') {
             $path .= '/' . FM_PATH;
         }
-        if (fm_mkdir($path . '/' . $new, false) === true) {
-            fm_set_msg(sprintf(fm_t('Folder <b>%s</b> created'), $new));
-        } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
-            fm_set_msg(sprintf(fm_t('Folder <b>%s</b> already exists'), $new), 'alert');
+        if($_GET['type']=="file") {
+            if(!file_exists($path . '/' . $new)) {
+                @fopen($path . '/' . $new, 'w') or die('Cannot open file:  '.$new);
+                fm_set_msg(sprintf(fm_t('File <b>%s</b> created'), $new));
+            } else {
+                fm_set_msg(sprintf(fm_t('File <b>%s</b> already exists'), $new), 'alert');
+            }
         } else {
-            fm_set_msg(sprintf(fm_t('Folder <b>%s</b> not created'), $new), 'error');
+            if (fm_mkdir($path . '/' . $new, false) === true) {
+                fm_set_msg(sprintf(fm_t('Folder <b>%s</b> created'), $new));
+            } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
+                fm_set_msg(sprintf(fm_t('Folder <b>%s</b> already exists'), $new), 'alert');
+            } else {
+                fm_set_msg(sprintf(fm_t('Folder <b>%s</b> not created'), $new), 'error');
+            }
         }
     } else {
         fm_set_msg(fm_t('Wrong folder name'), 'error');
@@ -1178,7 +1188,7 @@ if (empty($folders) && empty($files)) {
 <a href="javascript:document.getElementById('a-zip').click();" class="group-btn"><i class="fa fa-file-archive-o"></i> <?php echo fm_t('Zip') ?> </a> &nbsp;
 <input type="submit" class="hidden" name="copy" id="a-copy" value="<?php echo fm_t('Copy') ?>">
 <a href="javascript:document.getElementById('a-copy').click();" class="group-btn"><i class="fa fa-files-o"></i> <?php echo fm_t('Copy') ?> </a>
-<a href="https://github.com/prasathmani/h3kfilemanager" target="_blank" class="float-right">H3K | File Manager</a></p>
+<a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="float-right">H3K | Tiny File Manager</a></p>
 <?php endif; ?>
 </form>
 
@@ -1819,7 +1829,7 @@ function fm_show_nav_path($path)
         <div class="float-right">
         <?php if (!FM_READONLY): ?>
         <a title="<?php echo fm_t('Upload files') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
-        <a title="<?php echo fm_t('New folder') ?>" href="#createNewItem" ><i class="fa fa-folder" aria-hidden="true"></i></a>
+        <a title="<?php echo fm_t('New folder') ?>" href="#createNewItem" ><i class="fa fa-plus-square"></i></a>
         <?php endif; ?>
         <?php if (FM_USE_AUTH): ?><a title="<?php echo fm_t('Logout') ?>" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i></a><?php endif; ?>
         </div>
@@ -1911,9 +1921,9 @@ body {margin:0 30px;margin-top: 45px;}.logo{color:#0df70d;float:left;font-size:2
 <div id="wrapper">
     <div id="createNewItem" class="modalDialog"><div class="model-wrapper"><a href="#close" title="Close" class="close">X</a><h2>Create New Item</h2><p>
         <label for="newfile">Item Type &nbsp; : </label>
-        <input type="radio" name="newfile" id="newfile" value="file">File <input type="radio" name="newfile" value="folder"> Folder<br>
+        <input type="radio" name="newfile" id="newfile" value="file">File <input type="radio" name="newfile" value="folder" checked> Folder<br>
         <label for="newfilename">Item Name : </label><input type="text" name="newfilename" id="newfilename" value=""><br>
-        <input type="submit" name="submit" value="Create Now" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;">
+        <input type="submit" name="submit" class="group-btn" value="Create Now" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;">
     </p></div></div>
 <?php
 }
@@ -1926,7 +1936,7 @@ function fm_show_footer()
     ?>
 </div>
 <script>
-function newfolder(p){var n=prompt('<?php echo fm_t('New folder name') ?>','folder');if(n!==null&&n!==''){window.location.search='p='+encodeURIComponent(p)+'&new='+encodeURIComponent(n);}}
+function newfolder(p){var n=document.getElementById("newfilename").value;var t=document.querySelector('input[name="newfile"]:checked').value;if(n!==null&&n!==''&&t){window.location.hash="#";window.location.search='p='+encodeURIComponent(p)+'&new='+encodeURIComponent(n)+'&type='+encodeURIComponent(t);}}
 function rename(p,f){var n=prompt('<?php echo fm_t('New name') ?>',f);if(n!==null&&n!==''&&n!=f){window.location.search='p='+encodeURIComponent(p)+'&ren='+encodeURIComponent(f)+'&to='+encodeURIComponent(n);}}
 function change_checkboxes(l,v){for(var i=l.length-1;i>=0;i--){l[i].checked=(typeof v==='boolean')?v:!l[i].checked;}}
 function get_checkboxes(){var i=document.getElementsByName('file[]'),a=[];for(var j=i.length-1;j>=0;j--){if(i[j].type='checkbox'){a.push(i[j]);}}return a;}
