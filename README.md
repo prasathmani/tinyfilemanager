@@ -24,6 +24,9 @@ To enable/disable authentication set $use_auth to true or false.
 <li>Support user permissions - based on session</li>
 <li>Copy direct file URL</li>
 <li>Edit text file formats using advanced editor with syntax highlight</li>
+<li>Backup files</li>
+<li>Send files through email</li>
+<li>Seach files</li>
 <li>lots more...</li>
 </ul>
 
