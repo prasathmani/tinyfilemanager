@@ -1,7 +1,7 @@
 # Tiny PHP File Manager
 Tiny file manager in single php file
 <hr>
-<img src="tinyfilemanager.jpg" alt="H3k | Tiny File Manager">
+<img src="tinyfilemanager.gif" alt="H3k | Tiny File Manager">
 <h3>How to use</h3>
 
 Download ZIP with latest version from master branch.
@@ -25,7 +25,6 @@ To enable/disable authentication set $use_auth to true or false.
 <li>Copy direct file URL</li>
 <li>Edit text file formats using advanced editor with syntax highlight</li>
 <li>Backup files</li>
-<li>Send files through email</li>
 <li>Seach files</li>
 <li>lots more...</li>
 </ul>
