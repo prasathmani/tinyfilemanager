@@ -56,6 +56,9 @@ $http_host = $_SERVER['HTTP_HOST'];
 // input encoding for iconv
 $iconv_input_encoding = 'CP1251';
 
+// date() format for file modification date
+$datetime_format = 'd.m.y H:i';
+
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
 
 // if fm included
@@ -90,7 +93,7 @@ $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
 if (!@is_dir($root_path)) {
-    echo "<h1>Root path &quot;{$root_path}&quot; not found!</h1>";
+    echo "<h1>Root path \"{$root_path}\" not found!</h1>";
     exit;
 }
 
@@ -116,33 +119,22 @@ if (isset($_GET['img'])) {
 
 // Auth
 if ($use_auth) {
-    $languages = fm_get_available_langs();
     if (isset($_SESSION['logged'], $auth_users[$_SESSION['logged']])) {
         // Logged
-        $lang = (isset($_SESSION['lang']) && in_array($_SESSION['lang'], $languages)) ? $_SESSION['lang'] : $lang;
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
         if (isset($auth_users[$_POST['fm_usr']]) && md5($_POST['fm_pwd']) === $auth_users[$_POST['fm_usr']]) {
             $_SESSION['logged'] = $_POST['fm_usr'];
-            if (isset($_POST['lang']) && in_array($_POST['lang'], $languages)) {
-                $_SESSION['lang'] = $_POST['lang'];
-                $lang = $_POST['lang'];
-            } elseif (defined('FM_LANG')) {
-                $lang = FM_LANG;
-            }
-            fm_set_msg(fm_t('You are logged in', $lang));
+            fm_set_msg('You are logged in');
             fm_redirect(FM_SELF_URL . '?p=');
         } else {
             unset($_SESSION['logged']);
-            fm_set_msg(fm_t('Wrong password', $lang), 'error');
+            fm_set_msg('Wrong password', 'error');
             fm_redirect(FM_SELF_URL);
         }
     } else {
         // Form
-        if (defined('FM_LANG')) {
-            $lang = FM_LANG;
-        }
         unset($_SESSION['logged']);
         fm_show_header();
         fm_show_message();
@@ -184,11 +176,10 @@ $p = fm_clean_path($p);
 // instead globals vars
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
-define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
-define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
-define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
-define('FM_EDIT_FILE', $edit_files);
-
+defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
+defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
+defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
+defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
 unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
 
@@ -235,14 +226,14 @@ if (isset($_GET['del']) && !FM_READONLY) {
         }
         $is_dir = is_dir($path . '/' . $del);
         if (fm_rdelete($path . '/' . $del)) {
-            $msg = $is_dir ? fm_t('Folder <b>%s</b> deleted') : fm_t('File <b>%s</b> deleted');
+            $msg = $is_dir ? 'Folder <b>%s</b> deleted' : 'File <b>%s</b> deleted';
             fm_set_msg(sprintf($msg, $del));
         } else {
-            $msg = $is_dir ? fm_t('Folder <b>%s</b> not deleted') : fm_t('File <b>%s</b> not deleted');
+            $msg = $is_dir ? 'Folder <b>%s</b> not deleted' : 'File <b>%s</b> not deleted';
             fm_set_msg(sprintf($msg, $del), 'error');
         }
     } else {
-        fm_set_msg(fm_t('Wrong file or folder name'), 'error');
+        fm_set_msg('Wrong file or folder name', 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -275,7 +266,7 @@ if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
             }
         }
     } else {
-        fm_set_msg(fm_t('Wrong folder name'), 'error');
+        fm_set_msg('Wrong folder name', 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -287,7 +278,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     $copy = fm_clean_path($copy);
     // empty path
     if ($copy == '') {
-        fm_set_msg(fm_t('Source path not defined'), 'error');
+        fm_set_msg('Source path not defined', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
     // abs path from
@@ -306,21 +297,21 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
         if ($move) {
             $rename = fm_rename($from, $dest);
             if ($rename) {
-                fm_set_msg(sprintf(fm_t('Moved from <b>%s</b> to <b>%s</b>'), $copy, $msg_from));
+                fm_set_msg(sprintf('Moved from <b>%s</b> to <b>%s</b>', $copy, $msg_from));
             } elseif ($rename === null) {
-                fm_set_msg(fm_t('File or folder with this path already exists'), 'alert');
+                fm_set_msg('File or folder with this path already exists', 'alert');
             } else {
-                fm_set_msg(sprintf(fm_t('Error while moving from <b>%s</b> to <b>%s</b>'), $copy, $msg_from), 'error');
+                fm_set_msg(sprintf('Error while moving from <b>%s</b> to <b>%s</b>', $copy, $msg_from), 'error');
             }
         } else {
             if (fm_rcopy($from, $dest)) {
-                fm_set_msg(sprintf(fm_t('Copyied from <b>%s</b> to <b>%s</b>'), $copy, $msg_from));
+                fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', $copy, $msg_from));
             } else {
-                fm_set_msg(sprintf(fm_t('Error while copying from <b>%s</b> to <b>%s</b>'), $copy, $msg_from), 'error');
+                fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', $copy, $msg_from), 'error');
             }
         }
     } else {
-        fm_set_msg(fm_t('Paths must be not equal'), 'alert');
+        fm_set_msg('Paths must be not equal', 'alert');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -339,12 +330,12 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY) 
         $copy_to_path .= '/' . $copy_to;
     }
     if ($path == $copy_to_path) {
-        fm_set_msg(fm_t('Paths must be not equal'), 'alert');
+        fm_set_msg('Paths must be not equal', 'alert');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
     if (!is_dir($copy_to_path)) {
         if (!fm_mkdir($copy_to_path, true)) {
-            fm_set_msg(fm_t('Unable to create destination folder'), 'error');
+            fm_set_msg('Unable to create destination folder', 'error');
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
         }
     }
@@ -374,14 +365,14 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY) 
             }
         }
         if ($errors == 0) {
-            $msg = $move ? fm_t('Selected files and folders moved') : fm_t('Selected files and folders copied');
+            $msg = $move ? 'Selected files and folders moved' : 'Selected files and folders copied';
             fm_set_msg($msg);
         } else {
-            $msg = $move ? fm_t('Error while moving items') : fm_t('Error while copying items');
+            $msg = $move ? 'Error while moving items' : 'Error while copying items';
             fm_set_msg($msg, 'error');
         }
     } else {
-        fm_set_msg(fm_t('Nothing selected'), 'alert');
+        fm_set_msg('Nothing selected', 'alert');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -404,12 +395,12 @@ if (isset($_GET['ren'], $_GET['to']) && !FM_READONLY) {
     // rename
     if ($old != '' && $new != '') {
         if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
-            fm_set_msg(sprintf(fm_t('Renamed from <b>%s</b> to <b>%s</b>'), $old, $new));
+            fm_set_msg(sprintf('Renamed from <b>%s</b> to <b>%s</b>', $old, $new));
         } else {
-            fm_set_msg(sprintf(fm_t('Error while renaming from <b>%s</b> to <b>%s</b>'), $old, $new), 'error');
+            fm_set_msg(sprintf('Error while renaming from <b>%s</b> to <b>%s</b>', $old, $new), 'error');
         }
     } else {
-        fm_set_msg(fm_t('Names not set'), 'error');
+        fm_set_msg('Names not set', 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -436,7 +427,7 @@ if (isset($_GET['dl'])) {
         readfile($path . '/' . $dl);
         exit;
     } else {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 }
@@ -464,11 +455,11 @@ if (isset($_POST['upl']) && !FM_READONLY) {
     }
 
     if ($errors == 0 && $uploads > 0) {
-        fm_set_msg(sprintf(fm_t('All files uploaded to <b>%s</b>'), $path));
+        fm_set_msg(sprintf('All files uploaded to <b>%s</b>', $path));
     } elseif ($errors == 0 && $uploads == 0) {
-        fm_set_msg(fm_t('Nothing uploaded'), 'alert');
+        fm_set_msg('Nothing uploaded', 'alert');
     } else {
-        fm_set_msg(sprintf(fm_t('Error while uploading files. Uploaded files: %s'), $uploads), 'error');
+        fm_set_msg(sprintf('Error while uploading files. Uploaded files: %s', $uploads), 'error');
     }
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -493,12 +484,12 @@ if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
             }
         }
         if ($errors == 0) {
-            fm_set_msg(fm_t('Selected files and folder deleted'));
+            fm_set_msg('Selected files and folder deleted');
         } else {
-            fm_set_msg(fm_t('Error while deleting items'), 'error');
+            fm_set_msg('Error while deleting items', 'error');
         }
     } else {
-        fm_set_msg(fm_t('Nothing selected'), 'alert');
+        fm_set_msg('Nothing selected', 'alert');
     }
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -512,7 +503,7 @@ if (isset($_POST['group'], $_POST['zip']) && !FM_READONLY) {
     }
 
     if (!class_exists('ZipArchive')) {
-        fm_set_msg(fm_t('Operations with archives are not available'), 'error');
+        fm_set_msg('Operations with archives are not available', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -532,12 +523,12 @@ if (isset($_POST['group'], $_POST['zip']) && !FM_READONLY) {
         $res = $zipper->create($zipname, $files);
 
         if ($res) {
-            fm_set_msg(sprintf(fm_t('Archive <b>%s</b> created'), $zipname));
+            fm_set_msg(sprintf('Archive <b>%s</b> created', $zipname));
         } else {
-            fm_set_msg(fm_t('Archive not created'), 'error');
+            fm_set_msg('Archive not created', 'error');
         }
     } else {
-        fm_set_msg(fm_t('Nothing selected'), 'alert');
+        fm_set_msg('Nothing selected', 'alert');
     }
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -555,7 +546,7 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
     }
 
     if (!class_exists('ZipArchive')) {
-        fm_set_msg(fm_t('Operations with archives are not available'), 'error');
+        fm_set_msg('Operations with archives are not available', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -575,13 +566,13 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
         $res = $zipper->unzip($zip_path, $path);
 
         if ($res) {
-            fm_set_msg(fm_t('Archive unpacked'));
+            fm_set_msg('Archive unpacked');
         } else {
-            fm_set_msg(fm_t('Archive not unpacked'), 'error');
+            fm_set_msg('Archive not unpacked', 'error');
         }
 
     } else {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg('File not found', 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -597,7 +588,7 @@ if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
     if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -631,9 +622,9 @@ if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     }
 
     if (@chmod($path . '/' . $file, $mode)) {
-        fm_set_msg(fm_t('Permissions changed'));
+        fm_set_msg('Permissions changed');
     } else {
-        fm_set_msg(fm_t('Permissions not changed'), 'error');
+        fm_set_msg('Permissions not changed', 'error');
     }
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -688,8 +679,8 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b><?php echo fm_t('Uploading files') ?></b></p>
-        <p class="break-word"><?php echo fm_t('Destination folder:') ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?></p>
+        <p><b>Uploading files</b></p>
+        <p class="break-word">Destination folder: <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?></p>
         <form action="" method="post" enctype="multipart/form-data">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
             <input type="hidden" name="upl" value="1">
@@ -714,7 +705,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
 if (isset($_POST['copy']) && !FM_READONLY) {
     $copy_files = $_POST['file'];
     if (!is_array($copy_files) || empty($copy_files)) {
-        fm_set_msg(fm_t('Nothing selected'), 'alert');
+        fm_set_msg('Nothing selected', 'alert');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -722,7 +713,7 @@ if (isset($_POST['copy']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b><?php echo fm_t('Copying') ?></b></p>
+        <p><b>Copying</b></p>
         <form action="" method="post">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
             <input type="hidden" name="finish" value="1">
@@ -753,7 +744,7 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
     if ($copy == '' || !file_exists(FM_ROOT_PATH . '/' . $copy)) {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -761,10 +752,10 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b><?php echo fm_t('Copying') ?></b></p>
+        <p><b>Copying</b></p>
         <p class="break-word">
-            <?php echo fm_t('Source path:') ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . $copy) ?><br>
-            <?php echo fm_t('Destination folder:') ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?>
+            Source path: <?php echo fm_convert_win(FM_ROOT_PATH . '/' . $copy) ?><br>
+            Destination folder: <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?>
         </p>
         <p>
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> <?php echo fm_t('Copy') ?></a></b> &nbsp;
@@ -798,7 +789,7 @@ if (isset($_GET['view'])) {
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
     if ($file == '' || !is_file($path . '/' . $file)) {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -842,11 +833,11 @@ if (isset($_GET['view'])) {
 
     ?>
     <div class="path">
-        <p class="break-word"><b><?php echo fm_t($view_title) ?> <?php echo fm_convert_win($file) ?></b></p>
+        <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_convert_win($file) ?>"</b></p>
         <p class="break-word">
-            <?php echo fm_t('Full path:') ?> <?php echo fm_convert_win($file_path) ?><br>
-            <?php echo fm_t('File size:') ?> <?php echo fm_get_filesize($filesize) ?> (<?php echo sprintf(fm_t('%s byte'), $filesize) ?>)<br>
-            <?php echo fm_t('MIME-type:') ?> <?php echo $mime_type ?><br>
+            Full path: <?php echo fm_convert_win($file_path) ?><br>
+            File size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?><br>
+            MIME-type: <?php echo $mime_type ?><br>
             <?php
             // ZIP info
             if ($is_zip && $filenames !== false) {
@@ -861,16 +852,16 @@ if (isset($_GET['view'])) {
                     $total_uncomp += $fn['filesize'];
                 }
                 ?>
-                <?php echo fm_t('Files in archive:') ?> <?php echo $total_files ?><br>
-                <?php echo fm_t('Total size:') ?> <?php echo fm_get_filesize($total_uncomp) ?><br>
-                <?php echo fm_t('Size in archive:') ?> <?php echo fm_get_filesize($total_comp) ?><br>
-                <?php echo fm_t('Compression:') ?> <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
+                Files in archive: <?php echo $total_files ?><br>
+                Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
+                Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
+                Compression: <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
                 <?php
             }
             // Image info
             if ($is_image) {
                 $image_size = getimagesize($file_path);
-                echo fm_t('Image sizes:') . ' ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
+                echo 'Image sizes: ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
             }
             // Text info
             if ($is_text) {
@@ -880,7 +871,7 @@ if (isset($_GET['view'])) {
                         $content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
                     }
                 }
-                echo fm_t('Charset:') . ' ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
+                echo 'Charset: ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
             }
             ?>
         </p>
@@ -921,7 +912,7 @@ if (isset($_GET['view'])) {
                 }
                 echo '</code>';
             } else {
-                echo '<p>' . fm_t('Error while fetching archive info') . '</p>';
+                echo '<p>Error while fetching archive info</p>';
             }
         } elseif ($is_image) {
             // Image content
@@ -1044,7 +1035,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
     if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -1058,9 +1049,9 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
 
     ?>
     <div class="path">
-        <p><b><?php echo fm_t('Change Permissions') ?></b></p>
+        <p><b>Change Permissions</b></p>
         <p>
-            <?php echo fm_t('Full path:') ?> <?php echo $file_path ?><br>
+            Full path: <?php echo $file_path ?><br>
         </p>
         <form action="" method="post">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
@@ -1069,24 +1060,24 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
             <table class="compact-table">
                 <tr>
                     <td></td>
-                    <td><b><?php echo fm_t('Owner') ?></b></td>
-                    <td><b><?php echo fm_t('Group') ?></b></td>
-                    <td><b><?php echo fm_t('Other') ?></b></td>
+                    <td><b>Owner</b></td>
+                    <td><b>Group</b></td>
+                    <td><b>Other</b></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right"><b><?php echo fm_t('Read') ?></b></td>
+                    <td style="text-align: right"><b>Read</b></td>
                     <td><label><input type="checkbox" name="ur" value="1"<?php echo ($mode & 00400) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="gr" value="1"<?php echo ($mode & 00040) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="or" value="1"<?php echo ($mode & 00004) ? ' checked' : '' ?>></label></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right"><b><?php echo fm_t('Write') ?></b></td>
+                    <td style="text-align: right"><b>Write</b></td>
                     <td><label><input type="checkbox" name="uw" value="1"<?php echo ($mode & 00200) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="gw" value="1"<?php echo ($mode & 00020) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="ow" value="1"<?php echo ($mode & 00002) ? ' checked' : '' ?>></label></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right"><b><?php echo fm_t('Execute') ?></b></td>
+                    <td style="text-align: right"><b>Execute</b></td>
                     <td><label><input type="checkbox" name="ux" value="1"<?php echo ($mode & 00100) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="gx" value="1"<?php echo ($mode & 00010) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="ox" value="1"<?php echo ($mode & 00001) ? ' checked' : '' ?>></label></td>
@@ -1135,8 +1126,8 @@ if ($parent !== false) {
 }
 foreach ($folders as $f) {
     $is_link = is_link($path . '/' . $f);
-    $img = $is_link ? 'fa fa-folder' : 'fa fa-folder-o';
-    $modif = date("d.m.y H:i", filemtime($path . '/' . $f));
+    $img = $is_link ? 'icon-link_folder' : 'icon-folder';
+    $modif = date(FM_DATETIME_FORMAT, filemtime($path . '/' . $f));
     $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
     if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
         $owner = posix_getpwuid(fileowner($path . '/' . $f));
@@ -1185,7 +1176,7 @@ foreach ($files as $f) {
 <tr>
 <?php if (!FM_READONLY): ?><td><label><input type="checkbox" name="file[]" value="<?php echo fm_enc($f) ?>"></label></td><?php endif; ?>
 <td><div class="filename"><a href="<?php echo $filelink ?>" title="<?php echo fm_t('File info') ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?></a><?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div></td>
-<td><span title="<?php printf(fm_t('%s byte'), $filesize_raw) ?>"><?php echo $filesize ?></span></td>
+<td><span title="<?php printf(fm_t('%s bytes'), $filesize_raw) ?>"><?php echo $filesize ?></span></td>
 <td><?php echo $modif ?></td>
 <?php if (!FM_IS_WIN): ?>
 <td><?php if (!FM_READONLY): ?><a title="<?php echo fm_t('Change Permissions') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?></td>
@@ -1211,7 +1202,7 @@ if (empty($folders) && empty($files)) {
 } else {
     ?>
 <tr><?php if (!FM_READONLY): ?><td class="gray"></td><?php endif; ?><td class="gray" colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>">
-<?php echo fm_t('Full size:') ?> <span title="<?php printf(fm_t('%s byte'), $all_files_size) ?>"><?php echo fm_get_filesize($all_files_size) ?></span>,
+<?php echo fm_t('Full size:') ?> <span title="<?php printf(fm_t('%s bytes'), $all_files_size) ?>"><?php echo fm_get_filesize($all_files_size) ?></span>,
 <?php echo fm_t('files:') ?> <?php echo $num_files ?>,
 <?php echo fm_t('folders:') ?> <?php echo $num_folders ?>
 </td></tr>
@@ -1463,13 +1454,15 @@ function fm_get_parent_path($path)
 function fm_get_filesize($size)
 {
     if ($size < 1000) {
-        return sprintf(fm_t('%s byte'), $size);
+        return sprintf('%s B', $size);
     } elseif (($size / 1024) < 1000) {
-        return sprintf(fm_t('%s KB'), round(($size / 1024), 1));
+        return sprintf('%s KiB', round(($size / 1024), 2));
     } elseif (($size / 1024 / 1024) < 1000) {
-        return sprintf(fm_t('%s MB'), round(($size / 1024 / 1024), 1));
+        return sprintf('%s MiB', round(($size / 1024 / 1024), 2));
+    } elseif (($size / 1024 / 1024 / 1024) < 1000) {
+        return sprintf('%s GiB', round(($size / 1024 / 1024 / 1024), 2));
     } else {
-        return sprintf(fm_t('%s GB'), round(($size / 1024 / 1024 / 1024), 1));
+        return sprintf('%s TiB', round(($size / 1024 / 1024 / 1024 / 1024), 2));
     }
 }
 
