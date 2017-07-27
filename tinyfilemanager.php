@@ -142,6 +142,7 @@ if ($use_auth) {
         fm_show_message();
         ?>
         <div class="path login-form">
+			<img src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File manager">
             <form action="" method="post">
                 <label for="fm_usr"><?php echo fm_t('Username', $lang) ?></label><input type="text" id="fm_usr" name="fm_usr" value="" placeholder="<?php echo fm_t('Username', $lang) ?>" required><br>
                 <label for="fm_pwd"><?php echo fm_t('Password', $lang) ?></label><input type="password" id="fm_pwd" name="fm_pwd" value="" placeholder="<?php echo fm_t('Password', $lang) ?>" required><br>
