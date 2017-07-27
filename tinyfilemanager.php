@@ -34,6 +34,12 @@ $highlightjs_style = 'vs';
 // Enable ace.js (https://ace.c9.io/) on view's page
 $edit_files = true;
 
+// Send files though mail
+$send_mail = false;
+
+// Send files though mail
+$toMailId = ""; //yourmailid@mail.com
+
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
 $default_timezone = 'Asia/Kolkata'; // UTC+5:30
 
@@ -200,7 +206,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
     //Send file to mail
     if (isset($_POST['type']) && $_POST['type']=="mail") {
-        $isSend = send_mail($_POST['path'],$_POST['file'],'ccpprogrammers@gmail.com','Hello Word');
+        $isSend = send_mail($_POST['path'],$_POST['file'], $toMailId, 'File attached');
         echo $isSend;
     }
 
@@ -894,8 +900,11 @@ if (isset($_GET['view'])) {
             if($is_text && !FM_READONLY) {
             ?>
             <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Edit') ?></a></b> &nbsp;
-            <?php } ?>
+            <?php }
+            if($send_mail && !FM_READONLY) {
+            ?>
             <b><a href="javascript:mailto('<?php echo urlencode(trim(FM_ROOT_PATH.'/'.FM_PATH)) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Mail') ?></a></b> &nbsp;
+            <?php } ?>
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> <?php echo fm_t('Back') ?></a></b>
         </p>
         <?php
@@ -1510,6 +1519,8 @@ function fm_enc($text)
  */
 function scan($dir){
 	$files = array();
+	$_dir = $dir;
+	$dir = FM_ROOT_PATH.'/'.$dir;
 	// Is there actually such a folder/file?
 	if(file_exists($dir)){
 		foreach(scandir($dir) as $f) {
@@ -1522,7 +1533,7 @@ function scan($dir){
 				$files[] = array(
 					"name" => $f,
 					"type" => "folder",
-					"path" => $dir . '/' . $f,
+					"path" => $_dir.'/'.$f,
 					"items" => scan($dir . '/' . $f), // Recursively get the contents of the folder
 				);
 			} else {
@@ -1530,7 +1541,7 @@ function scan($dir){
 				$files[] = array(
 					"name" => $f,
 					"type" => "file",
-					"path" => $dir . '/' . $f,
+					"path" => $_dir,
 					"size" => filesize($dir . '/' . $f) // Gets the size of this file
 				);
 			}
@@ -1931,13 +1942,12 @@ function fm_show_nav_path($path)
             }
             $root_url .= $sep . implode($sep, $array);
         }
-        echo '<span class="logo" title="H3K | CCP Programmers">H<i>3</i>K</span> <div class="break-word float-left">' . $root_url . '</div>';
+        echo '<div class="break-word float-left">' . $root_url . '</div>';
         ?>
 
         <div class="float-right">
         <?php if (!FM_READONLY): ?>
-        <input type="search" name="search" value="" placeholder="Find a file..." class="hidden">
-        <a title="<?php echo fm_t('Search') ?>" href="javascript:showSearch('<?php echo urlencode(FM_ROOT_PATH.'/'.FM_PATH) ?>')"><i class="fa fa-search"></i></a>
+        <a title="<?php echo fm_t('Search') ?>" href="javascript:showSearch('<?php echo urlencode(FM_PATH) ?>')"><i class="fa fa-search"></i></a>
         <a title="<?php echo fm_t('Upload files') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
         <a title="<?php echo fm_t('New folder') ?>" href="#createNewItem" ><i class="fa fa-plus-square"></i></a>
         <?php endif; ?>
@@ -1976,7 +1986,7 @@ function fm_show_header()
 <head>
 <meta charset="utf-8">
 <title>H3K | File Manager</title>
- <meta name="Description" CONTENT="Author: CCP Programmers, H3K Tiny PHP FIle Manager">
+ <meta name="Description" CONTENT="Author: CCP Programmers, H3K Tiny PHP File Manager">
 <link rel="icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
 <link rel="shortcut icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
@@ -2000,7 +2010,7 @@ pre.with-hljs{padding:0} .hidden {display:none;}
 pre.with-hljs code{margin:0;border:0;overflow:visible}
 code.maxheight,pre.maxheight{max-height:512px}input[type="checkbox"]{margin:0;padding:0}
 .fa.fa-caret-right{font-size:1.2em;margin:0 4px;vertical-align:middle;color:#ececec}.fa.fa-home{font-size:1.2em;vertical-align:bottom;}
-body {margin:0 30px;margin-top: 45px;}.logo{color:#0df70d;float:left;font-size:28px;font-weight:bold;padding-right:4px;cursor:pointer;}.logo>i {color:yellow;font-style:normal}
+body {margin:0 30px;margin-top: 45px;}
 #wrapper{min-width:400px;margin:0 auto}
 .path{padding:4px 7px;border:1px solid #ddd;background-color:#fff;margin-bottom:10px}
 .right{text-align:right}.center{text-align:center}.float-right{float:right}.float-left{float:left}
@@ -2013,7 +2023,7 @@ body {margin:0 30px;margin-top: 45px;}.logo{color:#0df70d;float:left;font-size:2
 .preview-video{position:relative;max-width:100%;height:0;padding-bottom:62.5%;margin-bottom:10px}.preview-video video{position:absolute;width:100%;height:100%;left:0;top:0;background:#000}
 .compact-table{border:0;width:auto}.compact-table td,.compact-table th{width:100px;border:0;text-align:center}.compact-table tr:hover td{background-color:#fff}
 .filename{max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.break-word{word-wrap:break-word}.break-word.float-left a{color:#fff}.break-word+.float-right{padding-right:30px;position:relative;}.break-word+.float-right>a{color:#fff;font-size:1.2em;margin-right:4px;}
+.break-word{word-wrap:break-word;margin-left:30px;}.break-word.float-left a{color:#fff}.break-word+.float-right{padding-right:30px;position:relative;}.break-word+.float-right>a{color:#fff;font-size:1.2em;margin-right:4px;}
 .modal{display:none;position:fixed;z-index:1;padding-top:100px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:#000;background-color:rgba(0,0,0,.4)}
 .modal-content{background-color:#fefefe;margin:auto;padding:20px;border:1px solid #888;width:80%}
 .close{color:#aaa;float:right;font-size:28px;font-weight:700}.close:focus,.close:hover{color:#000;text-decoration:none;cursor:pointer}
@@ -2024,14 +2034,21 @@ body {margin:0 30px;margin-top: 45px;}.logo{color:#0df70d;float:left;font-size:2
 .main-nav{position:fixed;top:0;left:0;padding:10px 30px;padding-left:1px;width:100%;background:#585858;color:#fff;border:0;}
 .login-form {width:320px;text-align:center;margin:0 auto;}
 .login-form label,.path.login-form input {padding:5px;margin:10px}.footer-links{background:transparent;border:0}
-input[type=search]{position: absolute;height: 26px;right: 100%;top: -4px;margin-right: 10px;width: 200px;border-radius: 2px;border: 0;}
+input[type=search]{height:30px;margin:5px;width:80%;border:1px solid #ccc;}
 .modalDialog{position:fixed;font-family:Arial,Helvetica,sans-serif;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.8);z-index:99999;opacity:0;-webkit-transition:opacity .4s ease-in;-moz-transition:opacity .4s ease-in;transition:opacity .4s ease-in;pointer-events:none}.modalDialog:target{opacity:1;pointer-events:auto}.modalDialog>.model-wrapper{width:400px;position:relative;margin:10% auto;padding:5px 20px 13px;border-radius:5px;background:#fff}.close{background:#fff;color:#000;line-height:25px;position:absolute;right:0;text-align:center;top:0;width:24px;text-decoration:none;font-weight:700;border-radius:0 5px 0 0;font-size:18px}.close:hover{background:#00d9ff}.modalDialog p{line-height:30px}
+div#searchresultWrapper{max-height:320px;overflow:auto;}div#searchresultWrapper li{margin: 8px 0; list-style:none;}
+li.folder:before, li.file:before{font: normal normal normal 14px/1 "FontAwesome";content:"\f016";margin-right:5px;}li.folder:before{content:"\f114";}
 </style>
 </head>
 <body>
 <div id="wrapper">
     <div id="createNewItem" class="modalDialog"><div class="model-wrapper"><a href="#close" title="Close" class="close">X</a><h2>Create New Item</h2><p>
         <label for="newfile">Item Type &nbsp; : </label><input type="radio" name="newfile" id="newfile" value="file">File <input type="radio" name="newfile" value="folder" checked> Folder<br><label for="newfilename">Item Name : </label><input type="text" name="newfilename" id="newfilename" value=""><br><input type="submit" name="submit" class="group-btn" value="Create Now" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;"></p></div></div>
+    <div id="searchResult" class="modalDialog"><div class="model-wrapper"><a href="#close" title="Close" class="close">X</a>
+    <input type="search" name="search" value="" placeholder="Find a item in current folder...">
+    <h2>Search Results</h2>
+    <div id="searchresultWrapper"></div>
+    </div></div>
 <?php
 }
 
@@ -2050,64 +2067,13 @@ function get_checkboxes(){var i=document.getElementsByName('file[]'),a=[];for(va
 function select_all(){var l=get_checkboxes();change_checkboxes(l,true);}
 function unselect_all(){var l=get_checkboxes();change_checkboxes(l,false);}
 function invert_all(){var l=get_checkboxes();change_checkboxes(l);}
-function mailto(p,f){
-    var http=new XMLHttpRequest();
-    var params="path="+p+"&file="+f+"&type=mail&ajax=true";
-    http.open("POST", '', true);
-    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        http.onreadystatechange=function(){
-            if(http.readyState == 4 && http.status == 200){
-            console.log(http.responseText);
-        }
-    }
-    http.send(params);
+function mailto(p,f){var http=new XMLHttpRequest(); var params="path="+p+"&file="+f+"&type=mail&ajax=true"; http.open("POST", '', true);http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ alert(http.responseText);}}
+http.send(params); 
 }
-function showSearch(u){
-    var http=new XMLHttpRequest();
-    var params="path="+u+"&type=search&ajax=true";
-    http.open("POST", '', true);
-    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        http.onreadystatechange=function(){
-            if(http.readyState == 4 && http.status == 200){
-            window.searchObj = http.responseText;
-            document.querySelector('input[type=search]').classList.remove("hidden");
-        }
-    }
-    http.send(params);
-}
-
-var searchEl = document.querySelector('input[type=search]');
-var timeout = null;
-searchEl.onkeyup = function(evt) {
-    clearTimeout(timeout);
-    var data = JSON.parse(window.searchObj);
-    var searchTerms = document.querySelector('input[type=search]').value;
-    timeout = setTimeout(function () {
-        var res = getSearchResult(data,searchTerms);
-        var f1='',f2='';
-        res.folders.forEach(function (d) { f1 += '<li class="folders"><a href="'+ d.path +'">'+ d.name + '</a></li>'; });
-        res.files.forEach(function (d) { f2 += '<li class="folders"><a href="'+ d.path +'">'+ d.name + '</a></li>'; });
-        document.getElementById('createNewItem').innerHTML = '<div class="model-wrapper">'+f1+f2+'</div>';
-        window.location.hash="#createNewItem"
-    }, 500);
-};
-function getSearchResult(data,searchTerms) {
-    var folders=[],files=[];
-    data.forEach(function(d){
-        if(d.type === 'folder') {
-            getSearchResult(d.items,searchTerms);
-            if(d.name.toLowerCase().match(searchTerms)) {
-                folders.push(d);
-            }
-        }
-        else if(d.type === 'file') {
-            if(d.name.toLowerCase().match(searchTerms)) {
-                files.push(d);
-            }
-        }
-    });
-    return {folders: folders, files: files};
-}
+function showSearch(u){var http=new XMLHttpRequest();var params="path="+u+"&type=search&ajax=true";http.open("POST", '', true); http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ window.searchObj = http.responseText; document.getElementById('searchresultWrapper').innerHTML = "";window.location.hash="#searchResult"}} 
+http.send(params);}
+var searchEl = document.querySelector('input[type=search]');var timeout = null;searchEl.onkeyup = function(evt) {clearTimeout(timeout);var data = JSON.parse(window.searchObj);var searchTerms = document.querySelector('input[type=search]').value;timeout = setTimeout(function () {if(searchTerms.length>=2) {var res = getSearchResult(data,searchTerms);var f1='',f2='';res.folders.forEach(function (d){f1+='<li class="'+d.type+'"><a href="?p='+ d.path+'">'+d.name+'</a></li>'; });res.files.forEach(function (d){f2+='<li class="'+d.type+'"><a href="?p='+ d.path +'&view='+ d.name +'">'+d.name+'</a></li>';});document.getElementById('searchresultWrapper').innerHTML = '<div class="model-wrapper">'+f1+f2+'</div>';}},500);};
+function getSearchResult(data,searchTerms) {var folders=[],files=[];data.forEach(function(d){if(d.type === 'folder') { getSearchResult(d.items,searchTerms);if(d.name.toLowerCase().match(searchTerms)) {folders.push(d);}} else if(d.type === 'file') {if(d.name.toLowerCase().match(searchTerms)) {files.push(d);} }}); return {folders: folders, files: files};}
 function checkbox_toggle(){var l=get_checkboxes();l.push(this);change_checkboxes(l);}
 function backup(p,f){ var http=new XMLHttpRequest();var params="path="+p+"&file="+f+"&type=backup&ajax=true";http.open("POST", '', true);http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){alert(http.responseText);}}
 http.send(params); return false; }
