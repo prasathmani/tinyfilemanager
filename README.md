@@ -2,7 +2,14 @@
 Tiny file manager in single php file
 <hr>
 <img src="tinyfilemanager.gif" alt="H3k | Tiny File Manager">
-<h3>How to use</h3>
+
+## Requirements
+
+- PHP 5.2 or higher.
+- [Zip extension](http://php.net/manual/en/book.zip.php) for zip and unzip actions.
+- Fileinfo, iconv and mbstring extensions are strongly recommended.
+
+## How to use
 
 Download ZIP with latest version from master branch.
 
@@ -14,7 +21,8 @@ Warning: Please set your own username and password in $auth_users before use.
 
 To enable/disable authentication set $use_auth to true or false.
 
-<h3>Features</h3>
+
+### Features
 <ul>
 <li>Open Source, light and extremely simple</li>
 <li>Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
