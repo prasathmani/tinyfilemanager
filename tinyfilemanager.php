@@ -140,7 +140,7 @@ if ($use_auth) {
         fm_show_message();
         ?>
         <div class="path login-form">
-			<img src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File manager">
+                       <img src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File manager">
             <form action="" method="post">
                 <label for="fm_usr"><?php echo fm_t('Username', $lang) ?></label><input type="text" id="fm_usr" name="fm_usr" value="" placeholder="<?php echo fm_t('Username', $lang) ?>" required><br>
                 <label for="fm_pwd"><?php echo fm_t('Password', $lang) ?></label><input type="password" id="fm_pwd" name="fm_pwd" value="" placeholder="<?php echo fm_t('Password', $lang) ?>" required><br>
@@ -190,7 +190,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
     //search : get list of files from the current folder
     if(isset($_POST['type']) && $_POST['type']=="search") {
-        $dir = $_POST['path'];;
+        $dir = $_POST['path'];
         $response = scan($dir);
         echo json_encode($response);
     }
@@ -679,8 +679,8 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b>Uploading files</b></p>
-        <p class="break-word">Destination folder: <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?></p>
+        <p><b><?php echo fm_t('Uploading files') ?></b></p>
+        <p class="break-word"><?php echo fm_t('Destination folder:') ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?></p>
         <form action="" method="post" enctype="multipart/form-data">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
             <input type="hidden" name="upl" value="1">
@@ -691,8 +691,8 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             <input type="file" name="upload[]"><br>
             <br>
             <p>
-                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> <?php echo fm_t('Upload') ?></button> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel') ?></a></b>
+                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> <?php echo fm_t('Upload', $lang) ?></button> &nbsp;
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel', $lang) ?></a></b>
             </p>
         </form>
     </div>
@@ -727,10 +727,10 @@ if (isset($_POST['copy']) && !FM_READONLY) {
                 <label for="inp_copy_to"><?php echo fm_t('Destination folder:') ?></label>
                 <?php echo FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?php echo fm_enc(FM_PATH) ?>">
             </p>
-            <p><label><input type="checkbox" name="move" value="1"> <?php echo fm_t('Move') ?></label></p>
+            <p><label><input type="checkbox" name="move" value="1"> <?php echo fm_t('Move', $lang) ?></label></p>
             <p>
-                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> <?php echo fm_t('Copy') ?></button> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel') ?></a></b>
+                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> <?php echo fm_t('Copy', $lang) ?></button> &nbsp;
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel', $lang) ?></a></b>
             </p>
         </form>
     </div>
@@ -752,15 +752,15 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b>Copying</b></p>
+        <p><b><?php echo fm_t('Copying', $lang) ?></b></p>
         <p class="break-word">
-            Source path: <?php echo fm_convert_win(FM_ROOT_PATH . '/' . $copy) ?><br>
-            Destination folder: <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?>
+            <?php echo fm_t('Source path:', $lang) ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . $copy) ?><br>
+            <?php echo fm_t('Destination folder:', $lang) ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?>
         </p>
         <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> <?php echo fm_t('Copy') ?></a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> <?php echo fm_t('Move') ?></a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel') ?></a></b>
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> <?php echo fm_t('Copy', $lang) ?></a></b> &nbsp;
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> <?php echo fm_t('Move', $lang) ?></a></b> &nbsp;
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel', $lang) ?></a></b>
         </p>
         <p><i><?php echo fm_t('Select folder:') ?></i></p>
         <ul class="folders break-word">
@@ -835,9 +835,9 @@ if (isset($_GET['view'])) {
     <div class="path">
         <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_convert_win($file) ?>"</b></p>
         <p class="break-word">
-            Full path: <?php echo fm_convert_win($file_path) ?><br>
-            File size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?><br>
-            MIME-type: <?php echo $mime_type ?><br>
+            <?php echo fm_t('Full path:', $lang) ?> <?php echo fm_convert_win($file_path) ?><br>
+            <?php echo fm_t('File size:', $lang) ?> <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?><br>
+            <?php echo fm_t('MIME-type:', $lang) ?> <?php echo $mime_type ?><br>
             <?php
             // ZIP info
             if ($is_zip && $filenames !== false) {
@@ -876,27 +876,28 @@ if (isset($_GET['view'])) {
             ?>
         </p>
         <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo fm_t('Download') ?></a></b> &nbsp;
-            <b><a href="<?php echo $file_url ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo fm_t('Open') ?></a></b> &nbsp;
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo fm_t('Download', $lang) ?></a></b> &nbsp;
+            <b><a href="<?php echo $file_url ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo fm_t('Open', $lang) ?></a></b> &nbsp;
             <?php
             // ZIP actions
             if (!FM_READONLY && $is_zip && $filenames !== false) {
                 $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
                 ?>
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> <?php echo fm_t('UnZip') ?></a></b> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="<?php echo fm_t('UnZip to') ?> <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
-                    <?php echo fm_t('UnZip to folder') ?></a></b> &nbsp;
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> <?php echo fm_t('UnZip', $lang) ?></a></b> &nbsp;
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="<?php echo fm_t('UnZip to', $lang) ?> <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
+                    <?php echo fm_t('UnZip to folder', $lang) ?></a></b> &nbsp;
                 <?php
             }
             if($is_text && !FM_READONLY) {
             ?>
-            <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Edit') ?></a></b> &nbsp;
+            <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Edit', $lang) ?></a></b> &nbsp;
+            <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Advanced Edit', $lang) ?></a></b> &nbsp;
             <?php }
             if($send_mail && !FM_READONLY) {
             ?>
-            <b><a href="javascript:mailto('<?php echo urlencode(trim(FM_ROOT_PATH.'/'.FM_PATH)) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Mail') ?></a></b> &nbsp;
+            <b><a href="javascript:mailto('<?php echo urlencode(trim(FM_ROOT_PATH.'/'.FM_PATH)) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-pencil-square"></i> <?php echo fm_t('Mail', $lang) ?></a></b> &nbsp;
             <?php } ?>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> <?php echo fm_t('Back') ?></a></b>
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> <?php echo fm_t('Back', $lang) ?></a></b>
         </p>
         <?php
         if ($is_zip) {
@@ -961,7 +962,7 @@ if (isset($_GET['edit'])) {
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
     if ($file == '' || !is_file($path . '/' . $file)) {
-        fm_set_msg(fm_t('File not found'), 'error');
+        fm_set_msg(fm_t('File not found', $lang), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -985,7 +986,7 @@ if (isset($_GET['edit'])) {
         $fd=fopen($file_path,"w");
         @fwrite($fd, $writedata);
         fclose($fd);
-        fm_set_msg(fm_t('File Saved Successfully'), 'alert');
+        fm_set_msg(fm_t('File Saved Successfully', $lang), 'alert');
     }
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
@@ -1002,15 +1003,15 @@ if (isset($_GET['edit'])) {
     ?>
     <div class="path">
         <div class="edit-file-actions">
-            <a title="Cancel" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> Cancel</a>
-            <a title="Backup" href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> Backup</a>
+            <a title="<?php echo fm_t('Cancel', $lang) ?>" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo fm_t('Cancel', $lang) ?></a>
+            <a title="<?php echo fm_t('Backup', $lang) ?>" href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo fm_t('Backup', $lang) ?></a>
             <?php if($is_text) { ?>
                 <?php if($isNormalEditor) { ?>
-                    <a title="Advanced" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> Advanced Editor</a>
-                    <button type="button" name="Save" data-url="<?php echo $file_url ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save</button>
+                    <a title="<?php echo fm_t('Advanced', $lang) ?>" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> <?php echo fm_t('Advanced Editor', $lang) ?></a>
+                    <button type="button" name="<?php echo fm_t('Save', $lang) ?>" data-url="<?php echo $file_url ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> <?php echo fm_t('Save', $lang) ?></button>
                 <?php } else { ?>
-                    <a title="Plain Editor" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> Plain Editor</a>
-                    <button type="button" name="Save" data-url="<?php echo $file_url ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> Save</button>
+                    <a title="<?php echo fm_t('Plain Editor', $lang) ?>" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo fm_t('Plain Editor', $lang) ?></a>
+                    <button type="button" name="Save" data-url="<?php echo $file_url ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo fm_t('Save', $lang) ?></button>
                 <?php } ?>
             <?php } ?>
         </div>
@@ -1020,7 +1021,7 @@ if (isset($_GET['edit'])) {
         } elseif ($is_text) {
             echo '<div id="editor" contenteditable="true">'. htmlspecialchars($content) .'</div>';
         } else {
-            fm_set_msg(fm_t('FILE EXTENSION HAS NOT SUPPORTED'), 'error');
+            fm_set_msg(fm_t('FILE EXTENSION HAS NOT SUPPORTED', $lang), 'error');
         }
         ?>
     </div>
@@ -1049,9 +1050,9 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
 
     ?>
     <div class="path">
-        <p><b>Change Permissions</b></p>
+        <p><b><?php echo fm_t('Change Permissions', $lang) ?></b></p>
         <p>
-            Full path: <?php echo $file_path ?><br>
+            <?php echo fm_t('Full path:', $lang) ?> <?php echo $file_path ?><br>
         </p>
         <form action="" method="post">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
@@ -1060,24 +1061,24 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
             <table class="compact-table">
                 <tr>
                     <td></td>
-                    <td><b>Owner</b></td>
-                    <td><b>Group</b></td>
-                    <td><b>Other</b></td>
+                    <td><b><?php echo fm_t('Owner', $lang) ?></b></td>
+                    <td><b><?php echo fm_t('Group', $lang) ?></b></td>
+                    <td><b><?php echo fm_t('Other', $lang) ?></b></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right"><b>Read</b></td>
+                    <td style="text-align: right"><b><?php echo fm_t('Read', $lang) ?></b></td>
                     <td><label><input type="checkbox" name="ur" value="1"<?php echo ($mode & 00400) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="gr" value="1"<?php echo ($mode & 00040) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="or" value="1"<?php echo ($mode & 00004) ? ' checked' : '' ?>></label></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right"><b>Write</b></td>
+                    <td style="text-align: right"><b><?php echo fm_t('Write', $lang) ?></b></td>
                     <td><label><input type="checkbox" name="uw" value="1"<?php echo ($mode & 00200) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="gw" value="1"<?php echo ($mode & 00020) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="ow" value="1"<?php echo ($mode & 00002) ? ' checked' : '' ?>></label></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right"><b>Execute</b></td>
+                    <td style="text-align: right"><b><?php echo fm_t('Execute', $lang) ?></b></td>
                     <td><label><input type="checkbox" name="ux" value="1"<?php echo ($mode & 00100) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="gx" value="1"<?php echo ($mode & 00010) ? ' checked' : '' ?>></label></td>
                     <td><label><input type="checkbox" name="ox" value="1"<?php echo ($mode & 00001) ? ' checked' : '' ?>></label></td>
@@ -1085,8 +1086,8 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
             </table>
 
             <p>
-                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> <?php echo fm_t('Change') ?></button> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel') ?></a></b>
+                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> <?php echo fm_t('Change', $lang) ?></button> &nbsp;
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> <?php echo fm_t('Cancel', $lang) ?></a></b>
             </p>
 
         </form>
@@ -1112,10 +1113,10 @@ $all_files_size = 0;
 <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
 <input type="hidden" name="group" value="1">
 <table class="table"><thead><tr>
-<?php if (!FM_READONLY): ?><th style="width:3%"><label><input type="checkbox" title="<?php echo fm_t('Invert selection') ?>" onclick="checkbox_toggle()"></label></th><?php endif; ?>
-<th><?php echo fm_t('Name') ?></th><th style="width:10%"><?php echo fm_t('Size') ?></th>
-<th style="width:12%"><?php echo fm_t('Modified') ?></th>
-<?php if (!FM_IS_WIN): ?><th style="width:6%"><?php echo fm_t('Perms') ?></th><th style="width:10%"><?php echo fm_t('Owner') ?></th><?php endif; ?>
+<?php if (!FM_READONLY): ?><th style="width:3%"><label><input type="checkbox" title="<?php echo fm_t('Invert selection', $lang) ?>" onclick="checkbox_toggle()"></label></th><?php endif; ?>
+<th><?php echo fm_t('Name', $lang) ?></th><th style="width:10%"><?php echo fm_t('Size', $lang) ?></th>
+<th style="width:12%"><?php echo fm_t('Modified', $lang) ?></th>
+<?php if (!FM_IS_WIN): ?><th style="width:6%"><?php echo fm_t('Perms', $lang) ?></th><th style="width:10%"><?php echo fm_t('Owner', $lang) ?></th><?php endif; ?>
 <th style="width:<?php if (!FM_READONLY): ?>13<?php else: ?>6.5<?php endif; ?>%">Actions</th></tr></thead>
 <?php
 // link to parent folder
@@ -1140,17 +1141,17 @@ foreach ($folders as $f) {
 <tr>
 <?php if (!FM_READONLY): ?><td><label><input type="checkbox" name="file[]" value="<?php echo fm_enc($f) ?>"></label></td><?php endif; ?>
 <td><div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?></a><?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div></td>
-<td><?php echo fm_t('Folder') ?></td><td><?php echo $modif ?></td>
+<td><?php echo fm_t('Folder', $lang) ?></td><td><?php echo $modif ?></td>
 <?php if (!FM_IS_WIN): ?>
-<td><?php if (!FM_READONLY): ?><a title="<?php echo fm_t('Change Permissions') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?></td>
+<td><?php if (!FM_READONLY): ?><a title="<?php echo fm_t('Change Permissions', $lang) ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?></td>
 <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
 <?php endif; ?>
 <td class="inline-actions"><?php if (!FM_READONLY): ?>
-<a title="<?php echo fm_t('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo fm_t('Delete folder?') ?>');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-<a title="<?php echo fm_t('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+<a title="<?php echo fm_t('Delete', $lang) ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo fm_t('Delete folder?') ?>');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+<a title="<?php echo fm_t('Rename', $lang) ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
 <a title="<?php echo fm_t('Copy to...') ?>" href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
 <?php endif; ?>
-<a title="<?php echo fm_t('Direct link') ?>" href="<?php echo FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/' ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+<a title="<?php echo fm_t('Direct link', $lang) ?>" href="<?php echo FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/' ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
 </td></tr>
     <?php
     flush();
@@ -1175,21 +1176,21 @@ foreach ($files as $f) {
     ?>
 <tr>
 <?php if (!FM_READONLY): ?><td><label><input type="checkbox" name="file[]" value="<?php echo fm_enc($f) ?>"></label></td><?php endif; ?>
-<td><div class="filename"><a href="<?php echo $filelink ?>" title="<?php echo fm_t('File info') ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?></a><?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div></td>
+<td><div class="filename"><a href="<?php echo $filelink ?>" title="<?php echo fm_t('File info', $lang) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?></a><?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div></td>
 <td><span title="<?php printf(fm_t('%s bytes'), $filesize_raw) ?>"><?php echo $filesize ?></span></td>
 <td><?php echo $modif ?></td>
 <?php if (!FM_IS_WIN): ?>
-<td><?php if (!FM_READONLY): ?><a title="<?php echo fm_t('Change Permissions') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?></td>
+<td><?php if (!FM_READONLY): ?><a title="<?php echo fm_t('Change Permissions', $lang) ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?></td>
 <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
 <?php endif; ?>
 <td class="inline-actions">
 <?php if (!FM_READONLY): ?>
-<a title="<?php echo fm_t('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo fm_t('Delete file?') ?>');"><i class="fa fa-trash-o"></i></a>
-<a title="<?php echo fm_t('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
+<a title="<?php echo fm_t('Delete', $lang) ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo fm_t('Delete file?') ?>');"><i class="fa fa-trash-o"></i></a>
+<a title="<?php echo fm_t('Rename', $lang) ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
 <a title="<?php echo fm_t('Copy to...') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
 <?php endif; ?>
-<a title="<?php echo fm_t('Direct link') ?>" href="<?php echo FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f ?>" target="_blank"><i class="fa fa-link"></i></a>
-<a title="<?php echo fm_t('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
+<a title="<?php echo fm_t('Direct link', $lang) ?>" href="<?php echo FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f ?>" target="_blank"><i class="fa fa-link"></i></a>
+<a title="<?php echo fm_t('Download', $lang) ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
 </td></tr>
     <?php
     flush();
@@ -1197,29 +1198,29 @@ foreach ($files as $f) {
 
 if (empty($folders) && empty($files)) {
     ?>
-<tr><?php if (!FM_READONLY): ?><td></td><?php endif; ?><td colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>"><em><?php echo fm_t('Folder is empty') ?></em></td></tr>
+<tr><?php if (!FM_READONLY): ?><td></td><?php endif; ?><td colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>"><em><?php echo fm_t('Folder is empty', $lang) ?></em></td></tr>
 <?php
 } else {
     ?>
 <tr><?php if (!FM_READONLY): ?><td class="gray"></td><?php endif; ?><td class="gray" colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>">
-<?php echo fm_t('Full size:') ?> <span title="<?php printf(fm_t('%s bytes'), $all_files_size) ?>"><?php echo fm_get_filesize($all_files_size) ?></span>,
-<?php echo fm_t('files:') ?> <?php echo $num_files ?>,
-<?php echo fm_t('folders:') ?> <?php echo $num_folders ?>
+<?php echo fm_t('Full size:', $lang) ?> <span title="<?php printf(fm_t('%s bytes'), $all_files_size) ?>"><?php echo fm_get_filesize($all_files_size) ?></span>,
+<?php echo fm_t('files:', $lang) ?> <?php echo $num_files ?>,
+<?php echo fm_t('folders:', $lang) ?> <?php echo $num_folders ?>
 </td></tr>
 <?php
 }
 ?>
 </table>
 <?php if (!FM_READONLY): ?>
-<p class="path footer-links"><a href="#/select-all" class="group-btn" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo fm_t('Select all') ?></a> &nbsp;
-<a href="#/unselect-all" class="group-btn" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo fm_t('Unselect all') ?></a> &nbsp;
-<a href="#/invert-all" class="group-btn" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo fm_t('Invert selection') ?></a> &nbsp;
-<input type="submit" class="hidden" name="delete" id="a-delete" value="<?php echo fm_t('Delete') ?>" onclick="return confirm('<?php echo fm_t('Delete selected files and folders?') ?>')">
-<a href="javascript:document.getElementById('a-delete').click();" class="group-btn"><i class="fa fa-trash"></i> <?php echo fm_t('Delete') ?> </a> &nbsp;
-<input type="submit" class="hidden" name="zip" id="a-zip" value="<?php echo fm_t('Zip') ?>" onclick="return confirm('<?php echo fm_t('Create archive?') ?>')">
-<a href="javascript:document.getElementById('a-zip').click();" class="group-btn"><i class="fa fa-file-archive-o"></i> <?php echo fm_t('Zip') ?> </a> &nbsp;
-<input type="submit" class="hidden" name="copy" id="a-copy" value="<?php echo fm_t('Copy') ?>">
-<a href="javascript:document.getElementById('a-copy').click();" class="group-btn"><i class="fa fa-files-o"></i> <?php echo fm_t('Copy') ?> </a>
+<p class="path footer-links"><a href="#/select-all" class="group-btn" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo fm_t('Select all', $lang) ?></a> &nbsp;
+<a href="#/unselect-all" class="group-btn" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo fm_t('Unselect all', $lang) ?></a> &nbsp;
+<a href="#/invert-all" class="group-btn" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo fm_t('Invert selection', $lang) ?></a> &nbsp;
+<input type="submit" class="hidden" name="delete" id="a-delete" value="<?php echo fm_t('Delete', $lang) ?>" onclick="return confirm('<?php echo fm_t('Delete selected files and folders?') ?>')">
+<a href="javascript:document.getElementById('a-delete').click();" class="group-btn"><i class="fa fa-trash"></i> <?php echo fm_t('Delete', $lang) ?> </a> &nbsp;
+<input type="submit" class="hidden" name="zip" id="a-zip" value="<?php echo fm_t('Zip', $lang) ?>" onclick="return confirm('<?php echo fm_t('Create archive?') ?>')">
+<a href="javascript:document.getElementById('a-zip').click();" class="group-btn"><i class="fa fa-file-archive-o"></i> <?php echo fm_t('Zip', $lang) ?> </a> &nbsp;
+<input type="submit" class="hidden" name="copy" id="a-copy" value="<?php echo fm_t('Copy', $lang) ?>">
+<a href="javascript:document.getElementById('a-copy').click();" class="group-btn"><i class="fa fa-files-o"></i> <?php echo fm_t('Copy', $lang) ?> </a>
 <a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="float-right">H3K | Tiny File Manager</a></p>
 <?php endif; ?>
 </form>
@@ -1511,36 +1512,36 @@ function fm_enc($text)
  * @return json
  */
 function scan($dir){
-	$files = array();
-	$_dir = $dir;
-	$dir = FM_ROOT_PATH.'/'.$dir;
-	// Is there actually such a folder/file?
-	if(file_exists($dir)){
-		foreach(scandir($dir) as $f) {
-			if(!$f || $f[0] == '.') {
-				continue; // Ignore hidden files
-			}
+    $files = array();
+    $_dir = $dir;
+    $dir = FM_ROOT_PATH.'/'.$dir;
+    // Is there actually such a folder/file?
+    if(file_exists($dir)){
+        foreach(scandir($dir) as $f) {
+            if(!$f || $f[0] == '.') {
+                continue; // Ignore hidden files
+            }
 
-			if(is_dir($dir . '/' . $f)) {
-				// The path is a folder
-				$files[] = array(
-					"name" => $f,
-					"type" => "folder",
-					"path" => $_dir.'/'.$f,
-					"items" => scan($dir . '/' . $f), // Recursively get the contents of the folder
-				);
-			} else {
-				// It is a file
-				$files[] = array(
-					"name" => $f,
-					"type" => "file",
-					"path" => $_dir,
-					"size" => filesize($dir . '/' . $f) // Gets the size of this file
-				);
-			}
-		}
-	}
-	return $files;
+            if(is_dir($dir . '/' . $f)) {
+                // The path is a folder
+                $files[] = array(
+                    "name" => $f,
+                    "type" => "folder",
+                    "path" => $_dir.'/'.$f,
+                    "items" => scan($dir . '/' . $f), // Recursively get the contents of the folder
+                );
+            } else {
+                // It is a file
+                $files[] = array(
+                    "name" => $f,
+                    "type" => "file",
+                    "path" => $_dir,
+                    "size" => filesize($dir . '/' . $f) // Gets the size of this file
+                );
+            }
+        }
+    }
+    return $files;
 }
 
 /**
@@ -1916,6 +1917,7 @@ class FM_Zipper
  */
 function fm_show_nav_path($path)
 {
+    global $lang;
     ?>
 <div class="path main-nav">
 
@@ -1940,11 +1942,11 @@ function fm_show_nav_path($path)
 
         <div class="float-right">
         <?php if (!FM_READONLY): ?>
-        <a title="<?php echo fm_t('Search') ?>" href="javascript:showSearch('<?php echo urlencode(FM_PATH) ?>')"><i class="fa fa-search"></i></a>
-        <a title="<?php echo fm_t('Upload files') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
-        <a title="<?php echo fm_t('New folder') ?>" href="#createNewItem" ><i class="fa fa-plus-square"></i></a>
+        <a title="<?php echo fm_t('Search', $lang) ?>" href="javascript:showSearch('<?php echo urlencode(FM_PATH) ?>')"><i class="fa fa-search"></i></a>
+        <a title="<?php echo fm_t('Upload files', $lang) ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
+        <a title="<?php echo fm_t('New folder', $lang) ?>" href="#createNewItem" ><i class="fa fa-plus-square"></i></a>
         <?php endif; ?>
-        <?php if (FM_USE_AUTH): ?><a title="<?php echo fm_t('Logout') ?>" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i></a><?php endif; ?>
+        <?php if (FM_USE_AUTH): ?><a title="<?php echo fm_t('Logout', $lang) ?>" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i></a><?php endif; ?>
         </div>
 </div>
 <?php
@@ -1973,6 +1975,8 @@ function fm_show_header()
     header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
     header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
     header("Pragma: no-cache");
+
+    global $lang;
     ?>
 <!DOCTYPE html>
 <html>
@@ -2035,11 +2039,11 @@ li.folder:before, li.file:before{font: normal normal normal 14px/1 "FontAwesome"
 </head>
 <body>
 <div id="wrapper">
-    <div id="createNewItem" class="modalDialog"><div class="model-wrapper"><a href="#close" title="Close" class="close">X</a><h2>Create New Item</h2><p>
-        <label for="newfile">Item Type &nbsp; : </label><input type="radio" name="newfile" id="newfile" value="file">File <input type="radio" name="newfile" value="folder" checked> Folder<br><label for="newfilename">Item Name : </label><input type="text" name="newfilename" id="newfilename" value=""><br><input type="submit" name="submit" class="group-btn" value="Create Now" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;"></p></div></div>
-    <div id="searchResult" class="modalDialog"><div class="model-wrapper"><a href="#close" title="Close" class="close">X</a>
-    <input type="search" name="search" value="" placeholder="Find a item in current folder...">
-    <h2>Search Results</h2>
+    <div id="createNewItem" class="modalDialog"><div class="model-wrapper"><a href="#close" title="<?php echo fm_t('Close', $lang) ?>" class="close">X</a><h2><?php echo fm_t('Create New Item', $lang) ?></h2><p>
+        <label for="newfile"><?php echo fm_t('Item Type', $lang) ?> &nbsp; : </label><input type="radio" name="newfile" id="newfile" value="file"><?php echo fm_t('File', $lang) ?> <input type="radio" name="newfile" value="folder" checked> <?php echo fm_t('Folder', $lang) ?><br><label for="newfilename"><?php echo fm_t('Item Name', $lang) ?> : </label><input type="text" name="newfilename" id="newfilename" value=""><br><input type="submit" name="submit" class="group-btn" value="<?php echo fm_t('Create Now', $lang) ?>" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;"></p></div></div>
+    <div id="searchResult" class="modalDialog"><div class="model-wrapper"><a href="#close" title="<?php echo fm_t('Close', $lang) ?>" class="close">X</a>
+    <input type="search" name="search" value="" placeholder="<?php echo fm_t('Find a item in current folder...', $lang) ?>">
+    <h2><?php echo fm_t('Search Results', $lang) ?></h2>
     <div id="searchresultWrapper"></div>
     </div></div>
 <?php
@@ -2054,7 +2058,7 @@ function fm_show_footer()
 </div>
 <script>
 function newfolder(p){var n=document.getElementById("newfilename").value;var t=document.querySelector('input[name="newfile"]:checked').value;if(n!==null&&n!==''&&t){window.location.hash="#";window.location.search='p='+encodeURIComponent(p)+'&new='+encodeURIComponent(n)+'&type='+encodeURIComponent(t);}}
-function rename(p,f){var n=prompt('<?php echo fm_t('New name') ?>',f);if(n!==null&&n!==''&&n!=f){window.location.search='p='+encodeURIComponent(p)+'&ren='+encodeURIComponent(f)+'&to='+encodeURIComponent(n);}}
+function rename(p,f){var n=prompt('<?php global $lang; echo fm_t('New name', $lang) ?>',f);if(n!==null&&n!==''&&n!=f){window.location.search='p='+encodeURIComponent(p)+'&ren='+encodeURIComponent(f)+'&to='+encodeURIComponent(n);}}
 function change_checkboxes(l,v){for(var i=l.length-1;i>=0;i--){l[i].checked=(typeof v==='boolean')?v:!l[i].checked;}}
 function get_checkboxes(){var i=document.getElementsByName('file[]'),a=[];for(var j=i.length-1;j>=0;j--){if(i[j].type='checkbox'){a.push(i[j]);}}return a;}
 function select_all(){var l=get_checkboxes();change_checkboxes(l,true);}
