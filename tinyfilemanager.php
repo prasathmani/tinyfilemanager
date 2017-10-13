@@ -1119,7 +1119,7 @@ $all_files_size = 0;
 <th><?php echo fm_t('Name', $lang) ?></th><th style="width:10%"><?php echo fm_t('Size', $lang) ?></th>
 <th style="width:12%"><?php echo fm_t('Modified', $lang) ?></th>
 <?php if (!FM_IS_WIN): ?><th style="width:6%"><?php echo fm_t('Perms', $lang) ?></th><th style="width:10%"><?php echo fm_t('Owner', $lang) ?></th><?php endif; ?>
-<th style="width:<?php if (!FM_READONLY): ?>13<?php else: ?>6.5<?php endif; ?>%">Actions</th></tr></thead>
+<th style="width:<?php if (!FM_READONLY): ?>13<?php else: ?>6.5<?php endif; ?>%"><?php echo fm_t('Actions', $lang) ?></th></tr></thead>
 <?php
 // link to parent folder
 if ($parent !== false) {
