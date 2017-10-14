@@ -41,7 +41,7 @@ $send_mail = false;
 $toMailId = ""; //yourmailid@mail.com
 
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
-$default_timezone = 'Asia/Kolkata'; // UTC+5:30
+$default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
@@ -54,10 +54,15 @@ $root_url = '';
 $http_host = $_SERVER['HTTP_HOST'];
 
 // input encoding for iconv
-$iconv_input_encoding = 'CP1251';
+$iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 $datetime_format = 'd.m.y H:i';
+
+// include user config php file
+if (defined('FM_CONFIG') && is_file(FM_CONFIG) ) {
+	include(FM_CONFIG);
+}
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
 
@@ -1119,7 +1124,7 @@ $all_files_size = 0;
 <th><?php echo fm_t('Name', $lang) ?></th><th style="width:10%"><?php echo fm_t('Size', $lang) ?></th>
 <th style="width:12%"><?php echo fm_t('Modified', $lang) ?></th>
 <?php if (!FM_IS_WIN): ?><th style="width:6%"><?php echo fm_t('Perms', $lang) ?></th><th style="width:10%"><?php echo fm_t('Owner', $lang) ?></th><?php endif; ?>
-<th style="width:<?php if (!FM_READONLY): ?>13<?php else: ?>6.5<?php endif; ?>%">Actions</th></tr></thead>
+<th style="width:<?php if (!FM_READONLY): ?>13<?php else: ?>6.5<?php endif; ?>%"><?php echo fm_t('Actions', $lang) ?></th></tr></thead>
 <?php
 // link to parent folder
 if ($parent !== false) {
@@ -2067,9 +2072,9 @@ function select_all(){var l=get_checkboxes();change_checkboxes(l,true);}
 function unselect_all(){var l=get_checkboxes();change_checkboxes(l,false);}
 function invert_all(){var l=get_checkboxes();change_checkboxes(l);}
 function mailto(p,f){var http=new XMLHttpRequest(); var params="path="+p+"&file="+f+"&type=mail&ajax=true"; http.open("POST", '', true);http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ alert(http.responseText);}}
-http.send(params); 
+http.send(params);
 }
-function showSearch(u){var http=new XMLHttpRequest();var params="path="+u+"&type=search&ajax=true";http.open("POST", '', true); http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ window.searchObj = http.responseText; document.getElementById('searchresultWrapper').innerHTML = "";window.location.hash="#searchResult"}} 
+function showSearch(u){var http=new XMLHttpRequest();var params="path="+u+"&type=search&ajax=true";http.open("POST", '', true); http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ window.searchObj = http.responseText; document.getElementById('searchresultWrapper').innerHTML = "";window.location.hash="#searchResult"}}
 http.send(params);}
 var searchEl = document.querySelector('input[type=search]');var timeout = null;searchEl.onkeyup = function(evt) {clearTimeout(timeout);var data = JSON.parse(window.searchObj);var searchTerms = document.querySelector('input[type=search]').value;timeout = setTimeout(function () {if(searchTerms.length>=2) {var res = getSearchResult(data,searchTerms);var f1='',f2='';res.folders.forEach(function (d){f1+='<li class="'+d.type+'"><a href="?p='+ d.path+'">'+d.name+'</a></li>'; });res.files.forEach(function (d){f2+='<li class="'+d.type+'"><a href="?p='+ d.path +'&view='+ d.name +'">'+d.name+'</a></li>';});document.getElementById('searchresultWrapper').innerHTML = '<div class="model-wrapper">'+f1+f2+'</div>';}},500);};
 function getSearchResult(data,searchTerms) {var folders=[],files=[];data.forEach(function(d){if(d.type === 'folder') { getSearchResult(d.items,searchTerms);if(d.name.toLowerCase().match(searchTerms)) {folders.push(d);}} else if(d.type === 'file') {if(d.name.toLowerCase().match(searchTerms)) {files.push(d);} }}); return {folders: folders, files: files};}
