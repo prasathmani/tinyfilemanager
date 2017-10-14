@@ -60,7 +60,7 @@ $iconv_input_encoding = 'UTF-8';
 $datetime_format = 'd.m.y H:i';
 
 // include user config php file
-if (defined('FM_CONFIG') && is_files(FM_CONFIG) ) {
+if (defined('FM_CONFIG') && is_file(FM_CONFIG) ) {
 	include(FM_CONFIG);
 }
 
@@ -2072,9 +2072,9 @@ function select_all(){var l=get_checkboxes();change_checkboxes(l,true);}
 function unselect_all(){var l=get_checkboxes();change_checkboxes(l,false);}
 function invert_all(){var l=get_checkboxes();change_checkboxes(l);}
 function mailto(p,f){var http=new XMLHttpRequest(); var params="path="+p+"&file="+f+"&type=mail&ajax=true"; http.open("POST", '', true);http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ alert(http.responseText);}}
-http.send(params); 
+http.send(params);
 }
-function showSearch(u){var http=new XMLHttpRequest();var params="path="+u+"&type=search&ajax=true";http.open("POST", '', true); http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ window.searchObj = http.responseText; document.getElementById('searchresultWrapper').innerHTML = "";window.location.hash="#searchResult"}} 
+function showSearch(u){var http=new XMLHttpRequest();var params="path="+u+"&type=search&ajax=true";http.open("POST", '', true); http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");http.onreadystatechange=function(){if(http.readyState == 4 && http.status == 200){ window.searchObj = http.responseText; document.getElementById('searchresultWrapper').innerHTML = "";window.location.hash="#searchResult"}}
 http.send(params);}
 var searchEl = document.querySelector('input[type=search]');var timeout = null;searchEl.onkeyup = function(evt) {clearTimeout(timeout);var data = JSON.parse(window.searchObj);var searchTerms = document.querySelector('input[type=search]').value;timeout = setTimeout(function () {if(searchTerms.length>=2) {var res = getSearchResult(data,searchTerms);var f1='',f2='';res.folders.forEach(function (d){f1+='<li class="'+d.type+'"><a href="?p='+ d.path+'">'+d.name+'</a></li>'; });res.files.forEach(function (d){f2+='<li class="'+d.type+'"><a href="?p='+ d.path +'&view='+ d.name +'">'+d.name+'</a></li>';});document.getElementById('searchresultWrapper').innerHTML = '<div class="model-wrapper">'+f1+f2+'</div>';}},500);};
 function getSearchResult(data,searchTerms) {var folders=[],files=[];data.forEach(function(d){if(d.type === 'folder') { getSearchResult(d.items,searchTerms);if(d.name.toLowerCase().match(searchTerms)) {folders.push(d);}} else if(d.type === 'file') {if(d.name.toLowerCase().match(searchTerms)) {files.push(d);} }}); return {folders: folders, files: files};}
