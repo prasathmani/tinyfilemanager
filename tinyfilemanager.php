@@ -41,7 +41,7 @@ $send_mail = false;
 $toMailId = ""; //yourmailid@mail.com
 
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
-$default_timezone = 'Asia/Kolkata'; // UTC+5:30
+$default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
@@ -54,10 +54,15 @@ $root_url = '';
 $http_host = $_SERVER['HTTP_HOST'];
 
 // input encoding for iconv
-$iconv_input_encoding = 'CP1251';
+$iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 $datetime_format = 'd.m.y H:i';
+
+// include user config php file
+if (defined('FM_CONFIG') && is_files(FM_CONFIG) ) {
+	include(FM_CONFIG);
+}
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
 
