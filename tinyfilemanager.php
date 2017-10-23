@@ -1,8 +1,10 @@
 ﻿<?php
-/**
+
+/*
  * H3K | Tiny File Manager
  * CCP Programmers
  * http://fb.com/ccpprogrammers
+ * https://github.com/prasathmani/tinyfilemanager
  */
 
 // Default language ('en' and other from 'filemanager-l10n.php')
@@ -41,7 +43,7 @@ $send_mail = false;
 $toMailId = ""; //yourmailid@mail.com
 
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
-$default_timezone = 'Etc/UTC'; // UTC
+$default_timezone = 'UTC'; // UTC
 
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
@@ -143,12 +145,12 @@ if ($use_auth) {
     } else {
         // Form
         unset($_SESSION['logged']);
-        fm_show_header();
+        fm_show_header_login();
         fm_show_message();
         ?>
         <div class="path login-form">
                        <img src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File manager">
-            <form action="" method="post">
+            <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
                 <label for="fm_usr"><?php echo fm_t('Username', $lang) ?></label><input type="text" id="fm_usr" name="fm_usr" value="" placeholder="<?php echo fm_t('Username', $lang) ?>" required><br>
                 <label for="fm_pwd"><?php echo fm_t('Password', $lang) ?></label><input type="password" id="fm_pwd" name="fm_pwd" value="" placeholder="<?php echo fm_t('Password', $lang) ?>" required><br>
                 <select name="lang" title="Language" class="hidden">
@@ -183,6 +185,7 @@ $p = fm_clean_path($p);
 // instead globals vars
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
+define('FM_EDIT_FILE', $edit_files);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
 defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
@@ -688,7 +691,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <div class="path">
         <p><b><?php echo fm_t('Uploading files') ?></b></p>
         <p class="break-word"><?php echo fm_t('Destination folder:') ?> <?php echo fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH) ?></p>
-        <form action="" method="post" enctype="multipart/form-data">
+        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post" enctype="multipart/form-data">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
             <input type="hidden" name="upl" value="1">
             <input type="file" name="upload[]"><br>
@@ -721,7 +724,7 @@ if (isset($_POST['copy']) && !FM_READONLY) {
     ?>
     <div class="path">
         <p><b>Copying</b></p>
-        <form action="" method="post">
+        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
             <input type="hidden" name="finish" value="1">
             <?php
@@ -1061,7 +1064,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
         <p>
             <?php echo fm_t('Full path:', $lang) ?> <?php echo $file_path ?><br>
         </p>
-        <form action="" method="post">
+        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
             <input type="hidden" name="chmod" value="<?php echo fm_enc($file) ?>">
 
@@ -1116,7 +1119,7 @@ $num_files = count($files);
 $num_folders = count($folders);
 $all_files_size = 0;
 ?>
-<form action="" method="post">
+<form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
 <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
 <input type="hidden" name="group" value="1">
 <table class="table"><thead><tr>
@@ -1775,7 +1778,7 @@ function fm_get_text_exts()
         'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'json', 'sh', 'config',
         'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue',
         'eml', 'msg', 'csv', 'bat', 'twig', 'tpl', 'md', 'gitignore', 'less', 'sass', 'scss', 'c', 'cpp', 'cs', 'py',
-        'map', 'lock', 'dtd', 'svg',
+        'map', 'lock', 'dtd', 'svg', 'tmp', 'dat', 'htpasswd', 'pl'
     );
 }
 
@@ -1970,6 +1973,83 @@ function fm_show_message()
         unset($_SESSION['message']);
         unset($_SESSION['status']);
     }
+}
+
+/**
+ * Show page header in Login
+ */
+function fm_show_header_login()
+{
+    $sprites_ver = '20160315';
+    header("Content-Type: text/html; charset=utf-8");
+    header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+    header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+    header("Pragma: no-cache");
+
+    global $lang;
+    ?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>H3K | File Manager</title>
+ <meta name="Description" CONTENT="Author: CCP Programmers, H3K Tiny PHP File Manager">
+<link rel="icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
+<link rel="shortcut icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+<?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
+<?php endif; ?>
+<style>
+html,body,div,span,p,pre,a,code,em,img,small,strong,ol,ul,li,form,label,table,tr,th,td{margin:0;padding:0;vertical-align:baseline;outline:none;font-size:100%;background:transparent;border:none;text-decoration:none}
+html{overflow-y:scroll}body{padding:0;font:13px/16px Tahoma,Arial,sans-serif;color:#222;background:#efefef}
+input,select,textarea,button{font-size:inherit;font-family:inherit}
+a{color:#296ea3;text-decoration:none}a:hover{color:#b00}img{vertical-align:middle;border:none}
+a img{border:none}span{color:#777}small{font-size:11px;color:#999}p{margin-bottom:10px}
+ul{margin-left:2em;margin-bottom:10px}ul{list-style-type:none;margin-left:0}ul li{padding:3px 0}
+table{border-collapse:collapse;border-spacing:0;margin-bottom:10px;width:100%}
+th,td{padding:4px 7px;text-align:left;vertical-align:top;border:1px solid #ddd;background:#fff;white-space:nowrap}
+th,td.gray{background-color:#eee}td.gray span{color:#222}
+tr:hover td{background-color:#f5f5f5}tr:hover td.gray{background-color:#eee}
+.table{width:100%;max-width:100%;margin-bottom:1rem}.table td,.table th{padding:.55rem;vertical-align:top;border-top:1px solid #ddd}.table thead th{vertical-align:bottom;border-bottom:2px solid #eceeef}.table tbody+tbody{border-top:2px solid #eceeef}.table .table{background-color:#fff}
+code,pre{display:block;margin-bottom:10px;font:13px/16px Consolas,'Courier New',Courier,monospace;border:1px dashed #ccc;padding:5px;overflow:auto}
+pre.with-hljs{padding:0} .hidden {display:none;}
+pre.with-hljs code{margin:0;border:0;overflow:visible}
+code.maxheight,pre.maxheight{max-height:512px}input[type="checkbox"]{margin:0;padding:0}
+.fa.fa-caret-right{font-size:1.2em;margin:0 4px;vertical-align:middle;color:#ececec}.fa.fa-home{font-size:1.2em;vertical-align:bottom;}
+body {margin:0 30px;margin-top: 45px;}
+#wrapper{min-width:400px;margin:0 auto}
+.path{padding:4px 7px;border:1px solid #ddd;background-color:#fff;margin-bottom:10px}
+.right{text-align:right}.center{text-align:center}.float-right{float:right}.float-left{float:left}
+.message{padding:4px 7px;border:1px solid #ddd;background-color:#fff}
+.message.ok{border-color:green;color:green}
+.message.error{border-color:red;color:red}
+.message.alert{border-color:orange;color:orange}
+.btn{border:0;background:none;padding:0;margin:0;font-weight:bold;color:#296ea3;cursor:pointer}.btn:hover{color:#b00}
+.preview-img{max-width:100%;background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC") repeat 0 0}.inline-actions>a>i{font-size:1em;margin-left:5px;background:#3785c1;color:#fff;padding:3px;border-radius:3px;}
+.preview-video{position:relative;max-width:100%;height:0;padding-bottom:62.5%;margin-bottom:10px}.preview-video video{position:absolute;width:100%;height:100%;left:0;top:0;background:#000}
+.compact-table{border:0;width:auto}.compact-table td,.compact-table th{width:100px;border:0;text-align:center}.compact-table tr:hover td{background-color:#fff}
+.filename{max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.break-word{word-wrap:break-word;margin-left:30px;}.break-word.float-left a{color:#fff}.break-word+.float-right{padding-right:30px;position:relative;}.break-word+.float-right>a{color:#fff;font-size:1.2em;margin-right:4px;}
+.modal{display:none;position:fixed;z-index:1;padding-top:100px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:#000;background-color:rgba(0,0,0,.4)}
+.modal-content{background-color:#fefefe;margin:auto;padding:20px;border:1px solid #888;width:80%}
+.close{color:#aaa;float:right;font-size:28px;font-weight:700}.close:focus,.close:hover{color:#000;text-decoration:none;cursor:pointer}
+#editor {position:absolute;top:50px;right:30px;bottom:5px;left:30px;}
+.edit-file-actions {position: absolute;top:0;right:30px;background:#585858;margin-top:5px;}
+.edit-file-actions>button,.edit-file-actions>a{background:#f8f8fb;padding:5px 15px;border:0;cursor:pointer;color:#296ea3}
+.group-btn{background:#fff;padding:2px 6px;border:1px solid;cursor:pointer;color:#296ea3;}
+.main-nav{position:fixed;top:0;left:0;padding:10px 30px;padding-left:1px;width:100%;background:#585858;color:#fff;border:0;}
+.login-form {width:320px;text-align:center;margin:0 auto;}
+.login-form label,.path.login-form input {padding:5px;margin:10px}.footer-links{background:transparent;border:0}
+input[type=search]{height:30px;margin:5px;width:80%;border:1px solid #ccc;}
+.modalDialog{position:fixed;font-family:Arial,Helvetica,sans-serif;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.8);z-index:99999;opacity:0;-webkit-transition:opacity .4s ease-in;-moz-transition:opacity .4s ease-in;transition:opacity .4s ease-in;pointer-events:none}.modalDialog:target{opacity:1;pointer-events:auto}.modalDialog>.model-wrapper{width:400px;position:relative;margin:10% auto;padding:5px 20px 13px;border-radius:5px;background:#fff}.close{background:#fff;color:#000;line-height:25px;position:absolute;right:0;text-align:center;top:0;width:24px;text-decoration:none;font-weight:700;border-radius:0 5px 0 0;font-size:18px}.close:hover{background:#00d9ff}.modalDialog p{line-height:30px}
+div#searchresultWrapper{max-height:320px;overflow:auto;}div#searchresultWrapper li{margin: 8px 0; list-style:none;}
+li.folder:before, li.file:before{font: normal normal normal 14px/1 "FontAwesome";content:"\f016";margin-right:5px;}li.folder:before{content:"\f114";}
+</style>
+</head>
+<body>
+<div id="wrapper">
+<?php
 }
 
 /**
@@ -2274,3 +2354,5 @@ function fm_get_available_langs()
     $languages[] = 'en';
     return $languages;
 }
+
+?>
