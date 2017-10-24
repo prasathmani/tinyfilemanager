@@ -153,7 +153,7 @@ return array(
             "Username" => "Username",
             "Password" => "Password",
             "Login" => "Connettiti",
-            "Logout" => "Disconnetti",
+            "Logout" => "Disconnettiti",
             "Move" => "Sposta",
             "Copy" => "Copia",
             "Save" => "Salva",
