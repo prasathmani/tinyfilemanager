@@ -1,7 +1,7 @@
 # Tiny PHP File Manager
 Tiny file manager in single php file
 <hr>
-<img src="tinyfilemanager.gif" alt="H3k | Tiny File Manager">
+<img src="screenshot.gif" alt="H3K | Tiny File Manager">
 
 ## Requirements
 
