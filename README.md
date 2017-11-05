@@ -25,16 +25,16 @@ To enable/disable authentication set $use_auth to true or false.
 ### :loudspeaker: Features 
 <ul>
 <li>Open Source, light and extremely simple</li>
-<li>Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
-<li>Ability to upload multiple files</li>
-<li>Ability to create folders and files</li>
-<li>Ability to compress, extract files</li>
-<li>Support user permissions - based on session</li>
-<li>Copy direct file URL</li>
-<li>Edit text formats file using advanced editor</li>
-<li>Backup files</li>
-<li>Search - Advanced Ajax based seach</li>
-<li>Tree file view</li>
+<li>:information_source:Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
+<li>:arrow_double_up: Ability to upload multiple files</li>
+<li>:file_folder: Ability to create folders and files</li>
+<li>:gift: Ability to compress, extract files</li>
+<li>:sunglasses: Support user permissions - based on session</li>
+<li>:floppy_disk: Copy direct file URL</li>
+<li>:pencil2: Edit text formats file using advanced editor</li>
+<li>:zap: Backup files</li>
+<li>:mag_right: Search - Advanced Ajax based seach</li>
+<li>:palm_tree: Tree file view</li>
 <li>lots more...</li>
 </ul>
 
