@@ -35,7 +35,7 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:zap: Backup files</li>
 <li>:mag_right: Search - Advanced Ajax based seach</li>
 <li>:palm_tree: Tree file view</li>
-<li>lots more...</li>
+<li>:bangbang: lots more...</li>
 </ul>
 
 Source: <a target="_balnk" href="https://github.com/alexantr/filemanager">filemanager</a>(original version) were built by <a href="https://github.com/alexantr" target="_balnk">alexantr</a>.<br>
