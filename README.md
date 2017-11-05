@@ -22,7 +22,7 @@ Warning: Please set your own username and password in $auth_users before use.
 To enable/disable authentication set $use_auth to true or false.
 
 
-### Features
+### :loudspeaker: Features 
 <ul>
 <li>Open Source, light and extremely simple</li>
 <li>Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
@@ -31,9 +31,10 @@ To enable/disable authentication set $use_auth to true or false.
 <li>Ability to compress, extract files</li>
 <li>Support user permissions - based on session</li>
 <li>Copy direct file URL</li>
-<li>Edit text file formats using advanced editor with syntax highlight</li>
+<li>Edit text formats file using advanced editor</li>
 <li>Backup files</li>
 <li>Search - Advanced Ajax based seach</li>
+<li>Tree file view</li>
 <li>lots more...</li>
 </ul>
 
