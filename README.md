@@ -25,7 +25,7 @@ To enable/disable authentication set $use_auth to true or false.
 ### :loudspeaker: Features 
 <ul>
 <li>:cd: Open Source, light and extremely simple</li>
-<li>:information_source:Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
+<li>:information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
 <li>:arrow_double_up: Ability to upload multiple files</li>
 <li>:file_folder: Ability to create folders and files</li>
 <li>:gift: Ability to compress, extract files</li>
