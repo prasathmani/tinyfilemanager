@@ -60,6 +60,9 @@ $iconv_input_encoding = 'UTF-8';
 // date() format for file modification date
 $datetime_format = 'd.m.y H:i';
 
+// allowed upload file extensions
+$upload_extensions = ''; // 'gif,png,jpg'
+
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG) ) {
 	include(FM_CONFIG);
@@ -160,6 +163,7 @@ if ($use_auth) {
 }
 
 defined('FM_LANG') || define('FM_LANG', $lang);
+defined('FM_EXTENSION') || define('FM_EXTENSION', $upload_extensions);
 define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION['logged']) && in_array($_SESSION['logged'], $readonly_users));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
@@ -443,10 +447,14 @@ if (isset($_POST['upl']) && !FM_READONLY) {
     $errors = 0;
     $uploads = 0;
     $total = count($_FILES['upload']['name']);
-
+	$allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+	
     for ($i = 0; $i < $total; $i++) {
+		$filename = $_FILES['upload']['name'][$i];
         $tmp_name = $_FILES['upload']['tmp_name'][$i];
-        if (empty($_FILES['upload']['error'][$i]) && !empty($tmp_name) && $tmp_name != 'none') {
+		$ext = pathinfo($filename, PATHINFO_EXTENSION);
+		$isFileAllowed = ($allowed) ? in_array($ext,$allowed) : true;
+        if (empty($_FILES['upload']['error'][$i]) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if (move_uploaded_file($tmp_name, $path . '/' . $_FILES['upload']['name'][$i])) {
                 $uploads++;
             } else {
@@ -462,7 +470,6 @@ if (isset($_POST['upl']) && !FM_READONLY) {
     } else {
         fm_set_msg(sprintf('Error while uploading files. Uploaded files: %s', $uploads), 'error');
     }
-
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
