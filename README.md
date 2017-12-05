@@ -38,5 +38,5 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:bangbang: lots more...</li>
 </ul>
 
-Source: <a target="_balnk" href="https://github.com/alexantr/filemanager">filemanager</a>(original version) were built by <a href="https://github.com/alexantr" target="_balnk">alexantr</a>.<br>
-This is an excellent and improved version of the original.
+
+This is an excellent and improved version of the original <a target="_balnk" href="https://github.com/alexantr/filemanager">filemanager</a>(original version).
