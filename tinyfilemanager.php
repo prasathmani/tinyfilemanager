@@ -473,6 +473,72 @@ if (isset($_POST['upl']) && !FM_READONLY) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
+// Resumable Upload, adapted from https://github.com/23/resumable.js/blob/master/samples/Backend%20on%20PHP.md
+//check if request is GET and the requested chunk exists or not. this makes testChunks work
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['rupl']) && !FM_READONLY) {
+    if(!(isset($_GET['resumableIdentifier']) && trim($_GET['resumableIdentifier'])!='')){
+        $_GET['resumableIdentifier']='';
+    }
+    $temp_dir = FM_ROOT_PATH . '/temp/'.$_GET['resumableIdentifier'];
+    if(!(isset($_GET['resumableFilename']) && trim($_GET['resumableFilename'])!='')){
+        $_GET['resumableFilename']='';
+    }
+    if(!(isset($_GET['resumableChunkNumber']) && trim($_GET['resumableChunkNumber'])!='')){
+        $_GET['resumableChunkNumber']='';
+    }
+    $chunk_file = $temp_dir.'/'.$_GET['resumableFilename'].'.part'.$_GET['resumableChunkNumber'];
+    if (file_exists($chunk_file)) {
+         header("HTTP/1.0 200 Ok");
+       } else {
+         header("HTTP/1.0 404 Not Found");
+       }
+    exit;
+}
+
+// Resumable Upload, adapted from https://github.com/23/resumable.js/blob/master/samples/Backend%20on%20PHP.md
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rupl']) && !FM_READONLY) {
+    $path = FM_ROOT_PATH;
+    if (FM_PATH != '') {
+        $path .= '/' . FM_PATH;
+    }
+
+    $errors = 0;
+    $uploads = 0;
+    $total = count($_FILES['upload']['name']);
+    $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+
+    // loop through files and move the chunks to a temporarily created directory
+    if (!empty($_FILES)) foreach ($_FILES as $file) {
+
+        // check the error status
+        if ($file['error'] != 0) {
+            _log('error '.$file['error'].' in file '.$_POST['resumableFilename']);
+            continue;
+        }
+
+        // init the destination file (format <filename.ext>.part<#chunk>
+        // the file is stored in a temporary directory
+        if(isset($_POST['resumableIdentifier']) && trim($_POST['resumableIdentifier'])!=''){
+            $temp_dir = FM_ROOT_PATH.'/temp/'.$_POST['resumableIdentifier'];
+        }
+        $dest_file = $temp_dir .'/'.$_POST['resumableFilename'].'.part'.$_POST['resumableChunkNumber'];
+
+        // create the temporary directory
+        if (!is_dir($temp_dir)) {
+            mkdir($temp_dir, 0777, true);
+        }
+
+        // move the temporary file
+        if (!move_uploaded_file($file['tmp_name'], $dest_file)) {
+          _log('Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
+        } else {
+            // check if all the parts present, and create the final destination file
+            createFileFromChunks($temp_dir, $path, $_POST['resumableFilename'] ,$_POST['resumableChunkSize'], $_POST['resumableTotalSize'], $_POST['resumableTotalChunks']);
+        }
+    }
+    exit;
+}
+
 // Mass deleting
 if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
     $path = FM_ROOT_PATH;
@@ -704,6 +770,65 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             </p>
         </form>
     </div>
+    <?php
+    fm_show_footer();
+    exit;
+}
+
+if (isset($_GET['rupload']) && !FM_READONLY) {
+    fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
+    ?>
+<div class="resumable-drop" style="min-height: 100px; border: 4px dashed gray; text-align: center">
+  Drop files here to upload or <a class="resumable-browse"><u>select from your computer</u></a>
+<table id="uploader-list-table" class="uploader-list" style="margin: 0">
+  <tbody></tbody>
+</table>
+</div>
+
+<div class="progress" style='display: none'>
+  <table>
+    <tr>
+      <td width="100%">
+        <div class="progress-container" style="display: inline-block; width: 100%">
+          <div class="progress-bar"></div>
+        </div>
+      </td>
+      <td class="progress-text" nowrap="nowrap"></td>
+    </tr>
+  </table>
+</div>
+
+
+<script src="//code.jquery.com/jquery-3.2.1.js"></script>
+<script>
+!function(){"use strict";var e=function(t){function r(e,t,r,n){var a;return e.isFile?e.file(function(e){e.relativePath=t+e.name,r.push(e),n()}):(e.isDirectory?a=e:e instanceof File&&r.push(e),"function"==typeof e.webkitGetAsEntry&&(a=e.webkitGetAsEntry()),a&&a.isDirectory?i(a,t+a.name+"/",r,n):("function"==typeof e.getAsFile&&(e=e.getAsFile())instanceof File&&(e.relativePath=t+e.name,r.push(e)),void n()))}function n(e,t){if(!e||0===e.length)return t();e[0](function(){n(e.slice(1),t)})}function i(e,t,i,a){e.createReader().readEntries(function(e){if(!e.length)return a();n(e.map(function(e){return r.bind(null,e,t,i)}),a)})}function a(e,t){if(e.length){u.fire("beforeAdd");var i=[];n(Array.prototype.map.call(e,function(e){return r.bind(null,e,"",i)}),function(){i.length&&p(i,t)})}}function s(e,t,r){var n=this;n.opts={},n.getOpt=e.getOpt,n._prevProgress=0,n.resumableObj=e,n.file=t,n.fileName=t.fileName||t.name,n.size=t.size,n.relativePath=t.relativePath||t.webkitRelativePath||n.fileName,n.uniqueIdentifier=r,n._pause=!1,n.container="";var i=void 0!==r,a=function(e,t){switch(e){case"progress":n.resumableObj.fire("fileProgress",n,t);break;case"error":n.abort(),i=!0,n.chunks=[],n.resumableObj.fire("fileError",n,t);break;case"success":if(i)return;n.resumableObj.fire("fileProgress",n),n.isComplete()&&n.resumableObj.fire("fileSuccess",n,t);break;case"retry":n.resumableObj.fire("fileRetry",n)}};return n.chunks=[],n.abort=function(){var e=0;l.each(n.chunks,function(t){"uploading"==t.status()&&(t.abort(),e++)}),e>0&&n.resumableObj.fire("fileProgress",n)},n.cancel=function(){var e=n.chunks;n.chunks=[],l.each(e,function(e){"uploading"==e.status()&&(e.abort(),n.resumableObj.uploadNextChunk())}),n.resumableObj.removeFile(n),n.resumableObj.fire("fileProgress",n)},n.retry=function(){n.bootstrap();var e=!1;n.resumableObj.on("chunkingComplete",function(){e||n.resumableObj.upload(),e=!0})},n.bootstrap=function(){n.abort(),i=!1,n.chunks=[],n._prevProgress=0;for(var e=n.getOpt("forceChunkSize")?Math.ceil:Math.floor,t=Math.max(e(n.file.size/n.getOpt("chunkSize")),1),r=0;r<t;r++)!function(e){window.setTimeout(function(){n.chunks.push(new o(n.resumableObj,n,e,a)),n.resumableObj.fire("chunkingProgress",n,e/t)},0)}(r);window.setTimeout(function(){n.resumableObj.fire("chunkingComplete",n)},0)},n.progress=function(){if(i)return 1;var e=0,t=!1;return l.each(n.chunks,function(r){"error"==r.status()&&(t=!0),e+=r.progress(!0)}),e=t?1:e>.99999?1:e,e=Math.max(n._prevProgress,e),n._prevProgress=e,e},n.isUploading=function(){var e=!1;return l.each(n.chunks,function(t){if("uploading"==t.status())return e=!0,!1}),e},n.isComplete=function(){var e=!1;return l.each(n.chunks,function(t){var r=t.status();if("pending"==r||"uploading"==r||1===t.preprocessState)return e=!0,!1}),!e},n.pause=function(e){n._pause=void 0===e?!n._pause:e},n.isPaused=function(){return n._pause},n.resumableObj.fire("chunkingStart",n),n.bootstrap(),this}function o(e,t,r,n){var i=this;i.opts={},i.getOpt=e.getOpt,i.resumableObj=e,i.fileObj=t,i.fileObjSize=t.size,i.fileObjType=t.file.type,i.offset=r,i.callback=n,i.lastProgressCallback=new Date,i.tested=!1,i.retries=0,i.pendingRetry=!1,i.preprocessState=0;var a=i.getOpt("chunkSize");return i.loaded=0,i.startByte=i.offset*a,i.endByte=Math.min(i.fileObjSize,(i.offset+1)*a),i.fileObjSize-i.endByte<a&&!i.getOpt("forceChunkSize")&&(i.endByte=i.fileObjSize),i.xhr=null,i.test=function(){i.xhr=new XMLHttpRequest;var e=function(e){i.tested=!0;var t=i.status();"success"==t?(i.callback(t,i.message()),i.resumableObj.uploadNextChunk()):i.send()};i.xhr.addEventListener("load",e,!1),i.xhr.addEventListener("error",e,!1),i.xhr.addEventListener("timeout",e,!1);var t=[],r=i.getOpt("parameterNamespace"),n=i.getOpt("query");"function"==typeof n&&(n=n(i.fileObj,i)),l.each(n,function(e,n){t.push([encodeURIComponent(r+e),encodeURIComponent(n)].join("="))}),t=t.concat([["chunkNumberParameterName",i.offset+1],["chunkSizeParameterName",i.getOpt("chunkSize")],["currentChunkSizeParameterName",i.endByte-i.startByte],["totalSizeParameterName",i.fileObjSize],["typeParameterName",i.fileObjType],["identifierParameterName",i.fileObj.uniqueIdentifier],["fileNameParameterName",i.fileObj.fileName],["relativePathParameterName",i.fileObj.relativePath],["totalChunksParameterName",i.fileObj.chunks.length]].filter(function(e){return i.getOpt(e[0])}).map(function(e){return[r+i.getOpt(e[0]),encodeURIComponent(e[1])].join("=")})),i.xhr.open(i.getOpt("testMethod"),l.getTarget("test",t)),i.xhr.timeout=i.getOpt("xhrTimeout"),i.xhr.withCredentials=i.getOpt("withCredentials");var a=i.getOpt("headers");"function"==typeof a&&(a=a(i.fileObj,i)),l.each(a,function(e,t){i.xhr.setRequestHeader(e,t)}),i.xhr.send(null)},i.preprocessFinished=function(){i.preprocessState=2,i.send()},i.send=function(){var e=i.getOpt("preprocess");if("function"==typeof e)switch(i.preprocessState){case 0:return i.preprocessState=1,void e(i);case 1:return}if(!i.getOpt("testChunks")||i.tested){i.xhr=new XMLHttpRequest,i.xhr.upload.addEventListener("progress",function(e){new Date-i.lastProgressCallback>1e3*i.getOpt("throttleProgressCallbacks")&&(i.callback("progress"),i.lastProgressCallback=new Date),i.loaded=e.loaded||0},!1),i.loaded=0,i.pendingRetry=!1,i.callback("progress");var t=function(e){var t=i.status();if("success"==t||"error"==t)i.callback(t,i.message()),i.resumableObj.uploadNextChunk();else{i.callback("retry",i.message()),i.abort(),i.retries++;var r=i.getOpt("chunkRetryInterval");void 0!==r?(i.pendingRetry=!0,setTimeout(i.send,r)):i.send()}};i.xhr.addEventListener("load",t,!1),i.xhr.addEventListener("error",t,!1),i.xhr.addEventListener("timeout",t,!1);var r=[["chunkNumberParameterName",i.offset+1],["chunkSizeParameterName",i.getOpt("chunkSize")],["currentChunkSizeParameterName",i.endByte-i.startByte],["totalSizeParameterName",i.fileObjSize],["typeParameterName",i.fileObjType],["identifierParameterName",i.fileObj.uniqueIdentifier],["fileNameParameterName",i.fileObj.fileName],["relativePathParameterName",i.fileObj.relativePath],["totalChunksParameterName",i.fileObj.chunks.length]].filter(function(e){return i.getOpt(e[0])}).reduce(function(e,t){return e[i.getOpt(t[0])]=t[1],e},{}),n=i.getOpt("query");"function"==typeof n&&(n=n(i.fileObj,i)),l.each(n,function(e,t){r[e]=t});var a=i.fileObj.file.slice?"slice":i.fileObj.file.mozSlice?"mozSlice":i.fileObj.file.webkitSlice?"webkitSlice":"slice",s=i.fileObj.file[a](i.startByte,i.endByte,i.getOpt("setChunkTypeFromFile")?i.fileObj.file.type:""),o=null,u=[],f=i.getOpt("parameterNamespace");if("octet"===i.getOpt("method"))o=s,l.each(r,function(e,t){u.push([encodeURIComponent(f+e),encodeURIComponent(t)].join("="))});else if(o=new FormData,l.each(r,function(e,t){o.append(f+e,t),u.push([encodeURIComponent(f+e),encodeURIComponent(t)].join("="))}),"blob"==i.getOpt("chunkFormat"))o.append(f+i.getOpt("fileParameterName"),s,i.fileObj.fileName);else if("base64"==i.getOpt("chunkFormat")){var c=new FileReader;c.onload=function(e){o.append(f+i.getOpt("fileParameterName"),c.result),i.xhr.send(o)},c.readAsDataURL(s)}var p=l.getTarget("upload",u),d=i.getOpt("uploadMethod");i.xhr.open(d,p),"octet"===i.getOpt("method")&&i.xhr.setRequestHeader("Content-Type","application/octet-stream"),i.xhr.timeout=i.getOpt("xhrTimeout"),i.xhr.withCredentials=i.getOpt("withCredentials");var h=i.getOpt("headers");"function"==typeof h&&(h=h(i.fileObj,i)),l.each(h,function(e,t){i.xhr.setRequestHeader(e,t)}),"blob"==i.getOpt("chunkFormat")&&i.xhr.send(o)}else i.test()},i.abort=function(){i.xhr&&i.xhr.abort(),i.xhr=null},i.status=function(){return i.pendingRetry?"uploading":i.xhr?i.xhr.readyState<4?"uploading":200==i.xhr.status||201==i.xhr.status?"success":l.contains(i.getOpt("permanentErrors"),i.xhr.status)||i.retries>=i.getOpt("maxChunkRetries")?"error":(i.abort(),"pending"):"pending"},i.message=function(){return i.xhr?i.xhr.responseText:""},i.progress=function(e){void 0===e&&(e=!1);var t=e?(i.endByte-i.startByte)/i.fileObjSize:1;if(i.pendingRetry)return 0;switch(i.xhr&&i.xhr.status||(t*=.95),i.status()){case"success":case"error":return 1*t;case"pending":return 0*t;default:return i.loaded/(i.endByte-i.startByte)*t}},this}if(!(this instanceof e))return new e(t);if(this.version=1,this.support=!("undefined"==typeof File||"undefined"==typeof Blob||"undefined"==typeof FileList||!Blob.prototype.webkitSlice&&!Blob.prototype.mozSlice&&!Blob.prototype.slice),!this.support)return!1;var u=this;u.files=[],u.defaults={chunkSize:1048576,forceChunkSize:!1,simultaneousUploads:3,fileParameterName:"file",chunkNumberParameterName:"resumableChunkNumber",chunkSizeParameterName:"resumableChunkSize",currentChunkSizeParameterName:"resumableCurrentChunkSize",totalSizeParameterName:"resumableTotalSize",typeParameterName:"resumableType",identifierParameterName:"resumableIdentifier",fileNameParameterName:"resumableFilename",relativePathParameterName:"resumableRelativePath",totalChunksParameterName:"resumableTotalChunks",throttleProgressCallbacks:.5,query:{},headers:{},preprocess:null,method:"multipart",uploadMethod:"POST",testMethod:"GET",prioritizeFirstAndLastChunk:!1,target:"/",testTarget:null,parameterNamespace:"",testChunks:!0,generateUniqueIdentifier:null,getTarget:null,maxChunkRetries:100,chunkRetryInterval:void 0,permanentErrors:[400,404,415,500,501],maxFiles:void 0,withCredentials:!1,xhrTimeout:0,clearInput:!0,chunkFormat:"blob",setChunkTypeFromFile:!1,maxFilesErrorCallback:function(e,t){var r=u.getOpt("maxFiles");alert("Please upload no more than "+r+" file"+(1===r?"":"s")+" at a time.")},minFileSize:1,minFileSizeErrorCallback:function(e,t){alert(e.fileName||e.name+" is too small, please upload files larger than "+l.formatSize(u.getOpt("minFileSize"))+".")},maxFileSize:void 0,maxFileSizeErrorCallback:function(e,t){alert(e.fileName||e.name+" is too large, please upload files less than "+l.formatSize(u.getOpt("maxFileSize"))+".")},fileType:[],fileTypeErrorCallback:function(e,t){alert(e.fileName||e.name+" has type not allowed, please upload files of type "+u.getOpt("fileType")+".")}},u.opts=t||{},u.getOpt=function(t){var r=this;if(t instanceof Array){var n={};return l.each(t,function(e){n[e]=r.getOpt(e)}),n}if(r instanceof o){if(void 0!==r.opts[t])return r.opts[t];r=r.fileObj}if(r instanceof s){if(void 0!==r.opts[t])return r.opts[t];r=r.resumableObj}if(r instanceof e)return void 0!==r.opts[t]?r.opts[t]:r.defaults[t]},u.events=[],u.on=function(e,t){u.events.push(e.toLowerCase(),t)},u.fire=function(){for(var e=[],t=0;t<arguments.length;t++)e.push(arguments[t]);for(var r=e[0].toLowerCase(),t=0;t<=u.events.length;t+=2)u.events[t]==r&&u.events[t+1].apply(u,e.slice(1)),"catchall"==u.events[t]&&u.events[t+1].apply(null,e);"fileerror"==r&&u.fire("error",e[2],e[1]),"fileprogress"==r&&u.fire("progress")};var l={stopEvent:function(e){e.stopPropagation(),e.preventDefault()},each:function(e,t){if(void 0!==e.length){for(var r=0;r<e.length;r++)if(!1===t(e[r]))return}else for(r in e)if(!1===t(r,e[r]))return},generateUniqueIdentifier:function(e,t){var r=u.getOpt("generateUniqueIdentifier");if("function"==typeof r)return r(e,t);var n=e.webkitRelativePath||e.fileName||e.name;return e.size+"-"+n.replace(/[^0-9a-zA-Z_-]/gim,"")},contains:function(e,t){var r=!1;return l.each(e,function(e){return e!=t||(r=!0,!1)}),r},formatSize:function(e){return e<1024?e+" bytes":e<1048576?(e/1024).toFixed(0)+" KB":e<1073741824?(e/1024/1024).toFixed(1)+" MB":(e/1024/1024/1024).toFixed(1)+" GB"},getTarget:function(e,t){var r=u.getOpt("target");return"test"===e&&u.getOpt("testTarget")&&(r="/"===u.getOpt("testTarget")?u.getOpt("target"):u.getOpt("testTarget")),"function"==typeof r?r(t):r+(r.indexOf("?")<0?"?":"&")+t.join("&")}},f=function(e){l.stopEvent(e),e.dataTransfer&&e.dataTransfer.items?a(e.dataTransfer.items,e):e.dataTransfer&&e.dataTransfer.files&&a(e.dataTransfer.files,e)},c=function(e){e.preventDefault()},p=function(e,t){var r=0,n=u.getOpt(["maxFiles","minFileSize","maxFileSize","maxFilesErrorCallback","minFileSizeErrorCallback","maxFileSizeErrorCallback","fileType","fileTypeErrorCallback"]);if(void 0!==n.maxFiles&&n.maxFiles<e.length+u.files.length){if(1!==n.maxFiles||1!==u.files.length||1!==e.length)return n.maxFilesErrorCallback(e,r++),!1;u.removeFile(u.files[0])}var i=[],a=[],o=e.length,f=function(){if(!--o){if(!i.length&&!a.length)return;window.setTimeout(function(){u.fire("filesAdded",i,a)},0)}};l.each(e,function(e){function o(r){u.getFromUniqueIdentifier(r)?a.push(e):function(){e.uniqueIdentifier=r;var n=new s(u,e,r);u.files.push(n),i.push(n),n.container=void 0!==t?t.srcElement:null,window.setTimeout(function(){u.fire("fileAdded",n,t)},0)}(),f()}var c=e.name,p=e.type;if(n.fileType.length>0){var d=!1;for(var h in n.fileType){n.fileType[h]=n.fileType[h].replace(/\s/g,"").toLowerCase();var m=(n.fileType[h].match(/^[^.][^/]+$/)?".":"")+n.fileType[h];if(c.substr(-1*m.length)===m||-1!==m.indexOf("/")&&(-1!==m.indexOf("*")&&p.substr(0,m.indexOf("*"))===m.substr(0,m.indexOf("*"))||p===m)){d=!0;break}}if(!d)return n.fileTypeErrorCallback(e,r++),!1}if(void 0!==n.minFileSize&&e.size<n.minFileSize)return n.minFileSizeErrorCallback(e,r++),!1;if(void 0!==n.maxFileSize&&e.size>n.maxFileSize)return n.maxFileSizeErrorCallback(e,r++),!1;var g=l.generateUniqueIdentifier(e,t);g&&"function"==typeof g.then?g.then(function(e){o(e)},function(){f()}):o(g)})};return u.uploadNextChunk=function(){var e=!1;if(u.getOpt("prioritizeFirstAndLastChunk")&&(l.each(u.files,function(t){return t.chunks.length&&"pending"==t.chunks[0].status()&&0===t.chunks[0].preprocessState?(t.chunks[0].send(),e=!0,!1):t.chunks.length>1&&"pending"==t.chunks[t.chunks.length-1].status()&&0===t.chunks[t.chunks.length-1].preprocessState?(t.chunks[t.chunks.length-1].send(),e=!0,!1):void 0}),e))return!0;if(l.each(u.files,function(t){if(!1===t.isPaused()&&l.each(t.chunks,function(t){if("pending"==t.status()&&0===t.preprocessState)return t.send(),e=!0,!1}),e)return!1}),e)return!0;var t=!1;return l.each(u.files,function(e){if(!e.isComplete())return t=!0,!1}),t||u.fire("complete"),!1},u.assignBrowse=function(e,t){void 0===e.length&&(e=[e]),l.each(e,function(e){var r;"INPUT"===e.tagName&&"file"===e.type?r=e:((r=document.createElement("input")).setAttribute("type","file"),r.style.display="none",e.addEventListener("click",function(){r.style.opacity=0,r.style.display="block",r.focus(),r.click(),r.style.display="none"},!1),e.appendChild(r));var n=u.getOpt("maxFiles");void 0===n||1!=n?r.setAttribute("multiple","multiple"):r.removeAttribute("multiple"),t?r.setAttribute("webkitdirectory","webkitdirectory"):r.removeAttribute("webkitdirectory");var i=u.getOpt("fileType");void 0!==i&&i.length>=1?r.setAttribute("accept",i.map(function(e){return(e=e.replace(/\s/g,"").toLowerCase()).match(/^[^.][^/]+$/)&&(e="."+e),e}).join(",")):r.removeAttribute("accept"),r.addEventListener("change",function(e){p(e.target.files,e),u.getOpt("clearInput")&&(e.target.value="")},!1)})},u.assignDrop=function(e){void 0===e.length&&(e=[e]),l.each(e,function(e){e.addEventListener("dragover",c,!1),e.addEventListener("dragenter",c,!1),e.addEventListener("drop",f,!1)})},u.unAssignDrop=function(e){void 0===e.length&&(e=[e]),l.each(e,function(e){e.removeEventListener("dragover",c),e.removeEventListener("dragenter",c),e.removeEventListener("drop",f)})},u.isUploading=function(){var e=!1;return l.each(u.files,function(t){if(t.isUploading())return e=!0,!1}),e},u.upload=function(){if(!u.isUploading()){u.fire("uploadStart");for(var e=1;e<=u.getOpt("simultaneousUploads");e++)u.uploadNextChunk()}},u.pause=function(){l.each(u.files,function(e){e.abort()}),u.fire("pause")},u.cancel=function(){u.fire("beforeCancel");for(var e=u.files.length-1;e>=0;e--)u.files[e].cancel();u.fire("cancel")},u.progress=function(){var e=0,t=0;return l.each(u.files,function(r){e+=r.progress()*r.size,t+=r.size}),t>0?e/t:0},u.addFile=function(e,t){p([e],t)},u.addFiles=function(e,t){p(e,t)},u.removeFile=function(e){for(var t=u.files.length-1;t>=0;t--)u.files[t]===e&&u.files.splice(t,1)},u.getFromUniqueIdentifier=function(e){var t=!1;return l.each(u.files,function(r){r.uniqueIdentifier==e&&(t=r)}),t},u.getSize=function(){var e=0;return l.each(u.files,function(t){e+=t.size}),e},u.handleDropEvent=function(e){f(e)},u.handleChangeEvent=function(e){p(e.target.files,e),e.target.value=""},u.updateQuery=function(e){u.opts.query=e},this};"undefined"!=typeof module?module.exports=e:"function"==typeof define&&define.amd?define(function(){return e}):window.Resumable=e}();
+</script>
+<script>
+  uploader = (function($, Resumable){
+    $("div.progess").hide();
+    var r = new Resumable({
+      target: '<?php echo FM_SELF_URL; ?>',
+      chunkSize:3*1024*1024,
+      simultaneousUploads:4,
+      query: {rupl: 1, p: '<?php echo FM_PATH; ?>'}
+    });
+    r.assignBrowse($('a.resumable-browse'));
+    r.assignDrop($('div.resumable-drop'));
+    r.on('fileAdded', function(file){
+      $('#uploader-list-table > tbody:last-child').append('<tr><td>' + file.fileName + '</td></tr>');
+      $('div.progress').show();
+      r.upload();
+    });
+    r.on('fileProgress', function(file){
+      var progressPercent = Math.floor(Math.floor(r.progress()*100.0));
+      $('.progress-text').html(progressPercent + ' %');
+      $('.progress-bar').css({width:progressPercent + '%', 'background-color': 'gray', display: 'inline-block', height: '16px'});
+    });
+    if(!r.support) location.href = "<?php echo FM_SELF_URL; ?>?p=&upload";
+    return r;
+  })(jQuery, Resumable);
+</script>
     <?php
     fm_show_footer();
     exit;
@@ -1246,6 +1371,70 @@ fm_show_footer();
 //--- END
 
 // Functions
+
+/**
+ * From https://github.com/23/resumable.js/blob/master/samples/Backend%20on%20PHP.md
+ * Logging operation - to a file (upload_log.txt) and to the stdout
+ * @param string $str - the logging string
+ */
+function _log($str) {
+
+    // log to the output
+    $log_str = date('d.m.Y').": {$str}\r\n";
+    echo $log_str;
+
+    // log to file
+    if (($fp = fopen(FM_ROOT_PATH . '/upload_log.txt', 'a+')) !== false) {
+        fputs($fp, $log_str);
+        fclose($fp);
+    }
+}
+
+/**
+ * From https://github.com/23/resumable.js/blob/master/samples/Backend%20on%20PHP.md
+ * Check if all the parts exist, and
+ * gather all the parts of the file together
+ * @param string $temp_dir - the temporary directory holding all the parts of the file
+ * @param string $fileName - the original file name
+ * @param string $chunkSize - each chunk size (in bytes)
+ * @param string $totalSize - original file size (in bytes)
+ */
+function createFileFromChunks($temp_dir, $dest_dir, $fileName, $chunkSize, $totalSize, $total_files) {
+
+    // count all the parts of this file
+    $total_files_on_server_size = 0;
+    $temp_total = 0;
+    foreach(scandir($temp_dir) as $file) {
+        $temp_total = $total_files_on_server_size;
+        $tempfilesize = filesize($temp_dir.'/'.$file);
+        $total_files_on_server_size = $temp_total + $tempfilesize;
+    }
+    // check that all the parts are present
+    // If the Size of all the chunks on the server is equal to the size of the file uploaded.
+    if ($total_files_on_server_size >= $totalSize) {
+    // create the final destination file
+        if (($fp = fopen($dest_dir . '/' . $fileName, 'w')) !== false) {
+            for ($i=1; $i<=$total_files; $i++) {
+                fwrite($fp, file_get_contents($temp_dir . '/' . $fileName.'.part'.$i));
+                _log('writing chunk '.$i);
+            }
+            fclose($fp);
+        } else {
+            _log('cannot create the destination file');
+            return false;
+        }
+
+        // rename the temporary directory (to avoid access from other
+        // concurrent chunks uploads) and than delete it
+        if (rename($temp_dir, $temp_dir.'_UNUSED')) {
+            fm_rdelete($temp_dir.'_UNUSED');
+        } else {
+            fm_rdelete($temp_dir);
+        }
+    }
+
+}
+
 
 /**
  * Delete  file or folder (recursively)
@@ -1953,7 +2142,7 @@ function fm_show_nav_path($path)
         <div class="float-right">
         <?php if (!FM_READONLY): ?>
         <a title="Search" href="javascript:showSearch('<?php echo urlencode(FM_PATH) ?>')"><i class="fa fa-search"></i></a>
-        <a title="Upload files" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
+        <a title="Upload files" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;rupload"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
         <a title="New folder" href="#createNewItem" ><i class="fa fa-plus-square"></i></a>
         <?php endif; ?>
         <?php if (FM_USE_AUTH): ?><a title="Logout" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i></a><?php endif; ?>
