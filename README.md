@@ -21,6 +21,18 @@ Warning: Please set your own username and password in $auth_users before use.
 
 To enable/disable authentication set $use_auth to true or false.
 
+### Supported constants:
+
+- `FM_ROOT_PATH` - default is `$_SERVER['DOCUMENT_ROOT']`
+- `FM_ROOT_URL` - default is `'http(s)://site.domain/'`
+- `FM_SELF_URL` - default is `'http(s)://site.domain/' . $_SERVER['PHP_SELF']`
+- `FM_ICONV_INPUT_ENC` - default is `'CP1251'`
+- `FM_USE_HIGHLIGHTJS` - default is `true`
+- `FM_HIGHLIGHTJS_STYLE` - default is `'vs'`
+- `FM_DATETIME_FORMAT` - default is `'d.m.y H:i'`
+- `FM_EXTENSION` - default is `""` //upload files extensions
+- `FM_TREEVIEW` - default is `true`
+
 
 ### :loudspeaker: Features 
 <ul>
@@ -39,4 +51,4 @@ To enable/disable authentication set $use_auth to true or false.
 </ul>
 
 
-This is an excellent and improved version of the original <a target="_balnk" href="https://github.com/alexantr/filemanager">filemanager</a>(original version).
+This is an excellent and improved version of the original <a target="_balnk" href="https://github.com/alexantr/filemanager">filemanager</a>.
