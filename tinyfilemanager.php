@@ -249,7 +249,7 @@ if (isset($_GET['del']) && !FM_READONLY) {
 
 // Create folder
 if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
-    $new = $_GET['new'];
+    $new = strip_tags($_GET['new']);
     $type = $_GET['type'];
     $new = fm_clean_path($new);
     $new = str_replace('/', '', $new);
