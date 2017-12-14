@@ -47,6 +47,7 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:zap: Backup files</li>
 <li>:mag_right: Search - Advanced Ajax based seach</li>
 <li>:palm_tree: Tree file view</li>
+<li>:file_folder: Exclude folders from listing</li>
 <li>:bangbang: lots more...</li>
 </ul>
 
