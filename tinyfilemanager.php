@@ -66,6 +66,10 @@ $upload_extensions = ''; // 'gif,png,jpg'
 // show or hide the left side tree view
 $show_tree_view = true;
 
+//Array of folders excluded from listing
+$GLOBALS['exclude_folders'] = array(
+);
+
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG) ) {
 	include(FM_CONFIG);
@@ -451,7 +455,7 @@ if (isset($_POST['upl']) && !FM_READONLY) {
     $errors = 0;
     $uploads = 0;
     $total = count($_FILES['upload']['name']);
-	$allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+	  $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
 
     for ($i = 0; $i < $total; $i++) {
 		$filename = $_FILES['upload']['name'][$i];
@@ -663,7 +667,7 @@ $folders = array();
 $files = array();
 if (is_array($objects)) {
     foreach ($objects as $file) {
-        if ($file == '.' || $file == '..') {
+        if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_folders'])) {
             continue;
         }
         if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
@@ -672,7 +676,7 @@ if (is_array($objects)) {
         $new_path = $path . '/' . $file;
         if (is_file($new_path)) {
             $files[] = $file;
-        } elseif (is_dir($new_path) && $file != '.' && $file != '..') {
+        } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_folders'])) {
             $folders[] = $file;
         }
     }
@@ -1572,6 +1576,7 @@ function scan($dir){
 */
 function php_file_tree_dir($directory, $first_call = true) {
 	// Recursive function called by php_file_tree() to list directories/files
+
 	$php_file_tree = "";
 	// Get and sort directories/files
 	if( function_exists("scandir") ) $file = scandir($directory);
@@ -1579,7 +1584,13 @@ function php_file_tree_dir($directory, $first_call = true) {
 	// Make directories first
 	$files = $dirs = array();
 	foreach($file as $this_file) {
-		if( is_dir("$directory/$this_file" ) ) $dirs[] = $this_file; else $files[] = $this_file;
+		if( is_dir("$directory/$this_file" ) ) {
+      if(!in_array($this_file, $GLOBALS['exclude_folders'])){
+          $dirs[] = $this_file;
+      }
+    } else {
+      $files[] = $this_file;
+    }
 	}
 	$file = array_merge($dirs, $files);
 
