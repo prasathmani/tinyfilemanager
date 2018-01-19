@@ -31,7 +31,7 @@ To enable/disable authentication set $use_auth to true or false.
 - `FM_HIGHLIGHTJS_STYLE` - default is `'vs'`
 - `FM_DATETIME_FORMAT` - default is `'d.m.y H:i'`
 - `FM_EXTENSION` - default is `""` //upload files extensions
-- `FM_TREEVIEW` - default is `true`
+- `FM_TREEVIEW` - default is `false`
 
 
 ### :loudspeaker: Features 

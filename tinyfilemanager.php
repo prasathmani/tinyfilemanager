@@ -64,7 +64,7 @@ $datetime_format = 'd.m.y H:i';
 $upload_extensions = ''; // 'gif,png,jpg'
 
 // show or hide the left side tree view
-$show_tree_view = true;
+$show_tree_view = false;
 
 //Array of folders excluded from listing
 $GLOBALS['exclude_folders'] = array(
@@ -1185,7 +1185,7 @@ foreach ($folders as $f) {
 foreach ($files as $f) {
     $is_link = is_link($path . '/' . $f);
     $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . '/' . $f);
-    $modif = date("d.m.y H:i", filemtime($path . '/' . $f));
+    $modif = date(FM_DATETIME_FORMAT, filemtime($path . '/' . $f));
     $filesize_raw = filesize($path . '/' . $f);
     $filesize = fm_get_filesize($filesize_raw);
     $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
