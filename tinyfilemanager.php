@@ -72,7 +72,7 @@ $GLOBALS['exclude_folders'] = array(
 
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG) ) {
-	include(FM_CONFIG);
+    include(FM_CONFIG);
 }
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
@@ -455,13 +455,13 @@ if (isset($_POST['upl']) && !FM_READONLY) {
     $errors = 0;
     $uploads = 0;
     $total = count($_FILES['upload']['name']);
-	  $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+      $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
 
     for ($i = 0; $i < $total; $i++) {
-		$filename = $_FILES['upload']['name'][$i];
+        $filename = $_FILES['upload']['name'][$i];
         $tmp_name = $_FILES['upload']['tmp_name'][$i];
-		$ext = pathinfo($filename, PATHINFO_EXTENSION);
-		$isFileAllowed = ($allowed) ? in_array($ext,$allowed) : true;
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $isFileAllowed = ($allowed) ? in_array($ext,$allowed) : true;
         if (empty($_FILES['upload']['error'][$i]) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if (move_uploaded_file($tmp_name, $path . '/' . $_FILES['upload']['name'][$i])) {
                 $uploads++;
@@ -550,7 +550,50 @@ if (isset($_POST['group'], $_POST['zip']) && !FM_READONLY) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Unpack
+// Unpack gz
+if (isset($_GET['ungzip']) && !FM_READONLY) {
+    $ungzip = $_GET['ungzip'];
+    $ungzip = fm_clean_path($ungzip);
+    $ungzip = str_replace('/', '', $ungzip);
+
+    $path = FM_ROOT_PATH;
+    if (FM_PATH != '') {
+        $path .= '/' . FM_PATH;
+    }
+
+    if (!class_exists('PharData')) {
+        fm_set_msg('Operations with archives are not available', 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    if ($ungzip != '' && is_file($path . '/' . $ungzip)) {
+        $gzip_path = $path . '/' . $ungzip;
+
+        //to folder
+        $tofolder = '';
+        if (isset($_GET['tofolder'])) {
+            $tofolder = pathinfo($gzip_path, PATHINFO_FILENAME);
+            if (fm_mkdir($path . '/' . $tofolder, true)) {
+                $path .= '/' . $tofolder;
+            }
+        }
+
+        $gzipper = new PharData($gzip_path);
+        $res = $gzipper->extractTo($path);
+
+        if ($res) {
+            fm_set_msg('Archive unpacked');
+        } else {
+            fm_set_msg('Archive not unpacked', 'error');
+        }
+
+    } else {
+        fm_set_msg('File not found', 'error');
+    }
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+}
+
+// Unpack zip
 if (isset($_GET['unzip']) && !FM_READONLY) {
     $unzip = $_GET['unzip'];
     $unzip = fm_clean_path($unzip);
@@ -820,6 +863,7 @@ if (isset($_GET['view'])) {
     $filesize = filesize($file_path);
 
     $is_zip = false;
+    $is_gzip = false;
     $is_image = false;
     $is_audio = false;
     $is_video = false;
@@ -833,6 +877,9 @@ if (isset($_GET['view'])) {
         $is_zip = true;
         $view_title = 'Archive';
         $filenames = fm_get_zif_info($file_path);
+    } elseif ($ext == 'gz') {
+        $is_gzip = true;
+        $view_title = 'Archive';
     } elseif (in_array($ext, fm_get_image_exts())) {
         $is_image = true;
         $view_title = 'Image';
@@ -902,6 +949,14 @@ if (isset($_GET['view'])) {
                 <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> UnZip</a></b> &nbsp;
                 <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
                     UnZip to folder</a></b> &nbsp;
+                <?php
+            }
+            if (!FM_READONLY && $is_gzip) {
+                $gzip_name = pathinfo($file_path, PATHINFO_FILENAME);
+                ?>
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;ungzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> UnZip(.gz)</a></b> &nbsp;
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;ungzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="UnZip(.gz) to <?php echo fm_enc($gzip_name) ?>"><i class="fa fa-check-circle"></i>
+                    UnZip(.gz) to folder</a></b> &nbsp;
                 <?php
             }
             if($is_text && !FM_READONLY) {
@@ -1575,48 +1630,48 @@ function scan($dir){
 * @param boolean $first_call
 */
 function php_file_tree_dir($directory, $first_call = true) {
-	// Recursive function called by php_file_tree() to list directories/files
+    // Recursive function called by php_file_tree() to list directories/files
 
-	$php_file_tree = "";
-	// Get and sort directories/files
-	if( function_exists("scandir") ) $file = scandir($directory);
-	natcasesort($file);
-	// Make directories first
-	$files = $dirs = array();
-	foreach($file as $this_file) {
-		if( is_dir("$directory/$this_file" ) ) {
+    $php_file_tree = "";
+    // Get and sort directories/files
+    if( function_exists("scandir") ) $file = scandir($directory);
+    natcasesort($file);
+    // Make directories first
+    $files = $dirs = array();
+    foreach($file as $this_file) {
+        if( is_dir("$directory/$this_file" ) ) {
       if(!in_array($this_file, $GLOBALS['exclude_folders'])){
           $dirs[] = $this_file;
       }
     } else {
       $files[] = $this_file;
     }
-	}
-	$file = array_merge($dirs, $files);
+    }
+    $file = array_merge($dirs, $files);
 
-	if( count($file) > 2 ) { // Use 2 instead of 0 to account for . and .. "directories"
-		$php_file_tree = "<ul";
-		if( $first_call ) { $php_file_tree .= " class=\"php-file-tree\""; $first_call = false; }
-		$php_file_tree .= ">";
-		foreach( $file as $this_file ) {
-			if( $this_file != "." && $this_file != ".." ) {
-				if( is_dir("$directory/$this_file") ) {
-					// Directory
-					$php_file_tree .= "<li class=\"pft-directory\"><i class=\"fa fa-folder-o\"></i><a href=\"#\">" . htmlspecialchars($this_file) . "</a>";
-					$php_file_tree .= php_file_tree_dir("$directory/$this_file", false);
-					$php_file_tree .= "</li>";
-				} else {
-					// File
+    if( count($file) > 2 ) { // Use 2 instead of 0 to account for . and .. "directories"
+        $php_file_tree = "<ul";
+        if( $first_call ) { $php_file_tree .= " class=\"php-file-tree\""; $first_call = false; }
+        $php_file_tree .= ">";
+        foreach( $file as $this_file ) {
+            if( $this_file != "." && $this_file != ".." ) {
+                if( is_dir("$directory/$this_file") ) {
+                    // Directory
+                    $php_file_tree .= "<li class=\"pft-directory\"><i class=\"fa fa-folder-o\"></i><a href=\"#\">" . htmlspecialchars($this_file) . "</a>";
+                    $php_file_tree .= php_file_tree_dir("$directory/$this_file", false);
+                    $php_file_tree .= "</li>";
+                } else {
+                    // File
                     $ext = fm_get_file_icon_class($this_file);
                     $path = str_replace($_SERVER['DOCUMENT_ROOT'],"",$directory);
-					$link = "?p="."$path" ."&view=".urlencode($this_file);
-					$php_file_tree .= "<li class=\"pft-file\"><a href=\"$link\"> <i class=\"$ext\"></i>" . htmlspecialchars($this_file) . "</a></li>";
-				}
-			}
-		}
-		$php_file_tree .= "</ul>";
-	}
-	return $php_file_tree;
+                    $link = "?p="."$path" ."&view=".urlencode($this_file);
+                    $php_file_tree .= "<li class=\"pft-file\"><a href=\"$link\"> <i class=\"$ext\"></i>" . htmlspecialchars($this_file) . "</a></li>";
+                }
+            }
+        }
+        $php_file_tree .= "</ul>";
+    }
+    return $php_file_tree;
 }
 
 /**
