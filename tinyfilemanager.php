@@ -176,7 +176,7 @@ define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION['l
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 // always use ?p=
-if (!isset($_GET['p'])) {
+if (!isset($_GET['p']) && empty($_FILES)) {
     fm_redirect(FM_SELF_URL . '?p=');
 }
 
@@ -446,7 +446,8 @@ if (isset($_GET['dl'])) {
 }
 
 // Upload
-if (isset($_POST['upl']) && !FM_READONLY) {
+if (!empty($_FILES) && !FM_READONLY) {
+    $f = $_FILES;
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
@@ -454,31 +455,22 @@ if (isset($_POST['upl']) && !FM_READONLY) {
 
     $errors = 0;
     $uploads = 0;
-    $total = count($_FILES['upload']['name']);
-	  $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+    $total = count($f['file']['name']);
+    $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
 
-    for ($i = 0; $i < $total; $i++) {
-		$filename = $_FILES['upload']['name'][$i];
-        $tmp_name = $_FILES['upload']['tmp_name'][$i];
-		$ext = pathinfo($filename, PATHINFO_EXTENSION);
-		$isFileAllowed = ($allowed) ? in_array($ext,$allowed) : true;
-        if (empty($_FILES['upload']['error'][$i]) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
-            if (move_uploaded_file($tmp_name, $path . '/' . $_FILES['upload']['name'][$i])) {
-                $uploads++;
-            } else {
-                $errors++;
-            }
+    $filename = $f['file']['name'];
+    $tmp_name = $f['file']['tmp_name'];
+    $ext = pathinfo($filename, PATHINFO_EXTENSION);
+    $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+
+    if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
+        if (move_uploaded_file($tmp_name, $path . '/' . $f['file']['name'])) {
+            die('Successfully uploaded');
+        } else {
+            die(sprintf('Error while uploading files. Uploaded files: %s', $uploads));
         }
     }
-
-    if ($errors == 0 && $uploads > 0) {
-        fm_set_msg(sprintf('All files uploaded to <b>%s</b>', fm_enc($path)));
-    } elseif ($errors == 0 && $uploads == 0) {
-        fm_set_msg('Nothing uploaded', 'alert');
-    } else {
-        fm_set_msg(sprintf('Error while uploading files. Uploaded files: %s', $uploads), 'error');
-    }
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    exit();
 }
 
 // Mass deleting
@@ -694,23 +686,20 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     ?>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.js"></script>
+
     <div class="path">
         <p><b>Uploading files</b></p>
         <p class="break-word">Destination folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?></p>
-        <form action="" method="post" enctype="multipart/form-data">
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]).'?p='.fm_enc(FM_PATH) ?>" class="dropzone" id="fileuploader" enctype="multipart/form-data">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-            <input type="hidden" name="upl" value="1">
-            <input type="file" name="upload[]"><br>
-            <input type="file" name="upload[]"><br>
-            <input type="file" name="upload[]"><br>
-            <input type="file" name="upload[]"><br>
-            <input type="file" name="upload[]"><br>
-            <br>
-            <p>
-                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> Upload</button> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> Cancel</a></b>
-            </p>
+            <div class="fallback">
+                <input name="file" type="file" multiple />
+            </div>
         </form>
+
     </div>
     <?php
     fm_show_footer();
