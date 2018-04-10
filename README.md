@@ -1,5 +1,5 @@
 # Tiny PHP File Manager
-Tiny file manager in single php file
+It is a simple, fast and small file manager with single php file.
 <hr>
 <img src="screenshot.gif" alt="H3K | Tiny File Manager">
 
@@ -15,7 +15,7 @@ Download ZIP with latest version from master branch.
 
 Copy tinyfilemanager.php to your website folder and open it with web browser (e.g. http://yoursite/any_path/tinyfilemanager.php).
 
-Default username/password: admin/admin. password has encripted with MD5.
+Default username/password: admin/admin and user/12345. password has encripted with MD5.
 
 Warning: Please set your own username and password in $auth_users before use.
 
@@ -38,7 +38,7 @@ To enable/disable authentication set $use_auth to true or false.
 <ul>
 <li>:cd: Open Source, light and extremely simple</li>
 <li>:information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
-<li>:arrow_double_up: Ability to drag & drop, multiple files upload and file extensions filter </li>
+<li>:arrow_double_up: Ajax Upload, Ability to drag & drop, multiple files upload and file extensions filter </li>
 <li>:file_folder: Ability to create folders and files</li>
 <li>:gift: Ability to compress, extract files</li>
 <li>:sunglasses: Support user permissions - based on session</li>
