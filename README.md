@@ -1,5 +1,5 @@
 # Tiny PHP File Manager
-It is a simple, fast and small file manager with single php file.
+It is a simple, fast and small file manager with single php file. It is also a web code editor. It'll run either online or locally, on Linux, Windows or Mac based platforms. The only requirement is to have PHP 5+ available.
 <hr>
 <img src="screenshot.gif" alt="H3K | Tiny File Manager">
 
