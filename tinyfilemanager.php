@@ -60,7 +60,7 @@ $iconv_input_encoding = 'UTF-8';
 // date() format for file modification date
 $datetime_format = 'd.m.y H:i';
 
-// allowed upload file extensions
+// allowed upload/creation/rename file extensions
 $upload_extensions = ''; // 'gif,png,jpg'
 
 // show or hide the left side tree view
@@ -257,13 +257,20 @@ if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
     $type = $_GET['type'];
     $new = fm_clean_path($new);
     $new = str_replace('/', '', $new);
+
     if ($new != '' && $new != '..' && $new != '.') {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
             $path .= '/' . FM_PATH;
         }
         if($_GET['type']=="file") {
-            if(!file_exists($path . '/' . $new)) {
+            $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+            $ext = pathinfo($new, PATHINFO_EXTENSION);
+            $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+
+            if(!$isFileAllowed) {
+	        fm_set_msg(sprintf('No permission to use file extension .'.$ext, fm_enc($new)), 'alert');
+	    } elseif(!file_exists($path . '/' . $new)) {
                 @fopen($path . '/' . $new, 'w') or die('Cannot open file:  '.$new);
                 fm_set_msg(sprintf('File <b>%s</b> created', fm_enc($new)));
             } else {
@@ -400,13 +407,20 @@ if (isset($_GET['ren'], $_GET['to']) && !FM_READONLY) {
     $new = $_GET['to'];
     $new = fm_clean_path($new);
     $new = str_replace('/', '', $new);
+
+    $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+    $ext = pathinfo($new, PATHINFO_EXTENSION);
+    $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+
     // path
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
     // rename
-    if ($old != '' && $new != '') {
+    if (!$isFileAllowed) {
+	fm_set_msg('No permission to use file extension .'.$ext, 'error');
+    } elseif ($old != '' && $new != '') {
         if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
             fm_set_msg(sprintf('Renamed from <b>%s</b> to <b>%s</b>', fm_enc($old), fm_enc($new)));
         } else {
