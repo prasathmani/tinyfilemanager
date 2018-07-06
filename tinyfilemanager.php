@@ -428,17 +428,48 @@ if (isset($_GET['dl'])) {
         $path .= '/' . FM_PATH;
     }
     if ($dl != '' && is_file($path . '/' . $dl)) {
+        $bufferSize = 2097152;
+        $filesize = filesize($path . '/' . $dl);
+        $offset = 0;
+        $length = $filesize;
+        if (isset($_SERVER['HTTP_RANGE'])) {
+            // if the HTTP_RANGE header is set we're dealing with partial content
+            // find the requested range
+            // this might be too simplistic, apparently the client can request
+            // multiple ranges, which can become pretty complex, so ignore it for now
+            preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches);
+            $offset = intval($matches[1]);    
+            if(!isset($matches[2])) { $end=$filesize-1; } else { $end = intval($matches[2]); }
+            $length = $end + 1 - $offset;
+            // output the right headers for partial content
+            header('HTTP/1.1 206 Partial Content');
+            header("Content-Range: bytes $offset-$end/$filesize");
+        }
+        // output the regular HTTP headers
         header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
+        header('Content-Type: ' . mime_content_type($path . '/' . $dl));
         header('Content-Disposition: attachment; filename="' . basename($path . '/' . $dl) . '"');
         header('Content-Transfer-Encoding: binary');
         header('Connection: Keep-Alive');
         header('Expires: 0');
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Pragma: public');
-        header('Content-Length: ' . filesize($path . '/' . $dl));
-        readfile($path . '/' . $dl);
+        header("Content-Length: $filesize");
+        header('Accept-Ranges: bytes');
+
+        $file = fopen($path . '/' . $dl, 'r');
+        // seek to the requested offset, this is 0 if it's not a partial content request
+        fseek($file, $offset);
+        // don't forget to send the data too
+        while ($length >= $bufferSize)
+        {
+            print(fread($file, $bufferSize));
+            $length -= $bufferSize;
+        }
+        if ($length) print(fread($file, $length));
+        fclose($file);
         exit;
+
     } else {
         fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
