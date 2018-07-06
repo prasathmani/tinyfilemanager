@@ -47,6 +47,10 @@ $default_timezone = 'Etc/UTC'; // UTC
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
 
+// use filemanager script to view files or use direct link? If $root_path is not is to the server
+// document root, this must be set to true - otherwise viewing files does not work.
+$use_fm_to_view = true;
+
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
 // Will not working if $root_path will be outside of server document root
 $root_url = '';
@@ -801,7 +805,10 @@ if (isset($_GET['view'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
-    $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
+    if ($use_fm_to_view)
+        $file_url = "?p=".urlencode(FM_PATH)."&dl=".urlencode($file);
+    else
+        $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
     $file_path = $path . '/' . $file;
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
