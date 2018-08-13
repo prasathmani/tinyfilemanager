@@ -62,6 +62,7 @@ $datetime_format = 'd.m.y H:i';
 
 // allowed upload file extensions
 $upload_extensions = ''; // 'gif,png,jpg'
+$upload_mime_types = ''; // MIME types : 'image/gif,image/jpeg,image/jpg,image/png,image/gif,text/html,application/xml,application/pdf'
 
 // show or hide the left side tree view
 $show_tree_view = false;
@@ -171,6 +172,7 @@ if ($use_auth) {
 
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_EXTENSION') || define('FM_EXTENSION', $upload_extensions);
+defined('FM_MIME_TYPE') || define('FM_MIME_TYPE', $upload_mime_types);
 defined('FM_TREEVIEW') || define('FM_TREEVIEW', $show_tree_view);
 define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION['logged']) && in_array($_SESSION['logged'], $readonly_users));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
@@ -457,11 +459,19 @@ if (!empty($_FILES) && !FM_READONLY) {
     $uploads = 0;
     $total = count($f['file']['name']);
     $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+    $allowedMimeTypes = (FM_MIME_TYPE) ? explode(',', FM_MIME_TYPE) : false;
 
     $filename = $f['file']['name'];
     $tmp_name = $f['file']['tmp_name'];
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+
+    // get file mime type and check if mime type is allowed to avoid fake file extension uploads
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $fileMimeType = $finfo->file($tmp_name);
+    if($isFileAllowed && $allowedMimeTypes && !in_array($fileMimeType, $allowedMimeTypes)) {
+        $isFileAllowed = false;
+    }
 
     if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
         if (move_uploaded_file($tmp_name, $path . '/' . $f['file']['name'])) {
