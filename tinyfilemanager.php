@@ -1136,7 +1136,7 @@ $all_files_size = 0;
     <div class="tree-title">Browse</div>
 <?php
 //file tre view
-    echo php_file_tree($_SERVER['DOCUMENT_ROOT'], "javascript:alert('You clicked on [link]');");
+    echo php_file_tree(FM_ROOT_PATH, "javascript:alert('You clicked on [link]');");
 ?>
 </div>
 <?php } ?>
