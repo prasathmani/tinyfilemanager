@@ -50,6 +50,3 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:file_folder: Exclude folders from listing</li>
 <li>:bangbang: lots more...</li>
 </ul>
-
-
-This is an excellent and improved version of the original <a target="_balnk" href="https://github.com/alexantr/filemanager">filemanager</a>.
