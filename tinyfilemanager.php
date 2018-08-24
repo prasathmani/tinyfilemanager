@@ -449,6 +449,7 @@ if (isset($_GET['dl'])) {
 if (!empty($_FILES) && !FM_READONLY) {
     $f = $_FILES;
     $path = FM_ROOT_PATH;
+    $ds = DIRECTORY_SEPARATOR;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
@@ -463,8 +464,18 @@ if (!empty($_FILES) && !FM_READONLY) {
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
+    $targetPath = $path . $ds;
+    $fullPath = $path.'/'.$_REQUEST['fullpath'];
+    $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
+
+    if (!is_dir($folder)) {
+        $old = umask(0);
+        mkdir($folder, 0777, true);
+        umask($old);
+    }
+
     if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
-        if (move_uploaded_file($tmp_name, $path . '/' . $f['file']['name'])) {
+        if (move_uploaded_file($tmp_name, $fullPath)) {
             die('Successfully uploaded');
         } else {
             die(sprintf('Error while uploading files. Uploaded files: %s', $uploads));
@@ -689,12 +700,15 @@ if (isset($_GET['upload']) && !FM_READONLY) {
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.js"></script>
-
+    <script>
+        Dropzone.options.fileUploader={init:function(){this.on("sending",function(file){let _path=(file.fullPath)?file.fullPath:file.name;document.getElementById("fullpath").value=_path})}}
+    </script>
     <div class="path">
         <p><b>Uploading files</b></p>
         <p class="break-word">Destination folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?></p>
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]).'?p='.fm_enc(FM_PATH) ?>" class="dropzone" id="fileuploader" enctype="multipart/form-data">
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]).'?p='.fm_enc(FM_PATH) ?>" class="dropzone" id="fileUploader" enctype="multipart/form-data">
             <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+            <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
             <div class="fallback">
                 <input name="file" type="file" multiple />
             </div>
