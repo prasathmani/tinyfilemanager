@@ -41,7 +41,7 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:arrow_double_up: Ajax Upload, Ability to drag & drop, multiple files upload and file extensions filter </li>
 <li>:file_folder: Ability to create folders and files</li>
 <li>:gift: Ability to compress, extract files</li>
-<li>:sunglasses: Support user permissions - based on session</li>
+<li>:sunglasses: Support user permissions - based on session and each user root folder mapping</li>
 <li>:floppy_disk: Copy direct file URL</li>
 <li>:pencil2: Edit text formats file using advanced editor</li>
 <li>:zap: Backup files</li>
