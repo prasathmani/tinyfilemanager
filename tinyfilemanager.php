@@ -12,7 +12,7 @@ $lang = 'en';
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
 
-// Users: array('Username' => 'Password', 'Username2' => 'Password2', ...), Password has to encripted into MD5
+// Users: array('Username' => 'Password', 'Username2' => 'Password2', ...), Password has to be encrypted into MD5
 $auth_users = array(
     'admin' => '21232f297a57a5a743894a0e4a801fc3', //admin
     'user' => '827ccb0eea8a706c4c34a16891f84e7b', //12345
@@ -22,6 +22,10 @@ $auth_users = array(
 $readonly_users = array(
     'user'
 );
+
+//user specific directories
+//array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
+$directories_users = array();
 
 // Show or hide files and folders that starts with a dot
 $show_hidden_files = true;
@@ -105,20 +109,10 @@ if (empty($auth_users)) {
 $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
     || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
 
-// clean and check $root_path
-$root_path = rtrim($root_path, '\\/');
-$root_path = str_replace('\\', '/', $root_path);
-if (!@is_dir($root_path)) {
-    echo "<h1>Root path \"{$root_path}\" not found!</h1>";
-    exit;
-}
-
 // clean $root_url
 $root_url = fm_clean_path($root_url);
 
 // abs path for site
-defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
-defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
 defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
 
@@ -156,7 +150,7 @@ if ($use_auth) {
         fm_show_message();
         ?>
         <div class="path login-form">
-                <img src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File manager" style="margin:20px;">
+                <img src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File Manager" style="margin:20px;">
             <form action="" method="post">
                 <label for="fm_usr">Username</label><input type="text" id="fm_usr" name="fm_usr" value="" placeholder="Username" required><br>
                 <label for="fm_pwd">Password</label><input type="password" id="fm_pwd" name="fm_pwd" value="" placeholder="Password" required><br>
@@ -169,6 +163,21 @@ if ($use_auth) {
     }
 }
 
+//update root path
+if($use_auth && isset($_SESSION['logged'])) {
+    $root_path = isset($directories_users[$_SESSION['logged']]) ? $directories_users[$_SESSION['logged']] : $root_path;
+}
+
+// clean and check $root_path
+$root_path = rtrim($root_path, '\\/');
+$root_path = str_replace('\\', '/', $root_path);
+if (!@is_dir($root_path)) {
+    echo "<h1>Root path \"{$root_path}\" not found!</h1>";
+    exit;
+}
+
+defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
+defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_EXTENSION') || define('FM_EXTENSION', $upload_extensions);
 defined('FM_TREEVIEW') || define('FM_TREEVIEW', $show_tree_view);
