@@ -15,7 +15,7 @@ Download ZIP with latest version from master branch.
 
 Copy tinyfilemanager.php to your website folder and open it with web browser (e.g. http://yoursite/any_path/tinyfilemanager.php).
 
-Default username/password: admin/admin and user/12345. password has encripted with MD5.
+Default username/password: admin/admin and user/12345.
 
 Warning: Please set your own username and password in $auth_users before use.
 
@@ -46,7 +46,15 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:pencil2: Edit text formats file using advanced editor</li>
 <li>:zap: Backup files</li>
 <li>:mag_right: Search - Advanced Ajax based seach</li>
-<li>:palm_tree: Tree file view</li>
 <li>:file_folder: Exclude folders from listing</li>
 <li>:bangbang: lots more...</li>
 </ul>
+
+### CDN Used
+
+ - jQuery
+ - Bootstrap
+ - Font Awesome
+ - Highlight.js
+ - ace.js
+ - DropZone.js
