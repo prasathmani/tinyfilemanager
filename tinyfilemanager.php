@@ -2169,6 +2169,8 @@ global $lang;
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Web based File Manager in PHP, Manage your files efficiently and easily with Tiny File Manager">
     <meta name="author" content="CCP Programmers">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex">
     <title>H3K | File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
@@ -2263,6 +2265,8 @@ global $lang;
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Web based File Manager in PHP, Manage your files efficiently and easily with Tiny File Manager">
     <meta name="author" content="CCP Programmers">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex">
     <title>H3K | File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
