@@ -5,7 +5,7 @@ It is a simple, fast and small file manager with single php file. It is also a w
 
 ## Requirements
 
-- PHP 5.2 or higher.
+- PHP 5.5.0 or higher.
 - [Zip extension](http://php.net/manual/en/book.zip.php) for zip and unzip actions.
 - Fileinfo, iconv and mbstring extensions are strongly recommended.
 
