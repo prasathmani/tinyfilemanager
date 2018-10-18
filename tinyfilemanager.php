@@ -61,8 +61,8 @@ $datetime_format = 'd.m.y H:i';
 // allowed upload file extensions
 $upload_extensions = ''; // 'gif,png,jpg'
 
-//Array of folders excluded from listing
-$GLOBALS['exclude_folders'] = array();
+//Array of files and folders excluded from listing
+$GLOBALS['exclude_items'] = array();
 
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG)) {
@@ -672,16 +672,16 @@ $folders = array();
 $files = array();
 if (is_array($objects)) {
     foreach ($objects as $file) {
-        if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_folders'])) {
+        if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_items'])) {
             continue;
         }
         if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (is_file($new_path)) {
+        if (is_file($new_path) && !in_array($file, $GLOBALS['exclude_items'])) {
             $files[] = $file;
-        } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_folders'])) {
+        } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_items'])) {
             $folders[] = $file;
         }
     }
@@ -1363,7 +1363,7 @@ $all_files_size = 0;
                         <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> Copy </a></li>
                 </ul>
             </div>
-            <div class="col-3 d-none d-sm-block"><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="float-right" style="color:silver">H3K | File Manager v2.1</a></div>
+            <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right" style="color:silver">Tiny File Manager v2.1</a></div>
 
     <?php endif; ?>
 </form>
@@ -2171,7 +2171,7 @@ global $lang;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <title>H3K | File Manager</title>
+    <title>H3K | Tiny File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
         .form-signin {
@@ -2267,7 +2267,7 @@ global $lang;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <title>H3K | File Manager</title>
+    <title>H3K | Tiny File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
     <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
