@@ -41,7 +41,7 @@ $highlightjs_style = 'vs';
 $edit_files = true;
 
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
-$default_timezone = 'UTC/UTC'; // UTC
+$default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
