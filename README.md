@@ -31,7 +31,6 @@ To enable/disable authentication set $use_auth to true or false.
 - `FM_HIGHLIGHTJS_STYLE` - default is `'vs'`
 - `FM_DATETIME_FORMAT` - default is `'d.m.y H:i'`
 - `FM_EXTENSION` - default is `""` //upload files extensions
-- `FM_TREEVIEW` - default is `false`
 
 
 ### :loudspeaker: Features 
@@ -50,11 +49,6 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:bangbang: lots more...</li>
 </ul>
 
-### CDN Used
+###### CDN Used
 
- - jQuery
- - Bootstrap
- - Font Awesome
- - Highlight.js
- - ace.js
- - DropZone.js
+ `jQuery | Bootstrap | Font Awesome | Highlight.js | ace.js | DropZone.js`
