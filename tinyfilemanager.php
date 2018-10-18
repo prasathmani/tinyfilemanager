@@ -1,5 +1,6 @@
 <?php
-/**
+
+/*
  * H3K | Tiny File Manager
  * CCP Programmers | ccpprogrammers@gmail.com
  * http://fb.com/ccpprogrammers
@@ -14,8 +15,8 @@ $use_auth = true;
 
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 $auth_users = array(
-    'admin' => password_hash('admin', PASSWORD_DEFAULT),
-    'user' => password_hash('12345', PASSWORD_DEFAULT)
+    'admin' => '',
+    'user' => ''
 );
 
 // Readonly users (usernames array)
@@ -40,7 +41,7 @@ $highlightjs_style = 'vs';
 $edit_files = true;
 
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
-$default_timezone = 'Etc/UTC'; // UTC
+$default_timezone = 'UTC/UTC'; // UTC
 
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
@@ -115,6 +116,144 @@ if (isset($_GET['logout'])) {
 // Show image here
 if (isset($_GET['img'])) {
     fm_show_image($_GET['img']);
+}
+
+// if password is empty shows the password generator
+$password_check = 0;
+foreach ($auth_users as $user => $pass) {
+  if (empty($pass)) {
+    $password_check = 1;
+  }
+}
+if ($password_check == 1) {
+  generate_password_generator();
+}
+
+// Password Hash Generator
+function generate_password_generator() {
+header("Content-Type: text/html; charset=utf-8");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+header("Pragma: no-cache");
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<meta name="author" content="Alessandro Marinuzzi [Alecos]">
+<meta name="generator" content="Notepad2">
+<meta name="pragma" content="no-cache">
+<meta name="robots" content="noindex, nofollow">
+<title>Password Hash Generator</title>
+<style type="text/css">
+@import url('https://fonts.googleapis.com/css?family=Oswald');
+@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed');
+html {
+  display: table;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color: lightgray;
+  display: table-cell;
+  vertical-align: middle;
+  font-family: Oswald, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  line-height: normal;
+  font-weight: normal;
+  font-variant: normal;
+}
+.wrapper {
+  font-family: Oswald, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  line-height: normal;
+  font-weight: normal;
+  font-variant: normal;
+  border-radius: 7px;
+  border: 1px solid gray;
+  background-color: darkgray;
+  width: 800px;
+  height: auto;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  vertical-align: middle;
+  text-align: center;
+  margin: 0 auto;
+  padding: 10px;
+}
+.title {
+  font-family: 'Roboto Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 26px;
+  font-style: normal;
+  line-height: normal;
+  font-weight: normal;
+  font-variant: normal;
+}
+.info {
+  font-family: 'Roboto Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  line-height: normal;
+  font-weight: normal;
+  font-variant: normal;
+}
+.password {
+  border-right: #e6e6fa 1px solid;
+  border-top: #e6e6fa 1px solid;
+  border-left: #e6e6fa 1px solid;
+  border-bottom: #e6e6fa 1px solid;
+  color: #e6e6fa;
+  background-color: #32363c;
+  font-family: 'Roboto Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: normal;
+  font-style: normal;
+  font-variant: normal;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.generate {
+  border-right: #e6e6fa 1px solid;
+  border-top: #e6e6fa 1px solid;
+  border-left: #e6e6fa 1px solid;
+  border-bottom: #e6e6fa 1px solid;
+  color: #e6e6fa;
+  background-color: #32363c;
+  font-family: 'Roboto Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 22px;
+  font-weight: normal;
+  line-height: normal;
+  font-style: normal;
+  font-variant: normal;
+  cursor: pointer;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  border-radius: 5px;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<span class="title">Password Generator</span>
+<form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
+<label for="pass">Password:</label>&nbsp;&nbsp;<input class="password" type="password" name="pass" id="pass" value="<?php echo isset($_POST['pass']) && !empty($_POST['pass']) ? htmlspecialchars($_POST['pass']) : ''; ?>">&nbsp;&nbsp;<input class="password" readonly="readonly" type="text" style="width: 440px" name="pass_cripted" id="pass_cripted" value="<?php echo isset($_POST['pass']) && !empty($_POST['pass']) ? password_hash($_POST['pass'], PASSWORD_DEFAULT) : ''; ?>">&nbsp;&nbsp;<input class="generate" type="submit" name="submit" value="Generate">
+<span class="info">Generate your passwords and paste them into filemanager $auth_users array, save file and login into filemanager!</span>
+</form>
+</div>
+</body>
+</html>
+<?php
+exit();
 }
 
 // Auth
@@ -1934,7 +2073,7 @@ function fm_get_text_exts()
         'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'json', 'sh', 'config',
         'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue',
         'eml', 'msg', 'csv', 'bat', 'twig', 'tpl', 'md', 'gitignore', 'less', 'sass', 'scss', 'c', 'cpp', 'cs', 'py',
-        'map', 'lock', 'dtd', 'svg',
+        'map', 'lock', 'dtd', 'svg', 'tmp', 'top', 'bot', 'dat', 'bak', 'htpasswd', 'pl'
     );
 }
 
@@ -2899,5 +3038,4 @@ yfg3wNf+r99KxafOibNu5IQvKKsv2x9lTtEFvmGlXq9/rFeL/gnWD2kB6KcwcpB+wP/IyeP2svqp
 RK5CYII=',
     );
 }
-
 ?>
