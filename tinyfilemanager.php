@@ -15,8 +15,8 @@ $use_auth = true;
 
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 $auth_users = array(
-    'admin' => '',
-    'user' => ''
+    'admin' => '', // insert the generated password inside the single quotes, save everything and reload the page
+    'user' => '' // insert the generated password inside the single quotes, save everything and reload the page
 );
 
 // Readonly users (usernames array)
@@ -140,8 +140,6 @@ header("Pragma: no-cache");
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=utf-8">
-<meta name="author" content="Alessandro Marinuzzi [Alecos]">
-<meta name="generator" content="Notepad2">
 <meta name="pragma" content="no-cache">
 <meta name="robots" content="noindex, nofollow">
 <title>Password Hash Generator</title>
