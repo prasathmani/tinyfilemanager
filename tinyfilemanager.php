@@ -15,8 +15,10 @@ $use_auth = true;
 
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 $auth_users = array(
-    'admin' => '', // insert the generated password inside the single quotes, save everything and reload the page
-    'user' => '' // insert the generated password inside the single quotes, save everything and reload the page
+    // insert the generated password for 'admin' inside the single quotes, save everything and reload the page
+    'admin' => '',
+    // insert the generated password for 'user' inside the single quotes, save everything and reload the page
+    'user' => ''
 );
 
 // Readonly users (usernames array)
@@ -118,7 +120,7 @@ if (isset($_GET['img'])) {
     fm_show_image($_GET['img']);
 }
 
-// if password is empty shows the password generator
+// Even if only one password is empty, the password generator will be shown
 $password_check = 0;
 foreach ($auth_users as $user => $pass) {
   if (empty($pass)) {
@@ -129,7 +131,7 @@ if ($password_check == 1) {
   generate_password_generator();
 }
 
-// Password Hash Generator
+// Show the Password Hash Generator at the first start
 function generate_password_generator() {
 header("Content-Type: text/html; charset=utf-8");
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
