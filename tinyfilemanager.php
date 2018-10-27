@@ -14,8 +14,8 @@ $use_auth = true;
 
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 $auth_users = array(
-    'admin' => password_hash('admin', PASSWORD_DEFAULT),
-    'user' => password_hash('12345', PASSWORD_DEFAULT)
+    'admin' => '$2y$10$1wXHgLfTggq4SUTkm5YGUuO771X106e.B0WgHXXkH72C0/LuY6ZSW', //admin
+    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
 
 // Readonly users (usernames array)
