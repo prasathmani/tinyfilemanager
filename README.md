@@ -1,6 +1,13 @@
 # Tiny PHP File Manager
-It is a simple, fast and small file manager with single php file. It is also a web code editor. It'll run either online or locally, on Linux, Windows or Mac based platforms. The only requirement is to have PHP 5+ available.
+It is a simple, fast and small file manager with single php file. It is also a web code editor. It'll run either online or locally, on Linux, Windows or Mac based platforms. The only requirement is to have PHP 5.5+ available.
+
+## Demo
+<a href="https://tinyfilemanager.herokuapp.com" target="_blank">tinyfilemanager.herokuapp.com</a>
+
+## Documents
+<a href="https://tinyfilemanager.github.io/" target="_blank">tinyfilemanager.github.io</a>
 <hr>
+
 <img src="screenshot.gif" alt="H3K | Tiny File Manager">
 
 ## Requirements
@@ -17,7 +24,7 @@ Copy tinyfilemanager.php to your website folder and open it with web browser (e.
 
 Default username/password: admin/admin and user/12345.
 
-Warning: Please set your own username and password in $auth_users before use.
+Warning: Please set your own username and password in $auth_users before use. password is encrypted with <code>password_hash()</code>. to generate new password hash <a href="https://tinyfilemanager.github.io/docs/pwd.html" target="_blank">here</a>
 
 To enable/disable authentication set $use_auth to true or false.
 
