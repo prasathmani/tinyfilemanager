@@ -55,11 +55,11 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:pencil2: Edit text formats file using advanced editor</li>
 <li>:page_facing_up: Google Drive viewer helps you preview PDF/DOC/XLS/PPT/etc. 25 MB can be previewed with the Google Drive viewer</li>
 <li>:zap: Backup files</li>
-<li>:mag_right: Search - Advanced Ajax based seach</li>
+<li>:mag_right: Search -  Search and Sorting using datatable js</li>
 <li>:file_folder: Exclude folders from listing</li>
 <li>:bangbang: lots more...</li>
 </ul>
 
 ###### CDN Used
 
- `jQuery | Bootstrap | Font Awesome | Highlight.js | ace.js | DropZone.js`
+ `jQuery | Bootstrap | Font Awesome | Highlight js | ace js | DropZone js | DataTable js`
