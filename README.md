@@ -4,6 +4,9 @@ It is a simple, fast and small file manager with single php file. It is also a w
 ## Demo
 <a href="https://tinyfilemanager.herokuapp.com" target="_blank">tinyfilemanager.herokuapp.com</a>
 
+ Login Details : admin/admin | user/12345
+
+
 ## Documents
 <a href="https://tinyfilemanager.github.io/" target="_blank">tinyfilemanager.github.io</a>
 <hr>
@@ -50,6 +53,7 @@ To enable/disable authentication set $use_auth to true or false.
 <li>:sunglasses: Support user permissions - based on session and each user root folder mapping</li>
 <li>:floppy_disk: Copy direct file URL</li>
 <li>:pencil2: Edit text formats file using advanced editor</li>
+<li>:page_facing_up: Google Drive viewer helps you preview PDF/DOC/XLS/PPT/etc. 25 MB can be previewed with the Google Drive viewer</li>
 <li>:zap: Backup files</li>
 <li>:mag_right: Search - Advanced Ajax based seach</li>
 <li>:file_folder: Exclude folders from listing</li>

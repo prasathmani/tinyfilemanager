@@ -64,6 +64,9 @@ $upload_extensions = ''; // 'gif,png,jpg'
 //Array of files and folders excluded from listing
 $GLOBALS['exclude_items'] = array();
 
+//Google Docs Viewer
+$GLOBALS['online_viewer'] = true;
+
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG)) {
     include(FM_CONFIG);
@@ -845,12 +848,16 @@ if (isset($_GET['view'])) {
     $is_audio = false;
     $is_video = false;
     $is_text = false;
+    $is_onlineViewer = false;
 
     $view_title = 'File';
     $filenames = false; // for zip
     $content = ''; // for text
 
-    if ($ext == 'zip') {
+    if($GLOBALS['online_viewer'] && in_array($ext, fm_get_onlineViewer_exts())){
+        $is_onlineViewer = true;
+    }
+    elseif ($ext == 'zip') {
         $is_zip = true;
         $view_title = 'Archive';
         $filenames = fm_get_zif_info($file_path);
@@ -941,7 +948,10 @@ if (isset($_GET['view'])) {
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> Back</a></b>
         </p>
         <?php
-        if ($is_zip) {
+        if($is_onlineViewer) {
+            // Google docs viewer
+            echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
+        } elseif ($is_zip) {
             // ZIP content
             if ($filenames !== false) {
                 echo '<code class="maxheight">';
@@ -1972,6 +1982,15 @@ function fm_get_text_names()
         'contributors',
         'changelog',
     );
+}
+
+/**
+ * Get audio files extensions
+ * @return array
+ */
+function fm_get_onlineViewer_exts()
+{
+    return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar');
 }
 
 /**
