@@ -1043,10 +1043,10 @@ if (isset($_GET['edit'])) {
 
     ?>
     <div class="path">
-        <div class="edit-file-actions">
-            <a title="Cancel"
+        <div class="edit-file-actions col-xs-12 col-md-6 text-right">
+            <a title="Back"
                href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i
-                        class="fa fa-reply-all"></i> Cancel</a>
+                        class="fa fa-reply-all"></i> Back</a>
             <a title="Backup"
                href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i
                         class="fa fa-database"></i> Backup</a>
@@ -1199,9 +1199,15 @@ $all_files_size = 0;
             if ($parent !== false) {
                 ?>
                 <tr><?php if (!FM_READONLY): ?>
-                        <td></td><?php endif; ?>
-                    <td colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>"><a href="?p=<?php echo urlencode($parent) ?>"><i
-                                    class="fa fa-chevron-circle-left"></i> ..</a></td>
+                    <td class="nosort"></td><?php endif; ?>
+                    <td class="border-0"><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left"></i> ..</a></td>
+                    <td class="border-0"></td>
+                    <td class="border-0"></td>
+                    <td class="border-0"></td>
+                    <?php if (!FM_IS_WIN && FM_IS_WIN == 6) { ?>
+                        <td class="border-0"></td>
+                        <td class="border-0"></td>
+                    <?php } ?>
                 </tr>
                 <?php
             }
@@ -2109,15 +2115,19 @@ function fm_show_nav_path($path)
                 }
                 $root_url .= $sep . implode($sep, $array);
             }
-            echo '<div class="col-xs-6 col-sm-8">' . $root_url . '</div>';
+            echo '<div class="col-xs-6 col-sm-6">' . $root_url . '</div>';
             ?>
 
-            <div class="col-xs-12 col-sm-4 text-right">
+            <div class="col-xs-12 col-sm-6 text-right">
                 <ul class="navbar-nav mr-auto float-right">
                     <?php if (!FM_READONLY): ?>
-                    <li class="nav-item">
-                        <a title="Search" class="nav-link" href="javascript:showSearch('<?php echo urlencode(FM_PATH) ?>')"><i
-                                    class="fa fa-search"></i> Search</a>
+                    <li class="nav-item mr-2">
+                        <div class="input-group input-group-sm mr-1">
+                            <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-addon2" id="search-addon">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
+                            </div>
+                        </div>
                     </li>
                     <li class="nav-item">
                         <a title="Upload files" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> Upload</a>
@@ -2465,16 +2475,6 @@ global $lang;
             font-size: small;
         }
 
-        div#searchresultWrapper {
-            max-height: 320px;
-            overflow: auto
-        }
-
-        div#searchresultWrapper li {
-            margin: 10px 0;
-            list-style: none
-        }
-
         li.file:before, li.folder:before {
             font: normal normal normal 14px/1 FontAwesome;
             content: "\f016";
@@ -2533,6 +2533,35 @@ global $lang;
             box-shadow: 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12), 0 2px 4px -1px rgba(0, 0, 0, .2)
         }
 
+        .dataTables_filter {
+            display: none;
+        }
+
+        table.dataTable thead .sorting {
+            cursor: pointer;
+            background-repeat: no-repeat;
+            background-position: center right;
+            background-image: url(https://cdn.datatables.net/1.10.19/images/sort_both.png);
+        }
+
+        table.dataTable thead .sorting_asc {
+            cursor: pointer;
+            background-repeat: no-repeat;
+            background-position: center right;
+            background-image: url(https://cdn.datatables.net/1.10.19/images/sort_asc.png);
+        }
+
+        table.dataTable thead .sorting_desc {
+            cursor: pointer;
+            background-repeat: no-repeat;
+            background-position: center right;
+            background-image: url(https://cdn.datatables.net/1.10.19/images/sort_desc.png);
+        }
+
+        table.dataTable thead tr:first-child th:first-child{
+            background-image: none;
+        }
+
         .footer-action li {
             margin-bottom: 10px;
         }
@@ -2575,26 +2604,6 @@ global $lang;
         </div>
     </div>
 
-    <!-- Search Itema -->
-    <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="searchModalLabel"><i class="fa fa-search fa-fw"></i>  Search Files and Folders</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="search" class="form-control" name="search" value="" placeholder="Find a item in current folder...">
-                    <div id="searchresultWrapper" class="mt-3"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <?php
     }
 
@@ -2605,8 +2614,9 @@ global $lang;
     {
     ?>
 </div>
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 <script>
     /**
      * Create new Folder/file
@@ -2644,39 +2654,14 @@ global $lang;
         change_checkboxes(get_checkboxes())
     }
 
-    function mailto(e, t) {
-        var n = new XMLHttpRequest,
-            a = "path=" + e + "&file=" + t + "&type=mail&ajax=true";
-        n.open("POST", "", !0), n.setRequestHeader("Content-type", "application/x-www-form-urlencoded"), n.onreadystatechange = function () {
-            4 == n.readyState && 200 == n.status && alert(n.responseText)
-        }, n.send(a)
-    }
-
-    function showSearch(e) {
-        $('#searchModal').modal('show');
-        var t = new XMLHttpRequest,
-            n = "path=" + e + "&type=search&ajax=true";
-        t.open("POST", "", !0), t.setRequestHeader("Content-type", "application/x-www-form-urlencoded"), t.onreadystatechange = function () {
-            4 == t.readyState && 200 == t.status && (window.searchObj = t.responseText, document.getElementById("searchresultWrapper").innerHTML = "", window.location.hash = "#searchResult")
-        }, t.send(n)
-    }
-
-    function getSearchResult(e, t) {
-        var n = [],
-            a = [];
-        return e.forEach(function (e) {
-            "folder" === e.type ? (getSearchResult(e.items, t), e.name.toLowerCase().match(t) && n.push(e)) : "file" === e.type && e.name.toLowerCase().match(t) && a.push(e)
-        }), {
-            folders: n,
-            files: a
-        }
-    }
-
     function checkbox_toggle() {
         var e = get_checkboxes();
         e.push(this), change_checkboxes(e)
     }
 
+    /**
+     * Create file backup with .bck
+     */
     function backup(e, t) {
         var n = new XMLHttpRequest,
             a = "path=" + e + "&file=" + t + "&type=backup&ajax=true";
@@ -2685,6 +2670,7 @@ global $lang;
         }, n.send(a), !1
     }
 
+    //Save file
     function edit_save(e, t) {
         var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
         if (n) {
@@ -2697,51 +2683,33 @@ global $lang;
         }
     }
 
-    function init_php_file_tree() {
-        if (document.getElementsByTagName) {
-            for (var e = document.getElementsByTagName("LI"), t = 0; t < e.length; t++) {
-                var n = e[t].className;
-                if (n.indexOf("pft-directory") > -1)
-                    for (var a = e[t].childNodes, o = 0; o < a.length; o++) "A" == a[o].tagName && (a[o].onclick = function () {
-                        for (var e = this.nextSibling; ;) {
-                            if (null == e) return !1;
-                            if ("UL" == e.tagName) {
-                                var t = "none" == e.style.display;
-                                return e.style.display = t ? "block" : "none", this.className = t ? "open" : "closed", !1
-                            }
-                            e = e.nextSibling
-                        }
-                        return !1
-                    }, a[o].className = n.indexOf("open") > -1 ? "open" : "closed"), "UL" == a[o].tagName && (a[o].style.display = n.indexOf("open") > -1 ? "block" : "none")
-            }
-            return !1
-        }
-    }
 
-    var searchEl = document.querySelector("input[type=search]"),
-        timeout = null;
-    searchEl.onkeyup = function (e) {
-        clearTimeout(timeout);
-        var t = JSON.parse(window.searchObj),
-            n = document.querySelector("input[type=search]").value;
-        timeout = setTimeout(function () {
-            if (n.length >= 2) {
-                var e = getSearchResult(t, n),
-                    a = "",
-                    o = "";
-                e.folders.forEach(function (e) {
-                    a += '<li class="' + e.type + '"><a href="?p=' + e.path + '">' + e.name + "</a></li>"
-                }), e.files.forEach(function (e) {
-                    o += '<li class="' + e.type + '"><a href="?p=' + e.path + "&view=" + e.name + '">' + e.name + "</a></li>"
-                }), document.getElementById("searchresultWrapper").innerHTML = '<div class="model-wrapper">' + a + o + "</div>"
-            }
-        }, 500)
-    }, window.onload = init_php_file_tree;
-    if (document.getElementById("file-tree-view")) {
-        var tableViewHt = document.getElementById("main-table").offsetHeight - 2;
-        document.getElementById("file-tree-view").setAttribute("style", "height:" + tableViewHt + "px")
-    }
-    ;
+    /**
+     * jQuery Document Ready Event
+     */
+    $(document).ready( function () {
+        //dataTable init
+        var $table = $('#main-table'),
+            tableLng = $table.find('th').length,
+            _targets = (tableLng && tableLng == 7 ) ? [0, 4,5,6] : [0,4],
+            mainTable = $('#main-table').DataTable({
+            "paging":   false,
+            "info":     false,
+            "columnDefs": [
+                {
+                    "targets": _targets,
+                    "orderable": false
+                }
+            ]
+        });
+
+        /**
+         * Search using custom input box
+         */
+        $('#search-addon').on( 'keyup', function () {
+            mainTable.search( this.value ).draw();
+        });
+    });
 </script>
 <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
