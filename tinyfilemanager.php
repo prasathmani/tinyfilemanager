@@ -68,6 +68,9 @@ $GLOBALS['exclude_items'] = array();
 // Google Docs Viewer
 $GLOBALS['online_viewer'] = true;
 
+// Turn off all error reporting
+error_reporting(0);
+
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG)) {
     include(FM_CONFIG);
