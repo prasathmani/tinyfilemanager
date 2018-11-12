@@ -2632,11 +2632,11 @@ global $lang;
     });
 </script>
 <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
-    <script src="https//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 <?php endif; ?>
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE): ?>
-    <script src="https//cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
     <script>var editor = ace.edit("editor"); editor.getSession().setMode("ace/mode/javascript");</script>
 <?php endif; ?>
 </body>
