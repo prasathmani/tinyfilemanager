@@ -59,8 +59,8 @@ $iconv_input_encoding = 'UTF-8';
 // date() format for file modification date
 $datetime_format = 'd.m.y H:i';
 
-// allowed upload file extensions
-$upload_extensions = ''; // 'gif,png,jpg'
+// allowed file extensions for upload and rename
+$allowed_extensions = ''; // 'gif,png,jpg'
 
 // Array of files and folders excluded from listing
 $GLOBALS['exclude_items'] = array();
@@ -68,8 +68,8 @@ $GLOBALS['exclude_items'] = array();
 // Google Docs Viewer
 $GLOBALS['online_viewer'] = true;
 
-// Turn off all error reporting
-error_reporting(0);
+// Turn on/off PHP error reporting
+$report_errors = true; // false = Turns off Errors, true = Turns on Errors
 
 // include user config php file
 if (defined('FM_CONFIG') && is_file(FM_CONFIG)) {
@@ -77,6 +77,14 @@ if (defined('FM_CONFIG') && is_file(FM_CONFIG)) {
 }
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
+
+if ($report_errors == true) {
+    @ini_set('error_reporting', E_ALL);
+    @ini_set('display_errors', 1);
+} else {
+    @ini_set('error_reporting', E_ALL);
+    @ini_set('display_errors', 0);
+}
 
 // if fm included
 if (defined('FM_EMBED')) {
@@ -146,23 +154,55 @@ if ($use_auth) {
         fm_show_header_login();
         fm_show_message();
         ?>
-        <div class="text-center">
-            <form class="form-signin" action="" method="post" autocomplete="off">
-                <img class="mb-4" src="https://image.ibb.co/k92AFQ/h3k_logo_dark.png" alt="H3K File Manager">
-                <h1 class="h3 mb-3 font-weight-normal">File Manager</h1>
-                <label for="fm_usr" class="sr-only">Username</label>
-                <input type="text" id="fm_usr" name="fm_usr" class="form-control" placeholder="Username" required="" autofocus="">
-                <label for="fm_pwd" class="sr-only">Password</label>
-                <input type="password" id="fm_pwd" name="fm_pwd" class="form-control mt-2" placeholder="Password" required="">
-                <div class="checkbox mb-3">
-                    <label>
-                        <input type="checkbox" value="remember-me" aria-label="Remember me"> Remember me
-                    </label>
+        <section class="h-100">
+            <div class="container h-100">
+                <div class="row justify-content-md-center h-100">
+                    <div class="card-wrapper">
+                        <div class="brand">
+                            <img src="https://image.ibb.co/h7bb8V/h3k-logo.png" alt="H3K File Manager">
+                        </div>
+                        <div class="text-center">
+                            <h1 class="card-title">Tiny File Manager</h1>
+                        </div>
+                        <div class="card fat">
+                            <div class="card-body">
+                                <form class="form-signin" action="" method="post" autocomplete="off">
+                                    <div class="form-group">
+                                        <label for="fm_usr">Username</label>
+                                        <input type="text" class="form-control" id="fm_usr" name="fm_usr" required autofocus>
+                                        <div class="invalid-feedback">
+                                            Email is invalid
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="fm_pwd">Password</label>
+                                        <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <div class="custom-checkbox custom-control">
+                                            <input type="checkbox" name="remember" id="remember" class="custom-control-input">
+                                            <label for="remember" class="custom-control-label">Remeber Me</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group m-0">
+                                        <button type="submit" class="btn btn-success btn-block" role="button">
+                                            Sign in
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="footer text-center">
+                            &mdash;&mdash; &copy; <a href="mailto:ccpprogrammers@gmail.com" class="text-muted">CCP Programmers</a> &mdash;&mdash;
+                        </div>
+                    </div>
                 </div>
-                <button class="btn btn-lg btn-primary btn-block mt-4" type="submit" role="button">Sign in</button>
-                <p class="mt-5 mb-3 text-muted">© CCP Programmers</p>
-            </form>
-        </div>
+            </div>
+        </section>
+
         <?php
         fm_show_footer_login();
         exit;
@@ -185,7 +225,7 @@ if (!@is_dir($root_path)) {
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_LANG') || define('FM_LANG', $lang);
-defined('FM_EXTENSION') || define('FM_EXTENSION', $upload_extensions);
+defined('FM_EXTENSION') || define('FM_EXTENSION', $allowed_extensions);
 define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION['logged']) && in_array($_SESSION['logged'], $readonly_users));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
@@ -216,13 +256,6 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 // AJAX Request
 if (isset($_POST['ajax']) && !FM_READONLY) {
 
-    // search : get list of files from the current folder
-    if (isset($_POST['type']) && $_POST['type'] == "search") {
-        $dir = $_POST['path'];
-        $response = scan($dir);
-        echo json_encode($response);
-    }
-
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup") {
         $file = $_POST['file'];
@@ -233,7 +266,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         echo "Backup $newFile Created";
     }
 
-    exit;
+    exit();
 }
 
 // Delete file / folder
@@ -524,13 +557,18 @@ if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
 }
 
 // Pack files
-if (isset($_POST['group'], $_POST['zip']) && !FM_READONLY) {
+if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && !FM_READONLY) {
     $path = FM_ROOT_PATH;
+    $ext = 'zip';
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
 
-    if (!class_exists('ZipArchive')) {
+    //set pack type
+    $ext = isset($_POST['tar']) ? 'tar' : 'zip';
+
+
+    if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg('Operations with archives are not available', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
@@ -542,13 +580,18 @@ if (isset($_POST['group'], $_POST['zip']) && !FM_READONLY) {
         if (count($files) == 1) {
             $one_file = reset($files);
             $one_file = basename($one_file);
-            $zipname = $one_file . '_' . date('ymd_His') . '.zip';
+            $zipname = $one_file . '_' . date('ymd_His') . '.'.$ext;
         } else {
-            $zipname = 'archive_' . date('ymd_His') . '.zip';
+            $zipname = 'archive_' . date('ymd_His') . '.'.$ext;
         }
 
-        $zipper = new FM_Zipper();
-        $res = $zipper->create($zipname, $files);
+        if($ext == 'zip') {
+            $zipper = new FM_Zipper();
+            $res = $zipper->create($zipname, $files);
+        } elseif ($ext == 'tar') {
+            $tar = new FM_Zipper_Tar();
+            $res = $tar->create($zipname, $files);
+        }
 
         if ($res) {
             fm_set_msg(sprintf('Archive <b>%s</b> created', fm_enc($zipname)));
@@ -567,20 +610,28 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
     $unzip = $_GET['unzip'];
     $unzip = fm_clean_path($unzip);
     $unzip = str_replace('/', '', $unzip);
+    $isValid = false;
 
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
 
-    if (!class_exists('ZipArchive')) {
+    if ($unzip != '' && is_file($path . '/' . $unzip)) {
+        $zip_path = $path . '/' . $unzip;
+        $ext = pathinfo($zip_path, PATHINFO_EXTENSION);
+        $isValid = true;
+    } else {
+        fm_set_msg('File not found', 'error');
+    }
+
+
+    if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg('Operations with archives are not available', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
-    if ($unzip != '' && is_file($path . '/' . $unzip)) {
-        $zip_path = $path . '/' . $unzip;
-
+    if ($isValid) {
         //to folder
         $tofolder = '';
         if (isset($_GET['tofolder'])) {
@@ -590,8 +641,13 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
             }
         }
 
-        $zipper = new FM_Zipper();
-        $res = $zipper->unzip($zip_path, $path);
+        if($ext == "zip") {
+            $zipper = new FM_Zipper();
+            $res = $zipper->unzip($zip_path, $path);
+        } elseif ($ext == "tar") {
+            $gzipper = new PharData($zip_path);
+            $res = $gzipper->extractTo($path);
+        }
 
         if ($res) {
             fm_set_msg('Archive unpacked');
@@ -724,16 +780,25 @@ if (isset($_GET['upload']) && !FM_READONLY) {
         }
     </script>
     <div class="path">
-        <p><b>Uploading files</b></p>
-        <p class="break-word">Destination folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?></p>
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone" id="fileUploader" enctype="multipart/form-data">
-            <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-            <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
-            <div class="fallback">
-                <input name="file" type="file" multiple/>
-            </div>
-        </form>
+        <div class="card mb-2">
+            <h6 class="card-header">
+                Uploading files
+            </h6>
+            <div class="card-body">
+                <p class="card-text">
+                    <a href="?p=<?php echo FM_PATH ?>"><i class="fa fa-chevron-circle-left"></i> Back</a>  |
+                Destination folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
+                </p>
 
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone" id="fileUploader" enctype="multipart/form-data">
+                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <div class="fallback">
+                        <input name="file" type="file" multiple/>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <?php
     fm_show_footer();
@@ -844,6 +909,7 @@ if (isset($_GET['view'])) {
     $filesize = filesize($file_path);
 
     $is_zip = false;
+    $is_gzip = false;
     $is_image = false;
     $is_audio = false;
     $is_video = false;
@@ -857,10 +923,10 @@ if (isset($_GET['view'])) {
     if($GLOBALS['online_viewer'] && in_array($ext, fm_get_onlineViewer_exts())){
         $is_onlineViewer = true;
     }
-    elseif ($ext == 'zip') {
+    elseif ($ext == 'zip' || $ext == 'tar') {
         $is_zip = true;
         $view_title = 'Archive';
-        $filenames = fm_get_zif_info($file_path);
+        $filenames = fm_get_zif_info($file_path, $ext);
     } elseif (in_array($ext, fm_get_image_exts())) {
         $is_image = true;
         $view_title = 'Image';
@@ -876,126 +942,128 @@ if (isset($_GET['view'])) {
     }
 
     ?>
-    <div class="path">
-        <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
-        <p class="break-word">
-            Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-            File
-            size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
-            <br>
-            MIME-type: <?php echo $mime_type ?><br>
-            <?php
-            // ZIP info
-            if ($is_zip && $filenames !== false) {
-                $total_files = 0;
-                $total_comp = 0;
-                $total_uncomp = 0;
-                foreach ($filenames as $fn) {
-                    if (!$fn['folder']) {
-                        $total_files++;
+    <div class="row">
+        <div class="col-12">
+            <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
+            <p class="break-word">
+                Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
+                File
+                size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
+                <br>
+                MIME-type: <?php echo $mime_type ?><br>
+                <?php
+                // ZIP info
+                if (($is_zip || $is_gzip) && $filenames !== false) {
+                    $total_files = 0;
+                    $total_comp = 0;
+                    $total_uncomp = 0;
+                    foreach ($filenames as $fn) {
+                        if (!$fn['folder']) {
+                            $total_files++;
+                        }
+                        $total_comp += $fn['compressed_size'];
+                        $total_uncomp += $fn['filesize'];
                     }
-                    $total_comp += $fn['compressed_size'];
-                    $total_uncomp += $fn['filesize'];
+                    ?>
+                    Files in archive: <?php echo $total_files ?><br>
+                    Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
+                    Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
+                    Compression: <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
+                    <?php
+                }
+                // Image info
+                if ($is_image) {
+                    $image_size = getimagesize($file_path);
+                    echo 'Image sizes: ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
+                }
+                // Text info
+                if ($is_text) {
+                    $is_utf8 = fm_is_utf8($content);
+                    if (function_exists('iconv')) {
+                        if (!$is_utf8) {
+                            $content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
+                        }
+                    }
+                    echo 'Charset: ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
                 }
                 ?>
-                Files in archive: <?php echo $total_files ?><br>
-                Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
-                Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
-                Compression: <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
+            </p>
+            <p>
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> Download</a></b> &nbsp;
+                <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> Open</a></b>
+                &nbsp;
                 <?php
-            }
-            // Image info
-            if ($is_image) {
-                $image_size = getimagesize($file_path);
-                echo 'Image sizes: ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
-            }
-            // Text info
-            if ($is_text) {
-                $is_utf8 = fm_is_utf8($content);
-                if (function_exists('iconv')) {
-                    if (!$is_utf8) {
-                        $content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
-                    }
+                // ZIP actions
+                if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
+                    $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
+                    ?>
+                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> UnZip</a></b> &nbsp;
+                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
+                            UnZip to folder</a></b> &nbsp;
+                    <?php
                 }
-                echo 'Charset: ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
+                if ($is_text && !FM_READONLY) {
+                    ?>
+                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> Edit</a></b> &nbsp;
+                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square"></i> Advanced Edit</a></b> &nbsp;
+                <?php } ?>
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> Back</a></b>
+            </p>
+            <?php
+            if($is_onlineViewer) {
+                // Google docs viewer
+                echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
+            } elseif ($is_zip) {
+                // ZIP content
+                if ($filenames !== false) {
+                    echo '<code class="maxheight">';
+                    foreach ($filenames as $fn) {
+                        if ($fn['folder']) {
+                            echo '<b>' . fm_enc($fn['name']) . '</b><br>';
+                        } else {
+                            echo $fn['name'] . ' (' . fm_get_filesize($fn['filesize']) . ')<br>';
+                        }
+                    }
+                    echo '</code>';
+                } else {
+                    echo '<p>Error while fetching archive info</p>';
+                }
+            } elseif ($is_image) {
+                // Image content
+                if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico'))) {
+                    echo '<p><img src="' . fm_enc($file_url) . '" alt="" class="preview-img"></p>';
+                }
+            } elseif ($is_audio) {
+                // Audio content
+                echo '<p><audio src="' . fm_enc($file_url) . '" controls preload="metadata"></audio></p>';
+            } elseif ($is_video) {
+                // Video content
+                echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
+            } elseif ($is_text) {
+                if (FM_USE_HIGHLIGHTJS) {
+                    // highlight
+                    $hljs_classes = array(
+                        'shtml' => 'xml',
+                        'htaccess' => 'apache',
+                        'phtml' => 'php',
+                        'lock' => 'json',
+                        'svg' => 'xml',
+                    );
+                    $hljs_class = isset($hljs_classes[$ext]) ? 'lang-' . $hljs_classes[$ext] : 'lang-' . $ext;
+                    if (empty($ext) || in_array(strtolower($file), fm_get_text_names()) || preg_match('#\.min\.(css|js)$#i', $file)) {
+                        $hljs_class = 'nohighlight';
+                    }
+                    $content = '<pre class="with-hljs"><code class="' . $hljs_class . '">' . fm_enc($content) . '</code></pre>';
+                } elseif (in_array($ext, array('php', 'php4', 'php5', 'phtml', 'phps'))) {
+                    // php highlight
+                    $content = highlight_string($content, true);
+                } else {
+                    $content = '<pre>' . fm_enc($content) . '</pre>';
+                }
+                echo $content;
             }
             ?>
-        </p>
-        <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> Download</a></b> &nbsp;
-            <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> Open</a></b>
-            &nbsp;
-            <?php
-            // ZIP actions
-            if (!FM_READONLY && $is_zip && $filenames !== false) {
-                $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
-                ?>
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> UnZip</a></b> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
-                        UnZip to folder</a></b> &nbsp;
-                <?php
-            }
-            if ($is_text && !FM_READONLY) {
-                ?>
-                <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> Edit</a></b> &nbsp;
-                <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square"></i> Advanced Edit</a></b> &nbsp;
-            <?php } ?>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> Back</a></b>
-        </p>
-        <?php
-        if($is_onlineViewer) {
-            // Google docs viewer
-            echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
-        } elseif ($is_zip) {
-            // ZIP content
-            if ($filenames !== false) {
-                echo '<code class="maxheight">';
-                foreach ($filenames as $fn) {
-                    if ($fn['folder']) {
-                        echo '<b>' . fm_enc($fn['name']) . '</b><br>';
-                    } else {
-                        echo $fn['name'] . ' (' . fm_get_filesize($fn['filesize']) . ')<br>';
-                    }
-                }
-                echo '</code>';
-            } else {
-                echo '<p>Error while fetching archive info</p>';
-            }
-        } elseif ($is_image) {
-            // Image content
-            if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico'))) {
-                echo '<p><img src="' . fm_enc($file_url) . '" alt="" class="preview-img"></p>';
-            }
-        } elseif ($is_audio) {
-            // Audio content
-            echo '<p><audio src="' . fm_enc($file_url) . '" controls preload="metadata"></audio></p>';
-        } elseif ($is_video) {
-            // Video content
-            echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
-        } elseif ($is_text) {
-            if (FM_USE_HIGHLIGHTJS) {
-                // highlight
-                $hljs_classes = array(
-                    'shtml' => 'xml',
-                    'htaccess' => 'apache',
-                    'phtml' => 'php',
-                    'lock' => 'json',
-                    'svg' => 'xml',
-                );
-                $hljs_class = isset($hljs_classes[$ext]) ? 'lang-' . $hljs_classes[$ext] : 'lang-' . $ext;
-                if (empty($ext) || in_array(strtolower($file), fm_get_text_names()) || preg_match('#\.min\.(css|js)$#i', $file)) {
-                    $hljs_class = 'nohighlight';
-                }
-                $content = '<pre class="with-hljs"><code class="' . $hljs_class . '">' . fm_enc($content) . '</code></pre>';
-            } elseif (in_array($ext, array('php', 'php4', 'php5', 'phtml', 'phps'))) {
-                // php highlight
-                $content = highlight_string($content, true);
-            } else {
-                $content = '<pre>' . fm_enc($content) . '</pre>';
-            }
-            echo $content;
-        }
-        ?>
+        </div>
     </div>
     <?php
     fm_show_footer();
@@ -1166,7 +1234,7 @@ $all_files_size = 0;
     <input type="hidden" name="group" value="1">
     <div class="table-responsive">
         <table class="table table-bordered table-hover table-sm bg-white" id="main-table">
-            <thead class="thead-light">
+            <thead class="thead-white">
             <tr>
                 <?php if (!FM_READONLY): ?>
                     <th style="width:3%">
@@ -1334,8 +1402,10 @@ $all_files_size = 0;
                     <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> Invert selection</a></li>
                     <li class="list-inline-item"><input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('Delete selected files and folders?')">
                         <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> Delete </a></li>
-                    <li class="list-inline-item"><input type="submit" class="hidden" name="zip" id="a-zip" value="Zip" onclick="return confirm('Create archive?')">
+                    <li class="list-inline-item"><input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('Create archive?')">
                         <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> Zip </a></li>
+                    <li class="list-inline-item"><input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('Create archive?')">
+                        <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> Tar </a></li>
                     <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                         <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> Copy </a></li>
                 </ul>
@@ -1421,6 +1491,13 @@ function fm_rchmod($path, $filemode, $dirmode)
  */
 function fm_rename($old, $new)
 {
+    $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
+
+    $ext = pathinfo($new, PATHINFO_EXTENSION);
+    $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+
+    if(!$isFileAllowed) return false;
+
     return (!file_exists($new) && file_exists($old)) ? rename($old, $new) : null;
 }
 
@@ -1592,9 +1669,8 @@ function fm_get_filesize($size)
  * @param string $path
  * @return array|bool
  */
-function fm_get_zif_info($path)
-{
-    if (function_exists('zip_open')) {
+function fm_get_zif_info($path, $ext) {
+    if ($ext == 'zip' && function_exists('zip_open')) {
         $arch = zip_open($path);
         if ($arch) {
             $filenames = array();
@@ -1612,6 +1688,23 @@ function fm_get_zif_info($path)
             zip_close($arch);
             return $filenames;
         }
+    } elseif($ext == 'tar' && class_exists('PharData')) {
+        $archive = new PharData($path);
+        $filenames = array();
+        foreach(new RecursiveIteratorIterator($archive) as $file) {
+            $parent_info = $file->getPathInfo();
+            $zip_name = str_replace("phar://".$path, '', $file->getPathName());
+            $zip_name = substr($zip_name, ($pos = strpos($zip_name, '/')) !== false ? $pos + 1 : 0);
+            $zip_folder = $parent_info->getFileName();
+            $zip_info = new SplFileInfo($file);
+            $filenames[] = array(
+                'name' => $zip_name,
+                'filesize' => $zip_info->getSize(),
+                'compressed_size' => $file->getCompressedSize(),
+                'folder' => $zip_folder
+            );
+        }
+        return $filenames;
     }
     return false;
 }
@@ -1624,45 +1717,6 @@ function fm_get_zif_info($path)
 function fm_enc($text)
 {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * This function scans the files folder recursively, and builds a large array
- * @param string $dir
- * @return json
- */
-function scan($dir)
-{
-    $files = array();
-    $_dir = $dir;
-    $dir = FM_ROOT_PATH . '/' . $dir;
-    // Is there actually such a folder/file?
-    if (file_exists($dir)) {
-        foreach (scandir($dir) as $f) {
-            if (!$f || $f[0] == '.') {
-                continue; // Ignore hidden files
-            }
-
-            if (is_dir($dir . '/' . $f)) {
-                // The path is a folder
-                $files[] = array(
-                    "name" => $f,
-                    "type" => "folder",
-                    "path" => $_dir . '/' . $f,
-                    "items" => scan($dir . '/' . $f), // Recursively get the contents of the folder
-                );
-            } else {
-                // It is a file
-                $files[] = array(
-                    "name" => $f,
-                    "type" => "file",
-                    "path" => $_dir,
-                    "size" => filesize($dir . '/' . $f) // Gets the size of this file
-                );
-            }
-        }
-    }
-    return $files;
 }
 
 /**
@@ -2061,6 +2115,105 @@ class FM_Zipper
     }
 }
 
+/**
+ * Class to work with Tar files (using PharData)
+ */
+class FM_Zipper_Tar
+{
+    private $tar;
+
+    public function __construct()
+    {
+        $this->tar = null;
+    }
+
+    /**
+     * Create archive with name $filename and files $files (RELATIVE PATHS!)
+     * @param string $filename
+     * @param array|string $files
+     * @return bool
+     */
+    public function create($filename, $files)
+    {
+        $this->tar = new PharData($filename);
+        if (is_array($files)) {
+            foreach ($files as $f) {
+                if (!$this->addFileOrDir($f)) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            if ($this->addFileOrDir($files)) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Extract archive $filename to folder $path (RELATIVE OR ABSOLUTE PATHS)
+     * @param string $filename
+     * @param string $path
+     * @return bool
+     */
+    public function unzip($filename, $path)
+    {
+        $res = $this->tar->open($filename);
+        if ($res !== true) {
+            return false;
+        }
+        if ($this->tar->extractTo($path)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Add file/folder to archive
+     * @param string $filename
+     * @return bool
+     */
+    private function addFileOrDir($filename)
+    {
+        if (is_file($filename)) {
+            return $this->tar->addFile($filename);
+        } elseif (is_dir($filename)) {
+            return $this->addDir($filename);
+        }
+        return false;
+    }
+
+    /**
+     * Add folder recursively
+     * @param string $path
+     * @return bool
+     */
+    private function addDir($path)
+    {
+        $objects = scandir($path);
+        if (is_array($objects)) {
+            foreach ($objects as $file) {
+                if ($file != '.' && $file != '..') {
+                    if (is_dir($path . '/' . $file)) {
+                        if (!$this->addDir($path . '/' . $file)) {
+                            return false;
+                        }
+                    } elseif (is_file($path . '/' . $file)) {
+                        try {
+                            $this->tar->addFile($path . '/' . $file);
+                        } catch (Exception $e) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
 //--- templates functions
 
 /**
@@ -2072,7 +2225,7 @@ function fm_show_nav_path($path)
     global $lang;
     ?>
     <nav class="navbar navbar-expand-md fixed-top navbar-light bg-white mb-4 main-nav">
-        <a class="navbar-brand" href="">File Manager</a>
+        <a class="navbar-brand" href=""> File Manager </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -2115,8 +2268,11 @@ function fm_show_nav_path($path)
                         <a title="New folder" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> New Item</a>
                     </li>
                     <?php endif; ?>
-                    <li class="nav-item">
-                        <?php if (FM_USE_AUTH): ?><a title="Logout" class="nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> Sign out</a><?php endif; ?>
+                    <li class="nav-item avatar dropdown">
+                        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php echo $_SESSION['logged'] ?></a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink-5">
+                            <?php if (FM_USE_AUTH): ?><a title="Logout" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> Sign out</a><?php endif; ?>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -2163,34 +2319,62 @@ global $lang;
     <title>H3K | Tiny File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
-        .form-signin {
-            width: 100%;
-            max-width: 330px;
-            padding: 15px;
+        body.fm-login-page {
+            background-color: #f7f9fb;
+            font-size: 14px;
+        }
+        .fm-login-page .brand {
+            width: 121px;
+            overflow: hidden;
             margin: 0 auto;
-        }
-        .form-signin .checkbox {
-            font-weight: 400;
-        }
-        .form-signin .form-control {
+            margin: 40px auto;
+            margin-bottom: 25px;
             position: relative;
-            box-sizing: border-box;
-            height: auto;
-            padding: 10px;
-            font-size: 16px;
+            z-index: 1;
         }
-        .form-signin .form-control:focus {
-            z-index: 2;
+        .fm-login-page .brand img {
+            width: 100%;
         }
-        .form-signin input[type="email"] {
-            margin-bottom: -1px;
-            border-bottom-right-radius: 0;
-            border-bottom-left-radius: 0;
+        .fm-login-page .card-wrapper {
+            width: 360px;
         }
-        .form-signin input[type="password"] {
-            margin-bottom: 10px;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
+        .fm-login-page .card {
+            border-color: transparent;
+            box-shadow: 0 4px 8px rgba(0,0,0,.05);
+        }
+        .fm-login-page .card-title {
+            margin-bottom: 1.5rem;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: -.5px;
+        }
+        .fm-login-page .form-control {
+            border-width: 2.3px;
+        }
+        .fm-login-page .form-group label {
+            width: 100%;
+        }
+        .fm-login-page .btn.btn-block {
+            padding: 12px 10px;
+        }
+        .fm-login-page .footer {
+            margin: 40px 0;
+            color: #888;
+            text-align: center;
+        }
+        @media screen and (max-width: 425px) {
+            .fm-login-page .card-wrapper {
+                width: 90%;
+                margin: 0 auto;
+            }
+        }
+        @media screen and (max-width: 320px) {
+            .fm-login-page .card.fat {
+                padding: 0;
+            }
+            .fm-login-page .card.fat .card-body {
+                padding: 15px;
+            }
         }
         .message {
             padding: 4px 7px;
@@ -2211,7 +2395,7 @@ global $lang;
         }
     </style>
 </head>
-<body style="background-color: #f5f5f5;">
+<body class="fm-login-page">
 <div id="wrapper" class="container-fluid">
 
     <?php
@@ -2261,17 +2445,32 @@ global $lang;
               href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
     <?php endif; ?>
     <style>
-        .filename, td, th {
-            white-space: nowrap
-        }
         body {
             margin-top: 55px;
             font: 13px/16px Tahoma, Arial, sans-serif;
             color: #222;
             background: #F7F7F7;
         }
+        .filename, td, th {
+            white-space: nowrap
+        }
         .navbar-brand {
             font-weight: bold;
+        }
+        .nav-item.avatar a {
+            cursor: pointer;
+            text-transform: capitalize;
+        }
+        .nav-item.avatar a > i {
+            font-size: 15px;
+            vertical-align: bottom;
+        }
+        .nav-item.avatar .dropdown-menu a {
+            font-size: 13px;
+        }
+        #search-addon2 {
+            background: transparent;
+            border-left: 0;
         }
         #main-table a {
             text-decoration: none;
@@ -2305,6 +2504,11 @@ global $lang;
         }
         .path {
             margin-bottom: 10px
+        }
+        form.dropzone {
+            min-height: 200px;
+            border: 2px dashed #007bff;
+            line-height: 6rem;
         }
         .right {
             text-align: right
@@ -2632,11 +2836,11 @@ global $lang;
     });
 </script>
 <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
-    <script src="https//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 <?php endif; ?>
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE): ?>
-    <script src="https//cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
     <script>var editor = ace.edit("editor"); editor.getSession().setMode("ace/mode/javascript");</script>
 <?php endif; ?>
 </body>
