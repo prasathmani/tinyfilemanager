@@ -1262,7 +1262,7 @@ $all_files_size = 0;
                     <td class="border-0"></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
-                    <?php if (!FM_IS_WIN && FM_IS_WIN == 6) { ?>
+                    <?php if (!FM_IS_WIN) { ?>
                         <td class="border-0"></td>
                         <td class="border-0"></td>
                     <?php } ?>
