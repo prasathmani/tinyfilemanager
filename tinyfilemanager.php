@@ -2268,12 +2268,14 @@ function fm_show_nav_path($path)
                         <a title="New folder" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> New Item</a>
                     </li>
                     <?php endif; ?>
+                    <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php echo $_SESSION['logged'] ?></a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink-5">
-                            <?php if (FM_USE_AUTH): ?><a title="Logout" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> Sign out</a><?php endif; ?>
+                            <a title="Logout" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> Sign out</a>
                         </div>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
