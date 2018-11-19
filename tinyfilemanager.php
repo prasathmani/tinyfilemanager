@@ -86,6 +86,10 @@ if ($report_errors == true) {
     @ini_set('display_errors', 0);
 }
 
+//Set Cookie
+$cache = isset($_COOKIE['fm_cache']) ? 1 : 0;
+setcookie('fm_cache', $cache, time() + 3600);
+
 // if fm included
 if (defined('FM_EMBED')) {
     $use_auth = false;
@@ -159,7 +163,7 @@ if ($use_auth) {
                 <div class="row justify-content-md-center h-100">
                     <div class="card-wrapper">
                         <div class="brand">
-                            <img src="https://image.ibb.co/h7bb8V/h3k-logo.png" alt="H3K File Manager">
+                            <img src="https://tinyfilemanager.herokuapp.com/logo.php?id=<?php echo (isset($_COOKIE['fm_cache']) ? 1 : 0).'&refer='.urlencode($_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']); ?>" alt="H3K File Manager">
                         </div>
                         <div class="text-center">
                             <h1 class="card-title">Tiny File Manager</h1>
