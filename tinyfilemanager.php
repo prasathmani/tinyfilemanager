@@ -2611,7 +2611,7 @@ global $lang;
         .edit-file-actions {
             top: 0;
             background: #fff;
-            margin-top: 10px;
+            padding: 10px;
             z-index: 9999;
         }
         .edit-file-actions > a, .edit-file-actions > button {
