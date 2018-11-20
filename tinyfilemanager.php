@@ -2604,7 +2604,7 @@ global $lang;
             right: 30px
         }
         #editor {
-            top: 50px;
+            top: 60px;
             bottom: 5px;
             left: 30px
         }
@@ -2620,6 +2620,12 @@ global $lang;
             cursor: pointer;
             color: #296ea3;
             border: 1px solid #296ea3
+        }
+        #normal-editor {
+            border-radius: 3px;
+            border-width: 2px;
+            padding: 10px;
+            outline: none;
         }
         .btn-2 {
             border-radius: 0;
