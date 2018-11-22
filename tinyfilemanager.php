@@ -26,7 +26,7 @@ $readonly_users = array(
 
 // user specific directories
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
-$directories_users = array();
+// $directories_users = array(); 
 
 // Show or hide files and folders that starts with a dot
 $show_hidden_files = true;
