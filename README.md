@@ -63,3 +63,8 @@ To enable/disable authentication set $use_auth to true or false.
 ###### CDN Used
 
  `jQuery | Bootstrap | Font Awesome | Highlight js | ace js | DropZone js | DataTable js`
+
+## Support on Beerpay
+Hey dude! Help me out for a couple of :beers:!
+
+[![Beerpay](https://beerpay.io/prasathmani/tinyfilemanager/badge.svg?style=beer-square)](https://beerpay.io/prasathmani/tinyfilemanager)  [![Beerpay](https://beerpay.io/prasathmani/tinyfilemanager/make-wish.svg?style=flat-square)](https://beerpay.io/prasathmani/tinyfilemanager?focus=wish)
