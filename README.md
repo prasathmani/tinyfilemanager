@@ -64,7 +64,7 @@ To enable/disable authentication set $use_auth to true or false.
 
  `jQuery | Bootstrap | Font Awesome | Highlight js | ace js | DropZone js | DataTable js`
 
-## Support on Beerpay
-Hey dude! Help me out for a couple of :beers:!
+## Support Us
+If you find Tiny FIle Manager useful for your personal or commerical projects, please consider buying the founders a :beers:!
 
-[![Beerpay](https://beerpay.io/prasathmani/tinyfilemanager/badge.svg?style=beer-square)](https://beerpay.io/prasathmani/tinyfilemanager)  [![Beerpay](https://beerpay.io/prasathmani/tinyfilemanager/make-wish.svg?style=flat-square)](https://beerpay.io/prasathmani/tinyfilemanager?focus=wish)
+[![Beerpay](https://beerpay.io/prasathmani/tinyfilemanager/badge.svg?style=beer-square)](https://beerpay.io/prasathmani/tinyfilemanager)
