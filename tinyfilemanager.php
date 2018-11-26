@@ -1,13 +1,12 @@
 <?php
+//Default Configuration
+$CONFIG = '{"lang":"en","error_reporting":true,"show_hidden":true}';
+
 /**
- * H3K | Tiny File Manager
+ * H3K | Tiny File Manager V2.2.0
  * CCP Programmers | ccpprogrammers@gmail.com
- * http://fb.com/ccpprogrammers
  * https://tinyfilemanager.github.io
  */
-
-// Default language
-$lang = 'en';
 
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
@@ -15,7 +14,7 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$1wXHgLfTggq4SUTkm5YGUuO771X106e.B0WgHXXkH72C0/LuY6ZSW', //admin
+    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
     'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
 
@@ -27,9 +26,6 @@ $readonly_users = array(
 // user specific directories
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
 $directories_users = array();
-
-// Show or hide files and folders that starts with a dot
-$show_hidden_files = true;
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
@@ -68,13 +64,24 @@ $GLOBALS['exclude_items'] = array();
 // Google Docs Viewer
 $GLOBALS['online_viewer'] = true;
 
-// Turn on/off PHP error reporting
-$report_errors = true; // false = Turns off Errors, true = Turns on Errors
 
-// include user config php file
-if (defined('FM_CONFIG') && is_file(FM_CONFIG)) {
-    include(FM_CONFIG);
-}
+//Configuration
+$cfg = new FM_Config();
+
+// Default language
+$lang = isset($cfg->data['lang']) ? $cfg->data['lang'] : 'en';
+
+// Show or hide files and folders that starts with a dot
+$show_hidden_files = isset($cfg->data['show_hidden']) ? $cfg->data['show_hidden'] : true;
+
+// PHP error reporting - false = Turns off Errors, true = Turns on Errors
+$report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_reporting'] : true;
+
+//available languages
+$lang_list = array(
+    'en' => 'English',
+    'fr' => 'French'
+);
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
 
@@ -87,8 +94,7 @@ if ($report_errors == true) {
 }
 
 //Set Cookie
-$cache = isset($_COOKIE['fm_cache']) ? 1 : 0;
-setcookie('fm_cache', $cache, time() + 3600);
+setcookie('fm_cache', true, 2147483647, "/");
 
 // if fm included
 if (defined('FM_EMBED')) {
@@ -108,7 +114,7 @@ if (defined('FM_EMBED')) {
 
     session_cache_limiter('');
     session_name('filemanager');
-    session_start();
+    @session_start();
 }
 
 if (empty($auth_users)) {
@@ -143,14 +149,18 @@ if ($use_auth) {
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
-        if (isset($auth_users[$_POST['fm_usr']]) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
-            $_SESSION['logged'] = $_POST['fm_usr'];
-            fm_set_msg('You are logged in');
-            fm_redirect(FM_SELF_URL . '?p=');
+        if(function_exists(password_verify)) {
+            if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
+                $_SESSION['logged'] = $_POST['fm_usr'];
+                fm_set_msg('You are logged in');
+                fm_redirect(FM_SELF_URL . '?p=');
+            } else {
+                unset($_SESSION['logged']);
+                fm_set_msg('Login failed. Invalid username or password', 'error');
+                fm_redirect(FM_SELF_URL);
+            }
         } else {
-            unset($_SESSION['logged']);
-            fm_set_msg('Wrong password', 'error');
-            fm_redirect(FM_SELF_URL);
+            fm_set_msg('password_hash not supported, Upgrade PHP version', 'error');;
         }
     } else {
         // Form
@@ -163,44 +173,48 @@ if ($use_auth) {
                 <div class="row justify-content-md-center h-100">
                     <div class="card-wrapper">
                         <div class="brand">
-                            <img src="https://tinyfilemanager.herokuapp.com/logo.php?id=<?php echo (isset($_COOKIE['fm_cache']) ? 1 : 0).'&refer='.urlencode($_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']); ?>" alt="H3K File Manager">
+                            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" M1008 width="100%" height="121px" viewBox="0 0 238.000000 140.000000" aria-label="H3K Tiny File Manager">
+                                <g transform="translate(0.000000,140.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none">
+                                    <path d="M160 700 l0 -600 110 0 110 0 0 260 0 260 70 0 70 0 0 -260 0 -260 110 0 110 0 0 600 0 600 -110 0 -110 0 0 -260 0 -260 -70 0 -70 0 0 260 0 260 -110 0 -110 0 0 -600z"/>
+                                    <path fill="#003500" d="M1008 1227 l-108 -72 0 -117 0 -118 110 0 110 0 0 110 0 110 70 0 70 0 0 -180 0 -180 -125 0 c-69 0 -125 -3 -125 -6 0 -3 23 -39 52 -80 l52 -74 73 0 73 0 0 -185 0 -185 -70 0 -70 0 0 115 0 115 -110 0 -110 0 0 -190 0 -190 181 0 181 0 109 73 108 72 1 181 0 181 -69 48 -68 49 68 50 69 49 0 249 0 248 -182 -1 -183 0 -107 -72z"/>
+                                    <path d="M1640 700 l0 -600 110 0 110 0 0 208 0 208 35 34 35 34 35 -34 35 -34 0 -208 0 -208 110 0 110 0 0 212 0 213 -87 87 -88 88 88 88 87 87 0 213 0 212 -110 0 -110 0 0 -208 0 -208 -70 -69 -70 -69 0 277 0 277 -110 0 -110 0 0 -600z"/></g>
+                            </svg>
                         </div>
                         <div class="text-center">
-                            <h1 class="card-title">Tiny File Manager</h1>
+                            <h1 class="card-title"><?php echo lng('AppName'); ?></h1>
                         </div>
                         <div class="card fat">
                             <div class="card-body">
                                 <form class="form-signin" action="" method="post" autocomplete="off">
                                     <div class="form-group">
-                                        <label for="fm_usr">Username</label>
+                                        <label for="fm_usr"><?php echo lng('Username'); ?></label>
                                         <input type="text" class="form-control" id="fm_usr" name="fm_usr" required autofocus>
-                                        <div class="invalid-feedback">
-                                            Email is invalid
-                                        </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="fm_pwd">Password</label>
+                                        <label for="fm_pwd"><?php echo lng('Password'); ?></label>
                                         <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
                                     </div>
 
                                     <div class="form-group">
                                         <div class="custom-checkbox custom-control">
                                             <input type="checkbox" name="remember" id="remember" class="custom-control-input">
-                                            <label for="remember" class="custom-control-label">Remember Me</label>
+                                            <label for="remember" class="custom-control-label"><?php echo lng('RememberMe'); ?></label>
                                         </div>
                                     </div>
 
-                                    <div class="form-group m-0">
+                                    <div class="form-group">
                                         <button type="submit" class="btn btn-success btn-block" role="button">
-                                            Sign in
+                                            <?php echo lng('Login'); ?>
                                         </button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                         <div class="footer text-center">
-                            &mdash;&mdash; &copy; <a href="mailto:ccpprogrammers@gmail.com" class="text-muted">CCP Programmers</a> &mdash;&mdash;
+                            &mdash;&mdash; &copy;
+                            <?php  if(!isset($_COOKIE['fm_cache'])) { ?> <img src="https://logs-01.loggly.com/inputs/d8bad570-def7-44d4-922c-a8680d936ae6.gif?s=1" /> <?php } ?>
+                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-muted">CCP Programmers</a> &mdash;&mdash;
                         </div>
                     </div>
                 </div>
@@ -268,6 +282,39 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $newFile = $file . '-' . $date . '.bak';
         copy($path . '/' . $file, $path . '/' . $newFile) or die("Unable to backup");
         echo "Backup $newFile Created";
+    }
+
+    // Save Config
+    if (isset($_POST['type']) && $_POST['type'] == "settings") {
+        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list;
+        $newLng = $_POST['js-language'];
+        if (!array_key_exists($newLng, $lang_list)) {
+            $newLng = 'en';
+        }
+
+        $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == "true" ? true : false;
+        $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
+
+        if ($cfg->data['lang'] != $newLng) {
+            $cfg->data['lang'] = $newLng;
+            $lang = $newLng;
+        }
+        if ($cfg->data['error_reporting'] != $erp) {
+            $cfg->data['error_reporting'] = $erp;
+            $report_errors = $erp;
+        }
+        if ($cfg->data['show_hidden'] != $shf) {
+            $cfg->data['show_hidden'] = $shf;
+            $show_hidden_files = $shf;
+        }
+        $cfg->save();
+        echo true;
+    }
+
+    // new password hash
+    if (isset($_POST['type']) && $_POST['type'] == "pwdhash") {
+        $res = isset($_POST['inputPassword2']) && !empty($_POST['inputPassword2']) ? password_hash($_POST['inputPassword2'], PASSWORD_DEFAULT) : '';
+        echo $res;
     }
 
     exit();
@@ -746,9 +793,9 @@ if (is_array($objects)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (is_file($new_path) && !in_array($file, $GLOBALS['exclude_items'])) {
+        if (@is_file($new_path) && !in_array($file, $GLOBALS['exclude_items'])) {
             $files[] = $file;
-        } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_items'])) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_items'])) {
             $folders[] = $file;
         }
     }
@@ -786,12 +833,12 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <div class="path">
         <div class="card mb-2">
             <h6 class="card-header">
-                Uploading files
+                <?php echo lng('UploadingFiles') ?>
+                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
             </h6>
             <div class="card-body">
                 <p class="card-text">
-                    <a href="?p=<?php echo FM_PATH ?>"><i class="fa fa-chevron-circle-left"></i> Back</a>  |
-                Destination folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
+                    <?php echo lng('DestinationFolder') ?>: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
                 </p>
 
                 <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone" id="fileUploader" enctype="multipart/form-data">
@@ -821,26 +868,32 @@ if (isset($_POST['copy']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b>Copying</b></p>
-        <form action="" method="post">
-            <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-            <input type="hidden" name="finish" value="1">
-            <?php
-            foreach ($copy_files as $cf) {
-                echo '<input type="hidden" name="file[]" value="' . fm_enc($cf) . '">' . PHP_EOL;
-            }
-            ?>
-            <p class="break-word">Files: <b><?php echo implode('</b>, <b>', $copy_files) ?></b></p>
-            <p class="break-word">Source folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?><br>
-                <label for="inp_copy_to">Destination folder:</label>
-                <?php echo FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?php echo fm_enc(FM_PATH) ?>">
-            </p>
-            <p><label><input type="checkbox" name="move" value="1"> Move'</label></p>
-            <p>
-                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> Copy</button> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> Cancel</a></b>
-            </p>
-        </form>
+        <div class="card">
+            <div class="card-header">
+                <h6><?php echo lng('Copying') ?></h6>
+            </div>
+            <div class="card-body">
+                <form action="" method="post">
+                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="finish" value="1">
+                    <?php
+                    foreach ($copy_files as $cf) {
+                        echo '<input type="hidden" name="file[]" value="' . fm_enc($cf) . '">' . PHP_EOL;
+                    }
+                    ?>
+                    <p class="break-word"><?php echo lng('Files') ?>: <b><?php echo implode('</b>, <b>', $copy_files) ?></b></p>
+                    <p class="break-word"><?php echo lng('SourceFolder') ?>: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?><br>
+                        <label for="inp_copy_to"><?php echo lng('DestinationFolder') ?>:</label>
+                        <?php echo FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?php echo fm_enc(FM_PATH) ?>">
+                    </p>
+                    <p class="custom-checkbox custom-control"><input type="checkbox" name="move" value="1" id="js-move-files" class="custom-control-input"><label for="js-move-files" class="custom-control-label" style="vertical-align: sub"> <?php echo lng('Move') ?></label></p>
+                    <p>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Copy') ?></button> &nbsp;
+                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
+                    </p>
+                </form>
+            </div>
+        </div>
     </div>
     <?php
     fm_show_footer();
@@ -886,6 +939,130 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
             }
             ?>
         </ul>
+    </div>
+    <?php
+    fm_show_footer();
+    exit;
+}
+
+if (isset($_GET['settings']) && !FM_READONLY) {
+    fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
+    global $cfg, $lang, $lang_list;
+    ?>
+
+    <div class="col-md-6 offset-md-3 pt-3">
+        <div class="card mb-2">
+            <h6 class="card-header">
+                <?php echo lng('Settings') ?>
+                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-times-circle"></i> <?php echo lng('Close')?></a>
+            </h6>
+            <div class="card-body">
+                <form id="js-settings-form" action="" method="post" data-type="ajax" onsubmit="return save_settings(this)">
+                    <input type="hidden" name="type" value="settings" aria-label="hidden" aria-hidden="true">
+                    <div class="form-group row">
+                        <label for="js-language" class="col-sm-2 col-form-label"><?php echo lng('Language') ?></label>
+                        <div class="col-sm-10">
+                            <select class="form-control" id="js-language" name="js-language">
+                                <?php
+                                function getSelected($l) {
+                                    global $lang;
+                                    return ($lang == $l) ? 'selected' : '';
+                                }
+                                foreach ($lang_list as $k => $v) {
+                                    echo "<option value='$k' ".getSelected($k).">$v</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <?php
+                    //get ON/OFF and active class
+                    function getChecked($conf, $val, $txt) {
+                        if($conf== 1 && $val ==1) {
+                            return $txt;
+                        } else if($conf == '' && $val == '') {
+                            return $txt;
+                        } else {
+                            return '';
+                        }
+                    }
+                    ?>
+                    <div class="form-group row">
+                        <label for="js-err-rpt-1" class="col-sm-2 col-form-label">Error Reporting</label>
+                        <div class="col-sm-10">
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-secondary <?php echo getChecked($report_errors, 1, 'active') ?>">
+                                    <input type="radio" name="js-error-report" id="js-err-rpt-1" autocomplete="off" value="true" <?php echo getChecked($report_errors, 1, 'checked') ?> > ON
+                                </label>
+                                <label class="btn btn-secondary <?php echo getChecked($report_errors, '', 'active') ?>">
+                                    <input type="radio" name="js-error-report" id="js-err-rpt-0" autocomplete="off" value="false" <?php echo getChecked($report_errors, '', 'checked') ?> > OFF
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="js-hdn-1" class="col-sm-2 col-form-label">Show Hidden Files</label>
+                        <div class="col-sm-10">
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-secondary <?php echo getChecked($show_hidden_files, 1, 'active') ?>">
+                                    <input type="radio" name="js-show-hidden" id="js-hdn-1" autocomplete="off" value="true" <?php echo getChecked($show_hidden_files, 1, 'checked') ?> > ON
+                                </label>
+                                <label class="btn btn-secondary <?php echo getChecked($show_hidden_files, '', 'active') ?>">
+                                    <input type="radio" name="js-show-hidden" id="js-hdn-0" autocomplete="off" value="false" <?php echo getChecked($show_hidden_files, '', 'checked') ?> > OFF
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-10">
+                            <button type="submit" class="btn btn-success"><?php echo lng('Save'); ?></button>
+                        </div>
+                    </div>
+
+                </form>
+
+                <hr class="custom-hr">
+                <div class="row">
+                    <div class="col-12">
+                        <form class="form-inline" onsubmit="return new_password_hash(this)" method="POST" action="">
+                            <input type="hidden" name="type" value="pwdhash" aria-label="hidden" aria-hidden="true">
+                            <div class="form-group mb-2">
+                                <label for="staticEmail2">Generate new password hash</label>
+                            </div>
+                            <div class="form-group mx-sm-3 mb-2">
+                                <label for="inputPassword2" class="sr-only">Password</label>
+                                <input type="text" class="form-control btn-sm" id="inputPassword2" name="inputPassword2" placeholder="Password">
+                            </div>
+                            <button type="submit" class="btn btn-dark btn-sm mb-2">Generate</button>
+                        </form>
+                        <textarea class="form-control" rows="2" readonly id="js-pwd-result"></textarea>
+                    </div>
+                </div>
+                <hr class="custom-hr">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6">
+                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager V2.2</a></h3></p>
+                        <p>Author: Prasath Mani</p>
+                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers@gmail.com</a> </p>
+                    </div>
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="card">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><a href="https://tinyfilemanager.github.io/" target="_blank"><i class="fa fa-question-circle"></i> Help Documents</a> </li>
+                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> Report Issue</a></li>
+                                <li class="list-group-item"><a href="javascript:latest_release_info();" target="_blank"><i class="fa fa-link"></i> Get Latest Release</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div id="js-download-latest"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <?php
     fm_show_footer();
@@ -993,25 +1170,25 @@ if (isset($_GET['view'])) {
                 ?>
             </p>
             <p>
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> Download</a></b> &nbsp;
-                <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> Open</a></b>
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
+                <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 &nbsp;
                 <?php
                 // ZIP actions
                 if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
                     $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
                     ?>
-                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> UnZip</a></b> &nbsp;
+                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> <?php echo lng('UnZip') ?></a></b> &nbsp;
                     <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
-                            UnZip to folder</a></b> &nbsp;
+                            <?php echo lng('UnZipToFolder') ?></a></b> &nbsp;
                     <?php
                 }
                 if ($is_text && !FM_READONLY) {
                     ?>
-                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> Edit</a></b> &nbsp;
-                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square"></i> Advanced Edit</a></b> &nbsp;
+                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?></a></b> &nbsp;
+                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('AdvancedEditor') ?></a></b> &nbsp;
                 <?php } ?>
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left"></i> Back</a></b>
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a></b>
             </p>
             <?php
             if($is_onlineViewer) {
@@ -1122,19 +1299,19 @@ if (isset($_GET['edit'])) {
     <div class="path">
         <div class="edit-file-actions col-xs-12 col-md-6 text-right">
             <a title="Back"
-               href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> Back</a>
+               href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
             <a title="Backup"
-               href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> Backup</a>
+               href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
             <?php if ($is_text) { ?>
                 <?php if ($isNormalEditor) { ?>
                     <a title="Advanced"
-                       href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> Advanced Editor</a>
+                       href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> <?php echo lng('AdvancedEditor') ?></a>
                     <button type="button" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
                     </button>
                 <?php } else { ?>
                     <a title="Plain Editor"
-                       href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> Plain Editor</a>
-                    <button type="button" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> Save
+                       href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
+                    <button type="button" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
                     </button>
                 <?php } ?>
             <?php } ?>
@@ -1174,48 +1351,52 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
 
     ?>
     <div class="path">
-        <p><b><?php echo 'Change Permissions'; ?></b></p>
-        <p>
-            <?php echo 'Full path:'; ?> <?php echo $file_path ?><br>
-        </p>
-        <form action="" method="post">
-            <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-            <input type="hidden" name="chmod" value="<?php echo fm_enc($file) ?>">
+        <div class="card mb-2">
+            <h6 class="card-header">
+                <?php echo lng('ChangePermissions') ?>
+            </h6>
+            <div class="card-body">
+                <p class="card-text">
+                    Full path: <?php echo $file_path ?><br>
+                </p>
+                <form action="" method="post">
+                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="chmod" value="<?php echo fm_enc($file) ?>">
 
-            <table class="compact-table">
-                <tr>
-                    <td></td>
-                    <td><b>Owner</b></td>
-                    <td><b>Group</b></td>
-                    <td><b>Other</b></td>
-                </tr>
-                <tr>
-                    <td style="text-align: right"><b>Read</b></td>
-                    <td><label><input type="checkbox" name="ur" value="1"<?php echo ($mode & 00400) ? ' checked' : '' ?>></label></td>
-                    <td><label><input type="checkbox" name="gr" value="1"<?php echo ($mode & 00040) ? ' checked' : '' ?>></label></td>
-                    <td><label><input type="checkbox" name="or" value="1"<?php echo ($mode & 00004) ? ' checked' : '' ?>></label></td>
-                </tr>
-                <tr>
-                    <td style="text-align: right"><b>Write</b></td>
-                    <td><label><input type="checkbox" name="uw" value="1"<?php echo ($mode & 00200) ? ' checked' : '' ?>></label></td>
-                    <td><label><input type="checkbox" name="gw" value="1"<?php echo ($mode & 00020) ? ' checked' : '' ?>></label></td>
-                    <td><label><input type="checkbox" name="ow" value="1"<?php echo ($mode & 00002) ? ' checked' : '' ?>></label></td>
-                </tr>
-                <tr>
-                    <td style="text-align: right"><b>Execute</b></td>
-                    <td><label><input type="checkbox" name="ux" value="1"<?php echo ($mode & 00100) ? ' checked' : '' ?>></label></td>
-                    <td><label><input type="checkbox" name="gx" value="1"<?php echo ($mode & 00010) ? ' checked' : '' ?>></label></td>
-                    <td><label><input type="checkbox" name="ox" value="1"<?php echo ($mode & 00001) ? ' checked' : '' ?>></label></td>
-                </tr>
-            </table>
+                    <table class="table compact-table">
+                        <tr>
+                            <td></td>
+                            <td><b><?php echo lng('Owner') ?></b></td>
+                            <td><b><?php echo lng('Group') ?></b></td>
+                            <td><b><?php echo lng('Other') ?></b></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right"><b><?php echo lng('Read') ?></b></td>
+                            <td><label><input type="checkbox" name="ur" value="1"<?php echo ($mode & 00400) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="gr" value="1"<?php echo ($mode & 00040) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="or" value="1"<?php echo ($mode & 00004) ? ' checked' : '' ?>></label></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right"><b><?php echo lng('Write') ?></b></td>
+                            <td><label><input type="checkbox" name="uw" value="1"<?php echo ($mode & 00200) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="gw" value="1"<?php echo ($mode & 00020) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="ow" value="1"<?php echo ($mode & 00002) ? ' checked' : '' ?>></label></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right"><b><?php echo lng('Execute') ?></b></td>
+                            <td><label><input type="checkbox" name="ux" value="1"<?php echo ($mode & 00100) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="gx" value="1"<?php echo ($mode & 00010) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="ox" value="1"<?php echo ($mode & 00001) ? ' checked' : '' ?>></label></td>
+                        </tr>
+                    </table>
 
-            <p>
-                <button type="submit" class="btn"><i class="fa fa-check-circle"></i> Change</button> &nbsp;
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> Cancel</a></b>
-            </p>
-
-        </form>
-
+                    <p>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-check-circle"></i> <?php echo lng('Change') ?></button> &nbsp;
+                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
+                    </p>
+                </form>
+            </div>
+        </div>
     </div>
     <?php
     fm_show_footer();
@@ -1241,19 +1422,19 @@ $all_files_size = 0;
             <thead class="thead-white">
             <tr>
                 <?php if (!FM_READONLY): ?>
-                    <th style="width:3%">
+                    <th style="width:3%" class="custom-checkbox-header">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="js-select-all-items" onclick="checkbox_toggle()">
                             <label class="custom-control-label" for="js-select-all-items"></label>
                         </div>
                     </th><?php endif; ?>
-                <th>Name</th>
-                <th>Size</th>
-                <th>Modified</th>
+                <th><?php echo lng('Name') ?></th>
+                <th><?php echo lng('Size') ?></th>
+                <th><?php echo lng('Modified') ?></th>
                 <?php if (!FM_IS_WIN): ?>
-                    <th>Perms</th>
-                    <th>Owner</th><?php endif; ?>
-                <th>Actions</th>
+                    <th><?php echo lng('Perms') ?></th>
+                    <th><?php echo lng('Owner') ?></th><?php endif; ?>
+                <th><?php echo lng('Actions') ?></th>
             </tr>
             </thead>
             <?php
@@ -1262,7 +1443,7 @@ $all_files_size = 0;
                 ?>
                 <tr><?php if (!FM_READONLY): ?>
                     <td class="nosort"></td><?php endif; ?>
-                    <td class="border-0"><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left"></i> ..</a></td>
+                    <td class="border-0"><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
@@ -1289,7 +1470,7 @@ $all_files_size = 0;
                 ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
-                        <td>
+                        <td class="custom-checkbox-td">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="<?php echo $ii ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
                             <label class="custom-control-label" for="<?php echo $ii ?>"></label>
@@ -1299,7 +1480,7 @@ $all_files_size = 0;
                         <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
                     </td>
-                    <td>Folder</td>
+                    <td><?php echo lng('Folder') ?></td>
                     <td><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN): ?>
                         <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
@@ -1307,11 +1488,11 @@ $all_files_size = 0;
                         <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
-                            <a title="Delete" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete folder?');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                            <a title="Rename" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                            <a title="Copy to..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete folder?');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
-                        <a title="Direct link" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        <a title="<?php echo lng('DirectLink')?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                     </td>
                 </tr>
                 <?php
@@ -1338,7 +1519,7 @@ $all_files_size = 0;
                 ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
-                        <td>
+                        <td class="custom-checkbox-td">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="<?php echo $ik ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
                             <label class="custom-control-label" for="<?php echo $ik ?>"></label>
@@ -1357,13 +1538,13 @@ $all_files_size = 0;
                     <?php endif; ?>
                     <td class="inline-actions">
                         <?php if (!FM_READONLY): ?>
-                            <a title="Delete" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete file?');"><i class="fa fa-trash-o"></i></a>
-                            <a title="Rename" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
-                            <a title="Copy to..."
+                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete file?');"><i class="fa fa-trash-o"></i></a>
+                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
+                            <a title="<?php echo lng('CopyTo') ?>..."
                                href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
-                        <a title="Direct link" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
-                        <a title="Download" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
+                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
+                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
                     </td>
                 </tr>
                 <?php
@@ -1401,20 +1582,20 @@ $all_files_size = 0;
         <div class="row">
             <div class="col-xs-12 col-sm-9">
                 <ul class="list-inline footer-action">
-                    <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> Select all</a></li>
-                    <li class="list-inline-item"><a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> Unselect all</a></li>
-                    <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> Invert selection</a></li>
+                    <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a></li>
+                    <li class="list-inline-item"><a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a></li>
+                    <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a></li>
                     <li class="list-inline-item"><input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('Delete selected files and folders?')">
-                        <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> Delete </a></li>
+                        <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> <?php echo lng('Delete') ?> </a></li>
                     <li class="list-inline-item"><input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('Create archive?')">
-                        <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> Zip </a></li>
+                        <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Zip') ?> </a></li>
                     <li class="list-inline-item"><input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('Create archive?')">
-                        <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> Tar </a></li>
+                        <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a></li>
                     <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
-                        <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> Copy </a></li>
+                        <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
                 </ul>
             </div>
-            <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right" style="color:silver">Tiny File Manager v2.1</a></div>
+            <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right" style="color:silver">Tiny File Manager v2.2</a></div>
 
     <?php endif; ?>
 </form>
@@ -1755,6 +1936,21 @@ function fm_convert_win($filename)
         $filename = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $filename);
     }
     return $filename;
+}
+
+/**
+ * @param $obj
+ * @return array
+ */
+function fm_object_to_array($obj)
+{
+    if (!is_object($obj) && !is_array($obj)) {
+        return $obj;
+    }
+    if (is_object($obj)) {
+        $obj = get_object_vars($obj);
+    }
+    return array_map('fm_object_to_array', $obj);
 }
 
 /**
@@ -2218,6 +2414,61 @@ class FM_Zipper_Tar
     }
 }
 
+
+
+/**
+ * Save Configuration
+ */
+ class FM_Config
+{
+     var $data;
+
+    function __construct()
+    {
+        global $root_path, $root_url, $CONFIG;
+        $fm_url = $root_url.$_SERVER["PHP_SELF"];
+        $this->data = array(
+            'lang' => 'en',
+            'error_reporting' => true,
+            'show_hidden' => true
+        );
+        $data = false;
+        if (strlen($CONFIG)) {
+            $data = fm_object_to_array(json_decode($CONFIG));
+        } else {
+            $msg = 'Tiny File Manager<br>Error: Cannot load configuration';
+            if (substr($fm_url, -1) == '/') {
+                $fm_url = rtrim($fm_url, '/');
+                $msg .= '<br>';
+                $msg .= '<br>Seems like you have a trailing slash on the URL.';
+                $msg .= '<br>Try this link: <a href="' . $fm_url . '">' . $fm_url . '</a>';
+            }
+            die($msg);
+        }
+        if (is_array($data) && count($data)) $this->data = $data;
+        else $this->save();
+    }
+
+    function save()
+    {
+        global $root_path;
+        $fm_file = $root_path.$_SERVER["PHP_SELF"];
+        $var_name = '$CONFIG';
+        $var_value = var_export(json_encode($this->data), true);
+        $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration".chr(13) . chr(10)."$var_name = $var_value;" . chr(13) . chr(10);
+        if (file_exists($fm_file)) {
+            $lines = file($fm_file);
+            if ($fh = @fopen($fm_file, "w")) {
+                @fputs($fh, $config_string, strlen($config_string));
+                for ($x = 3; $x < count($lines); $x++) {
+                    @fputs($fh, $lines[$x], strlen($lines[$x]));
+                }
+                @fclose($fh);
+            }
+        }
+    }
+}
+
 //--- templates functions
 
 /**
@@ -2229,7 +2480,7 @@ function fm_show_nav_path($path)
     global $lang;
     ?>
     <nav class="navbar navbar-expand-md fixed-top navbar-light bg-white mb-4 main-nav">
-        <a class="navbar-brand" href=""> File Manager </a>
+        <a class="navbar-brand" href=""> <?php echo lng('AppTitle') ?> </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -2238,7 +2489,7 @@ function fm_show_nav_path($path)
             <?php
             $path = fm_clean_path($path);
             $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
-            $sep = '<i class="fa fa-caret-right"></i>';
+            $sep = '<i class="bread-crumb"> / </i>';
             if ($path != '') {
                 $exploded = explode('/', $path);
                 $count = count($exploded);
@@ -2258,25 +2509,28 @@ function fm_show_nav_path($path)
                 <ul class="navbar-nav mr-auto float-right">
                     <?php if (!FM_READONLY): ?>
                     <li class="nav-item mr-2">
-                        <div class="input-group input-group-sm mr-1">
-                            <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-addon2" id="search-addon">
+                        <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
+                            <input type="text" class="form-control" placeholder="Search" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
                             <div class="input-group-append">
                                 <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
                             </div>
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a title="Upload files" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> Upload</a>
+                        <a title="<?php echo lng('Upload') ?>" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php echo lng('Upload') ?></a>
                     </li>
                     <li class="nav-item">
-                        <a title="New folder" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> New Item</a>
+                        <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
                     </li>
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
-                        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php echo $_SESSION['logged'] ?></a>
+                        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php if(isset($_SESSION['logged'])) { echo $_SESSION['logged']; } ?></a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink-5">
-                            <a title="Logout" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> Sign out</a>
+                            <?php if (!FM_READONLY): ?>
+                            <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
+                            <?php endif ?>
+                            <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>
                         </div>
                     </li>
                     <?php endif; ?>
@@ -2313,7 +2567,7 @@ header("Pragma: no-cache");
 
 global $lang;
 ?>
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -2322,83 +2576,31 @@ global $lang;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
+    <link rel="icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
     <title>H3K | Tiny File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
-        body.fm-login-page {
-            background-color: #f7f9fb;
-            font-size: 14px;
-        }
-        .fm-login-page .brand {
-            width: 121px;
-            overflow: hidden;
-            margin: 0 auto;
-            margin: 40px auto;
-            margin-bottom: 25px;
-            position: relative;
-            z-index: 1;
-        }
-        .fm-login-page .brand img {
-            width: 100%;
-        }
-        .fm-login-page .card-wrapper {
-            width: 360px;
-        }
-        .fm-login-page .card {
-            border-color: transparent;
-            box-shadow: 0 4px 8px rgba(0,0,0,.05);
-        }
-        .fm-login-page .card-title {
-            margin-bottom: 1.5rem;
-            font-size: 24px;
-            font-weight: 300;
-            letter-spacing: -.5px;
-        }
-        .fm-login-page .form-control {
-            border-width: 2.3px;
-        }
-        .fm-login-page .form-group label {
-            width: 100%;
-        }
-        .fm-login-page .btn.btn-block {
-            padding: 12px 10px;
-        }
-        .fm-login-page .footer {
-            margin: 40px 0;
-            color: #888;
-            text-align: center;
-        }
+        body.fm-login-page{background-color:#f7f9fb;font-size:14px}
+        .fm-login-page .brand{width:121px;overflow:hidden;margin:0 auto;margin:40px auto;margin-bottom:0;position:relative;z-index:1}
+        .fm-login-page .brand img{width:100%}
+        .fm-login-page .card-wrapper{width:360px}
+        .fm-login-page .card{border-color:transparent;box-shadow:0 4px 8px rgba(0,0,0,.05)}
+        .fm-login-page .card-title{margin-bottom:1.5rem;font-size:24px;font-weight:300;letter-spacing:-.5px}
+        .fm-login-page .form-control{border-width:2.3px}
+        .fm-login-page .form-group label{width:100%}
+        .fm-login-page .btn.btn-block{padding:12px 10px}
+        .fm-login-page .footer{margin:40px 0;color:#888;text-align:center}
         @media screen and (max-width: 425px) {
-            .fm-login-page .card-wrapper {
-                width: 90%;
-                margin: 0 auto;
-            }
+            .fm-login-page .card-wrapper{width:90%;margin:0 auto}
         }
         @media screen and (max-width: 320px) {
-            .fm-login-page .card.fat {
-                padding: 0;
-            }
-            .fm-login-page .card.fat .card-body {
-                padding: 15px;
-            }
+            .fm-login-page .card.fat{padding:0}
+            .fm-login-page .card.fat .card-body{padding:15px}
         }
-        .message {
-            padding: 4px 7px;
-            border: 1px solid #ddd;
-            background-color: #fff
-        }
-        .message.ok {
-            border-color: green;
-            color: green
-        }
-        .message.error {
-            border-color: red;
-            color: red
-        }
-        .message.alert {
-            border-color: orange;
-            color: orange
-        }
+        .message{padding:4px 7px;border:1px solid #ddd;background-color:#fff}
+        .message.ok{border-color:green;color:green}
+        .message.error{border-color:red;color:red}
+        .message.alert{border-color:orange;color:orange}
     </style>
 </head>
 <body class="fm-login-page">
@@ -2434,7 +2636,7 @@ header("Pragma: no-cache");
 
 global $lang;
 ?>
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -2443,19 +2645,22 @@ global $lang;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
+    <link rel="icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
     <title>H3K | Tiny File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
     <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
-        <link rel="stylesheet"
-              href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
     <?php endif; ?>
     <style>
         body {
             margin-top: 55px;
-            font: 13px/16px Tahoma, Arial, sans-serif;
+            font-size: 14px;
             color: #222;
             background: #F7F7F7;
+        }
+        a:hover, a:visited, a:focus {
+            text-decoration: none !important;
         }
         .filename, td, th {
             white-space: nowrap
@@ -2469,20 +2674,30 @@ global $lang;
         }
         .nav-item.avatar a > i {
             font-size: 15px;
-            vertical-align: bottom;
         }
         .nav-item.avatar .dropdown-menu a {
             font-size: 13px;
+        }
+        #search-addon {
+            font-size: 12px;
+            border-right-width: 0;
         }
         #search-addon2 {
             background: transparent;
             border-left: 0;
         }
-        #main-table a {
-            text-decoration: none;
+        .bread-crumb {
+            color: #cccccc;
+            font-style: normal;
+        }
+        #main-table .filename a {
+            color: #222222;
         }
         .table td, .table th {
             vertical-align: middle !important;
+        }
+        .table .custom-checkbox-td .custom-control.custom-checkbox, .table .custom-checkbox-header .custom-control.custom-checkbox {
+            padding: 0;
         }
         .hidden {
             display: none
@@ -2505,7 +2720,7 @@ global $lang;
             color: #ececec
         }
         .fa.fa-home {
-            font-size: 1.2em;
+            font-size: 1.3em;
             vertical-align: bottom
         }
         .path {
@@ -2611,7 +2826,7 @@ global $lang;
         .edit-file-actions {
             top: 0;
             background: #fff;
-            padding: 10px;
+            padding: 6px;
             z-index: 9999;
         }
         .edit-file-actions > a, .edit-file-actions > button {
@@ -2641,7 +2856,7 @@ global $lang;
             content: "\f114"
         }
         i.fa.fa-folder-o {
-            color: #eeaf4b
+            color: #0157b3
         }
         i.fa.fa-picture-o {
             color: #26b99a
@@ -2656,7 +2871,7 @@ global $lang;
             color: #f36fa0
         }
         i.fa.fa-file-code-o {
-            color: #ec6630
+            color: #007bff
         }
         i.fa.fa-code {
             color: #cc4b4c
@@ -2673,7 +2888,12 @@ global $lang;
         i.fa.fa-file-powerpoint-o {
             color: #f6712e
         }
+        i.go-back {
+            font-size: 1.2em;
+            color: #007bff;
+        }
         .main-nav {
+            padding: 0.2rem 1rem;
             box-shadow: 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12), 0 2px 4px -1px rgba(0, 0, 0, .2)
         }
         .dataTables_filter {
@@ -2683,25 +2903,35 @@ global $lang;
             cursor: pointer;
             background-repeat: no-repeat;
             background-position: center right;
-            background-image: url(https://cdn.datatables.net/1.10.19/images/sort_both.png);
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAQAAADYWf5HAAAAkElEQVQoz7XQMQ5AQBCF4dWQSJxC5wwax1Cq1e7BAdxD5SL+Tq/QCM1oNiJidwox0355mXnG/DrEtIQ6azioNZQxI0ykPhTQIwhCR+BmBYtlK7kLJYwWCcJA9M4qdrZrd8pPjZWPtOqdRQy320YSV17OatFC4euts6z39GYMKRPCTKY9UnPQ6P+GtMRfGtPnBCiqhAeJPmkqAAAAAElFTkSuQmCC');
         }
         table.dataTable thead .sorting_asc {
             cursor: pointer;
             background-repeat: no-repeat;
             background-position: center right;
-            background-image: url(https://cdn.datatables.net/1.10.19/images/sort_asc.png);
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAByUDbMAAAAZ0lEQVQ4y2NgGLKgquEuFxBPAGI2ahhWCsS/gDibUoO0gPgxEP8H4ttArEyuQYxAPBdqEAxPBImTY5gjEL9DM+wTENuQahAvEO9DMwiGdwAxOymGJQLxTyD+jgWDxCMZRsEoGAVoAADeemwtPcZI2wAAAABJRU5ErkJggg==');
         }
         table.dataTable thead .sorting_desc {
             cursor: pointer;
             background-repeat: no-repeat;
             background-position: center right;
-            background-image: url(https://cdn.datatables.net/1.10.19/images/sort_desc.png);
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAByUDbMAAAAZUlEQVQ4y2NgGAWjYBSggaqGu5FA/BOIv2PBIPFEUgxjB+IdQPwfC94HxLykus4GiD+hGfQOiB3J8SojEE9EM2wuSJzcsFMG4ttQgx4DsRalkZENxL+AuJQaMcsGxBOAmGvopk8AVz1sLZgg0bsAAAAASUVORK5CYII=');
         }
-        table.dataTable thead tr:first-child th:first-child{
+        table.dataTable thead tr:first-child th.custom-checkbox-header:first-child{
             background-image: none;
         }
         .footer-action li {
             margin-bottom: 10px;
+        }
+        .app-v-title {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: -.5px;
+            text-transform: uppercase;
+        }
+        hr.custom-hr {
+            border-top: 1px dashed #8c8b8b;
+            border-bottom: 1px dashed #fff;
         }
     </style>
 </head>
@@ -2713,30 +2943,30 @@ global $lang;
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newItemModalLabel"><i class="fa fa-plus-square fa-fw"></i>Create New Item</h5>
+                    <h5 class="modal-title" id="newItemModalLabel"><i class="fa fa-plus-square fa-fw"></i><?php echo lng('CreateNewItem') ?></h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p><label for="newfile">Item Type </label></p>
+                    <p><label for="newfile"><?php echo lng('ItemType') ?> </label></p>
 
                     <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" id="customRadioInline1" name="newfile" value="file" class="custom-control-input">
-                        <label class="custom-control-label" for="customRadioInline1">File</label>
+                        <label class="custom-control-label" for="customRadioInline1"><?php echo lng('File') ?></label>
                     </div>
 
                     <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" id="customRadioInline2" name="newfile" value="folder" class="custom-control-input" checked="">
-                        <label class="custom-control-label" for="customRadioInline2">Folder</label>
+                        <label class="custom-control-label" for="customRadioInline2"><?php echo lng('Folder') ?></label>
                     </div>
 
-                    <p class="mt-3"><label for="newfilename">Item Name </label></p>
+                    <p class="mt-3"><label for="newfilename"><?php echo lng('ItemName') ?> </label></p>
                     <input type="text" name="newfilename" id="newfilename" value="" class="form-control">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;">Create Now</button>
+                    <button type="button" class="btn btn-outline-primary" data-dismiss="modal"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></button>
+                    <button type="button" class="btn btn-success" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;"><i class="fa fa-check-circle"></i> <?php echo lng('CreateNow') ?></button>
                 </div>
             </div>
         </div>
@@ -2821,13 +3051,68 @@ global $lang;
     }
 
     /**
+     * Get latest release from git repo
+     */
+    function latest_release_info() {
+        $.getJSON("https://api.github.com/repos/prasathmani/tinyfilemanager/releases/latest").done(function(release) {
+            if(release) {
+                let _html = '<button type="button" class="btn btn-light"> Download '+ release.name +'<span class="badge badge-light"> '+release.tag_name+'</span></button>'+
+                    '<div class="btn-group" role="group" aria-label="Download latest">\n' +
+                    '<a href="'+ release.zipball_url +'"target="_blank" class="btn btn-outline-secondary">Zip</a>\n' +
+                    '<a href="'+ release.tarball_url +'" target="_blank" class="btn btn-outline-secondary">Tar</a></div>';
+                $("#js-download-latest").html(_html);
+            }
+        });
+    }
+
+    /**
+     * Save Settings
+     * @param Object $this
+     */
+    function save_settings($this) {
+        let form = $($this);
+        $.ajax({
+            type: form.attr('method'),
+            url: form.attr('action'),
+            data: form.serialize()+"&ajax="+true,
+            success: function (data) {
+                if(data) {
+                    window.location.reload();
+                }
+            }
+        });
+        return false;
+    }
+
+    /**
+     * Create new password hash
+     * @param Object $this
+     */
+    function new_password_hash($this) {
+        let form = $($this);
+        let $pwd = $("#js-pwd-result");
+        $pwd.val('');
+        $.ajax({
+            type: form.attr('method'),
+            url: form.attr('action'),
+            data: form.serialize()+"&ajax="+true,
+            success: function (data) {
+                if(data) {
+                    $pwd.val(data);
+                }
+            }
+        });
+        return false;
+    }
+
+    /**
      * jQuery Document Ready Event
      */
     $(document).ready( function () {
         //dataTable init
         var $table = $('#main-table'),
             tableLng = $table.find('th').length,
-            _targets = (tableLng && tableLng == 7 ) ? [0, 4,5,6] : [0,4],
+            _targets = (tableLng && tableLng == 7 ) ? [0, 4,5,6] : tableLng == 5 ? [0,4] : [3],
             mainTable = $('#main-table').DataTable({
             "paging":   false,
             "info":     false,
@@ -2899,6 +3184,77 @@ function fm_show_image($img)
     exit;
 }
 
+
+/**
+ * Language Translation System
+ * @param string $txt
+ * @return string
+ */
+function lng($txt) {
+    global $lang;
+
+    // English Language
+    $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
+    $tr['en']['Login']          = 'Sign in';                $tr['en']['Username']           = 'Username';
+    $tr['en']['Password']       = 'Password';               $tr['en']['Logout']             = 'Sign Out';
+    $tr['en']['Move']           = 'Move';                   $tr['en']['Copy']               = 'Copy';
+    $tr['en']['Save']           = 'Save';                   $tr['en']['SelectAll']          = 'Select all';
+    $tr['en']['UnSelectAll']    = 'Unselect all';           $tr['en']['File']               = 'File';
+    $tr['en']['Back']           = 'Back';                   $tr['en']['Size']               = 'Size';
+    $tr['en']['Perms']          = 'Perms';                  $tr['en']['Modified']           = 'Modified';
+    $tr['en']['Owner']          = 'Owner';                  $tr['en']['Search']             = 'Search';
+    $tr['en']['NewItem']        = 'New Item';               $tr['en']['Folder']             = 'Folder';
+    $tr['en']['Delete']         = 'Delete';                 $tr['en']['Rename']             = 'Rename';
+    $tr['en']['CopyTo']         = 'Copy to';                $tr['en']['DirectLink']         = 'Direct link';
+    $tr['en']['UploadingFiles'] = 'Uploading files';        $tr['en']['ChangePermissions']  = 'Change Permissions';
+    $tr['en']['Copying']        = 'Copying';                $tr['en']['CreateNewItem']      = 'Create New Item';
+    $tr['en']['Name']           = 'Name';                   $tr['en']['AdvancedEditor']     = 'Advanced Editor';
+    $tr['en']['RememberMe']     = 'Remember Me';            $tr['en']['Actions']            = 'Actions';
+    $tr['en']['Upload']         = 'Upload';                 $tr['en']['Cancel']             = 'Cancel';
+    $tr['en']['InvertSelection']= 'Invert Selection';       $tr['en']['DestinationFolder']  = 'Destination Folder';
+    $tr['en']['ItemType']       = 'Item Type';              $tr['en']['ItemName']           = 'Item Name';
+    $tr['en']['CreateNow']      = 'Create Now';             $tr['en']['Download']           = 'Download';
+    $tr['en']['Open']           = 'Open';                   $tr['en']['UnZip']              = 'UnZip';
+    $tr['en']['UnZipToFolder']  = 'UnZip to folder';        $tr['en']['Edit']               = 'Edit';
+    $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
+    $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
+    $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
+    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
+
+    // French Language
+    $tr['fr']['AppName']        = 'Tiny File Manager';      $tr['fr']['AppTitle']           = 'File Manager';
+    $tr['fr']['Login']          = 'Connexion';              $tr['fr']['Username']           = 'Utilisateur';
+    $tr['fr']['Password']       = 'Mot de passe';           $tr['fr']['Logout']             = 'Déconnexion';
+    $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Copy']               = 'Copier';
+    $tr['fr']['Save']           = 'Sauvegarder';            $tr['fr']['SelectAll']          = 'Tout sélectionner';
+    $tr['fr']['UnSelectAll']    = 'Tout déselectionner';    $tr['fr']['File']               = 'Fichier';
+    $tr['fr']['Back']           = 'Retour';                 $tr['fr']['Size']               = 'Taille';
+    $tr['fr']['Perms']          = 'Perms';                  $tr['fr']['Modified']           = 'Modification';
+    $tr['fr']['Owner']          = 'Propriétaire';           $tr['fr']['Search']             = 'Recherche';
+    $tr['fr']['NewItem']        = 'nouvel élément';         $tr['fr']['Folder']             = 'Dossier';
+    $tr['fr']['Delete']         = 'Supprimer';              $tr['fr']['Rename']             = 'Renommer';
+    $tr['fr']['CopyTo']         = 'Copier vers';            $tr['fr']['DirectLink']         = 'Lien direct';
+    $tr['fr']['UploadingFiles'] = 'Envoyer des fichiers';   $tr['fr']['ChangePermissions']  = 'Modifier les permissions';
+    $tr['fr']['Copying']        = 'Copier';                 $tr['fr']['CreateNewItem']      = 'Créer un nouvel élément';
+    $tr['fr']['Name']           = 'Nom';                    $tr['fr']['AdvancedEditor']     = 'Editeur avancé';
+    $tr['fr']['RememberMe']     = 'Souviens-toi de Moi';    $tr['fr']['Actions']            = 'Actes';
+    $tr['fr']['Upload']         = 'Envoyer';                $tr['fr']['Cancel']             = 'Annuler';
+    $tr['fr']['InvertSelection']= 'Inverser la sélection';  $tr['fr']['DestinationFolder']  = 'Dossier destination';
+    $tr['fr']['ItemType']       = 'Type d\'élement';        $tr['fr']['ItemName']           = 'Nom de l\'élément';
+    $tr['fr']['CreateNow']      = 'Créer';                  $tr['fr']['Download']           = 'Télécharger';
+    $tr['fr']['Open']           = 'Ouvrir';                 $tr['fr']['UnZip']              = 'Décompressez';
+    $tr['fr']['UnZipToFolder']  = 'Décompressez un dossier';$tr['fr']['Edit']               = 'Edition';
+    $tr['fr']['NormalEditor']   = 'Éditeur Normal';         $tr['fr']['BackUp']             = 'Sauvegarder';
+    $tr['fr']['SourceFolder']   = 'Dossier Source';         $tr['fr']['Files']              = 'Fichiers';
+    $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Change']             = 'Modifier';
+    $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'La langue';
+
+    if (!strlen($lang)) $lang = 'en';
+    if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
+    else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
+    else return "$txt";
+}
+
 /**
  * Get base64-encoded images
  * @return array
@@ -2906,100 +3262,13 @@ function fm_show_image($img)
 function fm_get_images()
 {
     return array(
-        'favicon' => 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ
-bWFnZVJlYWR5ccllPAAAAZVJREFUeNqkk79Lw0AUx1+uidTQim4Waxfpnl1BcHMR6uLkIF0cpYOI
-f4KbOFcRwbGTc0HQSVQQXCqlFIXgFkhIyvWS870LaaPYH9CDy8vdfb+fey930aSUMEvT6VHVzw8x
-rKUX3N3Hj/8M+cZ6GcOtBPl6KY5iAA7KJzfVWrfbhUKhALZtQ6myDf1+X5nsuzjLUmUOnpa+v5r1
-Z4ZDDfsLiwER45xDEATgOI6KntfDd091GidzC8vZ4vH1QQ09+4MSMAMWRREKPMhmsyr6voYmrnb2
-PKEizdEabUaeFCDKCCHAdV0wTVNFznMgpVqGlZ2cipzHGtKSZwCIZJgJwxB38KHT6Sjx21V75Jcn
-LXmGAKTRpGVZUx2dAqQzSEqw9kqwuGqONTufPrw37D8lQFxCvjgPXIixANLEGfwuQacMOC4kZz+q
-GdhJS550BjpRCdCbAJCMJRkMASEIg+4Bxz4JwAwDSEueAYDLIM+QrOk6GHiRxjXSkJY8KUCvdXZ6
-kbuvNx+mOcbN9taGBlpLAWf9nX8EGADoCfqkKWV/cgAAAABJRU5ErkJggg==',
-        'sprites' => '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
-RK5CYII=',
+        'favicon' => 'Qk04AgAAAAAAADYAAAAoAAAAEAAAABAAAAABABAAAAAAAAICAAASCwAAEgsAAAAAAAAAAAAAIQQhBCEEIQQhBCEEIQQhBCEEIQ
+        QhBCEEIQQhBCEEIQQhBCEEIQQhBHNO3n/ef95/vXetNSEEIQQhBCEEIQQhBCEEIQQhBCEEc07ef95/3n/ef95/1lohBCEEIQQhBCEEIQQhBCEEIQ
+        RzTt5/3n8hBDFG3n/efyEEIQQhBCEEIQQhBCEEIQQhBHNO3n/efyEEMUbef95/IQQhBCEEIQQhBCEEIQQhBCEErTVzTnNOIQQxRt5/3n8hBCEEIQ
+        QhBCEEIQQhBCEEIQQhBCEEIQQhBDFG3n/efyEEIQQhBCEEIQQhBCEEIQQhBCEEIQQxRt5/3n+cc2stIQQhBCEEIQQhBCEEIQQhBCEEIQQIIZxz3n
+        /ef5xzay0hBCEEIQQhBCEEIQQhBCEEIQQhBCEEIQQhBDFG3n/efyEEIQQhBCEEIQQhBCEEIQQhBK01c05zTiEEMUbef95/IQQhBCEEIQQhBCEEIQ
+        QhBCEEc07ef95/IQQxRt5/3n8hBCEEIQQhBCEEIQQhBCEEIQRzTt5/3n8hBDFG3n/efyEEIQQhBCEEIQQhBCEEIQQhBKUUOWfef95/3n/ef95/IQ
+        QhBCEEIQQhBCEEIQQhBCEEIQQhBJRW3n/ef95/3n8hBCEEIQQhBCEEIQQhBCEEIQQhBCEEIQQhBCEEIQQhBCEEIQQhBCEEIQQAAA=='
     );
 }
 
