@@ -3249,6 +3249,34 @@ function lng($txt) {
     $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Change']             = 'Modifier';
     $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'La langue';
 
+    // Italian Language
+    $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
+    $tr['en']['Login']          = 'Connettiti';             $tr['en']['Username']           = 'Username';
+    $tr['en']['Password']       = 'Password';               $tr['en']['Logout']             = 'Disconnettiti';
+    $tr['en']['Move']           = 'Sposta';                 $tr['en']['Copy']               = 'Copia';
+    $tr['en']['Save']           = 'Salva';                  $tr['en']['SelectAll']          = 'Seleziona tutto';
+    $tr['en']['UnSelectAll']    = 'Deseleziona tutto';      $tr['en']['File']               = 'File';
+    $tr['en']['Back']           = 'Indietro';               $tr['en']['Size']               = 'Dimensione';
+    $tr['en']['Perms']          = 'Permessi';               $tr['en']['Modified']           = 'Modificato';
+    $tr['en']['Owner']          = 'Proprietario';           $tr['en']['Search']             = 'Cerca';
+    $tr['en']['NewItem']        = 'Nuovo Elemento';         $tr['en']['Folder']             = 'Cartella';
+    $tr['en']['Delete']         = 'Elimina';                $tr['en']['Rename']             = 'Rinomina';
+    $tr['en']['CopyTo']         = 'Copia su';               $tr['en']['DirectLink']         = 'Link diretto';
+    $tr['en']['UploadingFiles'] = 'Caricamento file';       $tr['en']['ChangePermissions']  = 'Modifica Permessi';
+    $tr['en']['Copying']        = 'Copia in corso';         $tr['en']['CreateNewItem']      = 'Crea Nuovo Elemento';
+    $tr['en']['Name']           = 'Nome';                   $tr['en']['AdvancedEditor']     = 'Editor Avanzato';
+    $tr['en']['RememberMe']     = 'Ricordami';              $tr['en']['Actions']            = 'Azioni';
+    $tr['en']['Upload']         = 'Carica';                 $tr['en']['Cancel']             = 'Annulla';
+    $tr['en']['InvertSelection']= 'Inverti Selezione';      $tr['en']['DestinationFolder']  = 'Cartella di Destinazione';
+    $tr['en']['ItemType']       = 'Tipo Elemento';          $tr['en']['ItemName']           = 'Nome Elemento';
+    $tr['en']['CreateNow']      = 'Crea Adesso';            $tr['en']['Download']           = 'Scarica';
+    $tr['en']['Open']           = 'Apri';                   $tr['en']['UnZip']              = 'Decomprimi';
+    $tr['en']['UnZipToFolder']  = 'Decomprimi su cartella'; $tr['en']['Edit']               = 'Modifica';
+    $tr['en']['NormalEditor']   = 'Editor Normale';         $tr['en']['BackUp']             = 'Back-Up';
+    $tr['en']['SourceFolder']   = 'Cartella di Origine';    $tr['en']['Files']              = 'File';
+    $tr['en']['Move']           = 'Sposta';                 $tr['en']['Change']             = 'Cambia';
+    $tr['en']['Settings']       = 'Impostazioni';           $tr['en']['Language']           = 'Lingua';  
+    
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
     else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
