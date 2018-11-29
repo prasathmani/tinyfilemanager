@@ -3229,25 +3229,25 @@ function lng($txt) {
     $tr['fr']['Save']           = 'Sauvegarder';            $tr['fr']['SelectAll']          = 'Tout sélectionner';
     $tr['fr']['UnSelectAll']    = 'Tout déselectionner';    $tr['fr']['File']               = 'Fichier';
     $tr['fr']['Back']           = 'Retour';                 $tr['fr']['Size']               = 'Taille';
-    $tr['fr']['Perms']          = 'Perms';                  $tr['fr']['Modified']           = 'Modification';
+    $tr['fr']['Perms']          = 'Perms';                  $tr['fr']['Modified']           = 'Modifié le';
     $tr['fr']['Owner']          = 'Propriétaire';           $tr['fr']['Search']             = 'Recherche';
-    $tr['fr']['NewItem']        = 'nouvel élément';         $tr['fr']['Folder']             = 'Dossier';
+    $tr['fr']['NewItem']        = 'Nouvel Élément';         $tr['fr']['Folder']             = 'Dossier';
     $tr['fr']['Delete']         = 'Supprimer';              $tr['fr']['Rename']             = 'Renommer';
     $tr['fr']['CopyTo']         = 'Copier vers';            $tr['fr']['DirectLink']         = 'Lien direct';
     $tr['fr']['UploadingFiles'] = 'Envoyer des fichiers';   $tr['fr']['ChangePermissions']  = 'Modifier les permissions';
     $tr['fr']['Copying']        = 'Copier';                 $tr['fr']['CreateNewItem']      = 'Créer un nouvel élément';
     $tr['fr']['Name']           = 'Nom';                    $tr['fr']['AdvancedEditor']     = 'Editeur avancé';
-    $tr['fr']['RememberMe']     = 'Souviens-toi de Moi';    $tr['fr']['Actions']            = 'Actes';
+    $tr['fr']['RememberMe']     = 'Se rappeler de moi';     $tr['fr']['Actions']            = 'Actes';
     $tr['fr']['Upload']         = 'Envoyer';                $tr['fr']['Cancel']             = 'Annuler';
     $tr['fr']['InvertSelection']= 'Inverser la sélection';  $tr['fr']['DestinationFolder']  = 'Dossier destination';
     $tr['fr']['ItemType']       = 'Type d\'élement';        $tr['fr']['ItemName']           = 'Nom de l\'élément';
     $tr['fr']['CreateNow']      = 'Créer';                  $tr['fr']['Download']           = 'Télécharger';
     $tr['fr']['Open']           = 'Ouvrir';                 $tr['fr']['UnZip']              = 'Décompressez';
-    $tr['fr']['UnZipToFolder']  = 'Décompressez un dossier';$tr['fr']['Edit']               = 'Edition';
+    $tr['fr']['UnZipToFolder']  = 'Décompresser dans un dossier';$tr['fr']['Edit']          = 'Editeur';
     $tr['fr']['NormalEditor']   = 'Éditeur Normal';         $tr['fr']['BackUp']             = 'Sauvegarder';
     $tr['fr']['SourceFolder']   = 'Dossier Source';         $tr['fr']['Files']              = 'Fichiers';
     $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Change']             = 'Modifier';
-    $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'La langue';
+    $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'Langue';
 
     // Italian Language
     $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
