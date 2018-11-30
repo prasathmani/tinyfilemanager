@@ -80,7 +80,7 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 //available languages
 $lang_list = array(
     'en' => 'English',
-    'fr' => 'French',
+    'fr' => 'Français',
     'it' => 'Italiano'
 );
 
