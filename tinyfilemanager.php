@@ -1298,21 +1298,17 @@ if (isset($_GET['edit'])) {
 
     ?>
     <div class="path">
-        <div class="edit-file-actions col-xs-12 col-md-6 text-right">
-            <a title="Back"
-               href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
-            <a title="Backup"
-               href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
+        <div class="edit-file-actions col-12 text-right">
+            <a title="Back" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
+            <a title="Backup" class="btn btn-sm btn-outline-primary" href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
             <?php if ($is_text) { ?>
                 <?php if ($isNormalEditor) { ?>
-                    <a title="Advanced"
-                       href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> <?php echo lng('AdvancedEditor') ?></a>
-                    <button type="button" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
+                    <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> <?php echo lng('AdvancedEditor') ?></a>
+                    <button type="button" class="btn btn-sm btn-outline-primary name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
                     </button>
                 <?php } else { ?>
-                    <a title="Plain Editor"
-                       href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
-                    <button type="button" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
+                    <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
+                    <button type="button" class="btn btn-sm btn-outline-primary" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
                     </button>
                 <?php } ?>
             <?php } ?>
@@ -2699,6 +2695,7 @@ global $lang;
         }
         .table .custom-checkbox-td .custom-control.custom-checkbox, .table .custom-checkbox-header .custom-control.custom-checkbox {
             padding: 0;
+            min-width: 18px;
         }
         .hidden {
             display: none
@@ -2815,27 +2812,22 @@ global $lang;
             font-size: 1.2em;
             margin-right: 4px
         }
-        #editor, .edit-file-actions {
+        #editor {
             position: absolute;
             right: 30px
         }
         #editor {
-            top: 60px;
-            bottom: 5px;
+            top: 100px;
+            bottom: 10px;
             left: 30px
         }
-        .edit-file-actions {
-            top: 0;
-            background: #fff;
-            padding: 6px;
-            z-index: 9999;
+        @media (max-width:481px) {
+            #editor {
+                top: 150px;
+            }
         }
-        .edit-file-actions > a, .edit-file-actions > button {
-            background: #fff;
-            padding: 5px 15px;
-            cursor: pointer;
-            color: #296ea3;
-            border: 1px solid #296ea3
+        .edit-file-actions {
+            padding: 6px;
         }
         #normal-editor {
             border-radius: 3px;
