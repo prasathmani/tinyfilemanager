@@ -80,7 +80,7 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 //available languages
 $lang_list = array(
     'en' => 'English',
-    'fr' => 'French',
+    'fr' => 'Français',
     'it' => 'Italiano'
 );
 
@@ -150,7 +150,7 @@ if ($use_auth) {
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
-        if(function_exists(password_verify)) {
+        if(function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
                 $_SESSION['logged'] = $_POST['fm_usr'];
                 fm_set_msg('You are logged in');
@@ -3276,8 +3276,8 @@ function lng($txt) {
     $tr['it']['NormalEditor']   = 'Editor Normale';         $tr['it']['BackUp']             = 'Back-Up';
     $tr['it']['SourceFolder']   = 'Cartella di Origine';    $tr['it']['Files']              = 'File';
     $tr['it']['Move']           = 'Sposta';                 $tr['it']['Change']             = 'Cambia';
-    $tr['it']['Settings']       = 'Impostazioni';           $tr['it']['Language']           = 'Lingua';  
-    
+    $tr['it']['Settings']       = 'Impostazioni';           $tr['it']['Language']           = 'Lingua';
+
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
     else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
