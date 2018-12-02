@@ -81,7 +81,8 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 $lang_list = array(
     'en' => 'English',
     'fr' => 'Français',
-    'it' => 'Italiano'
+    'it' => 'Italiano',
+    'ru' => 'Russian'
 );
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
@@ -956,7 +957,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
         <div class="card mb-2">
             <h6 class="card-header">
                 <?php echo lng('Settings') ?>
-                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-times-circle"></i> <?php echo lng('Close')?></a>
+                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel')?></a>
             </h6>
             <div class="card-body">
                 <form id="js-settings-form" action="" method="post" data-type="ajax" onsubmit="return save_settings(this)">
@@ -3269,6 +3270,34 @@ function lng($txt) {
     $tr['it']['SourceFolder']   = 'Cartella di Origine';    $tr['it']['Files']              = 'File';
     $tr['it']['Move']           = 'Sposta';                 $tr['it']['Change']             = 'Cambia';
     $tr['it']['Settings']       = 'Impostazioni';           $tr['it']['Language']           = 'Lingua';
+
+    // Russian Language
+    $tr['ru']['AppName']        = 'Файловый менеджер';            $tr['ru']['AppTitle']           = 'Файловый менеджер';
+    $tr['ru']['Login']          = 'Войти';                        $tr['ru']['Username']           = 'Пользователь';
+    $tr['ru']['Password']       = 'Пароль';                       $tr['ru']['Logout']             = 'Выйти';
+    $tr['ru']['Move']           = 'Переместить';                  $tr['ru']['Copy']               = 'Копировать';
+    $tr['ru']['Save']           = 'Сохранить';                    $tr['ru']['SelectAll']          = 'Выбрать всё';
+    $tr['ru']['UnSelectAll']    = 'Отменить выбор';               $tr['ru']['File']               = 'Файл';
+    $tr['ru']['Back']           = 'Вернуться';                    $tr['ru']['Size']               = 'Размер';
+    $tr['ru']['Perms']          = 'Права доступа';                $tr['ru']['Modified']           = 'Обновление';
+    $tr['ru']['Owner']          = 'Создатель';                    $tr['ru']['Search']             = 'Поиск';
+    $tr['ru']['NewItem']        = 'Создать';                      $tr['ru']['Folder']             = 'Папка';
+    $tr['ru']['Delete']         = 'Удалить';                      $tr['ru']['Rename']             = 'Переименовать';
+    $tr['ru']['CopyTo']         = 'Скопировать в';                $tr['ru']['DirectLink']         = 'Ссылка';
+    $tr['ru']['UploadingFiles'] = 'Загрузка файлов';              $tr['ru']['ChangePermissions']  = 'Изменить права';
+    $tr['ru']['Copying']        = 'Копировать';                   $tr['ru']['CreateNewItem']      = 'Создать новый';
+    $tr['ru']['Name']           = 'Имя';                          $tr['ru']['AdvancedEditor']     = 'Улучшеный редактор';
+    $tr['ru']['RememberMe']     = 'Запомнить меня';               $tr['ru']['Actions']            = 'Действия';
+    $tr['ru']['Upload']         = 'Загрузить';                    $tr['ru']['Cancel']             = 'Отмена';
+    $tr['ru']['InvertSelection']= 'Обратная выборка';             $tr['ru']['DestinationFolder']  = 'Папка назначения';
+    $tr['ru']['ItemType']       = 'Тип элемента';                 $tr['ru']['ItemName']           = 'Имя элемента';
+    $tr['ru']['CreateNow']      = 'Создать сейчас';               $tr['ru']['Download']           = 'Загрузка';
+    $tr['ru']['Open']           = 'Открыть';                      $tr['ru']['UnZip']              = 'Разархивировать';
+    $tr['ru']['UnZipToFolder']  = 'Разархивировать в папку';      $tr['ru']['Edit']               = 'Редактировать';
+    $tr['ru']['NormalEditor']   = 'Стандартный редактор';         $tr['ru']['BackUp']             = 'Back Up';
+    $tr['ru']['SourceFolder']   = 'Путь папки';                   $tr['ru']['Files']              = 'Файлы';
+    $tr['ru']['Move']           = 'Переместить';                  $tr['ru']['Change']             = 'Изменения';
+    $tr['ru']['Settings']       = 'Свойства';                     $tr['ru']['Language']           = 'Язык';
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
