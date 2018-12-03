@@ -61,7 +61,8 @@ To enable/disable authentication set `$use_auth` to true or false.
 <li>:gift: Ability to compress, extract files (zip, tar)</li>
 <li>:sunglasses: Support user permissions - based on session and each user root folder mapping</li>
 <li>:floppy_disk: Copy direct file URL</li>
-<li>:pencil2: Edit text formats file using advanced editor</li>
+<li>:pencil2: Cloud9 IDE - Syntax highlighting for over 90+ languages, Over 35+ themes with your favorite programming style
+</li>
 <li>:page_facing_up: Google Drive viewer helps you preview PDF/DOC/XLS/PPT/etc. 25 MB can be previewed with the Google Drive viewer</li>
 <li>:zap: Backup files</li>
 <li>:mag_right: Search -  Search and Sorting using datatable js</li>

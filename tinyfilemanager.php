@@ -1188,7 +1188,7 @@ if (isset($_GET['view'])) {
                 if ($is_text && !FM_READONLY) {
                     ?>
                     <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?></a></b> &nbsp;
-                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('AdvancedEditor') ?></a></b> &nbsp;
+                    <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace" class="edit-file"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a></b> &nbsp;
                 <?php } ?>
                 <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a></b>
             </p>
@@ -1299,24 +1299,43 @@ if (isset($_GET['edit'])) {
 
     ?>
     <div class="path">
-        <div class="edit-file-actions col-12 text-right">
-            <a title="Back" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
-            <a title="Backup" class="btn btn-sm btn-outline-primary" href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
-            <?php if ($is_text) { ?>
-                <?php if ($isNormalEditor) { ?>
-                    <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-paper-plane"></i> <?php echo lng('AdvancedEditor') ?></a>
-                    <button type="button" class="btn btn-sm btn-outline-primary name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
-                    </button>
-                <?php } else { ?>
-                    <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
-                    <button type="button" class="btn btn-sm btn-outline-primary" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
-                    </button>
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 pt-1">
+                <div class="btn-toolbar" role="toolbar">
+                    <?php if (!$isNormalEditor) { ?>
+                        <div class="btn-group js-ace-toolbar">
+                            <button data-cmd="none" data-option="fullscreen" class="btn btn-sm btn-outline-secondary" id="js-ace-fullscreen" title="Fullscreen"><i class="fa fa-expand" title="Fullscreen"></i></button>
+                            <button data-cmd="find" class="btn btn-sm btn-outline-secondary" id="js-ace-search" title="Search"><i class="fa fa-search" title="Search"></i></button>
+                            <button data-cmd="undo" class="btn btn-sm btn-outline-secondary" id="js-ace-undo" title="Undo"><i class="fa fa-undo" title="Undo"></i></button>
+                            <button data-cmd="redo" class="btn btn-sm btn-outline-secondary" id="js-ace-redo" title="Redo"><i class="fa fa-repeat" title="Redo"></i></button>
+                            <button data-cmd="none" data-option="wrap" class="btn btn-sm btn-outline-secondary" id="js-ace-wordWrap" title="Word Wrap"><i class="fa fa-text-width" title="Word Wrap"></i></button>
+                            <button data-cmd="goToNo" class="btn btn-sm btn-outline-secondary" id="js-ace-goLine" title="Go To Line Number"><i class="fa fa-i-cursor" title="Go To Line Number"></i></button>
+                            <button data-cmd="none" data-option="help" class="btn btn-sm btn-outline-secondary" id="js-ace-goLine" title="Help"><i class="fa fa-question" title="Help"></i></button>
+                            <select id="js-ace-mode" data-type="mode" title="Select Document Type" class="btn-outline-secondary border-left-0 d-none d-sm-block"><option value="ace/mode/abap">ABAP</option><option value="ace/mode/actionscript">ActionScript</option><option value="ace/mode/ada">ADA</option><option value="ace/mode/apache_conf">Apache Conf</option><option value="ace/mode/asciidoc">AsciiDoc</option><option value="ace/mode/asl">ASL</option><option value="ace/mode/assembly_x86">Assembly x86</option><option value="ace/mode/apex">Apex</option><option value="ace/mode/batchfile">BatchFile</option><option value="ace/mode/c_cpp">C and C++</option><option value="ace/mode/clojure">Clojure</option><option value="ace/mode/cobol">Cobol</option><option value="ace/mode/coffee">CoffeeScript</option><option value="ace/mode/coldfusion">ColdFusion</option><option value="ace/mode/csharp">C#</option><option value="ace/mode/css">CSS</option><option value="ace/mode/curly">Curly</option><option value="ace/mode/d">D</option><option value="ace/mode/dart">Dart</option><option value="ace/mode/diff">Diff</option><option value="ace/mode/dockerfile">Dockerfile</option><option value="ace/mode/dot">Dot</option><option value="ace/mode/ejs">EJS</option><option value="ace/mode/erlang">Erlang</option><option value="ace/mode/fortran">Fortran</option><option value="ace/mode/fsharp">FSharp</option><option value="ace/mode/gitignore">Gitignore</option><option value="ace/mode/golang">Go</option><option value="ace/mode/graphqlschema">GraphQLSchema</option><option value="ace/mode/groovy">Groovy</option><option value="ace/mode/haml">HAML</option><option value="ace/mode/handlebars">Handlebars</option><option value="ace/mode/haskell">Haskell</option><option value="ace/mode/haskell_cabal">Haskell Cabal</option><option value="ace/mode/haxe">haXe</option><option value="ace/mode/hjson">Hjson</option><option value="ace/mode/html">HTML</option><option value="ace/mode/html_elixir">HTML (Elixir)</option><option value="ace/mode/html_ruby">HTML (Ruby)</option><option value="ace/mode/ini">INI</option><option value="ace/mode/io">Io</option><option value="ace/mode/jade">Jade</option><option value="ace/mode/java">Java</option><option value="ace/mode/javascript" selected>JavaScript</option><option value="ace/mode/json">JSON</option><option value="ace/mode/jsoniq">JSONiq</option><option value="ace/mode/jsp">JSP</option><option value="ace/mode/jsx">JSX</option><option value="ace/mode/less">LESS</option><option value="ace/mode/markdown">Markdown</option><option value="ace/mode/matlab">MATLAB</option><option value="ace/mode/mysql">MySQL</option><option value="ace/mode/objectivec">Objective-C</option><option value="ace/mode/pascal">Pascal</option><option value="ace/mode/perl">Perl</option><option value="ace/mode/perl6">Perl 6</option><option value="ace/mode/pgsql">pgSQL</option><option value="ace/mode/php_laravel_blade">PHP (Blade Template)</option><option value="ace/mode/php">PHP</option><option value="ace/mode/powershell">Powershell</option><option value="ace/mode/python">Python</option><option value="ace/mode/razor">Razor</option><option value="ace/mode/rdoc">RDoc</option><option value="ace/mode/rhtml">RHTML</option><option value="ace/mode/ruby">Ruby</option><option value="ace/mode/rust">Rust</option><option value="ace/mode/sass">SASS</option><option value="ace/mode/scad">SCAD</option><option value="ace/mode/scala">Scala</option><option value="ace/mode/scheme">Scheme</option><option value="ace/mode/scss">SCSS</option><option value="ace/mode/sh">SH</option><option value="ace/mode/sjs">SJS</option><option value="ace/mode/sql">SQL</option><option value="ace/mode/sqlserver">SQLServer</option><option value="ace/mode/stylus">Stylus</option><option value="ace/mode/svg">SVG</option><option value="ace/mode/swift">Swift</option><option value="ace/mode/terraform">Terraform</option><option value="ace/mode/tex">Tex</option><option value="ace/mode/text">Text</option><option value="ace/mode/textile">Textile</option><option value="ace/mode/toml">Toml</option><option value="ace/mode/tsx">TSX</option><option value="ace/mode/typescript">Typescript</option><option value="ace/mode/vbscript">VBScript</option><option value="ace/mode/xml">XML</option><option value="ace/mode/xquery">XQuery</option><option value="ace/mode/yaml">YAML</option><option value="ace/mode/django">Django</option></select>
+                            <select id="js-ace-theme" data-type="theme" title="Select Theme" class="btn-outline-secondary border-left-0 d-none d-sm-block"><optgroup label="Bright"><option value="ace/theme/chrome">Chrome</option><option value="ace/theme/clouds">Clouds</option><option value="ace/theme/crimson_editor">Crimson Editor</option><option value="ace/theme/dawn">Dawn</option><option value="ace/theme/dreamweaver">Dreamweaver</option><option value="ace/theme/eclipse">Eclipse</option><option value="ace/theme/github">GitHub</option><option value="ace/theme/iplastic">IPlastic</option><option value="ace/theme/solarized_light">Solarized Light</option><option value="ace/theme/textmate">TextMate</option><option value="ace/theme/tomorrow">Tomorrow</option><option value="ace/theme/xcode">XCode</option><option value="ace/theme/kuroir">Kuroir</option><option value="ace/theme/katzenmilch">KatzenMilch</option><option value="ace/theme/sqlserver">SQL Server</option></optgroup><optgroup label="Dark"><option value="ace/theme/ambiance">Ambiance</option><option value="ace/theme/chaos">Chaos</option><option value="ace/theme/clouds_midnight">Clouds Midnight</option><option value="ace/theme/dracula">Dracula</option><option value="ace/theme/cobalt">Cobalt</option><option value="ace/theme/gruvbox">Gruvbox</option><option value="ace/theme/gob">Green on Black</option><option value="ace/theme/idle_fingers">idle Fingers</option><option value="ace/theme/kr_theme">krTheme</option><option value="ace/theme/merbivore">Merbivore</option><option value="ace/theme/merbivore_soft">Merbivore Soft</option><option value="ace/theme/mono_industrial">Mono Industrial</option><option value="ace/theme/monokai">Monokai</option><option value="ace/theme/pastel_on_dark">Pastel on dark</option><option value="ace/theme/solarized_dark">Solarized Dark</option><option value="ace/theme/terminal">Terminal</option><option value="ace/theme/tomorrow_night">Tomorrow Night</option><option value="ace/theme/tomorrow_night_blue">Tomorrow Night Blue</option><option value="ace/theme/tomorrow_night_bright">Tomorrow Night Bright</option><option value="ace/theme/tomorrow_night_eighties">Tomorrow Night 80s</option><option value="ace/theme/twilight">Twilight</option><option value="ace/theme/vibrant_ink">Vibrant Ink</option></optgroup></select>
+                        </div>
+                    <?php } ?>
+                </div>
+            </div>
+            <div class="edit-file-actions col-xs-12 col-sm-6 text-right pt-1">
+                <a title="Back" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
+                <a title="Backup" class="btn btn-sm btn-outline-primary" href="javascript:backup('<?php echo urlencode($path) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
+                <?php if ($is_text) { ?>
+                    <?php if ($isNormalEditor) { ?>
+                        <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
+                        <button type="button" class="btn btn-sm btn-outline-primary name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
+                        </button>
+                    <?php } else { ?>
+                        <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
+                        <button type="button" class="btn btn-sm btn-outline-primary" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
+                        </button>
+                    <?php } ?>
                 <?php } ?>
-            <?php } ?>
+            </div>
         </div>
         <?php
         if ($is_text && $isNormalEditor) {
-            echo '<textarea id="normal-editor" rows="33" cols="120" style="width: 99.5%;">' . htmlspecialchars($content) . '</textarea>';
+            echo '<textarea class="mt-2" id="normal-editor" rows="33" cols="120" style="width: 99.5%;">' . htmlspecialchars($content) . '</textarea>';
         } elseif ($is_text) {
             echo '<div id="editor" contenteditable="true">' . htmlspecialchars($content) . '</div>';
         } else {
@@ -2646,7 +2665,7 @@ global $lang;
     <link rel="icon" href="<?php echo FM_SELF_URL ?>?img=favicon" type="image/png">
     <title>H3K | Tiny File Manager</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
     <?php endif; ?>
@@ -2815,20 +2834,15 @@ global $lang;
         }
         #editor {
             position: absolute;
-            right: 30px
-        }
-        #editor {
+            right: 15px;
             top: 100px;
-            bottom: 10px;
-            left: 30px
+            bottom: 15px;
+            left: 15px
         }
         @media (max-width:481px) {
             #editor {
                 top: 150px;
             }
-        }
-        .edit-file-actions {
-            padding: 6px;
         }
         #normal-editor {
             border-radius: 3px;
@@ -2926,6 +2940,18 @@ global $lang;
         hr.custom-hr {
             border-top: 1px dashed #8c8b8b;
             border-bottom: 1px dashed #fff;
+        }
+        .btn.active.focus,
+        .btn.active:focus,
+        .btn.focus,
+        .btn.focus:active,
+        .btn:active:focus,
+        .btn:focus {
+            outline: 0 !important;
+            outline-offset: 0  !important;
+            background-image: none  !important;
+            -webkit-box-shadow: none !important;
+            box-shadow: none  !important;
         }
     </style>
 </head>
@@ -3132,7 +3158,56 @@ global $lang;
 <?php endif; ?>
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE): ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
-    <script>var editor = ace.edit("editor"); editor.getSession().setMode("ace/mode/javascript");</script>
+    <script>
+        var editor = ace.edit("editor");
+        editor.getSession().setMode("ace/mode/javascript");
+        //editor.setTheme("ace/theme/twilight"); //Dark Theme
+        function ace_commend (cmd) { editor.commands.exec(cmd, editor); }
+        editor.commands.addCommands([{
+            name: 'save',
+            bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+            exec: function(editor) {
+                edit_save(this, 'ace');
+            }
+        },{
+            name: 'goToNo',
+            bindKey: {win: 'Ctrl-G',  mac: 'Command-G'},
+            exec: function(editor) {
+                let x = parseInt(prompt("Enter a Line Number [1 - "+editor.session.getLength()+"]", "1"), 10);
+                editor.gotoLine(x);
+            }
+        }]);
+
+        $(".js-ace-toolbar").on("click", 'button', function(e){
+            e.preventDefault();
+            let cmdValue = $(this).attr("data-cmd");
+            let editorOption = $(this).attr("data-option");
+            if(cmdValue && cmdValue != "none") {
+                ace_commend(cmdValue);
+            } else if(editorOption) {
+                if(editorOption == "fullscreen") {
+                    (void 0!==document.fullScreenElement&&null===document.fullScreenElement||void 0!==document.msFullscreenElement&&null===document.msFullscreenElement||void 0!==document.mozFullScreen&&!document.mozFullScreen||void 0!==document.webkitIsFullScreen&&!document.webkitIsFullScreen)
+                    &&(editor.container.requestFullScreen?editor.container.requestFullScreen():editor.container.mozRequestFullScreen?editor.container.mozRequestFullScreen():editor.container.webkitRequestFullScreen?editor.container.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT):editor.container.msRequestFullscreen&&editor.container.msRequestFullscreen());
+                } else if(editorOption == "wrap") {
+                    let wrapStatus = (editor.getSession().getUseWrapMode()) ? false : true;
+                    editor.getSession().setUseWrapMode(wrapStatus);
+                } else if(editorOption == "help") {
+                    alert("Editor Shortcuts\n------------------\nSave (Ctrl + S)\nFind (Ctrl + F)\nUndo (Ctrl + Z)\nRedo (Ctrl + Y)\nGo to Line (Ctrl + G)\nMore - https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts");
+                }
+            }
+        });
+        $("select#js-ace-mode, select#js-ace-theme").on("change", function(e){
+            e.preventDefault();
+            let selectedValue = $(this).val();
+            let selectionType = $(this).attr("data-type");
+            if(selectedValue && selectionType == "mode") {
+                editor.getSession().setMode(selectedValue);
+            } else if(selectedValue && selectionType == "theme") {
+                editor.setTheme(selectedValue);
+            }
+        });
+
+    </script>
 <?php endif; ?>
 </body>
 </html>
