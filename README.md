@@ -1,7 +1,7 @@
 # Tiny File Manager
 
 
-[![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.eu-gb.mybluemix.net/Demo/)
+[![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.github.io/demo/)
 [![Live demo](https://img.shields.io/badge/Help-Docs-lightgrey.svg?style=flat-square)](https://tinyfilemanager.github.io/)
 [![GitHub Release](https://img.shields.io/github/release/qubyte/rubidium.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/releases)
  [![GitHub License](https://img.shields.io/github/license/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE) 
@@ -9,7 +9,7 @@
 > It is a simple, fast and small file manager with single php file. It is also a web code editor. It'll run either online or locally, on Linux, Windows or Mac based platforms. The only requirement is to have PHP 5.5+ available.
 
 ## Demo
-[Demo](https://tinyfilemanager.eu-gb.mybluemix.net/Demo/)
+[Demo](https://tinyfilemanager.github.io/demo/)
 
  Login Details : admin/admin@123 | user/12345
 
