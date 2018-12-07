@@ -994,7 +994,7 @@ if (isset($_GET['view'])) {
             </p>
             <p>
                 <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> Download</a></b> &nbsp;
-                <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> Open</a></b>
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>" target="_blank"><i class="fa fa-external-link-square"></i> Open</a></b>
                 &nbsp;
                 <?php
                 // ZIP actions
