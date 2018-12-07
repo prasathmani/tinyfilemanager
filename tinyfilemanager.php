@@ -1039,7 +1039,9 @@ if (isset($_GET['view'])) {
                 }
             } elseif ($is_audio) {
                 // Audio content
-                echo '<p><audio src="' . fm_enc($file_url) . '" controls preload="metadata"></audio></p>';
+                // gbr 7/12/2018 audio file wrong url use download format ?p=<music/path>&dl=<file>
+                echo '<p><audio src="'.basename(__FILE__).'?p=' . dirname(substr($file_path,strpos($file_path,'music'))) . '&amp;dl='.basename($file_path).'" controls preload="metadata"></audio></p>';
+                // echo '<p><audio src="' . fm_enc($file_url) . '" controls preload="metadata"></audio></p>';
             } elseif ($is_video) {
                 // Video content
                 echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
