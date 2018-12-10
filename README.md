@@ -67,7 +67,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 <li>:zap: Backup files</li>
 <li>:mag_right: Search -  Search and Sorting using datatable js</li>
 <li>:file_folder: Exclude folders from listing</li>
-<li>:globe_with_meridians: Multi-language support (English, French, Italian, Russian)</li>
+<li>:globe_with_meridians: Multi-language support (English, French, Italian, Russian, German)</li>
 <li>:bangbang: lots more...</li>
 </ul>
 
