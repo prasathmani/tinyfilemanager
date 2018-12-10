@@ -772,6 +772,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <script>
         Dropzone.options.fileUploader = {
             init: function () {
+                timeout:120000,  // 2 minutes
                 this.on("sending", function (file) {
                     let _path = (file.fullPath) ? file.fullPath : file.name;
                     document.getElementById("fullpath").value = _path
