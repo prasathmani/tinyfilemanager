@@ -319,6 +319,70 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         echo $res;
     }
 
+    //upload using url
+    if(isset($_POST['type']) && $_POST['type'] == "upload" && !empty($_REQUEST["uploadurl"])) {
+        $path = FM_ROOT_PATH;
+        if (FM_PATH != '') {
+            $path .= '/' . FM_PATH;
+        }
+
+        $url = !empty($_REQUEST["uploadurl"]) && preg_match("|^http(s)?://.+$|", stripslashes($_REQUEST["uploadurl"])) ? stripslashes($_REQUEST["uploadurl"]) : null;
+        $use_curl = false;defined("CURLOPT_PROGRESSFUNCTION");
+        $temp_file = tempnam(sys_get_temp_dir(), "upload-");
+        $fileinfo = new stdClass();
+        $fileinfo->name = trim(basename($url), ".\x00..\x20");
+
+        function event_callback ($message) {
+            global $callback;
+            echo json_encode($message);
+        }
+
+        function get_file_path () {
+            global $path, $fileinfo, $temp_file;
+            return $path."/".basename($fileinfo->name);
+        }
+
+        $err = false;
+        if (!$url) {
+            $success = false;
+        } else if ($use_curl) {
+            @$fp = fopen($temp_file, "w");
+            @$ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_NOPROGRESS, false );
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            @$success = curl_exec($ch);
+            $curl_info = curl_getinfo($ch);
+            if (!$success) {
+                $err = array("message" => curl_error($ch));
+            }
+            @curl_close($ch);
+            fclose($fp);
+            $fileinfo->size = $curl_info["size_download"];
+            $fileinfo->type = $curl_info["content_type"];
+        } else {
+            $ctx = stream_context_create();
+            @$success = copy($url, $temp_file, $ctx);
+            if (!$success) {
+                $err = error_get_last();
+            }
+        }
+
+        if ($success) {
+            $success = rename($temp_file, get_file_path());
+        }
+
+        if ($success) {
+            event_callback(array("done" => $fileinfo));
+        } else {
+            unlink($temp_file);
+            if (!$err) {
+                $err = array("message" => "Invalid url parameter");
+            }
+            event_callback(array("fail" => $err));
+        }
+    }
+
     exit();
 }
 
@@ -817,25 +881,11 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     ?>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.js"></script>
-    <script>
-        Dropzone.options.fileUploader = {
-            init: function () {
-                this.on("sending", function (file) {
-                    let _path = (file.fullPath) ? file.fullPath : file.name;
-                    document.getElementById("fullpath").value = _path
-                }).on("success", function (res) {
-                    console.log('Upload Status >> ', res.status);
-                }).on("error", function(file, response) {
-                    alert(response);
-                });
-            }
-        }
-    </script>
     <div class="path">
         <div class="card mb-2">
             <h6 class="card-header">
-                <?php echo lng('UploadingFiles') ?>
+                <i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?>
+                &nbsp;&nbsp; <a href="#/upload-url" class="js-url-upload"><i class="fa fa-link"></i> Upload from URL</a>
                 <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
             </h6>
             <div class="card-body">
@@ -850,9 +900,39 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                         <input name="file" type="file" multiple/>
                     </div>
                 </form>
+
+                <div class="upload-url-wrapper" style="display: none;">
+                    <form id="js-form-url-upload" class="form-inline" onsubmit="return upload_from_url(this);" method="POST" action="">
+                        <input type="hidden" name="type" value="upload" aria-label="hidden" aria-hidden="true">
+                        <input type="url" placeholder="URL" name="uploadurl" required class="form-control" style="width: 80%">
+                        <button type="submit" class="btn btn-primary ml-3"><?php echo lng('Upload') ?></button>
+                        <div class="lds-facebook"><div></div><div></div><div></div></div>
+                    </form>
+                    <div id="js-url-upload__list" class="col-12 mt-3"></div>
+                </div>
+
             </div>
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.js"></script>
+    <script>
+        Dropzone.options.fileUploader = {
+            timeout: 120000,
+            init: function () {
+                this.on("sending", function (file, xhr, formData) {
+                    let _path = (file.fullPath) ? file.fullPath : file.name;
+                    document.getElementById("fullpath").value = _path;
+                    xhr.ontimeout = (() => {
+                        alert('Error: Server Timeout');
+                    });
+                }).on("success", function (res) {
+                    console.log('Upload Status >> ', res.status);
+                }).on("error", function(file, response) {
+                    alert(response);
+                });
+            }
+        }
+    </script>
     <?php
     fm_show_footer();
     exit;
@@ -1262,7 +1342,7 @@ if (isset($_GET['edit'])) {
         fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
-
+    header('X-XSS-Protection:0');
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
@@ -1506,7 +1586,7 @@ $all_files_size = 0;
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete folder?');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
                         <a title="<?php echo lng('DirectLink')?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
@@ -1556,7 +1636,7 @@ $all_files_size = 0;
                     <td class="inline-actions">
                         <?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete file?');"><i class="fa fa-trash-o"></i></a>
-                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc($f) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
+                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..."
                                href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
@@ -2953,6 +3033,43 @@ global $lang;
             -webkit-box-shadow: none !important;
             box-shadow: none  !important;
         }
+        .lds-facebook {
+            display: none;
+            position: relative;
+            width: 64px;
+            height: 64px;
+        }
+        .lds-facebook.show-me { display: inline-block;}
+        .lds-facebook div {
+            display: inline-block;
+            position: absolute;
+            left: 6px;
+            width: 13px;
+            background: #007bff;
+            animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+        }
+        .lds-facebook div:nth-child(1) {
+            left: 6px;
+            animation-delay: -0.24s;
+        }
+        .lds-facebook div:nth-child(2) {
+            left: 26px;
+            animation-delay: -0.12s;
+        }
+        .lds-facebook div:nth-child(3) {
+            left: 45px;
+            animation-delay: 0;
+        }
+        @keyframes lds-facebook {
+            0% {
+                top: 6px;
+                height: 51px;
+            }
+            50%, 100% {
+                top: 19px;
+                height: 26px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -3011,52 +3128,23 @@ global $lang;
      * @param path {String}
      */
     function newfolder(e) {
-        var t = document.getElementById("newfilename").value,
-            n = document.querySelector('input[name="newfile"]:checked').value;
+        var t = document.getElementById("newfilename").value, n = document.querySelector('input[name="newfile"]:checked').value;
         null !== t && "" !== t && n && (window.location.hash = "#", window.location.search = "p=" + encodeURIComponent(e) + "&new=" + encodeURIComponent(t) + "&type=" + encodeURIComponent(n))
     }
-
-    function rename(e, t) {
-        var n = prompt("New name", t);
-        null !== n && "" !== n && n != t && (window.location.search = "p=" + encodeURIComponent(e) + "&ren=" + encodeURIComponent(t) + "&to=" + encodeURIComponent(n))
-    }
-
-    function change_checkboxes(e, t) {
-        for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked
-    }
-
-    function get_checkboxes() {
-        for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t
-    }
-
-    function select_all() {
-        change_checkboxes(get_checkboxes(), !0)
-    }
-
-    function unselect_all() {
-        change_checkboxes(get_checkboxes(), !1)
-    }
-
-    function invert_all() {
-        change_checkboxes(get_checkboxes())
-    }
-
-    function checkbox_toggle() {
-        var e = get_checkboxes();
-        e.push(this), change_checkboxes(e)
-    }
-
-    /**
-     * Create file backup with .bck
-     */
-    function backup(e, t) {
+    function rename(e, t) {var n = prompt("New name", t);null !== n && "" !== n && n != t && (window.location.search = "p=" + encodeURIComponent(e) + "&ren=" + encodeURIComponent(t) + "&to=" + encodeURIComponent(n))}
+    function change_checkboxes(e, t) { for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked }
+    function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
+    function select_all() { change_checkboxes(get_checkboxes(), !0) }
+    function unselect_all() { change_checkboxes(get_checkboxes(), !1) }
+    function invert_all() { change_checkboxes(get_checkboxes()) }
+    function checkbox_toggle() { var e = get_checkboxes(); e.push(this), change_checkboxes(e) }
+    function backup(e, t) { //Create file backup with .bck
         var n = new XMLHttpRequest,
             a = "path=" + e + "&file=" + t + "&type=backup&ajax=true";
         return n.open("POST", "", !0), n.setRequestHeader("Content-type", "application/x-www-form-urlencoded"), n.onreadystatechange = function () {
             4 == n.readyState && 200 == n.status && alert(n.responseText)
         }, n.send(a), !1
     }
-
     //Save file
     function edit_save(e, t) {
         var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
@@ -3069,10 +3157,7 @@ global $lang;
             o.appendChild(c), a.appendChild(o), document.body.appendChild(a), a.submit()
         }
     }
-
-    /**
-     * Get latest release from git repo
-     */
+    //Get latest release from git repo
     function latest_release_info() {
         $.getJSON("https://api.github.com/repos/prasathmani/tinyfilemanager/releases/latest").done(function(release) {
             if(release) {
@@ -3084,71 +3169,55 @@ global $lang;
             }
         });
     }
-
-    /**
-     * Save Settings
-     * @param Object $this
-     */
+    //Save Settings
     function save_settings($this) {
         let form = $($this);
         $.ajax({
-            type: form.attr('method'),
-            url: form.attr('action'),
-            data: form.serialize()+"&ajax="+true,
-            success: function (data) {
-                if(data) {
-                    window.location.reload();
-                }
-            }
-        });
-        return false;
+            type: form.attr('method'), url: form.attr('action'), data: form.serialize()+"&ajax="+true,
+            success: function (data) {if(data) { window.location.reload();}}
+        }); return false;
     }
-
-    /**
-     * Create new password hash
-     * @param Object $this
-     */
+    //Create new password hash
     function new_password_hash($this) {
-        let form = $($this);
-        let $pwd = $("#js-pwd-result");
-        $pwd.val('');
+        let form = $($this), $pwd = $("#js-pwd-result"); $pwd.val('');
         $.ajax({
-            type: form.attr('method'),
-            url: form.attr('action'),
-            data: form.serialize()+"&ajax="+true,
+            type: form.attr('method'), url: form.attr('action'), data: form.serialize()+"&ajax="+true,
+            success: function (data) { if(data) { $pwd.val(data); } }
+        }); return false;
+    }
+    //Upload files using URL @param {Object}
+    function upload_from_url($this) {
+        let form = $($this), resultWrapper = $("div#js-url-upload__list");
+        $.ajax({
+            type: form.attr('method'), url: form.attr('action'), data: form.serialize()+"&ajax="+true,
+            beforeSend: function() { form.find("input[name=uploadurl]").attr("disabled","disabled"); form.find("button").hide(); form.find(".lds-facebook").addClass('show-me'); },
             success: function (data) {
                 if(data) {
-                    $pwd.val(data);
+                    data = JSON.parse(data);
+                    if(data.done) {
+                        resultWrapper.append('<div class="alert alert-success row">Uploaded Successful: '+data.done.name+'</div>'); form.find("input[name=uploadurl]").val('');
+                    } else if(data['fail']) { resultWrapper.append('<div class="alert alert-danger row">Error: '+data.fail.message+'</div>'); }
+                    form.find("input[name=uploadurl]").removeAttr("disabled");form.find("button").show();form.find(".lds-facebook").removeClass('show-me');
                 }
+            },
+            error: function(xhr) {
+                form.find("input[name=uploadurl]").removeAttr("disabled");form.find("button").show();form.find(".lds-facebook").removeClass('show-me');console.error(xhr);
             }
-        });
-        return false;
+        }); return false;
     }
-
-    /**
-     * jQuery Document Ready Event
-     */
+    // Dom Ready Event
     $(document).ready( function () {
         //dataTable init
         var $table = $('#main-table'),
             tableLng = $table.find('th').length,
             _targets = (tableLng && tableLng == 7 ) ? [0, 4,5,6] : tableLng == 5 ? [0,4] : [3],
-            mainTable = $('#main-table').DataTable({
-            "paging":   false,
-            "info":     false,
-            "columnDefs": [
-                {
-                    "targets": _targets,
-                    "orderable": false
-                }
-            ]
+            mainTable = $('#main-table').DataTable({"paging":   false, "info":     false, "columnDefs": [{"targets": _targets, "orderable": false}]
         });
-
-        /**
-         * Search using custom input box
-         */
-        $('#search-addon').on( 'keyup', function () {
+        $('#search-addon').on( 'keyup', function () { //Search using custom input box
             mainTable.search( this.value ).draw();
+        });
+        $("a.js-url-upload").on("click", function(e){ //upload using URL
+            e.preventDefault(); $("#fileUploader").hide(); $("div.upload-url-wrapper").show();
         });
     });
 </script>
@@ -3164,14 +3233,10 @@ global $lang;
         //editor.setTheme("ace/theme/twilight"); //Dark Theme
         function ace_commend (cmd) { editor.commands.exec(cmd, editor); }
         editor.commands.addCommands([{
-            name: 'save',
-            bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
-            exec: function(editor) {
-                edit_save(this, 'ace');
-            }
+            name: 'save', bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+            exec: function(editor) { edit_save(this, 'ace'); }
         },{
-            name: 'goToNo',
-            bindKey: {win: 'Ctrl-G',  mac: 'Command-G'},
+            name: 'goToNo',  bindKey: {win: 'Ctrl-G',  mac: 'Command-G'},
             exec: function(editor) {
                 let x = parseInt(prompt("Enter a Line Number [1 - "+editor.session.getLength()+"]", "1"), 10);
                 editor.gotoLine(x);
@@ -3198,15 +3263,13 @@ global $lang;
         });
         $("select#js-ace-mode, select#js-ace-theme").on("change", function(e){
             e.preventDefault();
-            let selectedValue = $(this).val();
-            let selectionType = $(this).attr("data-type");
+            let selectedValue = $(this).val(), selectionType = $(this).attr("data-type");
             if(selectedValue && selectionType == "mode") {
                 editor.getSession().setMode(selectedValue);
             } else if(selectedValue && selectionType == "theme") {
                 editor.setTheme(selectedValue);
             }
         });
-
     </script>
 <?php endif; ?>
 </body>
@@ -3275,7 +3338,7 @@ function lng($txt) {
     $tr['en']['NewItem']        = 'New Item';               $tr['en']['Folder']             = 'Folder';
     $tr['en']['Delete']         = 'Delete';                 $tr['en']['Rename']             = 'Rename';
     $tr['en']['CopyTo']         = 'Copy to';                $tr['en']['DirectLink']         = 'Direct link';
-    $tr['en']['UploadingFiles'] = 'Uploading files';        $tr['en']['ChangePermissions']  = 'Change Permissions';
+    $tr['en']['UploadingFiles'] = 'Upload Files';        $tr['en']['ChangePermissions']  = 'Change Permissions';
     $tr['en']['Copying']        = 'Copying';                $tr['en']['CreateNewItem']      = 'Create New Item';
     $tr['en']['Name']           = 'Name';                   $tr['en']['AdvancedEditor']     = 'Advanced Editor';
     $tr['en']['RememberMe']     = 'Remember Me';            $tr['en']['Actions']            = 'Actions';
