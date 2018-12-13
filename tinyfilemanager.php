@@ -64,6 +64,10 @@ $GLOBALS['exclude_items'] = array();
 // Google Docs Viewer
 $GLOBALS['online_viewer'] = true;
 
+// private key and session name to store to the session
+if ( !defined( 'FM_SESSION_ID')) {
+    define('FM_SESSION_ID', 'filemanager');
+}
 
 //Configuration
 $cfg = new FM_Config();
@@ -115,7 +119,7 @@ if (defined('FM_EMBED')) {
     }
 
     session_cache_limiter('');
-    session_name('filemanager');
+    session_name(FM_SESSION_ID );
     @session_start();
 }
 
@@ -135,7 +139,7 @@ defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') .
 
 // logout
 if (isset($_GET['logout'])) {
-    unset($_SESSION['logged']);
+    unset($_SESSION[FM_SESSION_ID]['logged']);
     fm_redirect(FM_SELF_URL);
 }
 
@@ -146,18 +150,18 @@ if (isset($_GET['img'])) {
 
 // Auth
 if ($use_auth) {
-    if (isset($_SESSION['logged'], $auth_users[$_SESSION['logged']])) {
+    if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
         if(function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
-                $_SESSION['logged'] = $_POST['fm_usr'];
+                $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
                 fm_set_msg('You are logged in');
                 fm_redirect(FM_SELF_URL . '?p=');
             } else {
-                unset($_SESSION['logged']);
+                unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg('Login failed. Invalid username or password', 'error');
                 fm_redirect(FM_SELF_URL);
             }
@@ -166,7 +170,7 @@ if ($use_auth) {
         }
     } else {
         // Form
-        unset($_SESSION['logged']);
+        unset($_SESSION[FM_SESSION_ID]['logged']);
         fm_show_header_login();
         fm_show_message();
         ?>
@@ -230,8 +234,8 @@ if ($use_auth) {
 }
 
 // update root path
-if ($use_auth && isset($_SESSION['logged'])) {
-    $root_path = isset($directories_users[$_SESSION['logged']]) ? $directories_users[$_SESSION['logged']] : $root_path;
+if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
+    $root_path = isset($directories_users[$_SESSION[FM_SESSION_ID]['logged']]) ? $directories_users[$_SESSION[FM_SESSION_ID]['logged']] : $root_path;
 }
 
 // clean and check $root_path
@@ -246,7 +250,7 @@ defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_EXTENSION') || define('FM_EXTENSION', $allowed_extensions);
-define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION['logged']) && in_array($_SESSION['logged'], $readonly_users));
+define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 // always use ?p=
@@ -327,7 +331,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         }
 
         $url = !empty($_REQUEST["uploadurl"]) && preg_match("|^http(s)?://.+$|", stripslashes($_REQUEST["uploadurl"])) ? stripslashes($_REQUEST["uploadurl"]) : null;
-        $use_curl = false;defined("CURLOPT_PROGRESSFUNCTION");
+        $use_curl = false;
         $temp_file = tempnam(sys_get_temp_dir(), "upload-");
         $fileinfo = new stdClass();
         $fileinfo->name = trim(basename($url), ".\x00..\x20");
@@ -388,9 +392,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
 // Delete file / folder
 if (isset($_GET['del']) && !FM_READONLY) {
-    $del = $_GET['del'];
-    $del = fm_clean_path($del);
-    $del = str_replace('/', '', $del);
+    $del = str_replace( '/', '', fm_clean_path( $_GET['del'] ) );
     if ($del != '' && $del != '..' && $del != '.') {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
@@ -412,10 +414,8 @@ if (isset($_GET['del']) && !FM_READONLY) {
 
 // Create folder
 if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
-    $new = strip_tags($_GET['new']);
     $type = $_GET['type'];
-    $new = fm_clean_path($new);
-    $new = str_replace('/', '', $new);
+    $new = str_replace( '/', '', fm_clean_path( strip_tags( $_GET['new'] ) ) );
     if ($new != '' && $new != '..' && $new != '.') {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
@@ -882,18 +882,25 @@ if (isset($_GET['upload']) && !FM_READONLY) {
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.css" rel="stylesheet">
     <div class="path">
-        <div class="card mb-2">
-            <h6 class="card-header">
-                <i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?>
-                &nbsp;&nbsp; <a href="#/upload-url" class="js-url-upload"><i class="fa fa-link"></i> Upload from URL</a>
-                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
-            </h6>
+
+        <div class="card mb-2 fm-upload-wrapper">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> Upload from URL</a>
+                    </li>
+                </ul>
+            </div>
             <div class="card-body">
                 <p class="card-text">
+                    <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
                     <?php echo lng('DestinationFolder') ?>: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
                 </p>
 
-                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone" id="fileUploader" enctype="multipart/form-data">
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
                     <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
                     <div class="fallback">
@@ -901,16 +908,15 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     </div>
                 </form>
 
-                <div class="upload-url-wrapper" style="display: none;">
+                <div class="upload-url-wrapper card-tabs-container hidden" id="urlUploader">
                     <form id="js-form-url-upload" class="form-inline" onsubmit="return upload_from_url(this);" method="POST" action="">
                         <input type="hidden" name="type" value="upload" aria-label="hidden" aria-hidden="true">
                         <input type="url" placeholder="URL" name="uploadurl" required class="form-control" style="width: 80%">
                         <button type="submit" class="btn btn-primary ml-3"><?php echo lng('Upload') ?></button>
                         <div class="lds-facebook"><div></div><div></div><div></div></div>
                     </form>
-                    <div id="js-url-upload__list" class="col-12 mt-3"></div>
+                    <div id="js-url-upload__list" class="col-9 mt-3"></div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -2008,8 +2014,8 @@ function fm_enc($text)
  */
 function fm_set_msg($msg, $status = 'ok')
 {
-    $_SESSION['message'] = $msg;
-    $_SESSION['status'] = $status;
+    $_SESSION[FM_SESSION_ID]['message'] = $msg;
+    $_SESSION[FM_SESSION_ID]['status'] = $status;
 }
 
 /**
@@ -2622,7 +2628,7 @@ function fm_show_nav_path($path)
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
-                        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php if(isset($_SESSION['logged'])) { echo $_SESSION['logged']; } ?></a>
+                        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php if(isset($_SESSION[FM_SESSION_ID]['logged'])) { echo $_SESSION[FM_SESSION_ID]['logged']; } ?></a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink-5">
                             <?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
@@ -2643,11 +2649,11 @@ function fm_show_nav_path($path)
  */
 function fm_show_message()
 {
-    if (isset($_SESSION['message'])) {
-        $class = isset($_SESSION['status']) ? $_SESSION['status'] : 'ok';
-        echo '<p class="message ' . $class . '">' . $_SESSION['message'] . '</p>';
-        unset($_SESSION['message']);
-        unset($_SESSION['status']);
+    if (isset($_SESSION[FM_SESSION_ID]['message'])) {
+        $class = isset($_SESSION[FM_SESSION_ID]['status']) ? $_SESSION[FM_SESSION_ID]['status'] : 'ok';
+        echo '<p class="message ' . $class . '">' . $_SESSION[FM_SESSION_ID]['message'] . '</p>';
+        unset($_SESSION[FM_SESSION_ID]['message']);
+        unset($_SESSION[FM_SESSION_ID]['status']);
     }
 }
 
@@ -3216,8 +3222,12 @@ global $lang;
         $('#search-addon').on( 'keyup', function () { //Search using custom input box
             mainTable.search( this.value ).draw();
         });
-        $("a.js-url-upload").on("click", function(e){ //upload using URL
-            e.preventDefault(); $("#fileUploader").hide(); $("div.upload-url-wrapper").show();
+        //upload nav tabs
+        $(".fm-upload-wrapper .card-header-tabs").on("click", 'a', function(e){
+            e.preventDefault();
+            let target = $(this).data('target');
+            $(".fm-upload-wrapper .card-header-tabs a").removeClass('active'); $(this).addClass('active');
+            $(".fm-upload-wrapper .card-tabs-container").addClass('hidden'); $(target).removeClass('hidden');
         });
     });
 </script>
