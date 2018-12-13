@@ -1043,7 +1043,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
         <div class="card mb-2">
             <h6 class="card-header">
                 <?php echo lng('Settings') ?>
-                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel')?></a>
+                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?php echo lng('Cancel')?></a>
             </h6>
             <div class="card-body">
                 <form id="js-settings-form" action="" method="post" data-type="ajax" onsubmit="return save_settings(this)">
@@ -1114,6 +1114,26 @@ if (isset($_GET['settings']) && !FM_READONLY) {
 
                 <hr class="custom-hr">
                 <div class="row">
+                    <div class="col-xs-12 col-sm-6">
+                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager V2.2</a></h3></p>
+                        <p>Author: Prasath Mani</p>
+                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers@gmail.com</a> </p>
+                    </div>
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="card">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><a href="https://tinyfilemanager.github.io/" target="_blank"><i class="fa fa-question-circle"></i> Help Documents</a> </li>
+                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> Report Issue</a></li>
+                                <li class="list-group-item"><a href="javascript:latest_release_info();" target="_blank"><i class="fa fa-link"></i> Get Latest Release</a></li>
+                                <li class="list-group-item"><a href="javascript:show_new_pwd();" target="_blank"><i class="fa fa-lock"></i> Generate new password hash</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div id="js-download-latest"></div>
+                </div>
+                <div class="row js-new-pwd hidden mt-2">
                     <div class="col-12">
                         <form class="form-inline" onsubmit="return new_password_hash(this)" method="POST" action="">
                             <input type="hidden" name="type" value="pwdhash" aria-label="hidden" aria-hidden="true">
@@ -1128,26 +1148,6 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         </form>
                         <textarea class="form-control" rows="2" readonly id="js-pwd-result"></textarea>
                     </div>
-                </div>
-                <hr class="custom-hr">
-                <div class="row">
-                    <div class="col-xs-12 col-sm-6">
-                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager V2.2</a></h3></p>
-                        <p>Author: Prasath Mani</p>
-                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers@gmail.com</a> </p>
-                    </div>
-                    <div class="col-xs-12 col-sm-6">
-                        <div class="card">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="https://tinyfilemanager.github.io/" target="_blank"><i class="fa fa-question-circle"></i> Help Documents</a> </li>
-                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> Report Issue</a></li>
-                                <li class="list-group-item"><a href="javascript:latest_release_info();" target="_blank"><i class="fa fa-link"></i> Get Latest Release</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div id="js-download-latest"></div>
                 </div>
             </div>
         </div>
@@ -3175,6 +3175,7 @@ global $lang;
             }
         });
     }
+    function show_new_pwd() { $(".js-new-pwd").toggleClass('hidden'); window.open("https://tinyfilemanager.github.io/docs/pwd.html", '_blank'); }
     //Save Settings
     function save_settings($this) {
         let form = $($this);
