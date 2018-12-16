@@ -10,7 +10,7 @@
 $lang = 'en';
 
 // Auth with login/password (set true/false to enable/disable it)
-$use_auth = true;
+$use_auth = false;
 
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 $auth_users = array(
