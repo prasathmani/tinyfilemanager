@@ -1505,7 +1505,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
                     </table>
 
                     <p>
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-check-circle"></i> <?php echo lng('Change') ?></button> &nbsp;
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Change') ?></button> &nbsp;
                         <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
                     </p>
                 </form>
@@ -1681,9 +1681,11 @@ $all_files_size = 0;
                     <tr><?php if (!FM_READONLY): ?>
                             <td class="gray"></td><?php endif; ?>
                         <td class="gray" colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>">
-                            Full size: <span title="<?php printf('%s bytes', $all_files_size) ?>"><?php echo fm_get_filesize($all_files_size) ?></span>,
-                            files: <?php echo $num_files ?>,
-                            folders: <?php echo $num_folders ?>
+                            Full size: <span title="<?php printf('%s bytes', $all_files_size) ?>"><?php echo '<span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?></span>,
+                            <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>,
+                            <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>,
+                            <?php echo lng('MemoryUsed').': <span class="badge badge-light">'.$memory.'</span>' ?>,
+                            <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(disk_free_space($path)) .'</span> free of <span class="badge badge-light">'.fm_get_filesize(disk_total_space($path)).'</span>'; ?>
                         </td>
                     </tr>
                 </tfoot>
@@ -1708,7 +1710,6 @@ $all_files_size = 0;
                     <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
-                <li class="list-inline-item"><?php echo lng('MemoryUsed'); echo $memory; ?></li>
             </ul>
         </div>
         <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager v2.2</a></div>
@@ -1958,13 +1959,13 @@ function fm_get_filesize($size)
     if ($size < 1000) {
         return sprintf('%s B', $size);
     } elseif (($size / 1024) < 1000) {
-        return sprintf('%s KiB', round(($size / 1024), 2));
+        return sprintf('%s KB', round(($size / 1024), 2));
     } elseif (($size / 1024 / 1024) < 1000) {
-        return sprintf('%s MiB', round(($size / 1024 / 1024), 2));
+        return sprintf('%s MB', round(($size / 1024 / 1024), 2));
     } elseif (($size / 1024 / 1024 / 1024) < 1000) {
-        return sprintf('%s GiB', round(($size / 1024 / 1024 / 1024), 2));
+        return sprintf('%s GB', round(($size / 1024 / 1024 / 1024), 2));
     } else {
-        return sprintf('%s TiB', round(($size / 1024 / 1024 / 1024 / 1024), 2));
+        return sprintf('%s TB', round(($size / 1024 / 1024 / 1024 / 1024), 2));
     }
 }
 
@@ -3369,7 +3370,7 @@ function lng($txt) {
     $tr['en']['NewItem']        = 'New Item';               $tr['en']['Folder']             = 'Folder';
     $tr['en']['Delete']         = 'Delete';                 $tr['en']['Rename']             = 'Rename';
     $tr['en']['CopyTo']         = 'Copy to';                $tr['en']['DirectLink']         = 'Direct link';
-    $tr['en']['UploadingFiles'] = 'Upload Files';        $tr['en']['ChangePermissions']  = 'Change Permissions';
+    $tr['en']['UploadingFiles'] = 'Upload Files';           $tr['en']['ChangePermissions']  = 'Change Permissions';
     $tr['en']['Copying']        = 'Copying';                $tr['en']['CreateNewItem']      = 'Create New Item';
     $tr['en']['Name']           = 'Name';                   $tr['en']['AdvancedEditor']     = 'Advanced Editor';
     $tr['en']['RememberMe']     = 'Remember Me';            $tr['en']['Actions']            = 'Actions';
@@ -3383,8 +3384,8 @@ function lng($txt) {
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
     $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
-    $tr['en']['MemoryUsed']     = 'Memory used: ';
-    
+    $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
+
 
     // French Language
     $tr['fr']['AppName']        = 'Tiny File Manager';      $tr['fr']['AppTitle']           = 'File Manager';
@@ -3413,7 +3414,7 @@ function lng($txt) {
     $tr['fr']['SourceFolder']   = 'Dossier Source';         $tr['fr']['Files']              = 'Fichiers';
     $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Change']             = 'Modifier';
     $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'Langue';
-    $tr['fr']['MemoryUsed']     = 'Mémoire utilisée: ';
+    $tr['fr']['MemoryUsed']     = 'Mémoire utilisée';       $tr['fr']['PartitionSize']      = 'Taille de la partition';
 
     // Italian Language
     $tr['it']['AppName']        = 'Tiny File Manager';      $tr['it']['AppTitle']           = 'File Manager';
@@ -3442,7 +3443,7 @@ function lng($txt) {
     $tr['it']['SourceFolder']   = 'Cartella di Origine';    $tr['it']['Files']              = 'File';
     $tr['it']['Move']           = 'Sposta';                 $tr['it']['Change']             = 'Cambia';
     $tr['it']['Settings']       = 'Impostazioni';           $tr['it']['Language']           = 'Lingua';
-    $tr['it']['MemoryUsed']     = 'Memoria utilizzata: ';
+    $tr['it']['MemoryUsed']     = 'Memoria utilizzata';     $tr['it']['PartitionSize']      = 'Dimensione della partizione';
 
     // Russian Language
     $tr['ru']['AppName']        = 'Файловый менеджер';            $tr['ru']['AppTitle']           = 'Файловый менеджер';
@@ -3471,7 +3472,7 @@ function lng($txt) {
     $tr['ru']['SourceFolder']   = 'Путь папки';                   $tr['ru']['Files']              = 'Файлы';
     $tr['ru']['Move']           = 'Переместить';                  $tr['ru']['Change']             = 'Изменения';
     $tr['ru']['Settings']       = 'Свойства';                     $tr['ru']['Language']           = 'Язык';
-    $tr['ru']['MemoryUsed']     = 'Используемая память: ';
+    $tr['ru']['MemoryUsed']     = 'Используемая память';          $tr['ru']['PartitionSize']      = 'Размер раздела';
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
