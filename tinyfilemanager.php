@@ -1708,7 +1708,7 @@ $all_files_size = 0;
                     <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
-                <li class="list-inline-item">Memory Used: <?php echo $memory; ?></li>
+                <li class="list-inline-item"><?php echo lng('MemoryUsed'); echo $memory; ?></li>
             </ul>
         </div>
         <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager v2.2</a></div>
@@ -3383,6 +3383,8 @@ function lng($txt) {
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
     $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
+    $tr['en']['MemoryUsed']     = 'Memory used: ';
+    
 
     // French Language
     $tr['fr']['AppName']        = 'Tiny File Manager';      $tr['fr']['AppTitle']           = 'File Manager';
@@ -3411,6 +3413,7 @@ function lng($txt) {
     $tr['fr']['SourceFolder']   = 'Dossier Source';         $tr['fr']['Files']              = 'Fichiers';
     $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Change']             = 'Modifier';
     $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'Langue';
+    $tr['fr']['MemoryUsed']     = 'Mémoire utilisée: ';
 
     // Italian Language
     $tr['it']['AppName']        = 'Tiny File Manager';      $tr['it']['AppTitle']           = 'File Manager';
@@ -3439,6 +3442,7 @@ function lng($txt) {
     $tr['it']['SourceFolder']   = 'Cartella di Origine';    $tr['it']['Files']              = 'File';
     $tr['it']['Move']           = 'Sposta';                 $tr['it']['Change']             = 'Cambia';
     $tr['it']['Settings']       = 'Impostazioni';           $tr['it']['Language']           = 'Lingua';
+    $tr['it']['MemoryUsed']     = 'Memoria utilizzata: ';
 
     // Russian Language
     $tr['ru']['AppName']        = 'Файловый менеджер';            $tr['ru']['AppTitle']           = 'Файловый менеджер';
@@ -3467,6 +3471,7 @@ function lng($txt) {
     $tr['ru']['SourceFolder']   = 'Путь папки';                   $tr['ru']['Files']              = 'Файлы';
     $tr['ru']['Move']           = 'Переместить';                  $tr['ru']['Change']             = 'Изменения';
     $tr['ru']['Settings']       = 'Свойства';                     $tr['ru']['Language']           = 'Язык';
+    $tr['ru']['MemoryUsed']     = 'Используемая память: ';
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
