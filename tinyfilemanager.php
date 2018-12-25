@@ -102,7 +102,13 @@ if ($report_errors == true) {
     @ini_set('display_errors', 0);
 }
 
-//Set Cookie
+// Show Memory Used
+function fm_memory($size) {
+  $unit = array('Byte', 'KB', 'MB', 'GB', 'TB', 'PB');
+  return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
+}
+
+// Set Cookie
 setcookie('fm_cache', true, 2147483647, "/");
 
 // if fm included
@@ -1701,6 +1707,7 @@ $all_files_size = 0;
                     <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
+                <li class="list-inline-item">Memory Used: <?php echo fm_memory(memory_get_usage(true)); ?></li>
             </ul>
         </div>
         <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager v2.2</a></div>
