@@ -1,9 +1,9 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":true,"show_hidden":true}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 
 /**
- * H3K | Tiny File Manager V2.2.0
+ * H3K | Tiny File Manager V2.2.1
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
@@ -67,6 +67,9 @@ $GLOBALS['online_viewer'] = true;
 //Sticky Nav bar
 $sticky_navbar = true;
 
+//TFM version
+define('VERSION', '2.2.1');
+
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
     define('FM_SESSION_ID', 'filemanager');
@@ -101,13 +104,6 @@ if ($report_errors == true) {
     @ini_set('error_reporting', E_ALL);
     @ini_set('display_errors', 0);
 }
-
-// Show Memory Used
-function fm_memory($size) {
-  $unit = array('Byte', 'KB', 'MB', 'GB', 'TB', 'PB');
-  return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
-}
-$memory = fm_memory(memory_get_usage(true));
 
 // Set Cookie
 setcookie('fm_cache', true, 2147483647, "/");
@@ -231,7 +227,7 @@ if ($use_auth) {
                         <div class="footer text-center">
                             &mdash;&mdash; &copy;
                             <?php  if(!isset($_COOKIE['fm_cache'])) { ?> <img src="https://logs-01.loggly.com/inputs/d8bad570-def7-44d4-922c-a8680d936ae6.gif?s=1" /> <?php } ?>
-                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-muted">CCP Programmers</a> &mdash;&mdash;
+                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-muted" data-version="<?php echo VERSION; ?>">CCP Programmers</a> &mdash;&mdash;
                         </div>
                     </div>
                 </div>
@@ -1050,10 +1046,10 @@ if (isset($_GET['settings']) && !FM_READONLY) {
     global $cfg, $lang, $lang_list;
     ?>
 
-    <div class="col-md-6 offset-md-3 pt-3">
+    <div class="col-md-8 offset-md-2 pt-3">
         <div class="card mb-2">
             <h6 class="card-header">
-                <?php echo lng('Settings') ?>
+                <i class="fa fa-cog"></i>  <?php echo lng('Settings') ?>
                 <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?php echo lng('Cancel')?></a>
             </h6>
             <div class="card-body">
@@ -1061,7 +1057,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     <input type="hidden" name="type" value="settings" aria-label="hidden" aria-hidden="true">
                     <div class="form-group row">
                         <label for="js-language" class="col-sm-3 col-form-label"><?php echo lng('Language') ?></label>
-                        <div class="col-sm-9">
+                        <div class="col-sm-5">
                             <select class="form-control" id="js-language" name="js-language">
                                 <?php
                                 function getSelected($l) {
@@ -1122,27 +1118,43 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     </div>
 
                 </form>
+            </div>
+        </div>
+    </div>
+    <?php
+    fm_show_footer();
+    exit;
+}
 
-                <hr class="custom-hr">
+if (isset($_GET['help'])) {
+    fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
+    global $cfg, $lang, $lang_list;
+    ?>
+
+    <div class="col-md-8 offset-md-2 pt-3">
+        <div class="card mb-2">
+            <h6 class="card-header">
+                <i class="fa fa-exclamation-circle"></i> <?php echo lng('Help') ?>
+                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?php echo lng('Cancel')?></a>
+            </h6>
+            <div class="card-body">
                 <div class="row">
                     <div class="col-xs-12 col-sm-6">
-                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager V2.2</a></h3></p>
+                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager <?php echo VERSION; ?></a></h3></p>
                         <p>Author: Prasath Mani</p>
-                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers@gmail.com</a> </p>
+                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers[at]gmail.com</a> </p>
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item"><a href="https://tinyfilemanager.github.io/" target="_blank"><i class="fa fa-question-circle"></i> Help Documents</a> </li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> Report Issue</a></li>
-                                <li class="list-group-item"><a href="javascript:latest_release_info();" target="_blank"><i class="fa fa-link"></i> Get Latest Release</a></li>
+                                <li class="list-group-item"><a href="javascript:latest_release_info('<?php echo VERSION; ?>');" target="_blank"><i class="fa fa-link"></i> Check Latest Version</a></li>
                                 <li class="list-group-item"><a href="javascript:show_new_pwd();" target="_blank"><i class="fa fa-lock"></i> Generate new password hash</a></li>
                             </ul>
                         </div>
                     </div>
-                </div>
-                <div class="row mt-2">
-                    <div id="js-download-latest"></div>
                 </div>
                 <div class="row js-new-pwd hidden mt-2">
                     <div class="col-12">
@@ -1153,9 +1165,9 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             </div>
                             <div class="form-group mx-sm-3 mb-2">
                                 <label for="inputPassword2" class="sr-only">Password</label>
-                                <input type="text" class="form-control btn-sm" id="inputPassword2" name="inputPassword2" placeholder="Password">
+                                <input type="text" class="form-control btn-sm" id="inputPassword2" name="inputPassword2" placeholder="Password" required>
                             </div>
-                            <button type="submit" class="btn btn-dark btn-sm mb-2">Generate</button>
+                            <button type="submit" class="btn btn-success btn-sm mb-2">Generate</button>
                         </form>
                         <textarea class="form-control" rows="2" readonly id="js-pwd-result"></textarea>
                     </div>
@@ -1684,8 +1696,8 @@ $all_files_size = 0;
                             Full size: <span title="<?php printf('%s bytes', $all_files_size) ?>"><?php echo '<span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?></span>,
                             <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>,
                             <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>,
-                            <?php echo lng('MemoryUsed').': <span class="badge badge-light">'.$memory.'</span>' ?>,
-                            <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(disk_free_space($path)) .'</span> free of <span class="badge badge-light">'.fm_get_filesize(disk_total_space($path)).'</span>'; ?>
+                            <?php echo lng('MemoryUsed').': <span class="badge badge-light">'.fm_get_filesize(@memory_get_usage(true)).'</span>' ?>,
+                            <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> free of <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
                         </td>
                     </tr>
                 </tfoot>
@@ -1712,9 +1724,9 @@ $all_files_size = 0;
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
             </ul>
         </div>
-        <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager v2.2</a></div>
+        <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
         <?php else: ?>
-            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager v2.2</a></div>
+            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
         <?php endif; ?>
     </div>
 
@@ -2651,6 +2663,7 @@ function fm_show_nav_path($path)
                             <?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                             <?php endif ?>
+                            <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
                             <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>
                         </div>
                     </li>
@@ -2785,6 +2798,11 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         }
         a:hover, a:visited, a:focus {
             text-decoration: none !important;
+        }
+        * {
+            -webkit-border-radius: 0 !important;
+            -moz-border-radius: 0 !important;
+            border-radius: 0 !important;
         }
         .filename, td, th {
             white-space: nowrap
@@ -3136,6 +3154,29 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         </div>
     </div>
 
+    <!-- Modal -->
+    <script type="text/html" id="js-tpl-modal">
+        <div class="modal fade" id="js-ModalCenter" tabindex="-1" role="dialog" aria-labelledby="ModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ModalCenterTitle"><%this.title%></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <%this.content%>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-primary" data-dismiss="modal"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></button>
+                        <%if(this.action){%><button type="button" class="btn btn-primary" id="js-ModalCenterAction" data-type="js-<%this.action%>"><%this.action%></button><%}%>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
     <?php
     }
 
@@ -3150,10 +3191,11 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 <script>
-    /**
-     * Create new Folder/file
-     * @param path {String}
-     */
+    function template(html,options){
+        var re=/<%([^%>]+)?%>/g,reExp=/(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,code='var r=[];\n',cursor=0,match;var add=function(line,js){js?(code+=line.match(reExp)?line+'\n':'r.push('+line+');\n'):(code+=line!=''?'r.push("'+line.replace(/"/g,'\\"')+'");\n':'');return add}
+        while(match=re.exec(html)){add(html.slice(cursor,match.index))(match[1],!0);cursor=match.index+match[0].length}
+        add(html.substr(cursor,html.length-cursor));code+='return r.join("");';return new Function(code.replace(/[\r\t\n]/g,'')).apply(options)
+    }
     function newfolder(e) {
         var t = document.getElementById("newfilename").value, n = document.querySelector('input[name="newfile"]:checked').value;
         null !== t && "" !== t && n && (window.location.hash = "#", window.location.search = "p=" + encodeURIComponent(e) + "&new=" + encodeURIComponent(t) + "&type=" + encodeURIComponent(n))
@@ -3184,15 +3226,19 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             o.appendChild(c), a.appendChild(o), document.body.appendChild(a), a.submit()
         }
     }
-    //Get latest release from git repo
-    function latest_release_info() {
-        $.getJSON("https://api.github.com/repos/prasathmani/tinyfilemanager/releases/latest").done(function(release) {
+    //Get latest update from git repo
+    function latest_release_info(v) {
+        $.getJSON("https://tinyfilemanager.github.io/version.json").done(function(release) {
             if(release) {
-                let _html = '<button type="button" class="btn btn-light"> Download '+ release.name +'<span class="badge badge-light"> '+release.tag_name+'</span></button>'+
-                    '<div class="btn-group" role="group" aria-label="Download latest">\n' +
-                    '<a href="'+ release.zipball_url +'"target="_blank" class="btn btn-outline-secondary">Zip</a>\n' +
-                    '<a href="'+ release.tarball_url +'" target="_blank" class="btn btn-outline-secondary">Tar</a></div>';
-                $("#js-download-latest").html(_html);
+                var tplObj = { title: "Check Version", action: false },
+                    tpl = $("#js-tpl-modal").html();
+                if(release && release.version != v ) {
+                    tplObj.content = "New Updates Available, Download new version <a href='https://github.com/prasathmani/tinyfilemanager/archive/master.zip' target='_blank'>here</a>";
+                } else {
+                    tplObj.content = "No Updates Available";
+                }
+                $('#wrapper').append(template(tpl, tplObj));
+                $("#js-ModalCenter").modal('show');
             }
         });
     }
