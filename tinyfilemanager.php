@@ -3541,7 +3541,7 @@ function lng($txt) {
     $tr['es']['Upload']         = 'Subir';                              $tr['es']['Cancel']             = 'Cancelar';
     $tr['es']['InvertSelection']= 'Invertir Selección';                 $tr['es']['DestinationFolder']  = 'Carpeta Destino';
     $tr['es']['ItemType']       = 'Tipo de Ítem';                       $tr['es']['ItemName']           = 'Nombre del Ítem';
-    $tr['es']['CreateNow']      = 'Crear Ahora';                        $tr['es']['Download']           = 'Descargar';
+    $tr['es']['CreateNow']      = 'Crear';                              $tr['es']['Download']           = 'Descargar';
     $tr['es']['Open']           = 'Abrir';                              $tr['es']['UnZip']              = 'Descomprimir';
     $tr['es']['UnZipToFolder']  = 'Descomprimir en Carpeta';            $tr['es']['Edit']               = 'Editar';
     $tr['es']['NormalEditor']   = 'Editor Normal';                      $tr['es']['BackUp']             = 'Copia de Seguridad';
