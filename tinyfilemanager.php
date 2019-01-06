@@ -93,7 +93,9 @@ $lang_list = array(
     'fr' => 'Français',
     'it' => 'Italiano',
     'ru' => 'Russian',
-    'es' => 'Español'
+    'es' => 'Español',
+    'th' => 'ภาษาไทย',
+    'de' => 'German'
 );
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
@@ -3549,6 +3551,63 @@ function lng($txt) {
     $tr['es']['Move']           = 'Mover';                              $tr['es']['Change']             = 'Cambiar';
     $tr['es']['Settings']       = 'Preferencias';                       $tr['es']['Language']           = 'Lenguaje';
     $tr['es']['Zip']            = $tr['es']['UnZip'].' (.zip)';         $tr['es']['Tar']                =  $tr['es']['UnZip'].' (.tar)';
+
+    // German Language
+    $tr['de']['AppName']        = 'Tiny File Manager';            $tr['de']['AppTitle']           = 'Datei Manager';
+    $tr['de']['Login']          = 'Einloggen';                    $tr['de']['Username']           = 'Benutername';
+    $tr['de']['Password']       = 'Passwort';                     $tr['de']['Logout']             = 'Ausloggen';
+    $tr['de']['Move']           = 'Verschieben';                  $tr['de']['Copy']               = 'Kopieren';
+    $tr['de']['Save']           = 'Speichern';                    $tr['de']['SelectAll']          = 'Alles auswählen';
+    $tr['de']['UnSelectAll']    = 'Alles abwählen';               $tr['de']['File']               = 'Datei';
+    $tr['de']['Back']           = 'Zurück';                       $tr['de']['Size']               = 'Größe';
+    $tr['de']['Perms']          = 'Perms';                        $tr['de']['Modified']           = 'Geändert';
+    $tr['de']['Owner']          = 'Eigentümer';                   $tr['de']['Search']             = 'Suchen';
+    $tr['de']['NewItem']        = 'Neues Item';                   $tr['de']['Folder']             = 'Ordner';
+    $tr['de']['Delete']         = 'Löschen';                      $tr['de']['Rename']             = 'Umbennen';
+    $tr['de']['CopyTo']         = 'Kopieren nach';                $tr['de']['DirectLink']         = 'Direktlink';
+    $tr['de']['UploadingFiles'] = 'Datei hochladen';              $tr['de']['ChangePermissions']  = 'Berechtigungen ändern';
+    $tr['de']['Copying']        = 'Kopieren';                     $tr['de']['CreateNewItem']      = 'Neue Datei erstellen';
+    $tr['de']['Name']           = 'Name';                         $tr['de']['AdvancedEditor']     = 'Fortgeschrittener Editor';
+    $tr['de']['RememberMe']     = 'Eingeloggt bleiben';           $tr['de']['Actions']            = 'Aktionen';
+    $tr['de']['Upload']         = 'Hochladen';                    $tr['de']['Cancel']             = 'Abbrechner';
+    $tr['de']['InvertSelection']= 'Auswahl umkehren';             $tr['de']['DestinationFolder']  = 'Zielordner';
+    $tr['de']['ItemType']       = 'Dateityp';                     $tr['de']['ItemName']           = 'Dateiname';
+    $tr['de']['CreateNow']      = 'Jetzt erstellen';              $tr['de']['Download']           = 'Download';
+    $tr['de']['Open']           = 'Öffnen';                       $tr['de']['UnZip']              = 'UnZip';
+    $tr['de']['UnZipToFolder']  = 'UnZip im Ordner';              $tr['de']['Edit']               = 'Bearbeiten';
+    $tr['de']['NormalEditor']   = 'Normaler Editor';              $tr['de']['BackUp']             = 'Backup';
+    $tr['de']['SourceFolder']   = 'Source ordner';                $tr['de']['Files']              = 'Datein';
+    $tr['de']['Move']           = 'Verschieben';                  $tr['de']['Change']             = 'Verändern';
+    $tr['de']['Settings']       = 'Einstellungen';                $tr['de']['Language']           = 'Sprache';
+   
+    // Thailand Language
+    $tr['th']['AppName']        = 'Tiny File Manager';            $tr['en']['AppTitle']           = 'ตัวจัดการไฟล์';
+    $tr['th']['Login']          = 'เข้าสู่ระบบ';                     $tr['en']['Username']           = 'ชื่อผู้ใช้งาน';
+    $tr['th']['Password']       = 'รหัสผ่าน';                       $tr['en']['Logout']             = 'ออกจากระบบ';
+    $tr['th']['Move']           = 'ย้าย';                          $tr['en']['Copy']               = 'คัดลอก';
+    $tr['th']['Save']           = 'บันทึก';                        $tr['en']['SelectAll']          = 'เลือกท้งหมด';
+    $tr['th']['UnSelectAll']    = 'ไม่เลือกทั้งหมด';                 $tr['en']['File']               = 'ไฟล์';
+    $tr['th']['Back']           = 'กลับ';                         $tr['en']['Size']               = 'ขนาด';
+    $tr['th']['Perms']          = 'รหัสสิทธิ์';                         $tr['en']['Modified']           = 'แก้ไขล่าสุดเมื่อ';
+    $tr['th']['Owner']          = 'เจ้าของ';                      $tr['en']['Search']             = 'ค้นหา';
+    $tr['th']['NewItem']        = 'สร้างใหม่';                     $tr['en']['Folder']             = 'โฟลเดอร์';
+    $tr['th']['Delete']         = 'ลบ';                          $tr['en']['Rename']             = 'เปลี่ยนชื่อ';
+    $tr['th']['CopyTo']         = 'คัดลอกไปยัง';                  $tr['en']['DirectLink']         = 'ไปยังลิ้งก์นั้น';
+    $tr['th']['UploadingFiles'] = 'อัพโหลด';                 $tr['en']['ChangePermissions']  = 'เปลี่ยนสิทธิ์';
+    $tr['th']['Copying']        = 'กำลังย้ายข้อมูล';                $tr['en']['CreateNewItem']      = 'สร้างไฟล์ใหม่';
+    $tr['th']['Name']           = 'ชื่อ';                          $tr['en']['AdvancedEditor']     = 'แก้ไขขั้นสูง';
+    $tr['th']['RememberMe']     = 'จดจำฉันไว้';                   $tr['en']['Actions']            = 'การทำงาน';
+    $tr['th']['Upload']         = 'อัพโหลด';                     $tr['en']['Cancel']             = 'ยกเลิก';
+    $tr['th']['InvertSelection']= 'เปลี่ยนข้อมูล';                  $tr['en']['DestinationFolder']  = 'โฟลเดอร์ปลายทาง';
+    $tr['th']['ItemType']       = 'ข้อมูลประเภท';                 $tr['en']['ItemName']           = 'ชื่อไฟล์';
+    $tr['th']['CreateNow']      = 'สร้างตอนนี้';                   $tr['en']['Download']           = 'ดาวโหลด';
+    $tr['th']['Open']           = 'เปิด';                        $tr['en']['UnZip']              = 'แตก Zip';
+    $tr['th']['UnZipToFolder']  = 'แตกไฟล์ในโฟเดอร์นี้';           $tr['en']['Edit']               = 'แก้ไข';
+    $tr['th']['NormalEditor']   = 'แก้ไขปกติ';                    $tr['en']['BackUp']             = 'สำรองข้อมูล';
+    $tr['th']['SourceFolder']   = 'โฟลเดอร์ต้นทาง';               $tr['en']['Files']              = 'ไฟล์';
+    $tr['th']['Move']           = 'ย้าย';                       $tr['en']['Change']             = 'เปลี่ยน';
+    $tr['th']['Settings']       = 'การตั้งค่า';                   $tr['en']['Language']           = 'ภาษา';
+    
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
