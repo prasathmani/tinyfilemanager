@@ -56,7 +56,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 <li>:cd: Open Source, light and extremely simple</li>
 <li>:iphone: Mobile friendly view for touch devices</li>
 <li>:information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files </li>
-<li>:arrow_double_up: Ajax Upload, Ability to drag & drop, multiple files upload and file extensions filter </li>
+<li>:arrow_double_up: Ajax Upload, Ability to drag & drop, upload from URL, multiple files upload and file extensions filter </li>
 <li>:file_folder: Ability to create folders and files</li>
 <li>:gift: Ability to compress, extract files (zip, tar)</li>
 <li>:sunglasses: Support user permissions - based on session and each user root folder mapping</li>
@@ -67,7 +67,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 <li>:zap: Backup files</li>
 <li>:mag_right: Search -  Search and Sorting using datatable js</li>
 <li>:file_folder: Exclude folders from listing</li>
-<li>:globe_with_meridians: Multi-language support (English, French, Italian, Russian)</li>
+<li>:globe_with_meridians: Multi-language support (English, French, Italian, Russian, German)</li>
 <li>:bangbang: lots more...</li>
 </ul>
 
