@@ -93,6 +93,7 @@ $lang_list = array(
     'fr' => 'Français',
     'it' => 'Italiano',
     'ru' => 'Russian',
+    'es' => 'Español',
     'th' => 'ภาษาไทย',
     'de' => 'German'
 );
@@ -2645,7 +2646,7 @@ function fm_show_nav_path($path)
                     <?php if (!FM_READONLY): ?>
                     <li class="nav-item mr-2">
                         <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
-                            <input type="text" class="form-control" placeholder="Search" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
+                            <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
                             <div class="input-group-append">
                                 <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
                             </div>
@@ -3522,6 +3523,35 @@ function lng($txt) {
     $tr['ru']['Settings']       = 'Свойства';                     $tr['ru']['Language']           = 'Язык';
     $tr['ru']['MemoryUsed']     = 'Используемая память';          $tr['ru']['PartitionSize']      = 'Размер раздела';
 
+    // Spanish Language
+    $tr['es']['AppName']        = 'Pequeño Administrador de Archivos';  $tr['es']['AppTitle']           = 'Administrador de Archivos';
+    $tr['es']['Login']          = 'Iniciar Sesión';                     $tr['es']['Username']           = 'Nombre de Usuario';
+    $tr['es']['Password']       = 'Contraseña';                         $tr['es']['Logout']             = 'Desconectarse';
+    $tr['es']['Move']           = 'Mover';                              $tr['es']['Copy']               = 'Copiar';
+    $tr['es']['Save']           = 'Guardar';                            $tr['es']['SelectAll']          = 'Seleccionar Todo';
+    $tr['es']['UnSelectAll']    = 'Des-seleccionar Todo';               $tr['es']['File']               = 'Archivo';
+    $tr['es']['Back']           = 'Atrás';                              $tr['es']['Size']               = 'Tamaño';
+    $tr['es']['Perms']          = 'Permisos';                           $tr['es']['Modified']           = 'Modificado';
+    $tr['es']['Owner']          = 'Propietario';                        $tr['es']['Search']             = 'Buscar';
+    $tr['es']['NewItem']        = 'Nuevo Ítem';                         $tr['es']['Folder']             = 'Carpeta';
+    $tr['es']['Delete']         = 'Borrar';                             $tr['es']['Rename']             = 'Cambiar Nombre';
+    $tr['es']['CopyTo']         = 'Copiar en';                          $tr['es']['DirectLink']         = 'Link Directo';
+    $tr['es']['UploadingFiles'] = 'Subir Archivos';                     $tr['es']['ChangePermissions']  = 'Cambiar Permisos';
+    $tr['es']['Copying']        = 'Copiando';                           $tr['es']['CreateNewItem']      = 'Crear nuevo Item';
+    $tr['es']['Name']           = 'Nombre';                             $tr['es']['AdvancedEditor']     = 'Editor Avanzado';
+    $tr['es']['RememberMe']     = 'Recuérdame';                         $tr['es']['Actions']            = 'Acciones';
+    $tr['es']['Upload']         = 'Subir';                              $tr['es']['Cancel']             = 'Cancelar';
+    $tr['es']['InvertSelection']= 'Invertir Selección';                 $tr['es']['DestinationFolder']  = 'Carpeta Destino';
+    $tr['es']['ItemType']       = 'Tipo de Ítem';                       $tr['es']['ItemName']           = 'Nombre del Ítem';
+    $tr['es']['CreateNow']      = 'Crear';                              $tr['es']['Download']           = 'Descargar';
+    $tr['es']['Open']           = 'Abrir';                              $tr['es']['UnZip']              = 'Descomprimir';
+    $tr['es']['UnZipToFolder']  = 'Descomprimir en Carpeta';            $tr['es']['Edit']               = 'Editar';
+    $tr['es']['NormalEditor']   = 'Editor Normal';                      $tr['es']['BackUp']             = 'Copia de Seguridad';
+    $tr['es']['SourceFolder']   = 'Carpeta Actual';                     $tr['es']['Files']              = 'Archivos';
+    $tr['es']['Move']           = 'Mover';                              $tr['es']['Change']             = 'Cambiar';
+    $tr['es']['Settings']       = 'Preferencias';                       $tr['es']['Language']           = 'Lenguaje';
+    $tr['es']['Zip']            = $tr['es']['UnZip'].' (.zip)';         $tr['es']['Tar']                =  $tr['es']['UnZip'].' (.tar)';
+
     // German Language
     $tr['de']['AppName']        = 'Tiny File Manager';            $tr['de']['AppTitle']           = 'Datei Manager';
     $tr['de']['Login']          = 'Einloggen';                    $tr['de']['Username']           = 'Benutername';
@@ -3549,9 +3579,7 @@ function lng($txt) {
     $tr['de']['SourceFolder']   = 'Source ordner';                $tr['de']['Files']              = 'Datein';
     $tr['de']['Move']           = 'Verschieben';                  $tr['de']['Change']             = 'Verändern';
     $tr['de']['Settings']       = 'Einstellungen';                $tr['de']['Language']           = 'Sprache';
-
-    
-    
+   
     // Thailand Language
     $tr['th']['AppName']        = 'Tiny File Manager';            $tr['en']['AppTitle']           = 'ตัวจัดการไฟล์';
     $tr['th']['Login']          = 'เข้าสู่ระบบ';                     $tr['en']['Username']           = 'ชื่อผู้ใช้งาน';
@@ -3580,6 +3608,7 @@ function lng($txt) {
     $tr['th']['Move']           = 'ย้าย';                       $tr['en']['Change']             = 'เปลี่ยน';
     $tr['th']['Settings']       = 'การตั้งค่า';                   $tr['en']['Language']           = 'ภาษา';
     
+
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
     else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
