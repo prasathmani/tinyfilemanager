@@ -3366,7 +3366,8 @@ function lng($txt) {
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
 
-    $tr = fm_get_translations($tr);
+    $i18n = fm_get_translations($tr);
+    $tr = $i18n ? $i18n : $tr;
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
