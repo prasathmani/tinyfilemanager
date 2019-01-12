@@ -1,18 +1,17 @@
+<!-- Split the page into 2 parts -->
+	<link rel="stylesheet" href="split.css">
 <?php
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 
 /**
- * H3K | Tiny File Manager V2.3
+ * H3K | Tiny File Manager V2.2.1
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
-//TFM version
-define('VERSION', '2.3');
-
 // Auth with login/password (set true/false to enable/disable it)
-$use_auth = true;
+$use_auth = false;
 
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
@@ -42,6 +41,24 @@ $edit_files = true;
 // Default timezone for date() and time() - http://php.net/manual/en/timezones.php
 $default_timezone = 'Etc/UTC'; // UTC
 
+//Enable Delete
+$delete_btn = true;
+
+//Enable Rename
+$rename_btn = true;
+
+//Enable Copy to...
+$copyto_btn = true;
+
+//Enable Direct link
+$directlink_btn = true;
+
+//Enable Download
+$download_btn = true;
+
+//Enable Preview 
+$previewf_btn = true;
+
 // Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
 
@@ -70,6 +87,9 @@ $GLOBALS['online_viewer'] = true;
 //Sticky Nav bar
 $sticky_navbar = true;
 
+//TFM version
+define('VERSION', '2.2.1');
+
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
     define('FM_SESSION_ID', 'filemanager');
@@ -89,7 +109,13 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 
 //available languages
 $lang_list = array(
-    'en' => 'English'
+    'en' => 'English',
+    'fr' => 'Français',
+    'it' => 'Italiano',
+    'ru' => 'Russian',
+    'es' => 'Español',
+    'th' => 'ภาษาไทย',
+    'de' => 'German'
 );
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
@@ -298,7 +324,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
         global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list;
         $newLng = $_POST['js-language'];
-        fm_get_translations();
         if (!array_key_exists($newLng, $lang_list)) {
             $newLng = 'en';
         }
@@ -648,8 +673,63 @@ if (!empty($_FILES) && !FM_READONLY) {
     exit();
 }
 
-// Mass deleting
-if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
+ if (isset($_GET['previewf'])){
+					$path = FM_ROOT_PATH;
+					$path .= '/' . FM_PATH;
+					$file = $_GET['previewf'];
+					$ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));; 
+					$file = fm_clean_path($file);
+					$file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
+					$file_path = $path . '/' . $file;
+					$mime_type = fm_get_mime_type($file_path);
+					$content = ''; 						
+					echo '<div  id="right" class="split right">';
+					if (in_array($ext, fm_get_image_exts())) {
+						echo '<p><img src="' . fm_enc($file_url) . '" alt="" class="preview-img"></p>';
+					}
+					elseif(in_array($ext, fm_get_onlineViewer_exts())) {
+					// Google docs viewer
+						echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
+					}  
+					elseif (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
+						$content = file_get_contents($file_path); 
+						
+						$is_utf8 = fm_is_utf8($content);
+						if (function_exists('iconv')) {
+							if (!$is_utf8) {
+								$content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
+							}
+						}
+							if (FM_USE_HIGHLIGHTJS) {
+								// highlight
+								$hljs_classes = array(
+									'shtml' => 'xml',
+									'htaccess' => 'apache',
+									'phtml' => 'php',
+									'lock' => 'json',
+									'svg' => 'xml',
+								);
+								$hljs_class = isset($hljs_classes[$ext]) ? 'lang-' . $hljs_classes[$ext] : 'lang-' . $ext;
+								if (empty($ext) || in_array(strtolower($file), fm_get_text_names()) || preg_match('#\.min\.(css|js)$#i', $file)) {
+									$hljs_class = 'nohighlight';
+								}
+								$content = '<pre class="with-hljs"><code class="' . $hljs_class . '">' . fm_enc($content) . '</code></pre>';
+								
+							} elseif (in_array($ext, array('php', 'php4', 'php5', 'phtml', 'phps'))) {
+								// php highlight
+								$content = highlight_string($content, true);
+								
+							} else {
+								$content = '<pre>' . fm_enc($content) . '</pre>';
+							}
+							echo $content;
+					}
+			
+			echo '</div>';
+			}
+ 
+ // Mass deleting
+ if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
@@ -849,35 +929,118 @@ if (!is_dir($path)) {
     fm_redirect(FM_SELF_URL . '?p=');
 }
 
-// get parent folder
-$parent = fm_get_parent_path(FM_PATH);
+// Sort by date
 
-$objects = is_readable($path) ? scandir($path) : array();
-$folders = array();
-$files = array();
-if (is_array($objects)) {
-    foreach ($objects as $file) {
-        if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_items'])) {
-            continue;
+function scan_dir($dir,$n) {
+    $ignored = array('.', '..');
+
+	foreach (scandir($dir) as $file) {
+		if (in_array($file, $ignored)) continue;
+		//sort by date
+		$files[$file] = filemtime($dir . '/' . $file);
+		
+	}
+	
+	
+    if ($n == 0){
+        asort($files);
+    }
+    else{
+        arsort($files);
+    }
+    $files = array_keys($files);
+
+    return ($files) ? $files : false;
+}
+
+if (isset($_GET['asc'])) {
+// get parent folder
+    $parent = fm_get_parent_path(FM_PATH);
+
+    $objects = is_readable($path) ? scan_dir($path, 0) : array();
+
+    $folders = array();
+    $files = array();
+
+
+    if (is_array($objects)) {
+        foreach ($objects as $file) {
+            if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_folders'])) {
+                continue;
+            }
+            if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
+                continue;
+            }
+            $new_path = $path . '/' . $file;
+            if (is_file($new_path)) {
+                $files[] = $file;
+            } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_folders'])) {
+                $folders[] = $file;
+            }
+
+
         }
-        if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
-            continue;
+    }
+}
+elseif(isset($_GET['desc'])){
+	// get parent folder
+    $parent = fm_get_parent_path(FM_PATH);
+
+    $objects = is_readable($path) ? scan_dir($path, 1) : array();
+
+    $folders = array();
+    $files = array();
+
+
+    if (is_array($objects)) {
+        foreach ($objects as $file) {
+            if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_folders'])) {
+                continue;
+            }
+            if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
+                continue;
+            }
+            $new_path = $path . '/' . $file;
+            if (is_file($new_path)) {
+                $files[] = $file;
+            } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_folders'])) {
+                $folders[] = $file;
+            }
+
+
         }
-        $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && !in_array($file, $GLOBALS['exclude_items'])) {
-            $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_items'])) {
-            $folders[] = $file;
+    }
+}
+else{
+    // get parent folder
+    $parent = fm_get_parent_path(FM_PATH);
+
+    $objects = is_readable($path) ? scan_dir($path, 1) : array();
+
+    $folders = array();
+    $files = array();
+
+
+    if (is_array($objects)) {
+        foreach ($objects as $file) {
+            if ($file == '.' || $file == '..' && in_array($file, $GLOBALS['exclude_folders'])) {
+                continue;
+            }
+            if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
+                continue;
+            }
+            $new_path = $path . '/' . $file;
+            if (is_file($new_path)) {
+                $files[] = $file;
+            } elseif (is_dir($new_path) && $file != '.' && $file != '..' && !in_array($file, $GLOBALS['exclude_folders'])) {
+                $folders[] = $file;
+            }
+
+
         }
     }
 }
 
-if (!empty($files)) {
-    natcasesort($files);
-}
-if (!empty($folders)) {
-    natcasesort($folders);
-}
 
 // upload form
 if (isset($_GET['upload']) && !FM_READONLY) {
@@ -1111,7 +1274,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
 
                     <div class="form-group row">
                         <div class="col-sm-10">
-                            <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?></button>
+                            <button type="submit" class="btn btn-success"><?php echo lng('Save'); ?></button>
                         </div>
                     </div>
 
@@ -1127,7 +1290,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
 if (isset($_GET['help'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-    global $cfg, $lang;
+    global $cfg, $lang, $lang_list;
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
@@ -1149,9 +1312,7 @@ if (isset($_GET['help'])) {
                                 <li class="list-group-item"><a href="https://tinyfilemanager.github.io/" target="_blank"><i class="fa fa-question-circle"></i> Help Documents</a> </li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> Report Issue</a></li>
                                 <li class="list-group-item"><a href="javascript:latest_release_info('<?php echo VERSION; ?>');" target="_blank"><i class="fa fa-link"></i> Check Latest Version</a></li>
-                                <?php if(!FM_READONLY) { ?>
                                 <li class="list-group-item"><a href="javascript:show_new_pwd();" target="_blank"><i class="fa fa-lock"></i> Generate new password hash</a></li>
-                                <?php } ?>
                             </ul>
                         </div>
                     </div>
@@ -1178,9 +1339,9 @@ if (isset($_GET['help'])) {
     <?php
     fm_show_footer();
     exit;
-}
+}?>
 
-// file viewer
+<?php // file viewer
 if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file);
@@ -1332,7 +1493,8 @@ if (isset($_GET['view'])) {
                 // Video content
                 echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
             } elseif ($is_text) {
-                if (FM_USE_HIGHLIGHTJS) {
+				if (FM_USE_HIGHLIGHTJS) {
+					
                     // highlight
                     $hljs_classes = array(
                         'shtml' => 'xml',
@@ -1345,7 +1507,7 @@ if (isset($_GET['view'])) {
                     if (empty($ext) || in_array(strtolower($file), fm_get_text_names()) || preg_match('#\.min\.(css|js)$#i', $file)) {
                         $hljs_class = 'nohighlight';
                     }
-                    $content = '<pre class="with-hljs"><code class="' . $hljs_class . '">' . fm_enc($content) . '</code></pre>';
+					$content = '<pre class="with-hljs"><code class="' . $hljs_class . '">' . fm_enc($content) . '</code></pre>';
                 } elseif (in_array($ext, array('php', 'php4', 'php5', 'phtml', 'phps'))) {
                     // php highlight
                     $content = highlight_string($content, true);
@@ -1418,9 +1580,10 @@ if (isset($_GET['edit'])) {
                             <button data-cmd="undo" class="btn btn-sm btn-outline-secondary" id="js-ace-undo" title="Undo"><i class="fa fa-undo" title="Undo"></i></button>
                             <button data-cmd="redo" class="btn btn-sm btn-outline-secondary" id="js-ace-redo" title="Redo"><i class="fa fa-repeat" title="Redo"></i></button>
                             <button data-cmd="none" data-option="wrap" class="btn btn-sm btn-outline-secondary" id="js-ace-wordWrap" title="Word Wrap"><i class="fa fa-text-width" title="Word Wrap"></i></button>
+                            <button data-cmd="goToNo" class="btn btn-sm btn-outline-secondary" id="js-ace-goLine" title="Go To Line Number"><i class="fa fa-i-cursor" title="Go To Line Number"></i></button>
                             <button data-cmd="none" data-option="help" class="btn btn-sm btn-outline-secondary" id="js-ace-goLine" title="Help"><i class="fa fa-question" title="Help"></i></button>
-                            <select id="js-ace-mode" data-type="mode" title="Select Document Type" class="btn-outline-secondary border-left-0 d-none d-md-block"><option>-- Select Mode --</option></select>
-                            <select id="js-ace-theme" data-type="theme" title="Select Theme" class="btn-outline-secondary border-left-0 d-none d-lg-block"><option>-- Select Theme --</option></select>
+                            <select id="js-ace-mode" data-type="mode" title="Select Document Type" class="btn-outline-secondary border-left-0 d-none d-md-block"><option value="ace/mode/abap">ABAP</option><option value="ace/mode/actionscript">ActionScript</option><option value="ace/mode/ada">ADA</option><option value="ace/mode/apache_conf">Apache Conf</option><option value="ace/mode/asciidoc">AsciiDoc</option><option value="ace/mode/asl">ASL</option><option value="ace/mode/assembly_x86">Assembly x86</option><option value="ace/mode/apex">Apex</option><option value="ace/mode/batchfile">BatchFile</option><option value="ace/mode/c_cpp">C and C++</option><option value="ace/mode/clojure">Clojure</option><option value="ace/mode/cobol">Cobol</option><option value="ace/mode/coffee">CoffeeScript</option><option value="ace/mode/coldfusion">ColdFusion</option><option value="ace/mode/csharp">C#</option><option value="ace/mode/css">CSS</option><option value="ace/mode/curly">Curly</option><option value="ace/mode/d">D</option><option value="ace/mode/dart">Dart</option><option value="ace/mode/diff">Diff</option><option value="ace/mode/dockerfile">Dockerfile</option><option value="ace/mode/dot">Dot</option><option value="ace/mode/ejs">EJS</option><option value="ace/mode/erlang">Erlang</option><option value="ace/mode/fortran">Fortran</option><option value="ace/mode/fsharp">FSharp</option><option value="ace/mode/gitignore">Gitignore</option><option value="ace/mode/golang">Go</option><option value="ace/mode/graphqlschema">GraphQLSchema</option><option value="ace/mode/groovy">Groovy</option><option value="ace/mode/haml">HAML</option><option value="ace/mode/handlebars">Handlebars</option><option value="ace/mode/haskell">Haskell</option><option value="ace/mode/haskell_cabal">Haskell Cabal</option><option value="ace/mode/haxe">haXe</option><option value="ace/mode/hjson">Hjson</option><option value="ace/mode/html">HTML</option><option value="ace/mode/html_elixir">HTML (Elixir)</option><option value="ace/mode/html_ruby">HTML (Ruby)</option><option value="ace/mode/ini">INI</option><option value="ace/mode/io">Io</option><option value="ace/mode/jade">Jade</option><option value="ace/mode/java">Java</option><option value="ace/mode/javascript" selected>JavaScript</option><option value="ace/mode/json">JSON</option><option value="ace/mode/jsoniq">JSONiq</option><option value="ace/mode/jsp">JSP</option><option value="ace/mode/jsx">JSX</option><option value="ace/mode/less">LESS</option><option value="ace/mode/markdown">Markdown</option><option value="ace/mode/matlab">MATLAB</option><option value="ace/mode/mysql">MySQL</option><option value="ace/mode/objectivec">Objective-C</option><option value="ace/mode/pascal">Pascal</option><option value="ace/mode/perl">Perl</option><option value="ace/mode/perl6">Perl 6</option><option value="ace/mode/pgsql">pgSQL</option><option value="ace/mode/php_laravel_blade">PHP (Blade Template)</option><option value="ace/mode/php">PHP</option><option value="ace/mode/powershell">Powershell</option><option value="ace/mode/python">Python</option><option value="ace/mode/razor">Razor</option><option value="ace/mode/rdoc">RDoc</option><option value="ace/mode/rhtml">RHTML</option><option value="ace/mode/ruby">Ruby</option><option value="ace/mode/rust">Rust</option><option value="ace/mode/sass">SASS</option><option value="ace/mode/scad">SCAD</option><option value="ace/mode/scala">Scala</option><option value="ace/mode/scheme">Scheme</option><option value="ace/mode/scss">SCSS</option><option value="ace/mode/sh">SH</option><option value="ace/mode/sjs">SJS</option><option value="ace/mode/sql">SQL</option><option value="ace/mode/sqlserver">SQLServer</option><option value="ace/mode/stylus">Stylus</option><option value="ace/mode/svg">SVG</option><option value="ace/mode/swift">Swift</option><option value="ace/mode/terraform">Terraform</option><option value="ace/mode/tex">Tex</option><option value="ace/mode/text">Text</option><option value="ace/mode/textile">Textile</option><option value="ace/mode/toml">Toml</option><option value="ace/mode/tsx">TSX</option><option value="ace/mode/typescript">Typescript</option><option value="ace/mode/vbscript">VBScript</option><option value="ace/mode/xml">XML</option><option value="ace/mode/xquery">XQuery</option><option value="ace/mode/yaml">YAML</option><option value="ace/mode/django">Django</option></select>
+                            <select id="js-ace-theme" data-type="theme" title="Select Theme" class="btn-outline-secondary border-left-0 d-none d-lg-block"><optgroup label="Bright"><option value="ace/theme/chrome">Chrome</option><option value="ace/theme/clouds">Clouds</option><option value="ace/theme/crimson_editor">Crimson Editor</option><option value="ace/theme/dawn">Dawn</option><option value="ace/theme/dreamweaver">Dreamweaver</option><option value="ace/theme/eclipse">Eclipse</option><option value="ace/theme/github">GitHub</option><option value="ace/theme/iplastic">IPlastic</option><option value="ace/theme/solarized_light">Solarized Light</option><option value="ace/theme/textmate">TextMate</option><option value="ace/theme/tomorrow">Tomorrow</option><option value="ace/theme/xcode">XCode</option><option value="ace/theme/kuroir">Kuroir</option><option value="ace/theme/katzenmilch">KatzenMilch</option><option value="ace/theme/sqlserver">SQL Server</option></optgroup><optgroup label="Dark"><option value="ace/theme/ambiance">Ambiance</option><option value="ace/theme/chaos">Chaos</option><option value="ace/theme/clouds_midnight">Clouds Midnight</option><option value="ace/theme/dracula">Dracula</option><option value="ace/theme/cobalt">Cobalt</option><option value="ace/theme/gruvbox">Gruvbox</option><option value="ace/theme/gob">Green on Black</option><option value="ace/theme/idle_fingers">idle Fingers</option><option value="ace/theme/kr_theme">krTheme</option><option value="ace/theme/merbivore">Merbivore</option><option value="ace/theme/merbivore_soft">Merbivore Soft</option><option value="ace/theme/mono_industrial">Mono Industrial</option><option value="ace/theme/monokai">Monokai</option><option value="ace/theme/pastel_on_dark">Pastel on dark</option><option value="ace/theme/solarized_dark">Solarized Dark</option><option value="ace/theme/terminal">Terminal</option><option value="ace/theme/tomorrow_night">Tomorrow Night</option><option value="ace/theme/tomorrow_night_blue">Tomorrow Night Blue</option><option value="ace/theme/tomorrow_night_bright">Tomorrow Night Bright</option><option value="ace/theme/tomorrow_night_eighties">Tomorrow Night 80s</option><option value="ace/theme/twilight">Twilight</option><option value="ace/theme/vibrant_ink">Vibrant Ink</option></optgroup></select>
                         </div>
                     <?php } ?>
                 </div>
@@ -1555,7 +1718,8 @@ $all_files_size = 0;
                     </th><?php endif; ?>
                 <th><?php echo lng('Name') ?></th>
                 <th><?php echo lng('Size') ?></th>
-                <th><?php echo lng('Modified') ?></th>
+                <th><?php echo lng('Modified') ?>&nbsp;&nbsp;<a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;desc=<?php echo $desc=true; ?>""><i  title="Desc" style="cursor:pointer;"  class="fa fa-long-arrow-up"></i></a>&nbsp;&nbsp;
+            <a href="?p=<?php echo urlencode(FM_PATH) ?>&&amp;asc=<?php echo $asc=true; ?>""><i title="Asc" style="cursor:pointer;"  class="fa fa-long-arrow-down"></i></a></th>
                 <?php if (!FM_IS_WIN): ?>
                     <th><?php echo lng('Perms') ?></th>
                     <th><?php echo lng('Owner') ?></th><?php endif; ?>
@@ -1613,12 +1777,13 @@ $all_files_size = 0;
                         <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete folder?');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
+                            <?php if($delete_btn){?><a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete folder?');"><i class="fa fa-trash-o" aria-hidden="true"></i></a><?php }?>
+                            <?php if($rename_btn){?><a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a><?php }?>
+                            <?php if($copyto_btn){?><a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a><?php } ?>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink')?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
-                    </td>
+                        <?php if($directlink_btn ) {?> <a title="<?php echo lng('DirectLink')?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a><?php }?>
+						
+					</td>
                 </tr>
                 <?php
                 flush();
@@ -1663,14 +1828,17 @@ $all_files_size = 0;
                     <?php endif; ?>
                     <td class="inline-actions">
                         <?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete file?');"><i class="fa fa-trash-o"></i></a>
-                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
-                            <a title="<?php echo lng('CopyTo') ?>..."
-                               href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
+                           <?php if($delete_btn){?> <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete file?');"><i class="fa fa-trash-o"></i></a><?php }?>
+                           <?php if($rename_btn){?> <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a><?php }?>
+                           <?php if($copyto_btn){?> <a title="<?php echo lng('CopyTo') ?>..."
+                               href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a><?php }?>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
-                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
-                    </td>
+                        <?php if($directlink_btn ) {?> <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a> <?php }?>
+                        <?php if($download_btn ) {?> <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a><?php }?>
+						<?php if($previewf_btn) { $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));;  if (in_array($ext, fm_get_image_exts()) || in_array($ext, fm_get_text_exts()) || in_array($ext, fm_get_onlineViewer_exts())) {?>
+						<a title="Preview" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;previewf=<?php echo urlencode($f) ?>"><i class="fa fa-eye"></i></a> </td>
+						<?php } 
+						}?>
                 </tr>
                 <?php
                 flush();
@@ -1958,33 +2126,6 @@ function fm_get_parent_path($path)
         return '';
     }
     return false;
-}
-
-/*
- * get language translations from json file
- * @param int $tr
- * @return array
- */
-function fm_get_translations($tr) {
-    try {
-        $content = @file_get_contents('translation.json');
-        if($content !== FALSE) {
-            $lng = json_decode($content, TRUE);
-            global $lang_list;
-            foreach ($lng["language"] as $key => $value)
-            {
-                $code = $value["code"];
-                $lang_list[$code] = $value["name"];
-                if ($tr)
-                    $tr[$code] = $value["translation"];
-            }
-            return $tr;
-        }
-
-    }
-    catch (Exception $e) {
-        echo $e;
-    }
 }
 
 /**
@@ -2776,7 +2917,7 @@ global $lang;
     {
     ?>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </body>
 </html>
@@ -2800,6 +2941,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 <!DOCTYPE html>
 <html>
 <head>
+	
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Web based File Manager in PHP, Manage your files efficiently and easily with Tiny File Manager">
@@ -2924,7 +3066,10 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             color: orange
         }
         .preview-img {
-            max-width: 100%;
+			max-width: 100%;
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
             background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC)
         }
         .inline-actions > a > i {
@@ -3006,7 +3151,47 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             padding: 3px 6px;
             font-size: small;
         }
-        li.file:before,li.folder:before{font:normal normal normal 14px/1 FontAwesome;content:"\f016";margin-right:5px}li.folder:before{content:"\f114"}i.fa.fa-folder-o{color:#0157b3}i.fa.fa-picture-o{color:#26b99a}i.fa.fa-file-archive-o{color:#da7d7d}.btn-2 i.fa.fa-file-archive-o{color:inherit}i.fa.fa-css3{color:#f36fa0}i.fa.fa-file-code-o{color:#007bff}i.fa.fa-code{color:#cc4b4c}i.fa.fa-file-text-o{color:#0096e6}i.fa.fa-html5{color:#d75e72}i.fa.fa-file-excel-o{color:#09c55d}i.fa.fa-file-powerpoint-o{color:#f6712e}
+        li.file:before, li.folder:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f016";
+            margin-right: 5px
+        }
+        li.folder:before {
+            content: "\f114"
+        }
+        i.fa.fa-folder-o {
+            color: #0157b3
+        }
+        i.fa.fa-picture-o {
+            color: #26b99a
+        }
+        i.fa.fa-file-archive-o {
+            color: #da7d7d
+        }
+        .btn-2 i.fa.fa-file-archive-o {
+            color: inherit;
+        }
+        i.fa.fa-css3 {
+            color: #f36fa0
+        }
+        i.fa.fa-file-code-o {
+            color: #007bff
+        }
+        i.fa.fa-code {
+            color: #cc4b4c
+        }
+        i.fa.fa-file-text-o {
+            color: #0096e6
+        }
+        i.fa.fa-html5 {
+            color: #d75e72
+        }
+        i.fa.fa-file-excel-o {
+            color: #09c55d
+        }
+        i.fa.fa-file-powerpoint-o {
+            color: #f6712e
+        }
         i.go-back {
             font-size: 1.2em;
             color: #007bff;
@@ -3052,13 +3237,60 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             border-top: 1px dashed #8c8b8b;
             border-bottom: 1px dashed #fff;
         }
-        .btn.active.focus,.btn.active:focus,.btn.focus,.btn.focus:active,.btn:active:focus,.btn:focus{outline:0!important;outline-offset:0!important;background-image:none!important;-webkit-box-shadow:none!important;box-shadow:none!important}
-        .lds-facebook{display:none;position:relative;width:64px;height:64px}.lds-facebook div,.lds-facebook.show-me{display:inline-block}.lds-facebook div{position:absolute;left:6px;width:13px;background:#007bff;animation:lds-facebook 1.2s cubic-bezier(0,.5,.5,1) infinite}.lds-facebook div:nth-child(1){left:6px;animation-delay:-.24s}.lds-facebook div:nth-child(2){left:26px;animation-delay:-.12s}.lds-facebook div:nth-child(3){left:45px;animation-delay:0}@keyframes lds-facebook{0%{top:6px;height:51px}100%,50%{top:19px;height:26px}}
+        .btn.active.focus,
+        .btn.active:focus,
+        .btn.focus,
+        .btn.focus:active,
+        .btn:active:focus,
+        .btn:focus {
+            outline: 0 !important;
+            outline-offset: 0  !important;
+            background-image: none  !important;
+            -webkit-box-shadow: none !important;
+            box-shadow: none  !important;
+        }
+        .lds-facebook {
+            display: none;
+            position: relative;
+            width: 64px;
+            height: 64px;
+        }
+        .lds-facebook.show-me { display: inline-block;}
+        .lds-facebook div {
+            display: inline-block;
+            position: absolute;
+            left: 6px;
+            width: 13px;
+            background: #007bff;
+            animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+        }
+        .lds-facebook div:nth-child(1) {
+            left: 6px;
+            animation-delay: -0.24s;
+        }
+        .lds-facebook div:nth-child(2) {
+            left: 26px;
+            animation-delay: -0.12s;
+        }
+        .lds-facebook div:nth-child(3) {
+            left: 45px;
+            animation-delay: 0;
+        }
+        @keyframes lds-facebook {
+            0% {
+                top: 6px;
+                height: 51px;
+            }
+            50%, 100% {
+                top: 19px;
+                height: 26px;
+            }
+        }
     </style>
 </head>
 <body class="<?php echo $isStickyNavBar; ?>">
 <div id="wrapper" class="container-fluid">
-
+	<div class="split left">
     <!-- New Item creation -->
     <div class="modal fade" id="createNewItem" tabindex="-1" role="dialog" aria-label="newItemModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -3095,7 +3327,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 
     <!-- Modal -->
     <script type="text/html" id="js-tpl-modal">
-        <div class="modal fade" id="js-ModalCenter-<%this.id%>" tabindex="-1" role="dialog" aria-labelledby="ModalCenterTitle" aria-hidden="true">
+        <div class="modal fade" id="js-ModalCenter" tabindex="-1" role="dialog" aria-labelledby="ModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -3114,6 +3346,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                 </div>
             </div>
         </div>
+		</div>
     </script>
 
     <?php
@@ -3126,13 +3359,10 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     {
     ?>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 <script>
-    //TFM Config
-    window.curi = "https://tinyfilemanager.github.io/config.json", window.config = null;
-    function fm_get_config(){ if(!!window.name){ window.config = JSON.parse(window.name); } else { $.getJSON(window.curi).done(function(c) { if(!!c) { window.name = JSON.stringify(c), window.config = c; } }); }}
     function template(html,options){
         var re=/<%([^%>]+)?%>/g,reExp=/(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,code='var r=[];\n',cursor=0,match;var add=function(line,js){js?(code+=line.match(reExp)?line+'\n':'r.push('+line+');\n'):(code+=line!=''?'r.push("'+line.replace(/"/g,'\\"')+'");\n':'');return add}
         while(match=re.exec(html)){add(html.slice(cursor,match.index))(match[1],!0);cursor=match.index+match[0].length}
@@ -3168,11 +3398,21 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             o.appendChild(c), a.appendChild(o), document.body.appendChild(a), a.submit()
         }
     }
-    //Check latest version
+    //Get latest update from git repo
     function latest_release_info(v) {
-        if(!!window.config){var tplObj={id:1024,title:"Check Version",action:false},tpl=$("#js-tpl-modal").html();
-        if(window.config.version!=v){tplObj.content=window.config.newUpdate;}else{tplObj.content=window.config.noUpdate;}
-        $('#wrapper').append(template(tpl,tplObj));$("#js-ModalCenter-1024").modal('show');}else{fm_get_config();}
+        $.getJSON("https://tinyfilemanager.github.io/version.json").done(function(release) {
+            if(release) {
+                var tplObj = { title: "Check Version", action: false },
+                    tpl = $("#js-tpl-modal").html();
+                if(release && release.version != v ) {
+                    tplObj.content = "New Updates Available, Download new version <a href='https://github.com/prasathmani/tinyfilemanager/archive/master.zip' target='_blank'>here</a>";
+                } else {
+                    tplObj.content = "No Updates Available";
+                }
+                $('#wrapper').append(template(tpl, tplObj));
+                $("#js-ModalCenter").modal('show');
+            }
+        });
     }
     function show_new_pwd() { $(".js-new-pwd").toggleClass('hidden'); window.open("https://tinyfilemanager.github.io/docs/pwd.html", '_blank'); }
     //Save Settings
@@ -3211,10 +3451,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             }
         }); return false;
     }
-    // Dom Ready Event
+   /* // Dom Ready Event
     $(document).ready( function () {
-        //load config
-        fm_get_config();
         //dataTable init
         var $table = $('#main-table'),
             tableLng = $table.find('th').length,
@@ -3226,11 +3464,12 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         });
         //upload nav tabs
         $(".fm-upload-wrapper .card-header-tabs").on("click", 'a', function(e){
-            e.preventDefault();let target=$(this).data('target');
-            $(".fm-upload-wrapper .card-header-tabs a").removeClass('active');$(this).addClass('active');
-            $(".fm-upload-wrapper .card-tabs-container").addClass('hidden');$(target).removeClass('hidden');
+            e.preventDefault();
+            let target = $(this).data('target');
+            $(".fm-upload-wrapper .card-header-tabs a").removeClass('active'); $(this).addClass('active');
+            $(".fm-upload-wrapper .card-tabs-container").addClass('hidden'); $(target).removeClass('hidden');
         });
-    });
+    }); */
 </script>
 <?php if (isset($_GET['view']) && FM_USE_HIGHLIGHTJS): ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
@@ -3246,41 +3485,40 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         editor.commands.addCommands([{
             name: 'save', bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
             exec: function(editor) { edit_save(this, 'ace'); }
+        },{
+            name: 'goToNo',  bindKey: {win: 'Ctrl-G',  mac: 'Command-G'},
+            exec: function(editor) {
+                let x = parseInt(prompt("Enter a Line Number [1 - "+editor.session.getLength()+"]", "1"), 10);
+                editor.gotoLine(x);
+            }
         }]);
-        function renderThemeMode() {
-            var $modeEl = $("select#js-ace-mode"), $themeEl = $("select#js-ace-theme"), optionNode = function(type, arr){ var $Option = ""; $.each(arr, function(i, val) { $Option += "<option value='"+type+i+"'>" + val + "</option>"; }); return $Option; };
-            if(window.config && window.config.aceMode) { $modeEl.html(optionNode("ace/mode/", window.config.aceMode)); }
-            if(window.config && window.config.aceTheme) { var lightTheme = optionNode("ace/theme/", window.config.aceTheme.bright), darkTheme = optionNode("ace/theme/", window.config.aceTheme.dark); $themeEl.html("<optgroup label=\"Bright\">"+lightTheme+"</optgroup><optgroup label=\"Dark\">"+darkTheme+"</optgroup>");}
-        }
 
-        $(function(){
-            renderThemeMode();
-            $(".js-ace-toolbar").on("click", 'button', function(e){
-                e.preventDefault();
-                let cmdValue = $(this).attr("data-cmd"), editorOption = $(this).attr("data-option");
-                if(cmdValue && cmdValue != "none") {
-                    ace_commend(cmdValue);
-                } else if(editorOption) {
-                    if(editorOption == "fullscreen") {
-                        (void 0!==document.fullScreenElement&&null===document.fullScreenElement||void 0!==document.msFullscreenElement&&null===document.msFullscreenElement||void 0!==document.mozFullScreen&&!document.mozFullScreen||void 0!==document.webkitIsFullScreen&&!document.webkitIsFullScreen)
-                        &&(editor.container.requestFullScreen?editor.container.requestFullScreen():editor.container.mozRequestFullScreen?editor.container.mozRequestFullScreen():editor.container.webkitRequestFullScreen?editor.container.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT):editor.container.msRequestFullscreen&&editor.container.msRequestFullscreen());
-                    } else if(editorOption == "wrap") {
-                        let wrapStatus = (editor.getSession().getUseWrapMode()) ? false : true;
-                        editor.getSession().setUseWrapMode(wrapStatus);
-                    } else if(editorOption == "help") {
-                        var helpHtml="";$.each(window.config.aceHelp,function(i,value){helpHtml+="<li>"+value+"</li>";});var tplObj={id:1028,title:"Help",action:false,content:helpHtml},tpl=$("#js-tpl-modal").html();$('#wrapper').append(template(tpl,tplObj));$("#js-ModalCenter-1028").modal('show');
-                    }
+        $(".js-ace-toolbar").on("click", 'button', function(e){
+            e.preventDefault();
+            let cmdValue = $(this).attr("data-cmd");
+            let editorOption = $(this).attr("data-option");
+            if(cmdValue && cmdValue != "none") {
+                ace_commend(cmdValue);
+            } else if(editorOption) {
+                if(editorOption == "fullscreen") {
+                    (void 0!==document.fullScreenElement&&null===document.fullScreenElement||void 0!==document.msFullscreenElement&&null===document.msFullscreenElement||void 0!==document.mozFullScreen&&!document.mozFullScreen||void 0!==document.webkitIsFullScreen&&!document.webkitIsFullScreen)
+                    &&(editor.container.requestFullScreen?editor.container.requestFullScreen():editor.container.mozRequestFullScreen?editor.container.mozRequestFullScreen():editor.container.webkitRequestFullScreen?editor.container.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT):editor.container.msRequestFullscreen&&editor.container.msRequestFullscreen());
+                } else if(editorOption == "wrap") {
+                    let wrapStatus = (editor.getSession().getUseWrapMode()) ? false : true;
+                    editor.getSession().setUseWrapMode(wrapStatus);
+                } else if(editorOption == "help") {
+                    alert("Editor Shortcuts\n------------------\nSave (Ctrl + S)\nFind (Ctrl + F)\nUndo (Ctrl + Z)\nRedo (Ctrl + Y)\nGo to Line (Ctrl + G)\nMore - https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts");
                 }
-            });
-            $("select#js-ace-mode, select#js-ace-theme").on("change", function(e){
-                e.preventDefault();
-                let selectedValue = $(this).val(), selectionType = $(this).attr("data-type");
-                if(selectedValue && selectionType == "mode") {
-                    editor.getSession().setMode(selectedValue);
-                } else if(selectedValue && selectionType == "theme") {
-                    editor.setTheme(selectedValue);
-                }
-            });
+            }
+        });
+        $("select#js-ace-mode, select#js-ace-theme").on("change", function(e){
+            e.preventDefault();
+            let selectedValue = $(this).val(), selectionType = $(this).attr("data-type");
+            if(selectedValue && selectionType == "mode") {
+                editor.getSession().setMode(selectedValue);
+            } else if(selectedValue && selectionType == "theme") {
+                editor.setTheme(selectedValue);
+            }
         });
     </script>
 <?php endif; ?>
@@ -3366,8 +3604,179 @@ function lng($txt) {
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
 
-    $i18n = fm_get_translations($tr);
-    $tr = $i18n ? $i18n : $tr;
+
+    // French Language
+    $tr['fr']['AppName']        = 'Tiny File Manager';      $tr['fr']['AppTitle']           = 'File Manager';
+    $tr['fr']['Login']          = 'Connexion';              $tr['fr']['Username']           = 'Utilisateur';
+    $tr['fr']['Password']       = 'Mot de passe';           $tr['fr']['Logout']             = 'Déconnexion';
+    $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Copy']               = 'Copier';
+    $tr['fr']['Save']           = 'Sauvegarder';            $tr['fr']['SelectAll']          = 'Tout sélectionner';
+    $tr['fr']['UnSelectAll']    = 'Tout déselectionner';    $tr['fr']['File']               = 'Fichier';
+    $tr['fr']['Back']           = 'Retour';                 $tr['fr']['Size']               = 'Taille';
+    $tr['fr']['Perms']          = 'Perms';                  $tr['fr']['Modified']           = 'Modifié le';
+    $tr['fr']['Owner']          = 'Propriétaire';           $tr['fr']['Search']             = 'Recherche';
+    $tr['fr']['NewItem']        = 'Nouvel Élément';         $tr['fr']['Folder']             = 'Dossier';
+    $tr['fr']['Delete']         = 'Supprimer';              $tr['fr']['Rename']             = 'Renommer';
+    $tr['fr']['CopyTo']         = 'Copier vers';            $tr['fr']['DirectLink']         = 'Lien direct';
+    $tr['fr']['UploadingFiles'] = 'Envoyer des fichiers';   $tr['fr']['ChangePermissions']  = 'Modifier les permissions';
+    $tr['fr']['Copying']        = 'Copier';                 $tr['fr']['CreateNewItem']      = 'Créer un nouvel élément';
+    $tr['fr']['Name']           = 'Nom';                    $tr['fr']['AdvancedEditor']     = 'Editeur avancé';
+    $tr['fr']['RememberMe']     = 'Se rappeler de moi';     $tr['fr']['Actions']            = 'Actes';
+    $tr['fr']['Upload']         = 'Envoyer';                $tr['fr']['Cancel']             = 'Annuler';
+    $tr['fr']['InvertSelection']= 'Inverser la sélection';  $tr['fr']['DestinationFolder']  = 'Dossier destination';
+    $tr['fr']['ItemType']       = 'Type d\'élement';        $tr['fr']['ItemName']           = 'Nom de l\'élément';
+    $tr['fr']['CreateNow']      = 'Créer';                  $tr['fr']['Download']           = 'Télécharger';
+    $tr['fr']['Open']           = 'Ouvrir';                 $tr['fr']['UnZip']              = 'Décompressez';
+    $tr['fr']['UnZipToFolder']  = 'Décompresser dans un dossier';$tr['fr']['Edit']          = 'Editeur';
+    $tr['fr']['NormalEditor']   = 'Éditeur Normal';         $tr['fr']['BackUp']             = 'Sauvegarder';
+    $tr['fr']['SourceFolder']   = 'Dossier Source';         $tr['fr']['Files']              = 'Fichiers';
+    $tr['fr']['Move']           = 'Déplacer';               $tr['fr']['Change']             = 'Modifier';
+    $tr['fr']['Settings']       = 'Réglages';               $tr['fr']['Language']           = 'Langue';
+    $tr['fr']['MemoryUsed']     = 'Mémoire utilisée';       $tr['fr']['PartitionSize']      = 'Taille de la partition';
+
+    // Italian Language
+    $tr['it']['AppName']        = 'Tiny File Manager';      $tr['it']['AppTitle']           = 'File Manager';
+    $tr['it']['Login']          = 'Connettiti';             $tr['it']['Username']           = 'Username';
+    $tr['it']['Password']       = 'Password';               $tr['it']['Logout']             = 'Disconnettiti';
+    $tr['it']['Move']           = 'Sposta';                 $tr['it']['Copy']               = 'Copia';
+    $tr['it']['Save']           = 'Salva';                  $tr['it']['SelectAll']          = 'Seleziona tutto';
+    $tr['it']['UnSelectAll']    = 'Deseleziona tutto';      $tr['it']['File']               = 'File';
+    $tr['it']['Back']           = 'Indietro';               $tr['it']['Size']               = 'Dimensione';
+    $tr['it']['Perms']          = 'Permessi';               $tr['it']['Modified']           = 'Modificato';
+    $tr['it']['Owner']          = 'Proprietario';           $tr['it']['Search']             = 'Cerca';
+    $tr['it']['NewItem']        = 'Nuovo Elemento';         $tr['it']['Folder']             = 'Cartella';
+    $tr['it']['Delete']         = 'Elimina';                $tr['it']['Rename']             = 'Rinomina';
+    $tr['it']['CopyTo']         = 'Copia su';               $tr['it']['DirectLink']         = 'Link diretto';
+    $tr['it']['UploadingFiles'] = 'Caricamento file';       $tr['it']['ChangePermissions']  = 'Modifica Permessi';
+    $tr['it']['Copying']        = 'Copia in corso';         $tr['it']['CreateNewItem']      = 'Crea Nuovo Elemento';
+    $tr['it']['Name']           = 'Nome';                   $tr['it']['AdvancedEditor']     = 'Editor Avanzato';
+    $tr['it']['RememberMe']     = 'Ricordami';              $tr['it']['Actions']            = 'Azioni';
+    $tr['it']['Upload']         = 'Carica';                 $tr['it']['Cancel']             = 'Annulla';
+    $tr['it']['InvertSelection']= 'Inverti Selezione';      $tr['it']['DestinationFolder']  = 'Cartella di Destinazione';
+    $tr['it']['ItemType']       = 'Tipo Elemento';          $tr['it']['ItemName']           = 'Nome Elemento';
+    $tr['it']['CreateNow']      = 'Crea Adesso';            $tr['it']['Download']           = 'Scarica';
+    $tr['it']['Open']           = 'Apri';                   $tr['it']['UnZip']              = 'Decomprimi';
+    $tr['it']['UnZipToFolder']  = 'Decomprimi su cartella'; $tr['it']['Edit']               = 'Modifica';
+    $tr['it']['NormalEditor']   = 'Editor Normale';         $tr['it']['BackUp']             = 'Back-Up';
+    $tr['it']['SourceFolder']   = 'Cartella di Origine';    $tr['it']['Files']              = 'File';
+    $tr['it']['Move']           = 'Sposta';                 $tr['it']['Change']             = 'Cambia';
+    $tr['it']['Settings']       = 'Impostazioni';           $tr['it']['Language']           = 'Lingua';
+    $tr['it']['MemoryUsed']     = 'Memoria utilizzata';     $tr['it']['PartitionSize']      = 'Dimensione della partizione';
+
+    // Russian Language
+    $tr['ru']['AppName']        = 'Файловый менеджер';            $tr['ru']['AppTitle']           = 'Файловый менеджер';
+    $tr['ru']['Login']          = 'Войти';                        $tr['ru']['Username']           = 'Пользователь';
+    $tr['ru']['Password']       = 'Пароль';                       $tr['ru']['Logout']             = 'Выйти';
+    $tr['ru']['Move']           = 'Переместить';                  $tr['ru']['Copy']               = 'Копировать';
+    $tr['ru']['Save']           = 'Сохранить';                    $tr['ru']['SelectAll']          = 'Выбрать всё';
+    $tr['ru']['UnSelectAll']    = 'Отменить выбор';               $tr['ru']['File']               = 'Файл';
+    $tr['ru']['Back']           = 'Вернуться';                    $tr['ru']['Size']               = 'Размер';
+    $tr['ru']['Perms']          = 'Права доступа';                $tr['ru']['Modified']           = 'Обновление';
+    $tr['ru']['Owner']          = 'Создатель';                    $tr['ru']['Search']             = 'Поиск';
+    $tr['ru']['NewItem']        = 'Создать';                      $tr['ru']['Folder']             = 'Папка';
+    $tr['ru']['Delete']         = 'Удалить';                      $tr['ru']['Rename']             = 'Переименовать';
+    $tr['ru']['CopyTo']         = 'Скопировать в';                $tr['ru']['DirectLink']         = 'Ссылка';
+    $tr['ru']['UploadingFiles'] = 'Загрузка файлов';              $tr['ru']['ChangePermissions']  = 'Изменить права';
+    $tr['ru']['Copying']        = 'Копировать';                   $tr['ru']['CreateNewItem']      = 'Создать новый';
+    $tr['ru']['Name']           = 'Имя';                          $tr['ru']['AdvancedEditor']     = 'Улучшеный редактор';
+    $tr['ru']['RememberMe']     = 'Запомнить меня';               $tr['ru']['Actions']            = 'Действия';
+    $tr['ru']['Upload']         = 'Загрузить';                    $tr['ru']['Cancel']             = 'Отмена';
+    $tr['ru']['InvertSelection']= 'Обратная выборка';             $tr['ru']['DestinationFolder']  = 'Папка назначения';
+    $tr['ru']['ItemType']       = 'Тип элемента';                 $tr['ru']['ItemName']           = 'Имя элемента';
+    $tr['ru']['CreateNow']      = 'Создать сейчас';               $tr['ru']['Download']           = 'Загрузка';
+    $tr['ru']['Open']           = 'Открыть';                      $tr['ru']['UnZip']              = 'Разархивировать';
+    $tr['ru']['UnZipToFolder']  = 'Разархивировать в папку';      $tr['ru']['Edit']               = 'Редактировать';
+    $tr['ru']['NormalEditor']   = 'Стандартный редактор';         $tr['ru']['BackUp']             = 'Back Up';
+    $tr['ru']['SourceFolder']   = 'Путь папки';                   $tr['ru']['Files']              = 'Файлы';
+    $tr['ru']['Move']           = 'Переместить';                  $tr['ru']['Change']             = 'Изменения';
+    $tr['ru']['Settings']       = 'Свойства';                     $tr['ru']['Language']           = 'Язык';
+    $tr['ru']['MemoryUsed']     = 'Используемая память';          $tr['ru']['PartitionSize']      = 'Размер раздела';
+
+    // Spanish Language
+    $tr['es']['AppName']        = 'Pequeño Administrador de Archivos';  $tr['es']['AppTitle']           = 'Administrador de Archivos';
+    $tr['es']['Login']          = 'Iniciar Sesión';                     $tr['es']['Username']           = 'Nombre de Usuario';
+    $tr['es']['Password']       = 'Contraseña';                         $tr['es']['Logout']             = 'Desconectarse';
+    $tr['es']['Move']           = 'Mover';                              $tr['es']['Copy']               = 'Copiar';
+    $tr['es']['Save']           = 'Guardar';                            $tr['es']['SelectAll']          = 'Seleccionar Todo';
+    $tr['es']['UnSelectAll']    = 'Des-seleccionar Todo';               $tr['es']['File']               = 'Archivo';
+    $tr['es']['Back']           = 'Atrás';                              $tr['es']['Size']               = 'Tamaño';
+    $tr['es']['Perms']          = 'Permisos';                           $tr['es']['Modified']           = 'Modificado';
+    $tr['es']['Owner']          = 'Propietario';                        $tr['es']['Search']             = 'Buscar';
+    $tr['es']['NewItem']        = 'Nuevo Ítem';                         $tr['es']['Folder']             = 'Carpeta';
+    $tr['es']['Delete']         = 'Borrar';                             $tr['es']['Rename']             = 'Cambiar Nombre';
+    $tr['es']['CopyTo']         = 'Copiar en';                          $tr['es']['DirectLink']         = 'Link Directo';
+    $tr['es']['UploadingFiles'] = 'Subir Archivos';                     $tr['es']['ChangePermissions']  = 'Cambiar Permisos';
+    $tr['es']['Copying']        = 'Copiando';                           $tr['es']['CreateNewItem']      = 'Crear nuevo Item';
+    $tr['es']['Name']           = 'Nombre';                             $tr['es']['AdvancedEditor']     = 'Editor Avanzado';
+    $tr['es']['RememberMe']     = 'Recuérdame';                         $tr['es']['Actions']            = 'Acciones';
+    $tr['es']['Upload']         = 'Subir';                              $tr['es']['Cancel']             = 'Cancelar';
+    $tr['es']['InvertSelection']= 'Invertir Selección';                 $tr['es']['DestinationFolder']  = 'Carpeta Destino';
+    $tr['es']['ItemType']       = 'Tipo de Ítem';                       $tr['es']['ItemName']           = 'Nombre del Ítem';
+    $tr['es']['CreateNow']      = 'Crear';                              $tr['es']['Download']           = 'Descargar';
+    $tr['es']['Open']           = 'Abrir';                              $tr['es']['UnZip']              = 'Descomprimir';
+    $tr['es']['UnZipToFolder']  = 'Descomprimir en Carpeta';            $tr['es']['Edit']               = 'Editar';
+    $tr['es']['NormalEditor']   = 'Editor Normal';                      $tr['es']['BackUp']             = 'Copia de Seguridad';
+    $tr['es']['SourceFolder']   = 'Carpeta Actual';                     $tr['es']['Files']              = 'Archivos';
+    $tr['es']['Move']           = 'Mover';                              $tr['es']['Change']             = 'Cambiar';
+    $tr['es']['Settings']       = 'Preferencias';                       $tr['es']['Language']           = 'Lenguaje';
+    $tr['es']['Zip']            = $tr['es']['UnZip'].' (.zip)';         $tr['es']['Tar']                =  $tr['es']['UnZip'].' (.tar)';
+
+    // German Language
+    $tr['de']['AppName']        = 'Tiny File Manager';            $tr['de']['AppTitle']           = 'Datei Manager';
+    $tr['de']['Login']          = 'Einloggen';                    $tr['de']['Username']           = 'Benutername';
+    $tr['de']['Password']       = 'Passwort';                     $tr['de']['Logout']             = 'Ausloggen';
+    $tr['de']['Move']           = 'Verschieben';                  $tr['de']['Copy']               = 'Kopieren';
+    $tr['de']['Save']           = 'Speichern';                    $tr['de']['SelectAll']          = 'Alles auswählen';
+    $tr['de']['UnSelectAll']    = 'Alles abwählen';               $tr['de']['File']               = 'Datei';
+    $tr['de']['Back']           = 'Zurück';                       $tr['de']['Size']               = 'Größe';
+    $tr['de']['Perms']          = 'Perms';                        $tr['de']['Modified']           = 'Geändert';
+    $tr['de']['Owner']          = 'Eigentümer';                   $tr['de']['Search']             = 'Suchen';
+    $tr['de']['NewItem']        = 'Neues Item';                   $tr['de']['Folder']             = 'Ordner';
+    $tr['de']['Delete']         = 'Löschen';                      $tr['de']['Rename']             = 'Umbennen';
+    $tr['de']['CopyTo']         = 'Kopieren nach';                $tr['de']['DirectLink']         = 'Direktlink';
+    $tr['de']['UploadingFiles'] = 'Datei hochladen';              $tr['de']['ChangePermissions']  = 'Berechtigungen ändern';
+    $tr['de']['Copying']        = 'Kopieren';                     $tr['de']['CreateNewItem']      = 'Neue Datei erstellen';
+    $tr['de']['Name']           = 'Name';                         $tr['de']['AdvancedEditor']     = 'Fortgeschrittener Editor';
+    $tr['de']['RememberMe']     = 'Eingeloggt bleiben';           $tr['de']['Actions']            = 'Aktionen';
+    $tr['de']['Upload']         = 'Hochladen';                    $tr['de']['Cancel']             = 'Abbrechner';
+    $tr['de']['InvertSelection']= 'Auswahl umkehren';             $tr['de']['DestinationFolder']  = 'Zielordner';
+    $tr['de']['ItemType']       = 'Dateityp';                     $tr['de']['ItemName']           = 'Dateiname';
+    $tr['de']['CreateNow']      = 'Jetzt erstellen';              $tr['de']['Download']           = 'Download';
+    $tr['de']['Open']           = 'Öffnen';                       $tr['de']['UnZip']              = 'UnZip';
+    $tr['de']['UnZipToFolder']  = 'UnZip im Ordner';              $tr['de']['Edit']               = 'Bearbeiten';
+    $tr['de']['NormalEditor']   = 'Normaler Editor';              $tr['de']['BackUp']             = 'Backup';
+    $tr['de']['SourceFolder']   = 'Source ordner';                $tr['de']['Files']              = 'Datein';
+    $tr['de']['Move']           = 'Verschieben';                  $tr['de']['Change']             = 'Verändern';
+    $tr['de']['Settings']       = 'Einstellungen';                $tr['de']['Language']           = 'Sprache';
+   
+    // Thailand Language
+    $tr['th']['AppName']        = 'Tiny File Manager';            $tr['en']['AppTitle']           = 'ตัวจัดการไฟล์';
+    $tr['th']['Login']          = 'เข้าสู่ระบบ';                     $tr['en']['Username']           = 'ชื่อผู้ใช้งาน';
+    $tr['th']['Password']       = 'รหัสผ่าน';                       $tr['en']['Logout']             = 'ออกจากระบบ';
+    $tr['th']['Move']           = 'ย้าย';                          $tr['en']['Copy']               = 'คัดลอก';
+    $tr['th']['Save']           = 'บันทึก';                        $tr['en']['SelectAll']          = 'เลือกท้งหมด';
+    $tr['th']['UnSelectAll']    = 'ไม่เลือกทั้งหมด';                 $tr['en']['File']               = 'ไฟล์';
+    $tr['th']['Back']           = 'กลับ';                         $tr['en']['Size']               = 'ขนาด';
+    $tr['th']['Perms']          = 'รหัสสิทธิ์';                         $tr['en']['Modified']           = 'แก้ไขล่าสุดเมื่อ';
+    $tr['th']['Owner']          = 'เจ้าของ';                      $tr['en']['Search']             = 'ค้นหา';
+    $tr['th']['NewItem']        = 'สร้างใหม่';                     $tr['en']['Folder']             = 'โฟลเดอร์';
+    $tr['th']['Delete']         = 'ลบ';                          $tr['en']['Rename']             = 'เปลี่ยนชื่อ';
+    $tr['th']['CopyTo']         = 'คัดลอกไปยัง';                  $tr['en']['DirectLink']         = 'ไปยังลิ้งก์นั้น';
+    $tr['th']['UploadingFiles'] = 'อัพโหลด';                 $tr['en']['ChangePermissions']  = 'เปลี่ยนสิทธิ์';
+    $tr['th']['Copying']        = 'กำลังย้ายข้อมูล';                $tr['en']['CreateNewItem']      = 'สร้างไฟล์ใหม่';
+    $tr['th']['Name']           = 'ชื่อ';                          $tr['en']['AdvancedEditor']     = 'แก้ไขขั้นสูง';
+    $tr['th']['RememberMe']     = 'จดจำฉันไว้';                   $tr['en']['Actions']            = 'การทำงาน';
+    $tr['th']['Upload']         = 'อัพโหลด';                     $tr['en']['Cancel']             = 'ยกเลิก';
+    $tr['th']['InvertSelection']= 'เปลี่ยนข้อมูล';                  $tr['en']['DestinationFolder']  = 'โฟลเดอร์ปลายทาง';
+    $tr['th']['ItemType']       = 'ข้อมูลประเภท';                 $tr['en']['ItemName']           = 'ชื่อไฟล์';
+    $tr['th']['CreateNow']      = 'สร้างตอนนี้';                   $tr['en']['Download']           = 'ดาวโหลด';
+    $tr['th']['Open']           = 'เปิด';                        $tr['en']['UnZip']              = 'แตก Zip';
+    $tr['th']['UnZipToFolder']  = 'แตกไฟล์ในโฟเดอร์นี้';           $tr['en']['Edit']               = 'แก้ไข';
+    $tr['th']['NormalEditor']   = 'แก้ไขปกติ';                    $tr['en']['BackUp']             = 'สำรองข้อมูล';
+    $tr['th']['SourceFolder']   = 'โฟลเดอร์ต้นทาง';               $tr['en']['Files']              = 'ไฟล์';
+    $tr['th']['Move']           = 'ย้าย';                       $tr['en']['Change']             = 'เปลี่ยน';
+    $tr['th']['Settings']       = 'การตั้งค่า';                   $tr['en']['Language']           = 'ภาษา';
+    
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
