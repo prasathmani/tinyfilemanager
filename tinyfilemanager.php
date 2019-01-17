@@ -298,7 +298,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
         global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list;
         $newLng = $_POST['js-language'];
-        fm_get_translations();
+        fm_get_translations([]);
         if (!array_key_exists($newLng, $lang_list)) {
             $newLng = 'en';
         }
