@@ -475,7 +475,7 @@
     },
 	{
       "name": "Ελληνικά",
-      "code": "el",
+      "code": "gr",
       "translation": {
         "AppName": "Tiny File Manager",
         "AppTitle": "File Manager",
