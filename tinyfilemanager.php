@@ -9,7 +9,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
  */
 
 //TFM version
-define('VERSION', '2.3');
+define('VERSION', '2.3.1');
 
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
@@ -601,6 +601,7 @@ if (isset($_GET['dl'])) {
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Pragma: public');
         header('Content-Length: ' . filesize($path . '/' . $dl));
+        ob_end_clean();
         readfile($path . '/' . $dl);
         exit;
     } else {
@@ -3052,6 +3053,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             border-top: 1px dashed #8c8b8b;
             border-bottom: 1px dashed #fff;
         }
+        @media only screen and (min-device-width : 768px) and (max-device-width : 1024px) and (orientation : landscape) and (-webkit-min-device-pixel-ratio: 2) { .navbar-collapse .col-xs-6.text-right { padding: 0; } }
         .btn.active.focus,.btn.active:focus,.btn.focus,.btn.focus:active,.btn:active:focus,.btn:focus{outline:0!important;outline-offset:0!important;background-image:none!important;-webkit-box-shadow:none!important;box-shadow:none!important}
         .lds-facebook{display:none;position:relative;width:64px;height:64px}.lds-facebook div,.lds-facebook.show-me{display:inline-block}.lds-facebook div{position:absolute;left:6px;width:13px;background:#007bff;animation:lds-facebook 1.2s cubic-bezier(0,.5,.5,1) infinite}.lds-facebook div:nth-child(1){left:6px;animation-delay:-.24s}.lds-facebook div:nth-child(2){left:26px;animation-delay:-.12s}.lds-facebook div:nth-child(3){left:45px;animation-delay:0}@keyframes lds-facebook{0%{top:6px;height:51px}100%,50%{top:19px;height:26px}}
     </style>
