@@ -3,7 +3,7 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 
 /**
- * H3K | Tiny File Manager V2.3
+ * H3K | Tiny File Manager V2.3.1
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
@@ -134,6 +134,11 @@ if (empty($auth_users)) {
 $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
     || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
 
+// update $root_url based on user specific directories
+if (isset($_SESSION[FM_SESSION_ID]['logged']) && !empty($directories_users[$_SESSION[FM_SESSION_ID]['logged']])) {
+    $wd = fm_clean_path(dirname($_SERVER['PHP_SELF']));
+    $root_url =  $root_url.$wd.DIRECTORY_SEPARATOR.$directories_users[$_SESSION[FM_SESSION_ID]['logged']];
+}
 // clean $root_url
 $root_url = fm_clean_path($root_url);
 
