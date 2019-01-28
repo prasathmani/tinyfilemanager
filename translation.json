@@ -411,7 +411,9 @@
         "Execute": "执行",
         "Rename": "重命名",
         "enable": "开启",
-        "disable": "关闭"
+        "disable": "关闭",
+        "ErrorReporting": "上传错误报告",
+        "ShowHiddenFiles": "显示隐藏文件"
       }
     },
     {
