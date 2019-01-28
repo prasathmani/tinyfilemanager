@@ -1088,7 +1088,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     }
                     ?>
                     <div class="form-group row">
-                        <label for="js-err-rpt-1" class="col-sm-3 col-form-label">Error Reporting</label>
+                        <label for="js-err-rpt-1" class="col-sm-3 col-form-label"><?php echo lng('ErrorReporting') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                                 <label class="btn btn-secondary <?php echo getChecked($report_errors, 1, 'active') ?>">
@@ -1102,7 +1102,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     </div>
 
                     <div class="form-group row">
-                        <label for="js-hdn-1" class="col-sm-3 col-form-label">Show Hidden Files</label>
+                        <label for="js-hdn-1" class="col-sm-3 col-form-label"><?php echo lng('ShowHiddenFiles') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                                 <label class="btn btn-secondary <?php echo getChecked($show_hidden_files, 1, 'active') ?>">
@@ -3372,6 +3372,7 @@ function lng($txt) {
     $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
+    $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
