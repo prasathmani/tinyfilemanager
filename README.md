@@ -66,7 +66,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :zap: Backup files
 - :mag_right: Search -  Search and Sorting using `datatable js`
 - :file_folder: Exclude folders from listing
-- :globe_with_meridians: Multi-language support (English, Spanish, French, Italian, German, Russian, Thailand and Chinese ) for translations `translation.json` is file required
+- :globe_with_meridians: Multi-language support (English, Spanish, French, Italian, German, Russian, Thailand, Chinese and more..) for translations `translation.json` is file required
 - :bangbang: lots more...
 
 

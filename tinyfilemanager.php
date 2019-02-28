@@ -3,13 +3,13 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 
 /**
- * H3K | Tiny File Manager V2.3.1
+ * H3K | Tiny File Manager V2.3.2
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.3.1');
+define('VERSION', '2.3.2');
 
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
@@ -935,6 +935,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <script>
         Dropzone.options.fileUploader = {
             timeout: 120000,
+            maxFilesize: 2048, //2GB
             init: function () {
                 this.on("sending", function (file, xhr, formData) {
                     let _path = (file.fullPath) ? file.fullPath : file.name;
@@ -1204,7 +1205,7 @@ if (isset($_GET['view'])) {
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $mime_type = fm_get_mime_type($file_path);
-    $filesize = filesize($file_path);
+    $filesize = fm_get_filesize(filesize($file_path));
 
     $is_zip = false;
     $is_gzip = false;
@@ -1635,7 +1636,7 @@ $all_files_size = 0;
                 $is_link = is_link($path . '/' . $f);
                 $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . '/' . $f);
                 $modif = date(FM_DATETIME_FORMAT, filemtime($path . '/' . $f));
-                $filesize_raw = filesize($path . '/' . $f);
+                $filesize_raw = fm_get_size($path . '/' . $f);
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
                 $all_files_size += $filesize_raw;
@@ -1991,6 +1992,22 @@ function fm_get_translations($tr) {
     catch (Exception $e) {
         echo $e;
     }
+}
+
+/**
+ * @param $file
+ * Recover all file sizes larger than > 4GB.
+ * Works on php 32bits and 64bits and supports linux
+ * @return int|string
+ */
+function fm_get_size($file)
+{
+    $return = filesize($file);
+    if(substr(PHP_OS, 0, 3) == "WIN") {
+        exec('for %I in ("'.$file.'") do @echo %~zI', $output);
+        $return = $output[0];
+    }
+    return $return;
 }
 
 /**
