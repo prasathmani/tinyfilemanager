@@ -70,6 +70,9 @@ $GLOBALS['online_viewer'] = true;
 //Sticky Nav bar
 $sticky_navbar = true;
 
+//max upload file size
+define('MAX_UPLOAD_SIZE', '2048');
+
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
     define('FM_SESSION_ID', 'filemanager');
@@ -935,7 +938,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <script>
         Dropzone.options.fileUploader = {
             timeout: 120000,
-            maxFilesize: 2048, //2GB
+            maxFilesize: <?php echo MAX_UPLOAD_SIZE; ?>,
             init: function () {
                 this.on("sending", function (file, xhr, formData) {
                     let _path = (file.fullPath) ? file.fullPath : file.name;
@@ -1996,18 +1999,47 @@ function fm_get_translations($tr) {
 
 /**
  * @param $file
- * Recover all file sizes larger than > 4GB.
+ * Recover all file sizes larger than > 2GB.
  * Works on php 32bits and 64bits and supports linux
  * @return int|string
  */
 function fm_get_size($file)
 {
-    $return = filesize($file);
-    if(substr(PHP_OS, 0, 3) == "WIN") {
-        exec('for %I in ("'.$file.'") do @echo %~zI', $output);
-        $return = $output[0];
+    static $iswin;
+    if (!isset($iswin)) {
+        $iswin = (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN');
     }
-    return $return;
+
+    static $exec_works;
+    if (!isset($exec_works)) {
+        $exec_works = (function_exists('exec') && !ini_get('safe_mode') && @exec('echo EXEC') == 'EXEC');
+    }
+
+    // try a shell command
+    if ($exec_works) {
+        $cmd = ($iswin) ? "for %F in (\"$file\") do @echo %~zF" : "stat -c%s \"$file\"";
+        @exec($cmd, $output);
+        if (is_array($output) && ctype_digit($size = trim(implode("\n", $output)))) {
+            return $size;
+        }
+    }
+
+    // try the Windows COM interface
+    if ($iswin && class_exists("COM")) {
+        try {
+            $fsobj = new COM('Scripting.FileSystemObject');
+            $f = $fsobj->GetFile( realpath($file) );
+            $size = $f->Size;
+        } catch (Exception $e) {
+            $size = null;
+        }
+        if (ctype_digit($size)) {
+            return $size;
+        }
+    }
+
+    // if all else fails
+    return filesize($file);
 }
 
 /**
