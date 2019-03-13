@@ -3,13 +3,13 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 
 /**
- * H3K | Tiny File Manager V2.3.2
+ * H3K | Tiny File Manager V2.3.3
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.3.2');
+define('VERSION', '2.3.3');
 
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
@@ -641,6 +641,11 @@ if (!empty($_FILES) && !FM_READONLY) {
     $fullPath = $path . '/' . $_REQUEST['fullpath'];
     $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
+    if(file_exists ($fullPath)) {
+        $ext_1 = $ext ? '.'.$ext : '';
+        $fullPath = str_replace($ext_1, '', $fullPath) .'_'. date('ymdHis'). $ext_1;
+    }
+
     if (!is_dir($folder)) {
         $old = umask(0);
         mkdir($folder, 0777, true);
@@ -943,7 +948,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                 this.on("sending", function (file, xhr, formData) {
                     let _path = (file.fullPath) ? file.fullPath : file.name;
                     document.getElementById("fullpath").value = _path;
-                    xhr.ontimeout = (() => {
+                    xhr.ontimeout = (function() {
                         alert('Error: Server Timeout');
                     });
                 }).on("success", function (res) {
