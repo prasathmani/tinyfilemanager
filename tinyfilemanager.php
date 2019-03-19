@@ -476,6 +476,8 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     $dest .= '/' . basename($from);
     // move?
     $move = isset($_GET['move']);
+    // Duplicate?
+    $duplicate = isset($_GET['duplicate']);
     // copy/move
     if ($from != $dest) {
         $msg_from = trim(FM_PATH . '/' . basename($from), '/');
@@ -496,7 +498,27 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             }
         }
     } else {
-        fm_set_msg('Paths must be not equal', 'alert');
+       if ($duplicate){
+            $msg_from = trim(FM_PATH . '/' . basename($from), '/');
+            $fn_parts = pathinfo($from);
+            $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy.'.$fn_parts['extension'];
+            // Check if a file with the duplicate name already exists, if so, make new name
+            $loop_count = 0;
+            $max_loop = 1000;
+            while(file_exists($fn_duplicate) & $loopCount < $max_loop){
+               $fn_parts = pathinfo($fn_duplicate);
+               $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy.'.$fn_parts['extension'];
+               $loop_count++;
+            }
+            if (fm_copy($from, $fn_duplicate, False)) {
+                fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
+            } else {
+                fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
+            }
+       }
+       else{
+           fm_set_msg('Paths must be not equal', 'alert');
+       }
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -1029,6 +1051,7 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
         <p>
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> Move</a></b> &nbsp;
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;duplicate=1"><i class="fa fa-check-circle"></i> Duplicate file</a></b> &nbsp;
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> Cancel</a></b>
         </p>
         <p><i>Select folder</i></p>
@@ -1887,7 +1910,7 @@ function fm_mkdir($dir, $force)
  * Safely copy file
  * @param string $f1
  * @param string $f2
- * @param bool $upd
+ * @param bool $upd Indicates if file should be updated with new content
  * @return bool
  */
 function fm_copy($f1, $f2, $upd)
