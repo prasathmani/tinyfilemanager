@@ -501,16 +501,20 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
        if ($duplicate){
             $msg_from = trim(FM_PATH . '/' . basename($from), '/');
             $fn_parts = pathinfo($from);
-            $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy.'.$fn_parts['extension'];
+            $extension_suffix = '';
+            if(!is_dir($from)){
+               $extension_suffix = '.'.$fn_parts['extension'];
+            }
+            $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy'.$extension_suffix;
             // Check if a file with the duplicate name already exists, if so, make new name
             $loop_count = 0;
             $max_loop = 1000;
             while(file_exists($fn_duplicate) & $loopCount < $max_loop){
                $fn_parts = pathinfo($fn_duplicate);
-               $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy.'.$fn_parts['extension'];
+               $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy'.$extension_suffix;
                $loop_count++;
             }
-            if (fm_copy($from, $fn_duplicate, False)) {
+            if (fm_rcopy($from, $fn_duplicate, False)) {
                 fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
             } else {
                 fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
