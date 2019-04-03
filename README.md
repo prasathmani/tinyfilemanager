@@ -55,7 +55,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 - :cd: Open Source, light and extremely simple
 - :iphone: Mobile friendly view for touch devices
-- :information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files 
+- :information_source: Basic features likes Create, Delete, Modify, View, Quick View, Download, Copy and Move files 
 - :arrow_double_up: Ajax Upload, Ability to drag & drop, upload from URL, multiple files upload and file extensions filter 
 - :file_folder: Ability to create folders and files
 - :gift: Ability to compress, extract files (`zip`, `tar`)
@@ -74,10 +74,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 - Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
 - Original concept and development by github.com/alexantr/filemanager
-- CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, DataTable js_
+- CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, ekko-lightbox js, and DataTable js_
 - To report a bug or request a feature, please file an [issue](https://github.com/prasathmani/tinyfilemanager/issues)
-- We hope our tools will be helpful for you. If you find Tiny File Manager useful for your personal or commercial projects, Help me out for a couple of 
-[![Beerpay](https://beerpay.io/prasathmani/tinyfilemanager/badge.svg?style=flat-square)](https://beerpay.io/prasathmani/tinyfilemanager)
-
 
 

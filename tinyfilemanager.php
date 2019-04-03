@@ -3,13 +3,13 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 
 /**
- * H3K | Tiny File Manager V2.3.4
+ * H3K | Tiny File Manager V2.3.5
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.3.4');
+define('VERSION', '2.3.5');
 
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
@@ -1959,6 +1959,27 @@ function fm_redirect($url, $code = 302)
 }
 
 /**
+ * Path traversal prevention and clean the url
+ * It replaces (consecutive) occurrences of / and \\ with whatever is in DIRECTORY_SEPARATOR, and processes /. and /.. fine.
+ * @param $path
+ * @return string
+ */
+function get_absolute_path($path) {
+    $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+    $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
+    $absolutes = array();
+    foreach ($parts as $part) {
+        if ('.' == $part) continue;
+        if ('..' == $part) {
+            array_pop($absolutes);
+        } else {
+            $absolutes[] = $part;
+        }
+    }
+    return implode(DIRECTORY_SEPARATOR, $absolutes);
+}
+
+/**
  * Clean path
  * @param string $path
  * @return string
@@ -1968,6 +1989,7 @@ function fm_clean_path($path)
     $path = trim($path);
     $path = trim($path, '\\/');
     $path = str_replace(array('../', '..\\'), '', $path);
+    $path =  get_absolute_path($path);
     if ($path == '..') {
         $path = '';
     }
@@ -3237,7 +3259,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 <script>
     $(document).on('click', '[data-toggle="lightbox"]', function(event) {
         event.preventDefault();
-        var reInitHighlight = function() { if(typeof isHighlightingEnabled !== "undefined" && isHighlightingEnabled) { setTimeout(function () { $('.ekko-lightbox-container pre code').each(function (i, e) { hljs.highlightBlock(e) }); }, 111); } };
+        var reInitHighlight = function() { if(typeof isHighlightingEnabled !== "undefined" && isHighlightingEnabled) { setTimeout(function () { $('.ekko-lightbox-container pre code').each(function (i, e) { hljs.highlightBlock(e) }); }, 555); } };
         $(this).ekkoLightbox({
             alwaysShowClose: true,
             showArrows: true,
