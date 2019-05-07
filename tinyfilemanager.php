@@ -11,6 +11,13 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 //TFM version
 define('VERSION', '2.3.5');
 
+// Page Title. Leave blank for default.
+$page_title = '';
+
+// Favicon path. This can be either a full url to an image, or 
+// a path based on the document root. leave blank for default.
+$favicon_path = '';
+
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
 
@@ -256,6 +263,24 @@ $root_path = str_replace('\\', '/', $root_path);
 if (!@is_dir($root_path)) {
     echo "<h1>Root path \"{$root_path}\" not found!</h1>";
     exit;
+}
+
+// clean and check faviocn path
+if(!empty($favicon_path)) {
+    $favicon_path = trim($favicon_path);
+    if(strtolower(substr($favicon_path, 0, 4)) !== 'http') {
+        $favicon_path = trim($favicon_path, '\\/');
+        $favicon_path = $root_url . '/' . $favicon_url;
+    } 
+} else {
+    $favicon_path = $root_url . '?img=favicon';
+}
+
+// Clean page title
+if(!empty($page_title)) {
+    $page_title = trim($page_title);
+} else {
+    $page_title = 'H3K | Tiny File Manager';
 }
 
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
@@ -2818,7 +2843,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
 header("Pragma: no-cache");
 
-global $lang, $root_url;
+global $lang, $root_url, $favicon_path, $page_title;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -2829,8 +2854,8 @@ global $lang, $root_url;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <link rel="icon" href="<?php echo $root_url ?>?img=favicon" type="image/png">
-    <title>H3K | Tiny File Manager</title>
+    <link rel="icon" href="<?php echo $favicon_path ?>" type="image/png">
+    <title><?php echo $page_title ?></title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
         body.fm-login-page{background-color:#f7f9fb;font-size:14px}
@@ -2887,7 +2912,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
 header("Pragma: no-cache");
 
-global $lang, $root_url, $sticky_navbar;
+global $lang, $root_url, $sticky_navbar, $favicon_path, $page_title;
 $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 ?>
 <!DOCTYPE html>
@@ -2899,8 +2924,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <link rel="icon" href="<?php echo $root_url ?>?img=favicon" type="image/png">
-    <title>H3K | Tiny File Manager</title>
+    <link rel="icon" href="<?php echo $favicon_path ?>" type="image/png">
+    <title><?php echo $page_title ?></title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.css" />
