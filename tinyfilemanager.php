@@ -11,12 +11,8 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false}';
 //TFM version
 define('VERSION', '2.3.5');
 
-// Page Title. Leave blank for default.
-$page_title = '';
-
-// Favicon path. This can be either a full url to an image, or 
-// a path based on the document root. leave blank for default.
-$favicon_path = '';
+//Application Title
+define('APP_TITLE', 'Tiny File Manager');
 
 // Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
@@ -50,6 +46,7 @@ $edit_files = true;
 $default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
+// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
 $root_path = $_SERVER['DOCUMENT_ROOT'];
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
@@ -67,6 +64,9 @@ $datetime_format = 'd.m.y H:i';
 
 // allowed file extensions for upload and rename
 $allowed_extensions = ''; // 'gif,png,jpg'
+
+// Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
+$favicon_path = '?img=favicon';
 
 // Array of files and folders excluded from listing
 $GLOBALS['exclude_items'] = array();
@@ -206,7 +206,7 @@ if ($use_auth) {
                             </svg>
                         </div>
                         <div class="text-center">
-                            <h1 class="card-title"><?php echo lng('AppName'); ?></h1>
+                            <h1 class="card-title"><?php echo APP_TITLE; ?></h1>
                         </div>
                         <div class="card fat">
                             <div class="card-body">
@@ -263,24 +263,6 @@ $root_path = str_replace('\\', '/', $root_path);
 if (!@is_dir($root_path)) {
     echo "<h1>Root path \"{$root_path}\" not found!</h1>";
     exit;
-}
-
-// clean and check faviocn path
-if(!empty($favicon_path)) {
-    $favicon_path = trim($favicon_path);
-    if(strtolower(substr($favicon_path, 0, 4)) !== 'http') {
-        $favicon_path = trim($favicon_path, '\\/');
-        $favicon_path = $root_url . '/' . $favicon_url;
-    } 
-} else {
-    $favicon_path = $root_url . '?img=favicon';
-}
-
-// Clean page title
-if(!empty($page_title)) {
-    $page_title = trim($page_title);
-} else {
-    $page_title = 'H3K | Tiny File Manager';
 }
 
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
@@ -645,6 +627,7 @@ if (isset($_GET['dl'])) {
 
 // Upload
 if (!empty($_FILES) && !FM_READONLY) {
+    $override_file_name = false;
     $f = $_FILES;
     $path = FM_ROOT_PATH;
     $ds = DIRECTORY_SEPARATOR;
@@ -666,7 +649,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $fullPath = $path . '/' . $_REQUEST['fullpath'];
     $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
-    if(file_exists ($fullPath)) {
+    if(file_exists ($fullPath) && !$override_file_name) {
         $ext_1 = $ext ? '.'.$ext : '';
         $fullPath = str_replace($ext_1, '', $fullPath) .'_'. date('ymdHis'). $ext_1;
     }
@@ -2843,7 +2826,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
 header("Pragma: no-cache");
 
-global $lang, $root_url, $favicon_path, $page_title;
+global $lang, $root_url, $favicon_path;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -2854,8 +2837,8 @@ global $lang, $root_url, $favicon_path, $page_title;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <link rel="icon" href="<?php echo $favicon_path ?>" type="image/png">
-    <title><?php echo $page_title ?></title>
+    <link rel="icon" href="<?php echo fm_enc($favicon_path) ?>" type="image/png">
+    <title><?php echo fm_enc(APP_TITLE) ?></title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
         body.fm-login-page{background-color:#f7f9fb;font-size:14px}
@@ -2912,7 +2895,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
 header("Pragma: no-cache");
 
-global $lang, $root_url, $sticky_navbar, $favicon_path, $page_title;
+global $lang, $root_url, $sticky_navbar, $favicon_path;
 $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 ?>
 <!DOCTYPE html>
@@ -2924,13 +2907,13 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <link rel="icon" href="<?php echo $favicon_path ?>" type="image/png">
-    <title><?php echo $page_title ?></title>
+    <link rel="icon" href="<?php echo fm_enc($favicon_path) ?>" type="image/png">
+    <title><?php echo fm_enc(APP_TITLE) ?></title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.css" />
     <?php if (FM_USE_HIGHLIGHTJS): ?>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
     <?php endif; ?>
     <style>
         body {
@@ -3281,10 +3264,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         event.preventDefault();
         var reInitHighlight = function() { if(typeof isHighlightingEnabled !== "undefined" && isHighlightingEnabled) { setTimeout(function () { $('.ekko-lightbox-container pre code').each(function (i, e) { hljs.highlightBlock(e) }); }, 555); } };
         $(this).ekkoLightbox({
-            alwaysShowClose: true,
-            showArrows: true,
-            onShown: function() { reInitHighlight(); },
-            onNavigate: function(direction, itemIndex) { reInitHighlight(); }
+            alwaysShowClose: true, showArrows: true, onShown: function() { reInitHighlight(); }, onNavigate: function(direction, itemIndex) { reInitHighlight(); }
         });
     });
     //TFM Config
