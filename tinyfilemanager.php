@@ -637,7 +637,6 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $errors = 0;
     $uploads = 0;
-    $total = count($f['file']['name']);
     $allowed = (FM_EXTENSION) ? explode(',', FM_EXTENSION) : false;
 
     $filename = $f['file']['name'];
