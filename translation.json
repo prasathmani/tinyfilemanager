@@ -885,18 +885,16 @@
         "Language": "لغة",
         "MemoryUsed": "الذاكرة المستخدمة",
         "PartitionSize": "حجم القسم",
-		
         "Free of": "مساحة فارغة من ",
         "Preview": "عرض",
         "Full size": "الحجم الكلي",
-		
-        "ErrorReporting": "التبليغ باخطاء",
+		"ErrorReporting": "التبليغ باخطاء",
         "ShowHiddenFiles": "اظهار الملفات المخفية",
         "Help": "مساعدة",
 		
+		"Generate": "توليد",
         "Report Issue": "التبليغ بخطأ",
         "Generate new password hash": "توليد هاش لكلمة المرور",
-        "Generate": "توليد",
         "Help Documents": "وثائق المساعدة",
         "Check Latest Version": "تفقد آخر الاصدارات"
 		
