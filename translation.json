@@ -944,12 +944,14 @@
         "Language": "لغة",
         "MemoryUsed": "الذاكرة المستخدمة",
         "PartitionSize": "حجم القسم",
+
 		"Free of": "مساحة فارغة من ",
         "Preview": "عرض",
         "Full size": "الحجم الكلي",
 		"ErrorReporting": "التبليغ باخطاء",
         "ShowHiddenFiles": "اظهار الملفات المخفية",
         "Help": "مساعدة",
+
         "Generate": "توليد",
         "Report Issue": "التبليغ بمشكلة",
         "Generate new password hash": "توليد هاش لكلمة المرور",

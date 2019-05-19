@@ -23,8 +23,7 @@
 ## Requirements
 
 - PHP 5.5.0 or higher.
-- [Zip extension](http://php.net/manual/en/book.zip.php) for zip and unzip actions.
-- Fileinfo, iconv and mbstring extensions are strongly recommended.
+- Fileinfo, iconv, zip, tar and mbstring extensions are strongly recommended.
 
 ## How to use
 
@@ -62,8 +61,8 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :sunglasses: Support user permissions - based on session and each user root folder mapping
 - :floppy_disk: Copy direct file URL
 - :pencil2: Cloud9 IDE - Syntax highlighting for over `150+` languages, Over `35+` themes with your favorite programming style
-- :page_facing_up: Google Drive viewer helps you preview `PDF/DOC/XLS/PPT/etc`. 25 MB can be previewed with the Google Drive viewer
-- :zap: Backup files
+- :page_facing_up: Google/Microsoft doc viewer helps you preview `PDF/DOC/XLS/PPT/etc`. 25 MB can be previewed with the Google Drive viewer
+- :zap: Backup files and IP white and blacklisting
 - :mag_right: Search -  Search and Sorting using `datatable js`
 - :file_folder: Exclude folders from listing
 - :globe_with_meridians: Multi-language support (English, Spanish, French, Italian, German, Russian, Thailand, Chinese and more..) for translations `translation.json` is file required
