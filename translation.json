@@ -113,11 +113,14 @@
         "BackUp": "Back-Up",
         "SourceFolder": "Cartella di Origine",
         "Files": "File",
+	"Move": "Sposta",
         "Change": "Cambia",
         "Settings": "Impostazioni",
         "Language": "Lingua",
         "MemoryUsed": "Memoria utilizzata",
-        "PartitionSize": "Dimensione della partizione"
+        "PartitionSize": "Dimensione della partizione",
+	"ErrorReporting": "Segnala errori",
+	"ShowHiddenFiles": "Mostra file nascosti"
       }
     },
     {
