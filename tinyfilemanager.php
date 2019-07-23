@@ -348,6 +348,10 @@ $p = isset($_GET['p']) ? $_GET['p'] : (isset($_POST['p']) ? $_POST['p'] : '');
 // clean path
 $p = fm_clean_path($p);
 
+// for ajax request - save
+$input = file_get_contents('php://input');
+$_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? json_decode($input, true) : $_POST;
+
 // instead globals vars
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
@@ -364,6 +368,35 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 // AJAX Request
 if (isset($_POST['ajax']) && !FM_READONLY) {
 
+    // save
+    if (isset($_POST['type']) && $_POST['type'] == "save") {
+        // get current path
+        $path = FM_ROOT_PATH;
+        if (FM_PATH != '') {
+            $path .= '/' . FM_PATH;
+        }
+        // check path
+        if (!is_dir($path)) {
+            fm_redirect(FM_SELF_URL . '?p=');
+        }
+        $file = $_GET['edit'];
+        $file = fm_clean_path($file);
+        $file = str_replace('/', '', $file);
+        if ($file == '' || !is_file($path . '/' . $file)) {
+            fm_set_msg('File not found', 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+        }
+        header('X-XSS-Protection:0'); 
+        $file_path = $path . '/' . $file;
+        
+        $writedata = $_POST['content'];
+        $fd = fopen($file_path, "w");
+        @fwrite($fd, $writedata);
+        fclose($fd);
+        fm_set_msg('successful save!', 'alert');
+        die(true);
+    }
+    
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup") {
         $file = $_POST['file'];
@@ -3365,12 +3398,29 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function edit_save(e, t) {
         var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
         if (n) {
-            var a = document.createElement("form");
-            a.setAttribute("method", "POST"), a.setAttribute("action", "");
-            var o = document.createElement("textarea");
-            o.setAttribute("type", "textarea"), o.setAttribute("name", "savedata");
-            var c = document.createTextNode(n);
-            o.appendChild(c), a.appendChild(o), document.body.appendChild(a), a.submit()
+            if(true){
+                var data = {ajax: true, content: n, type: 'save'};
+                
+                $.ajax({
+                    type: "POST",
+                    url: window.location,
+                    // The key needs to match your method's input parameter (case-sensitive).
+                    data: JSON.stringify(data),
+                    contentType: "multipart/form-data-encoded; charset=utf-8",
+                    //dataType: "json",
+                    success: function(mes){window.onbeforeunload = function() {return}},
+                    failure: function(mes) {alert("error");}
+                });
+                
+            }
+            else{
+                var a = document.createElement("form");
+                a.setAttribute("method", "POST"), a.setAttribute("action", "");
+                var o = document.createElement("textarea");
+                o.setAttribute("type", "textarea"), o.setAttribute("name", "savedata");
+                var c = document.createTextNode(n);
+                o.appendChild(c), a.appendChild(o), document.body.appendChild(a), a.submit()
+            }
         }
     }
     //Check latest version
