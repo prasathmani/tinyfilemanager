@@ -1380,7 +1380,7 @@ if (isset($_GET['view'])) {
     $content = ''; // for text
     $online_viewer = strtolower($GLOBALS['online_viewer']);
 
-    if(online_viewer && online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())){
+    if($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())){
         $is_onlineViewer = true;
     }
     elseif ($ext == 'zip' || $ext == 'tar') {
