@@ -713,7 +713,31 @@
         "Files": "Arquivos",
         "Change": "Alterar",
         "Settings": "Preferências",
-        "Language": "Idioma"
+        "Language": "Idioma",
+        
+	"Preview": "Visualizar",
+        "MemoryUsed": "Memória usada",
+        "PartitionSize": "Tamanho da partição",
+        "ErrorReporting": "Relatório de erros",
+        "ShowHiddenFiles": "Mostrar arquivos ocultos",
+        "Group": "Grupo",
+        "Other": "Outros",
+        "Read": "Ler",
+        "Write": "Escrever",
+        "Execute": "Executar",
+        "enable": "habilitar",
+        "disable": "desativar",
+        "FreeOf": "Livre de",
+        "Free Of": "Livre de",
+        "FullSize": "tamanho completo",
+        "Help": "Ajuda / Suporte",
+        "Generate": "Gerar",
+        "Report Issue": "Informar problema",
+        "Generate new password hash": "Gerar nova hash de senha",
+        "Help Documents": "Documentos de Ajuda",
+        "Check Latest Version": "Verifique a última versão",
+        "HideColumns": "Ocultar colunas Perms / Owner",
+        "CalculateFolderSize": "Calcular o tamanho da pasta"
       }
     },
     {
