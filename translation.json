@@ -309,7 +309,12 @@
         "Files": "Archivos",
         "Change": "Cambiar",
         "Settings": "Preferencias",
-        "Language": "Lenguaje"
+        "Language": "Lenguaje",
+        "FullSize": "Tamaño carpeta",
+        "MemoryUsed": "Tamaño en disco",
+        "PartitionSize": "Disco",
+        "FreeOf": "disponibles de",
+        "EmptyFolder": "La carpeta está vacía"
       }
     },
     {
