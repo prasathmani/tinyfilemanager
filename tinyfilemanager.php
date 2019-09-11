@@ -1863,7 +1863,7 @@ $all_files_size = 0;
                 <tfoot>
                     <tr><?php if (!FM_READONLY): ?>
                             <td></td><?php endif; ?>
-                        <td colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>"><em><?php echo 'Folder is empty' ?></em></td>
+                        <td colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>"><em><?php echo lng('EmptyFolder') ?></em></td>
                     </tr>
                 </tfoot>
                 <?php
@@ -3688,15 +3688,15 @@ function lng($txt) {
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
-    $tr['en']['Full size'] 		= 'Full size';				$tr['en']['Help'] 				= 'Help';
-    $tr['en']['Free of'] 		= 'Free of';				$tr['en']['Preview'] 			= 'Preview';
+    $tr['en']['FullSize'] 		= 'Full size';				$tr['en']['Help'] 				= 'Help';
+    $tr['en']['FreeOf'] 		= 'free of';				$tr['en']['Preview'] 			= 'Preview';
 	$tr['en']['Help Documents'] = 'Help Documents';			$tr['en']['Report Issue']		= 'Report Issue';
-    $tr['en']['Generate'] 		= 'Generate';				$tr['en']['FullSize']           = 'Full Size';
-    $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
+    $tr['en']['Generate'] 		= 'Generate';				$tr['en']['CalculateFolderSize']= 'Calculate folder size';
     $tr['en']['Check Latest Version']= 'Check Latest Version';
     $tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['HideColumns'] = 'Hide Perms/Owner columns';
-
+	$tr['en']['EmptyFolder'] = 'Folder is empty';
+	
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
 
