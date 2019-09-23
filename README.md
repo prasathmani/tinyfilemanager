@@ -6,7 +6,7 @@
 [![GitHub Release](https://img.shields.io/github/release/qubyte/rubidium.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/releases)
  [![GitHub License](https://img.shields.io/github/license/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE) 
 [![Paypal](https://img.shields.io/badge/Donate-Paypal-lightgrey.svg?style=flat-square)](https://www.paypal.me/prasathmani)
-> It is a simple, fast and small file manager with single php file. It is also a web code editor. It'll run either online or locally, on Linux, Windows or Mac based platforms. The only requirement is to have **PHP 5.5+** available.
+> It is web based file manager and it is a simple, fast and small file manager with a single file, multi-language ready web application for storing, editing and managing files and folders online via web browser. The Application runs on PHP 5.5+, a build-in support for managing text files with cloud9 IDE and it supports syntax highlighting for over 150+ languages and over 35+ themes. .
 
 ## Demo
 [Demo](https://tinyfilemanager.github.io/demo/)
