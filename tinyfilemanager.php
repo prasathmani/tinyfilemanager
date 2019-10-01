@@ -3135,7 +3135,6 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             vertical-align: middle !important;
         }
         .table .custom-checkbox-td .custom-control.custom-checkbox, .table .custom-checkbox-header .custom-control.custom-checkbox {
-            padding: 0;
             min-width: 18px;
         }
         .table-sm td, .table-sm th { padding: .4rem;}
