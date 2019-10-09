@@ -110,9 +110,18 @@ $GLOBALS['online_viewer'] = 'google';
 $sticky_navbar = true;
 
 // max upload file size
-define('MAX_UPLOAD_SIZE', '2048');
+$max_upload_size_bytes = 2048;
+
+// if User has the customized config file, try to use it to override the default config above
+$user_config_file_path = 'user_config.php';
+if(file_exists($user_config_file_path)) {
+    include($user_config_file_path);
+}
 
 //--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
+
+// Set the max upload file size
+define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
 
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
