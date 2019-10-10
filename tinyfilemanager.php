@@ -1828,9 +1828,12 @@ $all_files_size = 0;
                             <label class="custom-control-label" for="<?php echo $ik ?>"></label>
                         </div>
                         </td><?php endif; ?>
-                    <td>
+                    <td class="file-name-col">
                         <div class="filename"><a href="<?php echo $filelink ?>" title="File info"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
+                        <?php if ($num_files < 500 && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))): ?>
+                            <img src="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" alt="" class="live-preview-img">
+                        <?php endif; ?>
                     </td>
                     <td><span title="<?php printf('%s bytes', $filesize_raw) ?>">
                         <?php echo $filesize; ?>
@@ -3134,6 +3137,9 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .table td, .table th {
             vertical-align: middle !important;
         }
+        .table td.file-name-col {
+            position: relative;
+        }
         .table .custom-checkbox-td .custom-control.custom-checkbox, .table .custom-checkbox-header .custom-control.custom-checkbox {
             min-width: 18px;
         }
@@ -3198,6 +3204,14 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             max-width: 100%;
             background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC)
         }
+        .live-preview-img {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 200px;
+            max-width: 200px;
+            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC)
+        }
         .inline-actions > a > i {
             font-size: 1em;
             margin-left: 5px;
@@ -3237,6 +3251,9 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             max-width: 420px;
             overflow: hidden;
             text-overflow: ellipsis
+        }
+        .filename:hover + .live-preview-img {
+            display: block;
         }
         .break-word {
             word-wrap: break-word;
