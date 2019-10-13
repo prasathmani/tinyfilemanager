@@ -1874,8 +1874,8 @@ $all_files_size = 0;
                             <td class="gray"></td><?php endif; ?>
                         <td class="gray" colspan="<?php echo !FM_IS_WIN ? '6' : '4' ?>">
                             <?php echo lng('FullSize').': <span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?>
-                            <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>
-                            <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>
+                            <?php echo lng('File').': <span class="badge badge-light file-count">'.$num_files.'</span>' ?>
+                            <?php echo lng('Folder').': <span class="badge badge-light folder-count">'.$num_folders.'</span>' ?>
                             <?php echo lng('MemoryUsed').': <span class="badge badge-light">'.fm_get_filesize(@memory_get_usage(true)).'</span>' ?>
                             <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> '.lng('FreeOf').' <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
                         </td>
@@ -3342,6 +3342,15 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .ekko-lightbox-nav-overlay a:hover{
             color: #20507D;
         }
+
+        .table-hover tr.folder{
+            background-color: #00bd60;
+        }
+
+        .table-hover tr.file{
+            background-color: #f8b600;
+        }
+
         #main-table span.badge{border-bottom:2px solid #f8f9fa}#main-table span.badge:nth-child(1){border-color:#df4227}#main-table span.badge:nth-child(2){border-color:#f8b600}#main-table span.badge:nth-child(3){border-color:#00bd60}#main-table span.badge:nth-child(4){border-color:#4581ff}#main-table span.badge:nth-child(5){border-color:#ac68fc}#main-table span.badge:nth-child(6){border-color:#45c3d2}
         @media only screen and (min-device-width : 768px) and (max-device-width : 1024px) and (orientation : landscape) and (-webkit-min-device-pixel-ratio: 2) { .navbar-collapse .col-xs-6.text-right { padding: 0; } }
         .btn.active.focus,.btn.active:focus,.btn.focus,.btn.focus:active,.btn:active:focus,.btn:focus{outline:0!important;outline-offset:0!important;background-image:none!important;-webkit-box-shadow:none!important;box-shadow:none!important}
@@ -3550,6 +3559,17 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             e.preventDefault();let target=$(this).data('target');
             $(".fm-upload-wrapper .card-header-tabs a").removeClass('active');$(this).addClass('active');
             $(".fm-upload-wrapper .card-tabs-container").addClass('hidden');$(target).removeClass('hidden');
+        });
+        //hightlight file info row when hovering count value at the status bar
+        $("#main-table .folder-count").hover( function () {
+            $(".table-hover tbody tr:has(.fa-folder-o)").addClass("folder");
+        }, function () {
+            $(".table-hover tbody tr:has(.fa-folder-o)").removeClass("folder");
+        });
+        $("#main-table .file-count").hover( function () {
+            $(".table-hover tbody tr").not(":has(.fa-folder-o)").addClass("file");
+        }, function () {
+            $(".table-hover tbody tr").not(":has(.fa-folder-o)").removeClass("file");
         });
     });
 </script>
