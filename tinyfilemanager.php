@@ -1878,6 +1878,7 @@ $all_files_size = 0;
                             <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>
                             <?php echo lng('MemoryUsed').': <span class="badge badge-light">'.fm_get_filesize(@memory_get_usage(true)).'</span>' ?>
                             <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> '.lng('FreeOf').' <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
+                            <?php echo lng('ProcessID').': <span class="badge badge-light">'.getmypid().'</span>' ?>
                         </td>
                     </tr>
                 </tfoot>
@@ -2242,17 +2243,9 @@ function fm_get_size($file)
  */
 function fm_get_filesize($size)
 {
-    if ($size < 1000) {
-        return sprintf('%s B', $size);
-    } elseif (($size / 1024) < 1000) {
-        return sprintf('%s KB', round(($size / 1024), 2));
-    } elseif (($size / 1024 / 1024) < 1000) {
-        return sprintf('%s MB', round(($size / 1024 / 1024), 2));
-    } elseif (($size / 1024 / 1024 / 1024) < 1000) {
-        return sprintf('%s GB', round(($size / 1024 / 1024 / 1024), 2));
-    } else {
-        return sprintf('%s TB', round(($size / 1024 / 1024 / 1024 / 1024), 2));
-    }
+    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $power = $size > 0 ? floor(log($size, 1024)) : 0;
+    return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
 }
 
 /**
@@ -3342,7 +3335,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .ekko-lightbox-nav-overlay a:hover{
             color: #20507D;
         }
-        #main-table span.badge{border-bottom:2px solid #f8f9fa}#main-table span.badge:nth-child(1){border-color:#df4227}#main-table span.badge:nth-child(2){border-color:#f8b600}#main-table span.badge:nth-child(3){border-color:#00bd60}#main-table span.badge:nth-child(4){border-color:#4581ff}#main-table span.badge:nth-child(5){border-color:#ac68fc}#main-table span.badge:nth-child(6){border-color:#45c3d2}
+        #main-table span.badge{border-bottom:2px solid #f8f9fa}#main-table span.badge:nth-child(1){border-color:#df4227}#main-table span.badge:nth-child(2){border-color:#f8b600}#main-table span.badge:nth-child(3){border-color:#00bd60}#main-table span.badge:nth-child(4){border-color:#4581ff}#main-table span.badge:nth-child(5){border-color:#ac68fc}#main-table span.badge:nth-child(6){border-color:#45c3d2}#main-table span.badge:nth-child(7){border-color:#ff00c6}
         @media only screen and (min-device-width : 768px) and (max-device-width : 1024px) and (orientation : landscape) and (-webkit-min-device-pixel-ratio: 2) { .navbar-collapse .col-xs-6.text-right { padding: 0; } }
         .btn.active.focus,.btn.active:focus,.btn.focus,.btn.focus:active,.btn:active:focus,.btn:focus{outline:0!important;outline-offset:0!important;background-image:none!important;-webkit-box-shadow:none!important;box-shadow:none!important}
         .lds-facebook{display:none;position:relative;width:64px;height:64px}.lds-facebook div,.lds-facebook.show-me{display:inline-block}.lds-facebook div{position:absolute;left:6px;width:13px;background:#007bff;animation:lds-facebook 1.2s cubic-bezier(0,.5,.5,1) infinite}.lds-facebook div:nth-child(1){left:6px;animation-delay:-.24s}.lds-facebook div:nth-child(2){left:26px;animation-delay:-.12s}.lds-facebook div:nth-child(3){left:45px;animation-delay:0}@keyframes lds-facebook{0%{top:6px;height:51px}100%,50%{top:19px;height:26px}}
@@ -3692,6 +3685,7 @@ function lng($txt) {
 	$tr['en']['Help Documents'] = 'Help Documents';			$tr['en']['Report Issue']		= 'Report Issue';
     $tr['en']['Generate'] 		= 'Generate';				$tr['en']['FullSize']           = 'Full Size';
     $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
+    $tr['en']['ProcessID']      = 'Process ID';
     $tr['en']['Check Latest Version']= 'Check Latest Version';
     $tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['HideColumns'] = 'Hide Perms/Owner columns';
