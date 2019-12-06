@@ -2507,6 +2507,7 @@ function fm_get_file_icon_class($path)
             break;
         case 'xls':
         case 'xlsx':
+        case 'ods':
             $img = 'fa fa-file-excel-o';
             break;
         case 'csv':
@@ -2517,6 +2518,7 @@ function fm_get_file_icon_class($path)
             break;
         case 'doc':
         case 'docx':
+        case 'odt':
             $img = 'fa fa-file-word-o';
             break;
         case 'ppt':
@@ -2633,7 +2635,7 @@ function fm_get_text_names()
  */
 function fm_get_onlineViewer_exts()
 {
-    return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar');
+    return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar', 'odt', 'ods');
 }
 
 /**
