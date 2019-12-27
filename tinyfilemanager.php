@@ -2200,8 +2200,12 @@ function fm_get_translations($tr) {
 function fm_get_size($file)
 {
     static $iswin;
+    static $isdarwin;
     if (!isset($iswin)) {
         $iswin = (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN');
+    } 
+    if (!isset($isdarwin)) {
+        $isdarwin = (strtoupper(substr(PHP_OS, 0)) == "DARWIN");
     }
 
     static $exec_works;
@@ -2211,7 +2215,7 @@ function fm_get_size($file)
 
     // try a shell command
     if ($exec_works) {
-        $cmd = ($iswin) ? "for %F in (\"$file\") do @echo %~zF" : "stat -c%s \"$file\"";
+        $cmd = ($iswin) ? "for %F in (\"$file\") do @echo %~zF" : ($isdarwin ? "stat -f%z \"$file\"" : "stat -c%s \"$file\"");
         @exec($cmd, $output);
         if (is_array($output) && ctype_digit($size = trim(implode("\n", $output)))) {
             return $size;
