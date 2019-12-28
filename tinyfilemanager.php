@@ -9,7 +9,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.3.8');
+define('VERSION', '2.3.9');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -480,6 +480,12 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         }
 
         $err = false;
+        if(!fm_is_file_allowed($fileinfo->name)) {
+            $err = array("message" => "File extension is not allowed");
+            event_callback(array("fail" => $err));
+            exit();
+        }
+
         if (!$url) {
             $success = false;
         } else if ($use_curl) {
@@ -1921,6 +1927,27 @@ fm_show_footer();
 // Functions
 
 /**
+ * Check if the filename is allowed.
+ * @param string $filename
+ * @return bool
+ */
+function fm_is_file_allowed($filename)
+{
+    // By default, no file is allowed
+    $allowed = false;
+
+    if (FM_EXTENSION) {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        if (in_array($ext, explode(',', strtolower(FM_EXTENSION)))) {
+            $allowed = true;
+        }
+    }
+
+    return $allowed;
+}
+
+/**
  * Delete  file or folder (recursively)
  * @param string $path
  * @return bool
@@ -2215,7 +2242,8 @@ function fm_get_size($file)
 
     // try a shell command
     if ($exec_works) {
-        $cmd = ($iswin) ? "for %F in (\"$file\") do @echo %~zF" : ($isdarwin ? "stat -f%z \"$file\"" : "stat -c%s \"$file\"");
+        $arg = escapeshellarg($file);
+        $cmd = ($iswin) ? "for %F in (\"$file\") do @echo %~zF" : ($isdarwin ? "stat -f%z $arg" : "stat -c%s $arg");
         @exec($cmd, $output);
         if (is_array($output) && ctype_digit($size = trim(implode("\n", $output)))) {
             return $size;
