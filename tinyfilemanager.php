@@ -92,7 +92,7 @@ $exclude_items = array();
 // Availabe rules are 'google', 'microsoft' or false
 // google => View documents using Google Docs Viewer
 // microsoft => View documents using Microsoft Web Apps Viewer
-// false => disable online dov viewer
+// false => disable online doc viewer
 $online_viewer = 'google';
 
 // Sticky Nav bar
