@@ -3,13 +3,13 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}';
 
 /**
- * H3K | Tiny File Manager V2.4.0
+ * H3K | Tiny File Manager V2.4.1
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.4.0');
+define('VERSION', '2.4.1');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -413,6 +413,14 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         fclose($fd);
         die(true);
     }
+
+    //search : get list of files from the current folder
+    if(isset($_POST['type']) && $_POST['type']=="search") {
+        $dir = FM_ROOT_PATH;
+        $response = scan($_POST['path'], $_POST['content']);
+        echo json_encode($response);
+        exit();
+    }
     
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup") {
@@ -789,27 +797,50 @@ if (!empty($_FILES) && !FM_READONLY) {
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
     $targetPath = $path . $ds;
-    $fullPath = $path . '/' . $_REQUEST['fullpath'];
-    $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
+    if ( is_writable($targetPath) ) {
+        $fullPath = $path . '/' . $_REQUEST['fullpath'];
+        $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
-    if(file_exists ($fullPath) && !$override_file_name) {
-        $ext_1 = $ext ? '.'.$ext : '';
-        $fullPath = str_replace($ext_1, '', $fullPath) .'_'. date('ymdHis'). $ext_1;
-    }
-
-    if (!is_dir($folder)) {
-        $old = umask(0);
-        mkdir($folder, 0777, true);
-        umask($old);
-    }
-
-    if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
-        if (move_uploaded_file($tmp_name, $fullPath)) {
-            die('Successfully uploaded');
-        } else {
-            die(sprintf('Error while uploading files. Uploaded files: %s', $uploads));
+        if(file_exists ($fullPath) && !$override_file_name) {
+            $ext_1 = $ext ? '.'.$ext : '';
+            $fullPath = str_replace($ext_1, '', $fullPath) .'_'. date('ymdHis'). $ext_1;
         }
+
+        if (!is_dir($folder)) {
+            $old = umask(0);
+            mkdir($folder, 0777, true);
+            umask($old);
+        }
+
+        if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
+            if (move_uploaded_file($tmp_name, $fullPath)) {
+                // Be sure that the file has been uploaded
+                if ( file_exists($fullPath) ) {
+                    $response = array (
+                        'status'    => 'success',
+                        'info' => "file upload successful"
+                    );
+                } else {
+                    $response = array (
+                        'status' => 'error',
+                        'info'   => 'Couldn\'t upload the requested file.'
+                    );
+                }
+            } else {
+                $response = array (
+                    'status'    => 'error',
+                    'info'      => "Error while uploading files. Uploaded files $uploads",
+                );
+            }
+        }
+    } else {
+        $response = array (
+            'status' => 'error',
+            'info'   => 'The specified folder for upload isn\'t writeable.'
+        );
     }
+    // Return the response
+    echo json_encode($response);
     exit();
 }
 
@@ -1114,7 +1145,10 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                         toast('Error: Server Timeout');
                     });
                 }).on("success", function (res) {
-                    console.log('Upload Status >> ', res.status);
+                    let _response = JSON.parse(res.xhr.response);
+                    if(_response.status == "error") {
+                        toast(_response.info);
+                    }
                 }).on("error", function(file, response) {
                     toast(response);
                 });
@@ -1351,7 +1385,7 @@ if (isset($_GET['help'])) {
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="https://tinyfilemanager.github.io/docs/" target="_blank"><i class="fa fa-question-circle"></i> <?php echo lng('Help Documents') ?> </a> </li>
+                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> <?php echo lng('Help Documents') ?> </a> </li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <li class="list-group-item"><a href="javascript:latest_release_info('<?php echo VERSION; ?>');"><i class="fa fa-link"> </i> <?php echo lng('Check Latest Version') ?></a></li>
                                 <?php if(!FM_READONLY) { ?>
@@ -1870,12 +1904,19 @@ $all_files_size = 0;
                             <label class="custom-control-label" for="<?php echo $ik ?>"></label>
                         </div>
                         </td><?php endif; ?>
-                    <td class="file-name-col">
-                        <div class="filename"><a href="<?php echo $filelink ?>" title="File info"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?>
-                            </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
-                        <?php if ($num_files < 500 && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))): ?>
-                            <img src="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" alt="" class="live-preview-img">
-                        <?php endif; ?>
+                    <td>
+                        <div class="filename"> 
+                        <?php
+                           if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))): ?>
+                                <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
+                                <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo $f ?>">
+                           <?php else: ?>
+                                <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
+                            <?php endif; ?>
+                                    <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?>
+                                </a>
+                                <?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                        </div>
                     </td>
                     <td><span title="<?php printf('%s bytes', $filesize_raw) ?>">
                         <?php echo $filesize; ?>
@@ -2677,7 +2718,7 @@ function fm_get_image_exts()
  */
 function fm_get_video_exts()
 {
-    return array('webm', 'mp4', 'm4v', 'ogm', 'ogv', 'mov', 'mkv');
+    return array('avi', 'webm', 'wmv', 'mp4', 'm4v', 'ogm', 'ogv', 'mov', 'mkv');
 }
 
 /**
@@ -2740,6 +2781,31 @@ function fm_get_text_names()
 function fm_get_onlineViewer_exts()
 {
     return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar', 'odt', 'ods');
+}
+
+/**
+ * This function scans the files and folder recursively, and return matching files
+ * @param string $dir
+ * @return json
+ */
+ function scan($dir, $filter = '') {
+    $path = FM_ROOT_PATH.'/'.$dir;
+    $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
+    $rii = new RegexIterator($ite, "/(".$filter.")/i");
+
+    $files = array(); 
+    foreach ($rii as $file) {
+        if (!$file->isDir()) {
+            $fileName = $file->getFilename();
+            $location = str_replace(FM_ROOT_PATH, '', $file->getPath());
+            $files[] = array(
+                    "name" => $fileName,
+                    "type" => "file",
+                    "path" => $location,
+                );           
+        }
+    }
+    return $files;
 }
 
 /**
@@ -3047,8 +3113,11 @@ function fm_show_nav_path($path)
                     <li class="nav-item mr-2">
                         <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
                             <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
-                            <div class="input-group-append">
-                                <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
+                            <div class="input-group-append btn-group">
+                                <span class="input-group-text dropdown-toggle" id="search-addon2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
+                                  <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="<?php echo $path2 = $path ? $path : '.'; ?>" id="js-search-modal" data-toggle="modal" data-target="#searchModal">Advanced Search</a>
+                                  </div>
                             </div>
                         </div>
                     </li>
@@ -3309,6 +3378,11 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         @keyframes lds-facebook { 0% { top:6px;height:51px }
         100%,50% { top:19px;height:26px }
         }
+        ul#search-wrapper { padding-left: 0;border: 1px solid #ecececcc; } ul#search-wrapper li { list-style: none; padding: 5px;border-bottom: 1px solid #ecececcc; }
+        ul#search-wrapper li:nth-child(odd){ background: #f9f9f9cc;}
+        .c-preview-img {
+            max-width: 300px;
+        }
     </style>
 </head>
 <body class="<?php echo $isStickyNavBar; ?>">
@@ -3349,6 +3423,33 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     </div>
 
     <!-- Modal -->
+    <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title col-10" id="searchModalLabel">
+                <div class="input-group input-group">
+                    <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> a files" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
+                    <div class="input-group-append">
+                        <span class="input-group-text" id="search-addon3"><i class="fa fa-search"></i></span>
+                    </div>
+                </div>
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form action="" method="post">
+                <div class="lds-facebook"><div></div><div></div><div></div></div>
+                <ul id="search-wrapper">
+                    <p class="m-2">Search file in folder and subfolders...</p>
+                </ul>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="text/html" id="js-tpl-modal">
         <div class="modal fade" id="js-ModalCenter-<%this.id%>" tabindex="-1" role="dialog" aria-labelledby="ModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -3497,6 +3598,45 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             }
         }); return false;
     }
+    //Search template
+    function search_template(data) {
+        var response = "";
+        $.each(data, function (key, val) {
+            response += `<li><a href="?p=${val.path}&view=${val.name}">${val.path}/${val.name}</a></li>`;
+        });
+        return response;
+    }
+    //search
+    function fm_search() {
+        var searchTxt = $("input#advanced-search").val(), searchWrapper = $("ul#search-wrapper"), path = $("#js-search-modal").attr("href"), _html = "", $loader = $("div.lds-facebook");
+        if(!!searchTxt && searchTxt.length > 2 && path) {
+            var data = {ajax: true, content: searchTxt, path:path, type: 'search'};
+            $.ajax({
+                type: "POST",
+                url: window.location,
+                data: data,
+                beforeSend: function() {
+                    searchWrapper.html('');
+                    $loader.addClass('show-me');
+                },
+                success: function(data){
+                    $loader.removeClass('show-me');
+                    data = JSON.parse(data);
+                    if(data && data.length) {
+                        _html = search_template(data);
+                        searchWrapper.html(_html);
+                    } else { searchWrapper.html('<p class="m-2">No result found!<p>'); }
+                },
+                error: function(xhr) { $loader.removeClass('show-me'); searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>'); },
+                failure: function(mes) { $loader.removeClass('show-me'); searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');}
+            });
+        } else { searchWrapper.html("OOPS: minimum 3 characters required!"); }
+    }
+
+    //on mouse hover image preview
+    !function(s){s.previewImage=function(e){var o=s(document),t=".previewImage",a=s.extend({xOffset:20,yOffset:-20,fadeIn:"fast",css:{padding:"5px",border:"1px solid #cccccc","background-color":"#fff"},eventSelector:"[data-preview-image]",dataKey:"previewImage",overlayId:"preview-image-plugin-overlay"},e);return o.off(t),o.on("mouseover"+t,a.eventSelector,function(e){s("p#"+a.overlayId).remove();var o=s("<p>").attr("id",a.overlayId).css("position","absolute").css("display","none").append(s('<img class="c-preview-img">').attr("src",s(this).data(a.dataKey)));a.css&&o.css(a.css),s("body").append(o),o.css("top",e.pageY+a.yOffset+"px").css("left",e.pageX+a.xOffset+"px").fadeIn(a.fadeIn)}),o.on("mouseout"+t,a.eventSelector,function(){s("#"+a.overlayId).remove()}),o.on("mousemove"+t,a.eventSelector,function(e){s("#"+a.overlayId).css("top",e.pageY+a.yOffset+"px").css("left",e.pageX+a.xOffset+"px")}),this},s.previewImage()}(jQuery);
+
+
     // Dom Ready Event
     $(document).ready( function () {
         //load config
@@ -3507,9 +3647,14 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             _targets = (tableLng && tableLng == 7 ) ? [0, 4,5,6] : tableLng == 5 ? [0,4] : [3],
             mainTable = $('#main-table').DataTable({"paging":   false, "info":     false, "columnDefs": [{"targets": _targets, "orderable": false}]
         });
-        $('#search-addon').on( 'keyup', function () { //Search using custom input box
+        //search
+        $('#search-addon').on( 'keyup', function () {
             mainTable.search( this.value ).draw();
         });
+        $("input#advanced-search").on('keyup', function (e) {
+            if (e.keyCode === 13) { fm_search(); }
+        });
+        $('#search-addon3').on( 'click', function () { fm_search(); });
         //upload nav tabs
         $(".fm-upload-wrapper .card-header-tabs").on("click", 'a', function(e){
             e.preventDefault();let target=$(this).data('target');
@@ -3657,10 +3802,10 @@ function lng($txt) {
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
-    $tr['en']['Full size'] 		= 'Full size';				$tr['en']['Help'] 				= 'Help';
-    $tr['en']['Free of'] 		= 'Free of';				$tr['en']['Preview'] 			= 'Preview';
-	$tr['en']['Help Documents'] = 'Help Documents';			$tr['en']['Report Issue']		= 'Report Issue';
-    $tr['en']['Generate'] 		= 'Generate';				$tr['en']['FullSize']           = 'Full Size';
+    $tr['en']['Full size']      = 'Full size';              $tr['en']['Help']               = 'Help';
+    $tr['en']['Free of']        = 'Free of';                $tr['en']['Preview']            = 'Preview';
+    $tr['en']['Help Documents'] = 'Help Documents';         $tr['en']['Report Issue']       = 'Report Issue';
+    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';
     $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
     $tr['en']['ProcessID']      = 'Process ID';
     $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';
