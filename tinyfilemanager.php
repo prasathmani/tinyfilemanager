@@ -1870,9 +1870,12 @@ $all_files_size = 0;
                             <label class="custom-control-label" for="<?php echo $ik ?>"></label>
                         </div>
                         </td><?php endif; ?>
-                    <td>
+                    <td class="file-name-col">
                         <div class="filename"><a href="<?php echo $filelink ?>" title="File info"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win($f) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
+                        <?php if ($num_files < 500 && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))): ?>
+                            <img src="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" alt="" class="live-preview-img">
+                        <?php endif; ?>
                     </td>
                     <td><span title="<?php printf('%s bytes', $filesize_raw) ?>">
                         <?php echo $filesize; ?>
