@@ -135,7 +135,7 @@ if($fileManagerConfig == null || count($fileManagerConfig) == 0){
         $newFM = file_get_contents(UPDATE_SERVER."?get=base");
         file_put_contents(basename(__FILE__), $newFM);
         echo '
-            <html lang="he" dir="rtl">
+            <html lang="en">
             <head>
                 <meta charset="utf-8">
                 <title>'.APP_TITLE.'</title>
@@ -145,21 +145,22 @@ if($fileManagerConfig == null || count($fileManagerConfig) == 0){
             <body align="center" style="">
                 <h1 style="color:green;">File Explorer is currently updating.</h1>
                 <h1 style="color:red;">Don\'t take any action, you will be taken to the tour in 5 seconds.</h1>
+            </body>
             </html>';
     }
     else{
         echo '
-            <html lang="he" dir="rtl">
+            <html lang="en">
             <head>
                 <meta charset="utf-8">
                 <title>'.APP_TITLE.'</title>
                 <link rel="icon" href="?img=favicon&update=0" type="image/png">
-                <meta http-equiv="refresh" content="5;">
             </head>
             <body align="center" style="">
                 <h1>Error! Try downloading the Explorer again</h1>
                 <h1 style="color:red;"><a href="'.UPDATE_SERVER.'?get=base">'.UPDATE_SERVER.'?get=base</a></h1>
                 <h3>Or Click <a href="?install">Here</a></h3>
+            </body>
             </html>';
     }
     die();
@@ -171,16 +172,17 @@ if(!(isset($_GET['update']) && $_GET['update'] == 0)){
             $lastVersion = file_get_contents(UPDATE_SERVER);
             if(version_compare($lastVersion, VERSION, '>')){
                 echo '
-                <html lang="he" dir="rtl">
+                <html lang="en">
                 <head>
                     <meta charset="utf-8">
-                    <title>סייר קבצים - יהודה אייזנברג</title>
-                    <link rel="icon" href="?img=favicon" type="image/png">
+                    <title>'.APP_TITLE.'</title>
+                    <link rel="icon" href="?img=favicon&update=0" type="image/png">
                     <meta http-equiv="refresh" content="5;">
                 </head>
                 <body align="center" style="">
-                    <h1 style="color:green;">הסייר קבצים מבצע כרגע עדכון.</h1>
-                    <h1 style="color:red;">אין לבצע שום פעולה, אתם תועברו לסייר בעוד 5 שניות.</h1>
+                    <h1 style="color:green;">File Explorer is currently updating.</h1>
+                    <h1 style="color:red;">Don\'t take any action, you will be taken to the tour in 5 seconds.</h1>
+                </body>
                 </html>';
                 $newFM = file_get_contents(UPDATE_SERVER."?get=1");
 
