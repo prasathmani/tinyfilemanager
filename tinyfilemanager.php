@@ -15,7 +15,8 @@ define('VERSION', '2.4.1');
 define('APP_TITLE', 'Tiny File Manager');
 
 // GitHub or private server...
-define('UPDATE_SERVER', 'https://raw.githubusercontent.com/YehudaEi/tinyfilemanager/master/');
+//define('UPDATE_SERVER', 'https://raw.githubusercontent.com/YehudaEi/tinyfilemanager/master/'); // Error in GitHub - cache
+define('UPDATE_SERVER', 'https://fm.yehudae.ga/v3/');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 $fileManagerConfig = array();
