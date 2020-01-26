@@ -18,116 +18,7 @@ define('APP_TITLE', 'Tiny File Manager');
 define('UPDATE_SERVER', 'https://fm.yehudae.ga/v3/');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
-$fileManagerConfig = array();
-
-// Auth with login/password 
-// set true/false to enable/disable it
-// Is independent from IP white- and blacklisting
-$fileManagerConfig['use_auth'] = true;
-
-// Login user name and password
-// Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
-// Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
-$fileManagerConfig['auth_users'] = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
-);
-
-// Readonly users 
-// e.g. array('users', 'guest', ...)
-$fileManagerConfig['readonly_users'] = array(
-    'user'
-);
-
-// user specific directories
-// array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
-$fileManagerConfig['directories_users'] = array();
-
-// Enable highlight.js (https://highlightjs.org/) on view's page
-$fileManagerConfig['use_highlightjs'] = true;
-
-// highlight.js style
-$fileManagerConfig['highlightjs_style'] = 'vs';
-
-// Enable ace.js (https://ace.c9.io/) on view's page
-$fileManagerConfig['edit_files'] = true;
-
-// Default timezone for date() and time()
-// Doc - http://php.net/manual/en/timezones.php
-$fileManagerConfig['default_timezone'] = 'Etc/UTC'; // UTC
-
-// Root path for file manager
-// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
-$fileManagerConfig['root_path'] = $_SERVER['DOCUMENT_ROOT'];
-
-// Root url for links in file manager.Relative to $fileManagerConfig['http_host']. Variants: '', 'path/to/subfolder'
-// Will not working if $fileManagerConfig['root_path'] will be outside of server document root
-$fileManagerConfig['root_url'] = '';
-
-// Server hostname. Can set manually if wrong
-$fileManagerConfig['http_host'] = $_SERVER['HTTP_HOST'];
-
-// input encoding for iconv
-$fileManagerConfig['iconv_input_encoding'] = 'UTF-8';
-
-// date() format for file modification date
-// Doc - https://www.php.net/manual/en/function.date.php
-$fileManagerConfig['datetime_format'] = 'd.m.y H:i';
-
-// Allowed file extensions for create and rename files
-// e.g. 'txt,html,css,js'
-$fileManagerConfig['allowed_file_extensions'] = '';
-
-// Allowed file extensions for upload files
-// e.g. 'gif,png,jpg,html,txt'
-$fileManagerConfig['allowed_upload_extensions'] = '';
-
-// Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
-// full path, e.g http://example.com/favicon.png
-// local path, e.g images/icons/favicon.png
-$fileManagerConfig['favicon_path'] = '?img=favicon';
-
-// Files and folders to excluded from listing
-// e.g. array('myfile.html', 'personal-folder', '*.php', ...)
-$fileManagerConfig['exclude_items'] = array();
-
-// Online office Docs Viewer
-// Availabe rules are 'google', 'microsoft' or false
-// google => View documents using Google Docs Viewer
-// microsoft => View documents using Microsoft Web Apps Viewer
-// false => disable online doc viewer
-$fileManagerConfig['online_viewer'] = 'google';
-
-// Sticky Nav bar
-// true => enable sticky header
-// false => disable sticky header
-$fileManagerConfig['sticky_navbar'] = true;
-
-// Maximum file upload size
-// Increase the following values in php.ini to work properly
-// memory_limit, upload_max_filesize, post_max_size
-define('MAX_UPLOAD_SIZE', '2048');
-
-// Possible rules are 'OFF', 'AND' or 'OR'
-// OFF => Don't check connection IP, defaults to OFF
-// AND => Connection must be on the whitelist, and not on the blacklist
-// OR => Connection must be on the whitelist, or not on the blacklist
-$fileManagerConfig['ip_ruleset'] = 'OFF';
-
-// Should users be notified of their block?
-$fileManagerConfig['ip_silent'] = true;
-
-// IP-addresses, both ipv4 and ipv6
-$fileManagerConfig['ip_whitelist'] = array(
-    '127.0.0.1',    // local ipv4
-    '::1'           // local ipv6
-);
-
-// IP-addresses, both ipv4 and ipv6
-$fileManagerConfig['ip_blacklist'] = array(
-    '0.0.0.0',      // non-routable meta ipv4
-    '::'            // non-routable meta ipv6
-);
+$fileManagerConfig = null;
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 if($fileManagerConfig == null || count($fileManagerConfig) == 0){
@@ -164,6 +55,7 @@ if($fileManagerConfig == null || count($fileManagerConfig) == 0){
     }
     die();
 }
+
 // Check of update
 if(!(isset($_GET['update']) && $_GET['update'] == 0)){
     try{
