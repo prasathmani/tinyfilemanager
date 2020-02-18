@@ -1162,7 +1162,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
 
 // copy form POST
 if (isset($_POST['copy']) && !FM_READONLY) {
-    $copy_files = $_POST['file'];
+    $copy_files = isset($_POST['file']) ? $_POST['file'] : null;
     if (!is_array($copy_files) || empty($copy_files)) {
         fm_set_msg('Nothing selected', 'alert');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
