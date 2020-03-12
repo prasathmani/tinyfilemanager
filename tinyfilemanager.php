@@ -2977,7 +2977,12 @@ class FM_Zipper_Tar
     private function addFileOrDir($filename)
     {
         if (is_file($filename)) {
-            return $this->tar->addFile($filename);
+            try {
+                $this->tar->addFile($filename);
+                return true;
+            } catch (Exception $e) {
+                return false;
+            }
         } elseif (is_dir($filename)) {
             return $this->addDir($filename);
         }
