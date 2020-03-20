@@ -259,15 +259,15 @@ if ($use_auth) {
         if(function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
-                fm_set_msg('You are logged in');
+                fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL . '?p=');
             } else {
                 unset($_SESSION[FM_SESSION_ID]['logged']);
-                fm_set_msg('Login failed. Invalid username or password', 'error');
+                fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
                 fm_redirect(FM_SELF_URL);
             }
         } else {
-            fm_set_msg('password_hash not supported, Upgrade PHP version', 'error');;
+            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
         }
     } else {
         // Form
@@ -593,7 +593,7 @@ if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
             if (!file_exists($path . '/' . $new)) {
                 if(fm_is_valid_ext($new)) {
                     @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
-                    fm_set_msg(sprintf('File <b>%s</b> created', fm_enc($new)));
+                    fm_set_msg(sprintf(lng('File').' <b>%s</b> '.lng('Created'), fm_enc($new)));
                 } else {
                     fm_set_msg('File extension is not allowed', 'error');
                 }
@@ -602,7 +602,7 @@ if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
             }
         } else {
             if (fm_mkdir($path . '/' . $new, false) === true) {
-                fm_set_msg(sprintf('Folder <b>%s</b> created', $new));
+                fm_set_msg(sprintf(lng('Folder').' <b>%s</b> '.lng('Created'), $new));
             } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
                 fm_set_msg(sprintf('Folder <b>%s</b> already exists', fm_enc($new)), 'alert');
             } else {
@@ -1867,7 +1867,7 @@ $all_files_size = 0;
                         <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('Delete folder?');"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('Folder').'?'; ?>\n \n ( <?php echo urlencode($f) ?> )');"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
@@ -1930,7 +1930,7 @@ $all_files_size = 0;
                     <td class="inline-actions">
                         <a title="<?php echo lng('Preview') ?>" href="<?php echo $filelink.'&quickView=1'; ?>" data-toggle="lightbox" data-gallery="tiny-gallery" data-title="<?php echo fm_convert_win($f) ?>" data-max-width="100%" data-width="100%"><i class="fa fa-eye"></i></a>
                         <?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('File').'?'; ?>');"><i class="fa fa-trash-o"></i></a>
+                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('File').'?'; ?>\n \n ( <?php echo urlencode($f) ?> )');"> <i class="fa fa-trash-o"></i></a>
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(FM_PATH) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..."
                                href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
@@ -3118,6 +3118,9 @@ function fm_show_nav_path($path)
                     <li class="nav-item mr-2">
                         <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
                             <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
+                            </div>
                             <div class="input-group-append btn-group">
                                 <span class="input-group-text dropdown-toggle" id="search-addon2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
                                   <div class="dropdown-menu dropdown-menu-right">
@@ -3816,6 +3819,13 @@ function lng($txt) {
     $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';
     $tr['en']['Check Latest Version']= 'Check Latest Version'; $tr['en']['Generate new password hash'] = 'Generate new password hash';
 
+    $tr['en']['Folder is empty']    = 'Folder is empty';
+    $tr['en']['Created']    = 'Created';
+    $tr['en']['You are logged in']    = 'You are logged in';
+    $tr['en']['Login failed. Invalid username or password']    = 'Login failed. Invalid username or password';
+    $tr['en']['password_hash not supported, Upgrade PHP version']    = 'password_hash not supported, Upgrade PHP version';
+    
+    
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
 
