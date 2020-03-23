@@ -635,19 +635,20 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     $dest .= '/' . basename($from);
     // move?
     $move = isset($_GET['move']);
-    // copy/move
+    // copy/move/duplicate
     if ($from != $dest) {
         $msg_from = trim(FM_PATH . '/' . basename($from), '/');
-        if ($move) {
+        if ($move) { // Move and to != from so just perform move
             $rename = fm_rename($from, $dest);
             if ($rename) {
                 fm_set_msg(sprintf('Moved from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
             } elseif ($rename === null) {
                 fm_set_msg('File or folder with this path already exists', 'alert');
+
             } else {
                 fm_set_msg(sprintf('Error while moving from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($msg_from)), 'error');
             }
-        } else {
+        } else { // Not move and to != from so copy with original name
             if (fm_rcopy($from, $dest)) {
                 fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
             } else {
@@ -655,7 +656,32 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             }
         }
     } else {
-        fm_set_msg('Paths must be not equal', 'alert');
+       if (!$move){ //Not move and to = from so duplicate
+            $msg_from = trim(FM_PATH . '/' . basename($from), '/');
+            $fn_parts = pathinfo($from);
+            $extension_suffix = '';
+            if(!is_dir($from)){
+               $extension_suffix = '.'.$fn_parts['extension'];
+            }
+            //Create new name for duplicate
+            $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-'.date('YmdHis').$extension_suffix;
+            $loop_count = 0;
+            $max_loop = 1000;
+            // Check if a file with the duplicate name already exists, if so, make new name (edge case...)
+            while(file_exists($fn_duplicate) & $loop_count < $max_loop){
+               $fn_parts = pathinfo($fn_duplicate);
+               $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy'.$extension_suffix;
+               $loop_count++;
+            }
+            if (fm_rcopy($from, $fn_duplicate, False)) {
+                fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
+            } else {
+                fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
+            }
+       }
+       else{
+           fm_set_msg('Paths must be not equal', 'alert');
+       }
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
@@ -2172,7 +2198,7 @@ function fm_mkdir($dir, $force)
  * Safely copy file
  * @param string $f1
  * @param string $f2
- * @param bool $upd
+ * @param bool $upd Indicates if file should be updated with new content
  * @return bool
  */
 function fm_copy($f1, $f2, $upd)
