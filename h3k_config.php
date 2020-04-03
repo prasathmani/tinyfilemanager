@@ -94,11 +94,6 @@ $online_viewer = 'google';
 // false => disable sticky header
 $sticky_navbar = true;
 
-// Maximum file upload size
-// Increase the following values in php.ini to work properly
-// memory_limit, upload_max_filesize, post_max_size
-define('MAX_UPLOAD_SIZE', '2048');
-
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
 // AND => Connection must be on the whitelist, and not on the blacklist
