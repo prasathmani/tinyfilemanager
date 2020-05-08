@@ -126,6 +126,11 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// Proxy for URL Download Support (hostname:port)
+// Note : configure your proxy to know whats or allow access inside/outside your network
+//        if you want both interal URLs and External URLs to work
+//$proxyServer = 'proxy.url.tld:8080';
+
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 
 // private key and session name to store to the session
@@ -533,7 +538,12 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             $fileinfo->size = $curl_info["size_download"];
             $fileinfo->type = $curl_info["content_type"];
         } else {
-            $ctx = stream_context_create();
+            if (isset($proxyServer)) {
+                $opts = array('http' => array('proxy' => 'tcp://' . $proxyServer, 'request_fulluri' => true));
+                $ctx = stream_context_create($opts);
+	    } else {
+                $ctx = stream_context_create();
+	    }
             @$success = copy($url, $temp_file, $ctx);
             if (!$success) {
                 $err = error_get_last();
