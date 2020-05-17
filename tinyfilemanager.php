@@ -3082,12 +3082,11 @@ class FM_Zipper_Tar
 
     function save()
     {
-        global $root_path;
-        $fm_file = $root_path.$_SERVER["PHP_SELF"];
+        $fm_file = __FILE__;
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
         $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration".chr(13) . chr(10)."$var_name = $var_value;" . chr(13) . chr(10);
-        if (file_exists($fm_file)) {
+        if (is_writable($fm_file)) {
             $lines = file($fm_file);
             if ($fh = @fopen($fm_file, "w")) {
                 @fputs($fh, $config_string, strlen($config_string));
