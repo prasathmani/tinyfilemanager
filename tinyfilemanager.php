@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":true,"calc_folder":false}';
 
 /**
  * H3K | Tiny File Manager V2.4.2
@@ -12,7 +12,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
 define('VERSION', '2.4.2');
 
 //Application Title
-define('APP_TITLE', 'Tiny File Manager');
+define('APP_TITLE', 'Auristor File System - mitll cell');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
@@ -20,7 +20,7 @@ define('APP_TITLE', 'Tiny File Manager');
 // Auth with login/password 
 // set true/false to enable/disable it
 // Is independent from IP white- and blacklisting
-$use_auth = true;
+$use_auth = false;
 
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
@@ -69,7 +69,7 @@ $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 // Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'd.m.y H:i';
+$datetime_format = 'm/d/Y H:i:s';
 
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
@@ -93,7 +93,7 @@ $exclude_items = array();
 // google => View documents using Google Docs Viewer
 // microsoft => View documents using Microsoft Web Apps Viewer
 // false => disable online doc viewer
-$online_viewer = 'google';
+$online_viewer = false;
 
 // Sticky Nav bar
 // true => enable sticky header
@@ -125,6 +125,9 @@ $ip_blacklist = array(
     '0.0.0.0',      // non-routable meta ipv4
     '::'            // non-routable meta ipv6
 );
+
+// Proxy for URL Download Support (hostname:port)
+$proxyServer = 'd6proxy.llan.ll.mit.edu:8080';
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 
@@ -350,7 +353,7 @@ defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
-defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', $exclude_items);
+(!defined('FM_EXCLUDE_ITEMS') && !empty($exclude_items)) && define('FM_EXCLUDE_ITEMS', $exclude_items);
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
 define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
@@ -538,7 +541,12 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             $fileinfo->size = $curl_info["size_download"];
             $fileinfo->type = $curl_info["content_type"];
         } else {
-            $ctx = stream_context_create();
+            if (isset($proxyServer)) {
+                $opts = array('http' => array('proxy' => 'tcp://' . $proxyServer, 'request_fulluri' => true));
+                $ctx = stream_context_create($opts);
+	    } else {
+                $ctx = stream_context_create();
+	    }
             @$success = copy($url, $temp_file, $ctx);
             if (!$success) {
                 $err = error_get_last();
@@ -2322,6 +2330,8 @@ function fm_get_parent_path($path)
  * @return bool
  */
 function fm_is_exclude_items($file) {
+    if (!defined('FM_EXCLUDE_ITEMS'))
+      return true;
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     if(!in_array($file, FM_EXCLUDE_ITEMS) && !in_array("*.$ext", FM_EXCLUDE_ITEMS)) {
         return true;
