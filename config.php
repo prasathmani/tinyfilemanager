@@ -5,13 +5,19 @@
 This is an OPTIONAL configuration file.
 The role of this file is to make updating of "tinyfilemanager.php" easier.
 So you can:
--Feel free to remove completely this file and configure "tinifilemanager.php" as a single file application.
+-Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
 or
--Put inside this file all the static configuration you want and forgot to configure "tinifilemanager.php".
+-Put inside this file all the static configuration you want and forgot to configure "tinyfilemanager.php".
 #################################################################################################################
 */
 
 // Auth with login/password 
+// set true/false to enable/disable it
+// Is independent from IP white- and blacklisting
+$use_auth = true;
+
+
+// Auth with login/password
 // set true/false to enable/disable it
 // Is independent from IP white- and blacklisting
 $use_auth = true;
@@ -24,20 +30,21 @@ $auth_users = array(
     'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
 
-// Readonly users 
+//set application theme
+//options - 'light' and 'dark'
+$theme = 'light';
+
+// Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
     'user'
 );
 
-// user specific directories
-// array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
-$directories_users = array();
-
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 
 // highlight.js style
+// for dark theme use 'ir-black'
 $highlightjs_style = 'vs';
 
 // Enable ace.js (https://ace.c9.io/) on view's page
@@ -57,6 +64,10 @@ $root_url = '';
 
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
+
+// user specific directories
+// array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
+$directories_users = array();
 
 // input encoding for iconv
 $iconv_input_encoding = 'UTF-8';
@@ -93,6 +104,10 @@ $online_viewer = 'google';
 // true => enable sticky header
 // false => disable sticky header
 $sticky_navbar = true;
+
+
+// max upload file size
+$max_upload_size_bytes = 2048;
 
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
