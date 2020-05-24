@@ -131,7 +131,7 @@ $ip_blacklist = array(
 );
 
 // if User has the customized config file, try to use it to override the default config above
-$config_file = 'config.php';
+$config_file = './config.php';
 if (is_readable($config_file)) {
     @include($config_file);
 }
