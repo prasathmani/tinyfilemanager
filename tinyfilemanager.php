@@ -100,10 +100,21 @@ $online_viewer = 'google';
 // false => disable sticky header
 $sticky_navbar = true;
 
+
+// max upload file size
+$max_upload_size_bytes = 2048;
+
+// if User has the customized config file, try to use it to override the default config above
+$user_config_file_path = 'user_config.php';
+if(file_exists($user_config_file_path)) {
+    include($user_config_file_path);
+}
+
 // Maximum file upload size
 // Increase the following values in php.ini to work properly
 // memory_limit, upload_max_filesize, post_max_size
 define('MAX_UPLOAD_SIZE', '2048');
+
 
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
@@ -127,6 +138,9 @@ $ip_blacklist = array(
 );
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
+
+// Set the max upload file size
+define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
 
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
@@ -2413,17 +2427,9 @@ function fm_get_size($file)
  */
 function fm_get_filesize($size)
 {
-    if ($size < 1000) {
-        return sprintf('%s B', $size);
-    } elseif (($size / 1024) < 1000) {
-        return sprintf('%s KB', round(($size / 1024), 2));
-    } elseif (($size / 1024 / 1024) < 1000) {
-        return sprintf('%s MB', round(($size / 1024 / 1024), 2));
-    } elseif (($size / 1024 / 1024 / 1024) < 1000) {
-        return sprintf('%s GB', round(($size / 1024 / 1024 / 1024), 2));
-    } else {
-        return sprintf('%s TB', round(($size / 1024 / 1024 / 1024 / 1024), 2));
-    }
+    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $power = $size > 0 ? floor(log($size, 1024)) : 0;
+    return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
 }
 
 /**
@@ -3964,13 +3970,11 @@ function lng($txt) {
     $tr['en']['ProcessID']      = 'Process ID';
     $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';
     $tr['en']['Check Latest Version']= 'Check Latest Version'; $tr['en']['Generate new password hash'] = 'Generate new password hash';
-
     $tr['en']['Folder is empty']    = 'Folder is empty';
     $tr['en']['Created']    = 'Created';
     $tr['en']['You are logged in']    = 'You are logged in';
     $tr['en']['Login failed. Invalid username or password']    = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version']    = 'password_hash not supported, Upgrade PHP version';
-    
     
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
