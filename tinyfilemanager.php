@@ -137,6 +137,12 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// Load configuration file, if present
+$config_file = 'h3k_config.php';
+if (is_readable($config_file)) {
+    include($config_file);
+}
+
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 
 // Set the max upload file size
