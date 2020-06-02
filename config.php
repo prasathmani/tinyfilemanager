@@ -11,12 +11,6 @@ or
 #################################################################################################################
 */
 
-// Auth with login/password 
-// set true/false to enable/disable it
-// Is independent from IP white- and blacklisting
-$use_auth = true;
-
-
 // Auth with login/password
 // set true/false to enable/disable it
 // Is independent from IP white- and blacklisting
