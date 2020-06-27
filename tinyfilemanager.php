@@ -1897,7 +1897,16 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             foreach ($folders as $f) {
                 $is_link = is_link($path . '/' . $f);
                 $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
-                $modif = date(FM_DATETIME_FORMAT, filemtime($path . '/' . $f));
+                $modif_raw = filemtime($path . '/' . $f);
+                $modif = date(FM_DATETIME_FORMAT, $modif_raw);
+                if ($calc_folder) {
+                    $filesize_raw = fm_get_directorysize($path . '/' . $f);
+                    $filesize = fm_get_filesize($filesize_raw);
+                }
+                else {
+                    $filesize_raw = "";
+                    $filesize = lng('Folder');
+                }
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     $owner = posix_getpwuid(fileowner($path . '/' . $f));
@@ -1919,8 +1928,10 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
                     </td>
-                    <td><?php if ($calc_folder) { echo fm_get_directorysize($path . '/' . $f); } else { echo lng('Folder'); } ?></td>
-                    <td><?php echo $modif ?></td>
+                    <td data-sort="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
+                        <?php echo $filesize; ?>
+                    </td>
+                    <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>                                                                                                                           
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
@@ -1942,7 +1953,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             foreach ($files as $f) {
                 $is_link = is_link($path . '/' . $f);
                 $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . '/' . $f);
-                $modif = date(FM_DATETIME_FORMAT, filemtime($path . '/' . $f));
+                $modif_raw = filemtime($path . '/' . $f);
+                $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 $filesize_raw = fm_get_size($path . '/' . $f);
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
@@ -1978,10 +1990,10 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                                 <?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
                         </div>
                     </td>
-                    <td><span title="<?php printf('%s bytes', $filesize_raw) ?>">
+                    <td data-sort=b-"<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
                         <?php echo $filesize; ?>
                         </span></td>
-                    <td><?php echo $modif ?></td>
+                    <td data-sort="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
@@ -2448,7 +2460,7 @@ function fm_get_filesize($size)
 /**
  * Get director total size
  * @param string $directory
- * @return string
+ * @return int
  */
 function fm_get_directorysize($directory) {
     global $calc_folder;
@@ -2461,7 +2473,7 @@ function fm_get_directorysize($directory) {
         }
     else if ($file->isDir()) { $dirCount++; }
     // return [$size, $count, $dirCount];
-    return fm_get_filesize($size);
+    return $size;
     }
     else return 'Folder'; //  Quick output
 }
