@@ -201,7 +201,7 @@
       "code": "fr",
       "translation": {
         "AppName": "Tiny File Manager",
-        "AppTitle": "File Manager",
+        "AppTitle": "Gestionnaire de fichiers",
         "Login": "Connexion",
         "Username": "Utilisateur",
         "Password": "Mot de passe",
@@ -214,7 +214,7 @@
         "File": "Fichier",
         "Back": "Retour",
         "Size": "Taille",
-        "Perms": "Perms",
+        "Perms": "Permissions",
         "Modified": "Modifié le",
         "Owner": "Propriétaire",
         "Search": "Recherche",
@@ -230,8 +230,8 @@
         "CreateNewItem": "Créer un nouvel élément",
         "Name": "Nom",
         "AdvancedEditor": "Editeur avancé",
-        "RememberMe": "Se rappeler de moi",
-        "Actions": "Actes",
+        "RememberMe": "Se souvenir de moi",
+        "Actions": "Actions",
         "Upload": "Envoyer",
         "Cancel": "Annuler",
         "InvertSelection": "Inverser la sélection",
@@ -241,7 +241,7 @@
         "CreateNow": "Créer",
         "Download": "Télécharger",
         "Open": "Ouvrir",
-        "UnZip": "Décompressez",
+        "UnZip": "Décompresser",
         "UnZipToFolder": "Décompresser dans un dossier",
         "Edit": "Editeur",
         "NormalEditor": "Éditeur Normal",
@@ -252,7 +252,9 @@
         "Settings": "Réglages",
         "Language": "Langue",
         "MemoryUsed": "Mémoire utilisée",
-        "PartitionSize": "Taille de la partition"
+        "PartitionSize": "Taille de la partition",
+        "Free of": "libres sur",
+        "FreeOf": "libres sur"
       }
     },
     {
