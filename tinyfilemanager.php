@@ -2921,6 +2921,12 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         return (false);
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
+	/*
+     * Write the session to the disk and close it here, it's no longer needed
+     * This also allows the user to keep browsing the file share in another tab/window during a download
+	 */
+	session_write_close();
+
     $contentType = fm_get_file_mimes($extension);
     header("Cache-Control: public");
     header("Content-Transfer-Encoding: binary\n");
