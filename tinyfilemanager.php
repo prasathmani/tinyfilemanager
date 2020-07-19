@@ -3885,6 +3885,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             if(_data && _data.aceMode) { $modeEl.html(optionNode("ace/mode/", _data.aceMode)); }
             if(_data && _data.aceTheme) { var lightTheme = optionNode("ace/theme/", _data.aceTheme.bright), darkTheme = optionNode("ace/theme/", _data.aceTheme.dark); $themeEl.html("<optgroup label=\"Bright\">"+lightTheme+"</optgroup><optgroup label=\"Dark\">"+darkTheme+"</optgroup>");}
             if(_data && _data.fontSize) { $fontSizeEl.html(optionNode("", _data.fontSize)); }
+            $modeEl.val( editor.getSession().$modeId );
+            $themeEl.val( editor.getTheme() );
             $fontSizeEl.val(12).change(); //set default font size in drop down
         }
 
