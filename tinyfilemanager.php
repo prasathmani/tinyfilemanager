@@ -435,7 +435,12 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $writedata = $_POST['content'];
         $fd = fopen($file_path, "w");
         @fwrite($fd, $writedata);
+        $write_results = @fwrite($fd, $writedata);
         fclose($fd);
+        if ($write_results === false){ 
+            header("HTTP/1.1 500 Internal Server Error");
+            die("Could Not Write File! - Check Permissions / Ownership");
+        }
         die(true);
     }
 
@@ -3743,7 +3748,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     contentType: "multipart/form-data-encoded; charset=utf-8",
                     //dataType: "json",
                     success: function(mes){toast("Saved Successfully"); window.onbeforeunload = function() {return}},
-                    failure: function(mes) {toast("Error: try again");}
+                    failure: function(mes) {toast("Error: try again");},
+                    error: function(mes) {toast(`<p style="background-color:red">${mes.responseText}</p>`);}
                 });
                 
             }
