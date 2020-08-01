@@ -34,7 +34,7 @@ You can also change the file name from "tinyfilemanager.php" to something else, 
 
 Default username/password: **admin/admin@123** and **user/12345**.
 
-:warning: Warning: Please set your own username and password in `$auth_users` before use. password is encrypted with <code>password_hash()</code>. to generate new password hash [here](https://tinyfilemanager.github.io/docs/pwd.html)
+:warning: Warning: Please set your own username and password in `$auth_users` before use. password is encrypted with <code>password_hash()</code>. to generate new password hash [here](https://tinyfilemanager.github.io/docs/pwd.html) or once deployed access Help.
 
 To enable/disable authentication set `$use_auth` to true or false.
 
