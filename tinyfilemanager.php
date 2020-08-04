@@ -434,7 +434,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         
         $writedata = $_POST['content'];
         $fd = fopen($file_path, "w");
-        @fwrite($fd, $writedata);
         $write_results = @fwrite($fd, $writedata);
         fclose($fd);
         if ($write_results === false){ 
