@@ -371,14 +371,14 @@
         "Language": "Idioma",
 	"MemoryUsed": "Memòria usada",            
 	"PartitionSize": "Mida de la partició",
-        "ErrorReporting": "Error al reportar",        
+        "ErrorReporting": "Informe d'errors",        
 	"ShowHiddenFiles": "Mostra Fitxers Ocults",
         "Full size": "Mida sencera",              
 	"Help": "Ajuda",
         "Free of": "Lliure de",
         "Preview": "Previsualitzar",
 	"Help Documents": "Documents d'ajuda",
-	"Report Issue": "Informe d'errors",
+	"Report Issue": "Informe del problema",
         "Generate": "Generar",
 	"FullSize": "Mida Total",
         "FreeOf": "lliure de",
@@ -391,7 +391,7 @@
 	"Generate new password hash": "Crear una nou hash de contrasenya",
         "You are logged in": "Estàs autenticat",
 	"Login failed. Invalid username or password": "Error d'inici de sessió. El nom d'usuari o contrasenya són incorrectes",
-        "password_hash not supported, Upgrade PHP version": "No és compatible password_hash. Actualitza la versió de PHP"
+        "password_hash not supported, Upgrade PHP version": "no és compatible password_hash. Actualitza la versió de PHP"
       }
     },
     {
