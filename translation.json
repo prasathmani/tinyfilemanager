@@ -77,7 +77,7 @@
       }
     },
     {
-      "name": "русский",
+      "name": "Русский",
       "code": "ru",
       "translation": {
         "AppName": "Файловый менеджер",
@@ -109,7 +109,7 @@
         "Copying": "Копировать",
         "CreateNewItem": "Создать новый",
         "Name": "Имя",
-        "AdvancedEditor": "Улучшеный редактор",
+        "AdvancedEditor": "Улучшенный редактор",
         "RememberMe": "Запомнить меня",
         "Actions": "Действия",
         "Upload": "Загрузить",
@@ -125,8 +125,8 @@
         "UnZipToFolder": "Разархивировать в папку",
         "Edit": "Редактировать",
         "NormalEditor": "Стандартный редактор",
-        "BackUp": "Back Up",
-        "SourceFolder": "Путь папки",
+        "BackUp": "Резервная копия",
+        "SourceFolder": "Исходная папка",
         "Files": "Файлы",
         "Change": "Изменения",
         "Settings": "Свойства",
