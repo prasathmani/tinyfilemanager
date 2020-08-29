@@ -2045,11 +2045,11 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <tr>
                         <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_cols) ? '7' : '5' ?>">
                         <center>
-                        <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i class="fa fa-info-circle">&nbsp;</i>'.lng('FullSize').': '.fm_get_filesize($all_files_size).'</span>' ?>
-                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i class="fa fa-file-text">&nbsp;</i>'.lng('File').': '.$num_files.'</span>' ?>
-                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i class="fa fa-folder">&nbsp;</i>'.lng('Folder').': '.$num_folders.'</span>' ?>
-                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i class="fa fa-server">&nbsp;</i>'.lng('MemoryUsed').': '.fm_get_filesize(@memory_get_usage(true)).'</span>' ?>
-                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i class="fa fa-pie-chart">&nbsp;</i>'.lng('PartitionSize').': '.fm_get_filesize(@disk_free_space($path)) .' '.lng('FreeOf').' '.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
+                        <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i style="color: #ccc" class="fa fa-info-circle">&nbsp;</i>'.lng('FullSize').': '.fm_get_filesize($all_files_size).'</span>' ?>
+                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i style="color: #ccc" class="fa fa-file-text">&nbsp;</i>'.lng('File').': '.$num_files.'</span>' ?>
+                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i style="color: #ccc" class="fa fa-folder">&nbsp;</i>'.lng('Folder').': '.$num_folders.'</span>' ?>
+                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i style="color: #ccc"class="fa fa-server">&nbsp;</i>'.lng('MemoryUsed').': '.fm_get_filesize(@memory_get_usage(true)).'</span>' ?>
+                            <?php echo '<span style="font-size: 14px" class="badge badge-dark"><i style="color: #ccc" class="fa fa-pie-chart">&nbsp;</i>'.lng('PartitionSize').': '.fm_get_filesize(@disk_free_space($path)) .' '.lng('FreeOf').' '.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
                         </center>
                         </td>
                     </tr>
