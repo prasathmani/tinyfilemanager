@@ -2060,10 +2060,10 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
         </table>
     </div>
 
-    <div class="row">
-        <?php if (!FM_READONLY): ?>
-        <div class="col-xs-12 col-sm-9">
-            <ul class="list-inline footer-action">
+    <?php if (!FM_READONLY && ($num_files != 0 || $num_folders != 0)): ?>
+    <div style="margin-top: 4px">
+        <center>
+            <ul style="margin: 0" class="list-inline footer-action">
                 <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a></li>
                 <li class="list-inline-item"><a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a></li>
                 <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a></li>
@@ -2076,13 +2076,11 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
             </ul>
+        </center>
         </div>
-        <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
-        <?php else: ?>
-            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
-        <?php endif; ?>
-    </div>
+    <?php endif; ?>
 
+    <center><div style="font-size: 12px;margin: 6px 0"><a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted">Tiny File Manager <?php echo VERSION; ?></a></div></center>
 </form>
 
 <?php
@@ -3498,6 +3496,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         #search-addon2 { background:transparent;border-left:0; }
         .bread-crumb { color:#cccccc;font-style:normal; }
         #main-table .filename a { color:#222222; }
+        .table { margin-bottom: 10px }
         .table td, .table th { vertical-align:middle !important; }
         .table .custom-checkbox-td .custom-control.custom-checkbox, .table .custom-checkbox-header .custom-control.custom-checkbox { min-width:18px; }
         .table-sm td, .table-sm th { padding:.4rem; }
