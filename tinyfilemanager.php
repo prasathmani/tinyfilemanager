@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_cols":false,"calc_folder":false}';
 
 /**
  * H3K | Tiny File Manager V2.4.4
@@ -161,7 +161,7 @@ $show_hidden_files = isset($cfg->data['show_hidden']) ? $cfg->data['show_hidden'
 $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_reporting'] : true;
 
 // Hide Permissions and Owner cols in file-listing
-$hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
+$hide_cols = isset($cfg->data['hide_cols']) ? $cfg->data['hide_cols'] : true;
 
 // Show directory size: true or speedup output: false
 $calc_folder = isset($cfg->data['calc_folder']) ? $cfg->data['calc_folder'] : true;
@@ -478,7 +478,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $calc_folder;
+        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_cols, $calc_folder;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
         if (!array_key_exists($newLng, $lang_list)) {
@@ -506,9 +506,9 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             $cfg->data['show_hidden'] = $shf;
             $show_hidden_files = $shf;
         }
-        if ($cfg->data['hide_Cols'] != $hco) {
-            $cfg->data['hide_Cols'] = $hco;
-            $hide_Cols = $hco;
+        if ($cfg->data['hide_cols'] != $hco) {
+            $cfg->data['hide_cols'] = $hco;
+            $hide_cols = $hco;
         }
         if ($cfg->data['calc_folder'] != $caf) {
             $cfg->data['calc_folder'] = $caf;
@@ -1397,11 +1397,11 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         <label for="js-hid-1" class="col-sm-3 col-form-label"><?php echo lng('HideColumns') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-secondary <?php echo getChecked($hide_Cols, 1, 'active') ?>">
-                                    <input type="radio" name="js-hide-cols" id="js-hid-1" autocomplete="off" value="true" <?php echo getChecked($hide_Cols, 1, 'checked') ?> > ON
+                                <label class="btn btn-secondary <?php echo getChecked($hide_cols, 1, 'active') ?>">
+                                    <input type="radio" name="js-hide-cols" id="js-hid-1" autocomplete="off" value="true" <?php echo getChecked($hide_cols, 1, 'checked') ?> > ON
                                 </label>
-                                <label class="btn btn-secondary <?php echo getChecked($hide_Cols, '', 'active') ?>">
-                                    <input type="radio" name="js-hide-cols" id="js-hid-0" autocomplete="off" value="false" <?php echo getChecked($hide_Cols, '', 'checked') ?> > OFF
+                                <label class="btn btn-secondary <?php echo getChecked($hide_cols, '', 'active') ?>">
+                                    <input type="radio" name="js-hide-cols" id="js-hid-0" autocomplete="off" value="false" <?php echo getChecked($hide_cols, '', 'checked') ?> > OFF
                                 </label>
                             </div>
                         </div>
@@ -1884,7 +1884,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <th><?php echo lng('Name') ?></th>
                 <th><?php echo lng('Size') ?></th>
                 <th><?php echo lng('Modified') ?></th>
-                <?php if (!FM_IS_WIN && !$hide_Cols): ?>
+                <?php if (!FM_IS_WIN && !$hide_cols): ?>
                     <th><?php echo lng('Perms') ?></th>
                     <th><?php echo lng('Owner') ?></th><?php endif; ?>
                 <th><?php echo lng('Actions') ?></th>
@@ -1900,7 +1900,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <td class="border-0"></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
-                    <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
+                    <?php if (!FM_IS_WIN && !$hide_cols) { ?>
                         <td class="border-0"></td>
                         <td class="border-0"></td>
                     <?php } ?>
@@ -1946,7 +1946,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <?php echo $filesize; ?>
                     </td>
                     <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>                                                                                                                           
-                    <?php if (!FM_IS_WIN && !$hide_Cols): ?>
+                    <?php if (!FM_IS_WIN && !$hide_cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
                         <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
@@ -2008,7 +2008,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <?php echo $filesize; ?>
                         </span></td>
                     <td data-sort="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
-                    <?php if (!FM_IS_WIN && !$hide_Cols): ?>
+                    <?php if (!FM_IS_WIN && !$hide_cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
                         <td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
@@ -2035,7 +2035,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <tfoot>
                     <tr><?php if (!FM_READONLY): ?>
                             <td></td><?php endif; ?>
-                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?php echo 'Folder is empty' ?></em></td>
+                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_cols) ? '6' : '4' ?>"><em><?php echo 'Folder is empty' ?></em></td>
                     </tr>
                 </tfoot>
                 <?php
@@ -2044,7 +2044,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <tfoot>
                     <tr><?php if (!FM_READONLY): ?>
                             <td class="gray"></td><?php endif; ?>
-                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>">
+                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_cols) ? '6' : '4' ?>">
                             <?php echo lng('FullSize').': <span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?>
                             <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>
