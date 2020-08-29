@@ -3294,7 +3294,7 @@ function fm_show_nav_path($path)
     ?>
     <nav class="navbar navbar-expand-lg <?php echo $getTheme; ?> mb-4 main-nav <?php echo $isStickyNavBar ?>">
         <a class="navbar-brand" href=""> <?php echo lng('AppTitle') ?> </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button style="padding: 2px 6px" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -3318,19 +3318,19 @@ function fm_show_nav_path($path)
             echo '<div class="col-xs-6 col-sm-5">' . $root_url . '</div>';
             ?>
 
-            <div class="col-xs-6 col-sm-7 text-right">
+            <div style="padding: 0" class="col-xs-6 col-sm-7 text-right">
                 <ul class="navbar-nav mr-auto float-right <?php echo fm_get_theme();  ?>">
-                    <li class="nav-item mr-2">
-                        <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
-                            <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
+                    <li class="nav-item">
+                    <div class="input-group input-group-sm" style="margin: 4px 0;">
+                            <input style= "padding: 14px 8px" type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
                             <div class="input-group-append">
                                 <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
                             </div>
                             <div class="input-group-append btn-group">
-                                <span class="input-group-text dropdown-toggle" id="search-addon2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
-                                  <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="<?php echo $path2 = $path ? $path : '.'; ?>" id="js-search-modal" data-toggle="modal" data-target="#searchModal">Advanced Search</a>
-                                  </div>
+                            <span style= "padding: 0 6px" class="input-group-text dropdown-toggle" id="search-addon2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
+                                <div style="margin: 0; padding: 0" class="dropdown-menu dropdown-menu-right">
+                                    <small><a class="dropdown-item" href="<?php echo $path2 = $path ? $path : '.'; ?>" id="js-search-modal" data-toggle="modal" data-target="#searchModal"><i style="font-size: 14px" class="fa fa-search-plus">&nbsp;</i>Advanced Search</a></small>
+                                </div>
                             </div>
                         </div>
                     </li>
@@ -3345,7 +3345,7 @@ function fm_show_nav_path($path)
                     <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php if(isset($_SESSION[FM_SESSION_ID]['logged'])) { echo $_SESSION[FM_SESSION_ID]['logged']; } ?></a>
-                        <div class="dropdown-menu dropdown-menu-right <?php echo fm_get_theme(); ?>" aria-labelledby="navbarDropdownMenuLink-5">
+                        <div style="margin-bottom: 8px; padding: 0 8px" class="dropdown-menu dropdown-menu-right <?php echo fm_get_theme(); ?>" aria-labelledby="navbarDropdownMenuLink-5">
                             <?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                             <?php endif ?>
@@ -3506,7 +3506,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         pre.with-hljs code { margin:0;border:0;overflow:visible  }
         code.maxheight, pre.maxheight { max-height:512px  }
         .fa.fa-caret-right { font-size:1.2em;margin:0 4px;vertical-align:middle;color:#ececec  }
-        .fa.fa-home { font-size:1.3em;vertical-align:bottom  }
+        .fa.fa-home { font-size:16px }
         .path { margin-bottom:10px  }
         form.dropzone { min-height:200px;border:2px dashed #007bff;line-height:6rem; }
         .right { text-align:right  }
@@ -3659,7 +3659,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                 <div class="input-group input-group">
                     <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> a files" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
                     <div class="input-group-append">
-                        <span class="input-group-text" id="search-addon3"><i class="fa fa-search"></i></span>
+                        <span class="input-group-text" id="search-addon3"><i class="fa fa-search-plus"></i></span>
                     </div>
                 </div>
             </h5>
