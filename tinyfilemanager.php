@@ -3603,13 +3603,13 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <?php
     if (FM_THEME == "dark"): ?>
         <style>
-            body.theme-dark { background-color: #2f2a2a; }
+            body.theme-dark { background-color: #1a1c20; }
             .list-group .list-group-item { background: #343a40; }
             .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #ffffff; }
-            a, a:hover, a:visited, a:active, #main-table .filename a { color: #00ff1f; }
+            a, a:hover, a:visited, a:active, #main-table .filename a { color: #ffffff; }
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
-            .theme-dark .btn-outline-primary { color: #00ff1f; border-color: #00ff1f; }
-            .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #028211;}
+            .theme-dark .btn-outline-primary { color: #949aa3; border-color: #949aa3; }
+            .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #2d3035;}
         </style>
     <?php endif; ?>
 </head>
