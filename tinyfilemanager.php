@@ -1555,9 +1555,8 @@ if (isset($_GET['view'])) {
             <?php if(!$quickView) { ?>
                 <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
                 <p class="break-word">
-                    Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-                    File
-                    size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
+                    <?php echo lng('FullPath') ?>: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
+                    <?php echo lng('FileSize') ?>: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
                     <br>
                     MIME-type: <?php echo $mime_type ?><br>
                     <?php
@@ -4044,6 +4043,7 @@ function lng($txt) {
     $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['You are logged in']    = 'You are logged in'; $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
+    $tr['en']['FullPath']       = 'Full path';              $tr['en']['FileSize']           = 'File size';
     
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
