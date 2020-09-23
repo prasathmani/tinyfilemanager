@@ -3610,6 +3610,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
             .theme-dark .btn-outline-primary { color: #949aa3; border-color: #949aa3; }
             .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #2d3035;}
+            p {color:#ffffff;}
         </style>
     <?php endif; ?>
 </head>
