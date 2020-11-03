@@ -469,7 +469,10 @@
         "Files": "Dateien",
         "Change": "Ändern",
         "Settings": "Einstellungen",
-        "Language": "Sprache"
+        "Language": "Sprache",
+	"You are logged in": "Du bist eingeloggt.",
+        "Login failed. Invalid username or password": "Login fehlgeschlagen. Falscher Benutzername oder Passwort.",
+        "password_hash not supported, Upgrade PHP version": "password_hash wird nicht unterstützt, aktualisiere die PHP-Version"
       }
     },
     {
