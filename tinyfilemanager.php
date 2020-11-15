@@ -1664,6 +1664,7 @@ if (isset($_GET['view'])) {
                         'phtml' => 'php',
                         'lock' => 'json',
                         'svg' => 'xml',
+                        'log' => 'php',
                     );
                     $hljs_class = isset($hljs_classes[$ext]) ? 'lang-' . $hljs_classes[$ext] : 'lang-' . $ext;
                     if (empty($ext) || in_array(strtolower($file), fm_get_text_names()) || preg_match('#\.min\.(css|js)$#i', $file)) {
