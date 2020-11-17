@@ -14,12 +14,19 @@ define('VERSION', '2.4.3');
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
 
+//Authentication methods
+define('AUTH_NONE', 0);
+define('AUTH_PHP', 1);
+define('AUTH_PAM', 2);
+
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
 // Auth with login/password 
-// set true/false to enable/disable it
+// AUTH_NONE: disable authentication
+// AUTH_PHP: authenticate against $auth_users array
+// AUTH_PAM: authenticate against PAM
 // Is independent from IP white- and blacklisting
-$use_auth = true;
+$use_auth = AUTH_PHP;
 
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
@@ -181,7 +188,7 @@ if ($report_errors == true) {
 
 // if fm included
 if (defined('FM_EMBED')) {
-    $use_auth = false;
+    $use_auth = AUTH_NONE;
     $sticky_navbar = false;
 } else {
     @set_time_limit(600);
@@ -212,7 +219,7 @@ if (defined('FM_EMBED')) {
 }
 
 if (empty($auth_users)) {
-    $use_auth = false;
+    $use_auth = AUTH_NONE;
 }
 
 $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
@@ -276,23 +283,51 @@ if($ip_ruleset != 'OFF'){
 
 // Auth
 if ($use_auth) {
-    if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
+    $logged = false;
+    switch ($use_auth) {
+        case AUTH_PHP:
+            $logged = isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]);
+            break;
+        case AUTH_PAM:
+            $logged = isset($_SESSION[FM_SESSION_ID]['logged']);
+            break;
+    }
+    if ($logged) {
         // Logged
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
-        if(function_exists('password_verify')) {
-            if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
-                $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
-                fm_set_msg(lng('You are logged in'));
-                fm_redirect(FM_SELF_URL . '?p=');
-            } else {
-                unset($_SESSION[FM_SESSION_ID]['logged']);
-                fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
+        $auth_succes = false;
+        switch ($use_auth) {
+            case AUTH_PHP:
+                if (function_exists('password_verify')) {
+                    $auth_succes = isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]);
+                } else {
+                    fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');
+                    fm_redirect(FM_SELF_URL);
+                }
+                break;
+            case AUTH_PAM:
+                if (function_exists('pam_auth')) {
+                    $auth_succes = pam_auth($_POST['fm_usr'], $_POST['fm_pwd']);
+                } else {
+                    fm_set_msg(lng('pam_auth not supported, Install php-pam extension'), 'error');
+                    fm_redirect(FM_SELF_URL);
+                }
+                break;
+            default:
+                fm_set_msg(lng('Configuration error, Unknown auth method'), 'error');
                 fm_redirect(FM_SELF_URL);
-            }
+                break;
+        }
+        if ($auth_succes) {
+            $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
+            fm_set_msg(lng('You are logged in'));
+            fm_redirect(FM_SELF_URL . '?p=');
         } else {
-            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
+            unset($_SESSION[FM_SESSION_ID]['logged']);
+            fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
+            fm_redirect(FM_SELF_URL);
         }
     } else {
         // Form
