@@ -1174,7 +1174,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                         <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> Upload from URL</a>
+                        <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> <?php echo lng('UploadingFromURL') ?></a>
                     </li>
                 </ul>
             </div>
@@ -1555,9 +1555,8 @@ if (isset($_GET['view'])) {
             <?php if(!$quickView) { ?>
                 <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
                 <p class="break-word">
-                    Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-                    File
-                    size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
+                    <?php echo lng('FullPath') ?>: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
+                    <?php echo lng('FileSize') ?>: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
                     <br>
                     MIME-type: <?php echo $mime_type ?><br>
                     <?php
@@ -3603,13 +3602,14 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <?php
     if (FM_THEME == "dark"): ?>
         <style>
-            body.theme-dark { background-color: #2f2a2a; }
+            body.theme-dark { background-color: #1a1c20; }
             .list-group .list-group-item { background: #343a40; }
             .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #ffffff; }
-            a, a:hover, a:visited, a:active, #main-table .filename a { color: #00ff1f; }
+            a, a:hover, a:visited, a:active, #main-table .filename a { color: #ffffff; }
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
-            .theme-dark .btn-outline-primary { color: #00ff1f; border-color: #00ff1f; }
-            .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #028211;}
+            .theme-dark .btn-outline-primary { color: #949aa3; border-color: #949aa3; }
+            .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #2d3035;}
+            p {color:#ffffff;}
         </style>
     <?php endif; ?>
 </head>
@@ -4029,7 +4029,7 @@ function lng($txt) {
     $tr['en']['UnZipToFolder']  = 'UnZip to folder';        $tr['en']['Edit']               = 'Edit';
     $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
-    $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
+    $tr['en']['FromURL']        = 'From URL';               $tr['en']['Change']             = 'Change';
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['MemoryUsed']     = 'Memory used';            $tr['en']['PartitionSize']      = 'Partition size';
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
@@ -4043,6 +4043,7 @@ function lng($txt) {
     $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['You are logged in']    = 'You are logged in'; $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
+    $tr['en']['FullPath']       = 'Full path';              $tr['en']['FileSize']           = 'File size';
     
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
