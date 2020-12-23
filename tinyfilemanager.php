@@ -1513,7 +1513,8 @@ if (isset($_GET['view'])) {
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $mime_type = fm_get_mime_type($file_path);
-    $filesize = fm_get_filesize(filesize($file_path));
+    $filesize_raw = fm_get_size($file_path);
+    $filesize = fm_get_filesize($filesize_raw);
 
     $is_zip = false;
     $is_gzip = false;
@@ -1556,9 +1557,7 @@ if (isset($_GET['view'])) {
                 <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
                 <p class="break-word">
                     Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-                    File
-                    size: <?php echo fm_get_filesize($filesize) ?><?php if ($filesize >= 1000): ?> (<?php echo sprintf('%s bytes', $filesize) ?>)<?php endif; ?>
-                    <br>
+                    File size: <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
                     MIME-type: <?php echo $mime_type ?><br>
                     <?php
                     // ZIP info
