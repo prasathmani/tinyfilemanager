@@ -11,10 +11,15 @@ or
 #################################################################################################################
 */
 
+// SHARIF.
+define('CONFIG', '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}');
+define('ROOT_PATH', $_SERVER['DOCUMENT_ROOT'] . '/sites/default/files/public');
+define('ROOT_URL', 'sites/default/files/public');
+
 // Auth with login/password
 // set true/false to enable/disable it
 // Is independent from IP white- and blacklisting
-$use_auth = true;
+$use_auth = false;
 
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
@@ -50,11 +55,11 @@ $default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
 // use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
-$root_path = $_SERVER['DOCUMENT_ROOT'];
+$root_path = $_SERVER['DOCUMENT_ROOT'] . '/sites/default/files/public';
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
 // Will not working if $root_path will be outside of server document root
-$root_url = '';
+$root_url = 'sites/default/files/public';
 
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
