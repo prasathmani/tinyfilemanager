@@ -12,9 +12,12 @@ or
 */
 
 // SHARIF.
-define('CONFIG', '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}');
-define('ROOT_PATH', $_SERVER['DOCUMENT_ROOT'] . '/sites/default/files/public');
-define('ROOT_URL', 'sites/default/files/public');
+$GLOBALS['CONFIG'] = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}';
+$GLOBALS['root_path'] = $_SERVER['DOCUMENT_ROOT'] . '/sites/default/files/public';
+$GLOBALS['root_url'] = 'sites/default/files/public';
+$GLOBALS['lang_list'] = ['en' => 'English'];
+$GLOBALS['sticky_navbar'] = TRUE;
+$GLOBALS['favicon_path'] = '?img=favicon';
 
 // Auth with login/password
 // set true/false to enable/disable it

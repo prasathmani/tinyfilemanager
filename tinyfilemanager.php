@@ -154,7 +154,7 @@ if ( !defined( 'FM_SESSION_ID')) {
 $cfg = new FM_Config();
 
 // Default language
-$lang = isset($cfg->data['lang']) ? $cfg->data['lang'] : 'en';
+$GLOBALS['lang'] = isset($cfg->data['lang']) ? $cfg->data['lang'] : 'en';
 
 // Show or hide files and folders that starts with a dot
 $show_hidden_files = isset($cfg->data['show_hidden']) ? $cfg->data['show_hidden'] : true;
@@ -166,7 +166,7 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 
 // Show directory size: true or speedup output: false
-$calc_folder = isset($cfg->data['calc_folder']) ? $cfg->data['calc_folder'] : true;
+$GLOBALS['calc_folder'] = isset($cfg->data['calc_folder']) ? $cfg->data['calc_folder'] : true;
 
 //available languages
 $lang_list = array(
@@ -184,7 +184,7 @@ if ($report_errors == true) {
 // if fm included
 if (defined('FM_EMBED')) {
     $use_auth = false;
-    $sticky_navbar = false;
+    $GLOBALS['sticky_navbar'] = false;
 } else {
     @set_time_limit(600);
 
@@ -374,7 +374,7 @@ if (!@is_dir($root_path)) {
 
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
-defined('FM_LANG') || define('FM_LANG', $lang);
+defined('FM_LANG') || define('FM_LANG', $GLOBALS['lang']);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', $exclude_items);
@@ -480,10 +480,11 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $calc_folder;
+        //global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $calc_folder;
+        global $cfg;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
-        if (!array_key_exists($newLng, $lang_list)) {
+        if (!array_key_exists($newLng, $GLOBALS['lang_list'])) {
             $newLng = 'en';
         }
 
@@ -494,7 +495,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
         if ($cfg->data['lang'] != $newLng) {
             $cfg->data['lang'] = $newLng;
-            $lang = $newLng;
+            $GLOBALS['lang'] = $newLng;
         }
         if ($cfg->data['error_reporting'] != $erp) {
             $cfg->data['error_reporting'] = $erp;
@@ -514,7 +515,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         }
         if ($cfg->data['calc_folder'] != $caf) {
             $cfg->data['calc_folder'] = $caf;
-            $calc_folder = $caf;
+            $GLOBALS['calc_folder'] = $caf;
         }
         $cfg->save();
         echo true;
@@ -544,12 +545,13 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
         function event_callback ($message) {
-            global $callback;
+            //global $callback;
             echo json_encode($message);
         }
 
-        function get_file_path () {
-            global $path, $fileinfo, $temp_file;
+        function get_file_path ($fileinfo = []) {
+            //global $path, $fileinfo, $temp_file;
+            global $path;
             return $path."/".basename($fileinfo->name);
         }
 
@@ -587,7 +589,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         }
 
         if ($success) {
-            $success = rename($temp_file, get_file_path());
+            $success = rename($temp_file, get_file_path($fileinfo));
         }
 
         if ($success) {
@@ -1327,7 +1329,8 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
 if (isset($_GET['settings']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-    global $cfg, $lang, $lang_list;
+    //global $cfg, $lang, $lang_list;
+    global $cfg;
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
@@ -1345,10 +1348,10 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             <select class="form-control" id="js-language" name="js-language">
                                 <?php
                                 function getSelected($l) {
-                                    global $lang;
-                                    return ($lang == $l) ? 'selected' : '';
+                                    //global $lang;
+                                    return ($GLOBALS['lang'] == $l) ? 'selected' : '';
                                 }
-                                foreach ($lang_list as $k => $v) {
+                                foreach ($GLOBALS['lang_list'] as $k => $v) {
                                     echo "<option value='$k' ".getSelected($k).">$v</option>";
                                 }
                                 ?>
@@ -1413,11 +1416,11 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         <label for="js-dir-1" class="col-sm-3 col-form-label"><?php echo lng('CalculateFolderSize') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-secondary <?php echo getChecked($calc_folder, 1, 'active') ?>">
-                                    <input type="radio" name="js-calc-folder" id="js-dir-1" autocomplete="off" value="true" <?php echo getChecked($calc_folder, 1, 'checked') ?> > ON
+                                <label class="btn btn-secondary <?php echo getChecked($GLOBALS['calc_folder'], 1, 'active') ?>">
+                                    <input type="radio" name="js-calc-folder" id="js-dir-1" autocomplete="off" value="true" <?php echo getChecked($GLOBALS['calc_folder'], 1, 'checked') ?> > ON
                                 </label>
-                                <label class="btn btn-secondary <?php echo getChecked($calc_folder, '', 'active') ?>">
-                                    <input type="radio" name="js-calc-folder" id="js-dir-0" autocomplete="off" value="false" <?php echo getChecked($calc_folder, '', 'checked') ?> > OFF
+                                <label class="btn btn-secondary <?php echo getChecked($GLOBALS['calc_folder'], '', 'active') ?>">
+                                    <input type="radio" name="js-calc-folder" id="js-dir-0" autocomplete="off" value="false" <?php echo getChecked($GLOBALS['calc_folder'], '', 'checked') ?> > OFF
                                 </label>
                             </div>
                         </div>
@@ -1441,7 +1444,8 @@ if (isset($_GET['settings']) && !FM_READONLY) {
 if (isset($_GET['help'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-    global $cfg, $lang;
+    //global $cfg, $lang;
+    global $cfg;
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
@@ -1914,7 +1918,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
                 $modif_raw = filemtime($path . '/' . $f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
-                if ($calc_folder) {
+                if ($GLOBALS['calc_folder']) {
                     $filesize_raw = fm_get_directorysize($path . '/' . $f);
                     $filesize = fm_get_filesize($filesize_raw);
                 }
@@ -2392,11 +2396,11 @@ function fm_get_translations($tr) {
         $content = @file_get_contents('translation.json');
         if($content !== FALSE) {
             $lng = json_decode($content, TRUE);
-            global $lang_list;
+            //global $lang_list;
             foreach ($lng["language"] as $key => $value)
             {
                 $code = $value["code"];
-                $lang_list[$code] = $value["name"];
+                $GLOBALS['lang_list'][$code] = $value["name"];
                 if ($tr)
                     $tr[$code] = $value["translation"];
             }
@@ -2478,8 +2482,8 @@ function fm_get_filesize($size)
  * @return int
  */
 function fm_get_directorysize($directory) {
-    global $calc_folder;
-    if ($calc_folder==true) { //  Slower output
+    //global $calc_folder;
+    if ($GLOBALS['calc_folder']==true) { //  Slower output
       $size = 0;  $count= 0;  $dirCount= 0;
     foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file)
     if ($file->isFile())
@@ -3229,16 +3233,16 @@ class FM_Zipper_Tar
 
     function __construct()
     {
-        global $root_path, $root_url, $CONFIG;
-        $fm_url = ROOT_URL.$_SERVER["PHP_SELF"];
+        //global $root_path, $root_url, $CONFIG;
+        $fm_url = $GLOBALS['root_url'].$_SERVER["PHP_SELF"];
         $this->data = array(
             'lang' => 'en',
             'error_reporting' => true,
             'show_hidden' => true
         );
         $data = false;
-        if (strlen(CONFIG)) {
-            $data = fm_object_to_array(json_decode(CONFIG));
+        if (strlen($GLOBALS['CONFIG'])) {
+            $data = fm_object_to_array(json_decode($GLOBALS['CONFIG']));
         } else {
             $msg = 'Tiny File Manager<br>Error: Cannot load configuration';
             if (substr($fm_url, -1) == '/') {
@@ -3282,8 +3286,8 @@ class FM_Zipper_Tar
  */
 function fm_show_nav_path($path)
 {
-    global $lang, $sticky_navbar;
-    $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
+    //global $lang, $sticky_navbar;
+    $isStickyNavBar = $GLOBALS['sticky_navbar'] ? 'fixed-top' : '';
     $getTheme = fm_get_theme();
     $getTheme .= " navbar-light";
     if(FM_THEME == "dark") {
@@ -3391,7 +3395,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
 header("Pragma: no-cache");
 
-global $lang, $root_url, $favicon_path;
+//global $lang, $root_url, $favicon_path;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -3402,7 +3406,7 @@ global $lang, $root_url, $favicon_path;
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <link rel="icon" href="<?php echo fm_enc($favicon_path) ?>" type="image/png">
+    <link rel="icon" href="<?php echo fm_enc($GLOBALS['favicon_path']) ?>" type="image/png">
     <title><?php echo fm_enc(APP_TITLE) ?></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
@@ -3462,8 +3466,8 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
 header("Pragma: no-cache");
 
-global $lang, $root_url, $sticky_navbar, $favicon_path;
-$isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
+//global $lang, $root_url, $sticky_navbar, $favicon_path;
+$isStickyNavBar = $GLOBALS['sticky_navbar'] ? 'navbar-fixed' : 'navbar-normal';
 ?>
 <!DOCTYPE html>
 <html>
@@ -3474,7 +3478,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
-    <link rel="icon" href="<?php echo fm_enc($favicon_path) ?>" type="image/png">
+    <link rel="icon" href="<?php echo fm_enc($GLOBALS['favicon_path']) ?>" type="image/png">
     <title><?php echo fm_enc(APP_TITLE) ?></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -4001,7 +4005,7 @@ function fm_show_image($img)
  * @return string
  */
 function lng($txt) {
-    global $lang;
+    //global $lang;
 
     // English Language
     $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
@@ -4046,8 +4050,8 @@ function lng($txt) {
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
 
-    if (!strlen($lang)) $lang = 'en';
-    if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
+    if (!strlen($GLOBALS['lang'])) $GLOBALS['lang'] = 'en';
+    if (isset($tr[$GLOBALS['lang']][$txt])) return fm_enc($tr[$GLOBALS['lang']][$txt]);
     else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
     else return "$txt";
 }
