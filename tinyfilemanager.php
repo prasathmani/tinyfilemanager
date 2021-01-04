@@ -954,6 +954,9 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg('Operations with archives are not available', 'error');
+
+        die('22222222');
+
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -985,6 +988,10 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
     } else {
         fm_set_msg('Nothing selected', 'alert');
     }
+
+
+    var_dump(FM_SELF_URL);
+    die('3333333');
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
