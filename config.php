@@ -10,14 +10,6 @@ or
 -Put inside this file all the static configuration you want and forgot to configure "tinyfilemanager.php".
 #################################################################################################################
 */
-
-// SHARIF.
-$GLOBALS['CONFIG'] = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}';
-$GLOBALS['root_path'] = $_SERVER['DOCUMENT_ROOT'] . '/sites/default/files/public';
-$GLOBALS['root_url'] = 'sites/default/files/public';
-$GLOBALS['lang_list'] = ['en' => 'English'];
-$GLOBALS['sticky_navbar'] = TRUE;
-$GLOBALS['favicon_path'] = '?img=favicon';
 $fm_base_path = '/browse';
 
 // Auth with login/password
@@ -63,7 +55,7 @@ $root_path = $_SERVER['DOCUMENT_ROOT'] . '/sites/default/files/public';
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
 // Will not working if $root_path will be outside of server document root
-$root_url = 'sites/default/files/public';
+$root_url = $GLOBALS['root_url'] = 'sites/default/files/public';
 
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
@@ -90,7 +82,7 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$favicon_path = '?img=favicon';
+$GLOBALS['favicon_path'] = '?img=favicon';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', ...)
@@ -106,9 +98,11 @@ $online_viewer = 'google';
 // Sticky Nav bar
 // true => enable sticky header
 // false => disable sticky header
-$sticky_navbar = true;
+$GLOBALS['sticky_navbar'] = true;
 
-
+// Maximum file upload size
+// Increase the following values in php.ini to work properly
+// memory_limit, upload_max_filesize, post_max_size
 // max upload file size
 $max_upload_size_bytes = 2048;
 
