@@ -230,7 +230,7 @@ $root_url = fm_clean_path($root_url);
 
 // abs path for site
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
-defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['REDIRECT_URL']);
+defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . '/browse');
 
 // logout
 if (isset($_GET['logout'])) {
@@ -986,7 +986,7 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
         fm_set_msg('Nothing selected', 'alert');
     }
 
-    fm_redirect(FM_SELF_URL . 'browse?p=' . urlencode(FM_PATH));
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
 // Unpack
