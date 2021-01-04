@@ -481,7 +481,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
         //global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $calc_folder;
-        global $cfg;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
         if (!array_key_exists($newLng, $GLOBALS['lang_list'])) {
@@ -549,9 +548,8 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             echo json_encode($message);
         }
 
-        function get_file_path ($fileinfo = []) {
+        function get_file_path ($fileinfo = [], $path = '') {
             //global $path, $fileinfo, $temp_file;
-            global $path;
             return $path."/".basename($fileinfo->name);
         }
 
@@ -589,7 +587,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         }
 
         if ($success) {
-            $success = rename($temp_file, get_file_path($fileinfo));
+            $success = rename($temp_file, get_file_path($fileinfo, $path));
         }
 
         if ($success) {
@@ -1330,7 +1328,6 @@ if (isset($_GET['settings']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     //global $cfg, $lang, $lang_list;
-    global $cfg;
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
@@ -1445,7 +1442,6 @@ if (isset($_GET['help'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     //global $cfg, $lang;
-    global $cfg;
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
