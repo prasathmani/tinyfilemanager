@@ -230,7 +230,7 @@ $root_url = fm_clean_path($root_url);
 
 // abs path for site
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
-defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
+defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['REDIRECT_URL']);
 
 // logout
 if (isset($_GET['logout'])) {
@@ -954,9 +954,6 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg('Operations with archives are not available', 'error');
-
-        die('22222222');
-
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
@@ -988,10 +985,6 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
     } else {
         fm_set_msg('Nothing selected', 'alert');
     }
-
-
-    var_dump(FM_SELF_URL);
-    die('3333333');
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
