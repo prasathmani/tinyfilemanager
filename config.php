@@ -18,6 +18,7 @@ $GLOBALS['root_url'] = 'sites/default/files/public';
 $GLOBALS['lang_list'] = ['en' => 'English'];
 $GLOBALS['sticky_navbar'] = TRUE;
 $GLOBALS['favicon_path'] = '?img=favicon';
+$fm_base_path = '/browse';
 
 // Auth with login/password
 // set true/false to enable/disable it

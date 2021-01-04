@@ -61,6 +61,8 @@ $root_path = $_SERVER['DOCUMENT_ROOT'];
 // Will not working if $root_path will be outside of server document root
 $root_url = '';
 
+$fm_base_path = '';
+
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
 
@@ -137,6 +139,8 @@ $config_file = dirname(__FILE__) . '/config.php';
 if (is_readable($config_file)) {
     @include($config_file);
 }
+
+define('FM_BASE_PATH', ($fm_base_path) ? $fm_base_path : $_SERVER['PHP_SELF']);
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 
@@ -222,18 +226,16 @@ $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['
 
 // update $root_url based on user specific directories
 if (isset($_SESSION[FM_SESSION_ID]['logged']) && !empty($directories_users[$_SESSION[FM_SESSION_ID]['logged']])) {
-    $wd = fm_clean_path(dirname($_SERVER['PHP_SELF']));
+    $wd = fm_clean_path(dirname(FM_BASE_PATH));
     $root_url =  $root_url.$wd.DIRECTORY_SEPARATOR.$directories_users[$_SESSION[FM_SESSION_ID]['logged']];
 }
 // clean $root_url
 $root_url = fm_clean_path($root_url);
 
 // abs path for site
+
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
-defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['REDIRECT_URL']);
-
-print_r($_SERVER);
-
+defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . FM_BASE_PATH);
 
 // logout
 if (isset($_GET['logout'])) {
@@ -3233,7 +3235,7 @@ class FM_Zipper_Tar
     function __construct()
     {
         //global $root_path, $root_url, $CONFIG;
-        $fm_url = $GLOBALS['root_url'].$_SERVER["PHP_SELF"];
+        $fm_url = $GLOBALS['root_url'].FM_BASE_PATH;
         $this->data = array(
             'lang' => 'en',
             'error_reporting' => true,
