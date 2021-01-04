@@ -133,14 +133,17 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
-// if User has the customized config file, try to use it to override the default config above
-$config_file = './config.php';
-// Sharif.
-$config_file = dirname(__FILE__) . '/config.php';
+// if customized config file path set, try to use it to override the default config above
+if (isset($GLOBALS['fm_config_dir']) && is_readable($GLOBALS['fm_config_dir'])) {
+  $config_file = $GLOBALS['fm_config_dir'];
+}
+// if customized config file, try to use it to override the default config above
+else {
+  $config_file = dirname(__FILE__) . '/config.php';
+}
 if (is_readable($config_file)) {
     @include($config_file);
 }
-
 define('FM_BASE_PATH', ($fm_base_path) ? $fm_base_path : $_SERVER['PHP_SELF']);
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
