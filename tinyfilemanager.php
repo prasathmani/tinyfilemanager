@@ -986,7 +986,7 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
         fm_set_msg('Nothing selected', 'alert');
     }
 
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    fm_redirect(FM_SELF_URL . 'browse?p=' . urlencode(FM_PATH));
 }
 
 // Unpack
