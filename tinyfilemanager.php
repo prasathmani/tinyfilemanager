@@ -1523,6 +1523,7 @@ if (isset($_GET['view'])) {
     $is_video = false;
     $is_text = false;
     $is_onlineViewer = false;
+    $is_md = false;
 
     $view_title = 'File';
     $filenames = false; // for zip
@@ -1546,6 +1547,9 @@ if (isset($_GET['view'])) {
         $is_video = true;
         $view_title = 'Video';
     } elseif (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
+        if (in_array($ext, array('md', 'markdown'))) {
+            $is_md = true;
+        }
         $is_text = true;
         $content = file_get_contents($file_path);
     }
@@ -1654,7 +1658,12 @@ if (isset($_GET['view'])) {
             } elseif ($is_video) {
                 // Video content
                 echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
-            } elseif ($is_text) {
+	    } elseif ($is_md) {
+                echo '<pre class="x-mdhere">';
+                echo $content;
+                echo "</pre>";
+                echo "<script>show_md();</script>";
+	    } elseif ($is_text) {
                 if (FM_USE_HIGHLIGHTJS) {
                     // highlight
                     $hljs_classes = array(
@@ -2649,6 +2658,7 @@ function fm_get_file_icon_class($path)
         case 'map':
         case 'lock':
         case 'dtd':
+        case 'lua';
             $img = 'fa fa-file-code-o';
             break;
         case 'txt':
@@ -2815,7 +2825,7 @@ function fm_get_audio_exts()
 function fm_get_text_exts()
 {
     return array(
-        'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'json', 'sh', 'config',
+        'lua', 'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'json', 'sh', 'config',
         'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue',
         'eml', 'msg', 'csv', 'bat', 'twig', 'tpl', 'md', 'gitignore', 'less', 'sass', 'scss', 'c', 'cpp', 'cs', 'py',
         'map', 'lock', 'dtd', 'svg', 'scss', 'asp', 'aspx', 'asx', 'asmx', 'ashx', 'jsx', 'jsp', 'jspx', 'cfm', 'cgi'
@@ -3713,6 +3723,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
 <?php if (FM_USE_HIGHLIGHTJS): ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad(); var isHighlightingEnabled = true;</script>
@@ -3826,6 +3837,21 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             }
         }); return false;
     }
+    function show_md() {
+      var converter = new showdown.Converter({tables: true});
+      var markdown_els = document.getElementsByClassName('x-mdhere');
+      for (var i=0; i < markdown_els.length; i++) {
+        var text = '';
+        for (var j=0; j < markdown_els[i].childNodes.length; j++) {
+            var child = markdown_els[i].childNodes[j];
+            if (child.nodeName === '#text') {
+                text = child.nodeValue;
+                break;
+            }
+        }
+        markdown_els[i].innerHTML = converter.makeHtml(text);
+     }
+    }
     //Search template
     function search_template(data) {
         var response = "";
@@ -3895,7 +3921,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         $ext = "javascript";
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
         ?>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.8/ace.js"></script>
     <script>
         var editor = ace.edit("editor");
         editor.getSession().setMode( {path:"ace/mode/<?php echo $ext; ?>", inline:true} );
