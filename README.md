@@ -1,7 +1,7 @@
 # Tiny File Manager
 
 
-[![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.github.io/demo/)
+[![Financial Contributors on Open Collective](https://opencollective.com/tinyfilemanager/all/badge.svg?label=financial+contributors)](https://opencollective.com/tinyfilemanager) [![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.github.io/demo/)
 [![Live demo](https://img.shields.io/badge/Help-Docs-lightgrey.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/wiki)
 [![GitHub Release](https://img.shields.io/github/release/qubyte/rubidium.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/releases)
  [![GitHub License](https://img.shields.io/github/license/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE) 
@@ -57,6 +57,36 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :globe_with_meridians: Multi-language(20+) support and for translations `translation.json` is file required
 - :bangbang: lots more...
 
+
+## Contributors
+
+### Code Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="https://github.com/prasathmani/tinyfilemanager/graphs/contributors"><img src="https://opencollective.com/tinyfilemanager/contributors.svg?width=890&button=false" /></a>
+
+### Financial Contributors
+
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/tinyfilemanager/contribute)]
+
+#### Individuals
+
+<a href="https://opencollective.com/tinyfilemanager"><img src="https://opencollective.com/tinyfilemanager/individuals.svg?width=890"></a>
+
+#### Organizations
+
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/tinyfilemanager/contribute)]
+
+<a href="https://opencollective.com/tinyfilemanager/organization/0/website"><img src="https://opencollective.com/tinyfilemanager/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/1/website"><img src="https://opencollective.com/tinyfilemanager/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/2/website"><img src="https://opencollective.com/tinyfilemanager/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/3/website"><img src="https://opencollective.com/tinyfilemanager/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/4/website"><img src="https://opencollective.com/tinyfilemanager/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/5/website"><img src="https://opencollective.com/tinyfilemanager/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/6/website"><img src="https://opencollective.com/tinyfilemanager/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/7/website"><img src="https://opencollective.com/tinyfilemanager/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/8/website"><img src="https://opencollective.com/tinyfilemanager/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/tinyfilemanager/organization/9/website"><img src="https://opencollective.com/tinyfilemanager/organization/9/avatar.svg"></a>
 
 ### <a name=license></a>License, Credit  
 
