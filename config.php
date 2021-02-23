@@ -67,7 +67,7 @@ $directories_users = array();
 $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
-// Doc - https://www.php.net/manual/en/function.date.php
+// Doc - https://www.php.net/manual/en/datetime.format.php
 $datetime_format = 'd.m.y H:i';
 
 // Allowed file extensions for create and rename files
