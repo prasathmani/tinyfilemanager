@@ -16,7 +16,7 @@ define('APP_TITLE', 'Tiny File Manager');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
-// Auth with login/password 
+// Auth with login/password
 // set true/false to enable/disable it
 // Is independent from IP white- and blacklisting
 $use_auth = true;
@@ -33,7 +33,7 @@ $auth_users = array(
 //options - 'light' and 'dark'
 $theme = 'light';
 
-// Readonly users 
+// Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
     'user'
@@ -131,7 +131,7 @@ $ip_blacklist = array(
 );
 
 // if User has the customized config file, try to use it to override the default config above
-$config_file = './config.php';
+$config_file = __DIR__.'/config.php';
 if (is_readable($config_file)) {
     @include($config_file);
 }
@@ -429,14 +429,14 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             fm_set_msg('File not found', 'error');
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
         }
-        header('X-XSS-Protection:0'); 
+        header('X-XSS-Protection:0');
         $file_path = $path . '/' . $file;
-        
+
         $writedata = $_POST['content'];
         $fd = fopen($file_path, "w");
         $write_results = @fwrite($fd, $writedata);
         fclose($fd);
-        if ($write_results === false){ 
+        if ($write_results === false){
             header("HTTP/1.1 500 Internal Server Error");
             die("Could Not Write File! - Check Permissions / Ownership");
         }
@@ -450,7 +450,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         echo json_encode($response);
         exit();
     }
-    
+
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup" && !empty($_POST['file'])) {
         $fileName = $_POST['file'];
@@ -540,7 +540,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
         $ext = strtolower(pathinfo($fileinfo->name, PATHINFO_EXTENSION));
         $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
-        
+
         function event_callback ($message) {
             global $callback;
             echo json_encode($message);
@@ -1944,7 +1944,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <td data-sort="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
                         <?php echo $filesize; ?>
                     </td>
-                    <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>                                                                                                                           
+                    <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
@@ -1990,7 +1990,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         </div>
                         </td><?php endif; ?>
                     <td>
-                        <div class="filename"> 
+                        <div class="filename">
                         <?php
                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))): ?>
                                 <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
@@ -2419,7 +2419,7 @@ function fm_get_size($file)
     static $isdarwin;
     if (!isset($iswin)) {
         $iswin = (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN');
-    } 
+    }
     if (!isset($isdarwin)) {
         $isdarwin = (strtoupper(substr(PHP_OS, 0)) == "DARWIN");
     }
@@ -3416,10 +3416,10 @@ global $lang, $root_url, $favicon_path;
         .fm-login-page .form-group label{ width:100%}
         .fm-login-page .btn.btn-block{ padding:12px 10px}
         .fm-login-page .footer{ margin:40px 0;color:#888;text-align:center}
-        @media screen and (max-width:425px){ 
+        @media screen and (max-width:425px){
             .fm-login-page .card-wrapper{ width:90%;margin:0 auto;margin-top:10%;}
         }
-        @media screen and (max-width:320px){ 
+        @media screen and (max-width:320px){
             .fm-login-page .card.fat{ padding:0}
             .fm-login-page .card.fat .card-body{ padding:15px}
         }
@@ -3527,7 +3527,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .break-word + .float-right { padding-right:30px;position:relative  }
         .break-word + .float-right > a { color:#7d7d7d;font-size:1.2em;margin-right:4px  }
         #editor { position:absolute;right:15px;top:100px;bottom:15px;left:15px  }
-        @media (max-width:481px) { 
+        @media (max-width:481px) {
             #editor { top:150px; }
         }
         #normal-editor { border-radius:3px;border-width:2px;padding:10px;outline:none; }
@@ -3759,7 +3759,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         if (n) {
             if(true){
                 var data = {ajax: true, content: n, type: 'save'};
-                
+
                 $.ajax({
                     type: "POST",
                     url: window.location,
@@ -3771,7 +3771,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     failure: function(mes) {toast("Error: try again");},
                     error: function(mes) {toast(`<p style="background-color:red">${mes.responseText}</p>`);}
                 });
-                
+
             }
             else{
                 var a = document.createElement("form");
@@ -3891,7 +3891,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         });
     });
 </script>
-<?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE): 
+<?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE):
         $ext = "javascript";
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
         ?>
@@ -3943,7 +3943,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                 } else if(selectedValue && selectionType == "theme") {
                     editor.setTheme(selectedValue);
                 }else if(selectedValue && selectionType == "fontSize") {
-                    editor.setFontSize(parseInt(selectedValue)); 
+                    editor.setFontSize(parseInt(selectedValue));
                 }
             });
         });
@@ -4042,7 +4042,7 @@ function lng($txt) {
     $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['You are logged in']    = 'You are logged in'; $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
-    
+
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
 
