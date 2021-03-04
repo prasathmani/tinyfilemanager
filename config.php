@@ -20,18 +20,22 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'recox' => '$2y$10$9WBeaacPPHQ9hrCErO.0p.zZFANR2hAaunMaivBSKWyFMzNRfBc9i', 
+    'jopi' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
+    'wyrox' => '$2y$10$FED/SsLlx9cHB3o3sKiItuW06tZwa4Y6NYYcXuC0IXX1HPSA/OKfG',
+    'simp' => '$2y$10$gIHw2ybKo6mvsZ8Z/k3FzuYvNIV0DnOzihjbFlqgFEFpIl3dh4t4u',
+    'haracin' => '$2y$10$1N9vyknVQcKlPZDXKjhUK.h7srnK.cjfgVj5O6Nrnt10yKrg5jqYK',
+    'reyarb' => '$2y$10$4X3gqurnA7KmcybjbqWAOu31Ntg6mjB8q669IP/waEGtegISwpm3G'
 );
 
 //set application theme
 //options - 'light' and 'dark'
-$theme = 'light';
+$theme = 'dark';
 
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'user'
+    'jopi', 'wyrox', 'simp', 'haracin', 'reyarb'
 );
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
