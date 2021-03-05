@@ -22,12 +22,14 @@ $use_auth = true;
 $auth_users = array(
     'recox' => '$2y$10$9WBeaacPPHQ9hrCErO.0p.zZFANR2hAaunMaivBSKWyFMzNRfBc9i', 
     'jopi' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
-    'wyrox' => '$2y$10$FED/SsLlx9cHB3o3sKiItuW06tZwa4Y6NYYcXuC0IXX1HPSA/OKfG',
+    'wyrox' => '$2y$10$hGwYApvN9TO8DHCnqM5rXeXeEJDMm5MD5Xa9l9T4SA47anEobs0By',
     'simp' => '$2y$10$gIHw2ybKo6mvsZ8Z/k3FzuYvNIV0DnOzihjbFlqgFEFpIl3dh4t4u',
     'haracin' => '$2y$10$1N9vyknVQcKlPZDXKjhUK.h7srnK.cjfgVj5O6Nrnt10yKrg5jqYK',
     'vancleff' => '$2y$10$pNkLwl4FWEeOmw2s5AwVKe7CpB3mfZTXM5TxMF6tJx8xGEEKbCEWi',
     'emancu' => '$2y$10$zvyW4i.058EtyqQXVOLRROu3f1sEfyi1/G8F71sSQu8paMkgaI5GS',
-    'reyarb' => '$2y$10$4X3gqurnA7KmcybjbqWAOu31Ntg6mjB8q669IP/waEGtegISwpm3G'
+    'ronin' => '$2y$10$zvyW4i.058EtyqQXVOLRROu3f1sEfyi1/G8F71sSQu8paMkgaI5GS',
+    'reyarb' => '$2y$10$4X3gqurnA7KmcybjbqWAOu31Ntg6mjB8q669IP/waEGtegISwpm3G',
+    'ronin' => '$2y$10$C0JNU8RK8GDp1OLOyFWuLOLa4B7/nqcYIhVf0rNyGcnGD7uQNE1SC'
 );
 
 //set application theme
@@ -37,7 +39,7 @@ $theme = 'dark';
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'vancleff', 'emancu', 'jopi', 'wyrox', 'simp', 'haracin', 'reyarb'
+    'ronin', 'vancleff', 'emancu', 'jopi', 'wyrox', 'simp', 'haracin', 'reyarb'
 );
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
