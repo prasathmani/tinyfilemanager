@@ -29,6 +29,7 @@ $auth_users = array(
     'emancu' => '$2y$10$zvyW4i.058EtyqQXVOLRROu3f1sEfyi1/G8F71sSQu8paMkgaI5GS',
     'ronin' => '$2y$10$zvyW4i.058EtyqQXVOLRROu3f1sEfyi1/G8F71sSQu8paMkgaI5GS',
     'reyarb' => '$2y$10$4X3gqurnA7KmcybjbqWAOu31Ntg6mjB8q669IP/waEGtegISwpm3G',
+    'MartinTrionfetti' => '$2y$10$GeoDYYo43edC9FmN2ZmygePg2J2l7YLYOGl9JBZztxdI/W5ROpPKu',
     'ronin' => '$2y$10$C0JNU8RK8GDp1OLOyFWuLOLa4B7/nqcYIhVf0rNyGcnGD7uQNE1SC'
 );
 
@@ -39,7 +40,7 @@ $theme = 'dark';
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'ronin', 'vancleff', 'emancu', 'jopi', 'wyrox', 'simp', 'haracin', 'reyarb'
+    'MartinTrionfetti', 'ronin', 'vancleff', 'emancu', 'jopi', 'wyrox', 'simp', 'haracin', 'reyarb'
 );
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
