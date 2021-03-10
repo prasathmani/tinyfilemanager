@@ -100,9 +100,6 @@ $online_viewer = 'google';
 // false => disable sticky header
 $GLOBALS['sticky_navbar'] = true;
 
-// Maximum file upload size
-// Increase the following values in php.ini to work properly
-// memory_limit, upload_max_filesize, post_max_size
 // max upload file size
 $max_upload_size_bytes = 5000;
 
