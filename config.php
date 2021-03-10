@@ -25,15 +25,15 @@ $auth_users = array(
     'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
 
-//set application theme
-//options - 'light' and 'dark'
-$theme = 'light';
-
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
     'user'
 );
+
+//set application theme
+//options - 'light' and 'dark'
+$theme = 'light';
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
@@ -68,8 +68,8 @@ $directories_users = array();
 $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
-// Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'd.m.y H:i';
+// Doc - https://www.php.net/manual/en/datetime.format.php
+$datetime_format = 'd.m.y H:i:s';
 
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
@@ -82,7 +82,7 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$GLOBALS['favicon_path'] = '?img=favicon';
+$GLOBALS['favicon_path'] = '';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', ...)
@@ -104,7 +104,7 @@ $GLOBALS['sticky_navbar'] = true;
 // Increase the following values in php.ini to work properly
 // memory_limit, upload_max_filesize, post_max_size
 // max upload file size
-$max_upload_size_bytes = 2048;
+$max_upload_size_bytes = 5000;
 
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
