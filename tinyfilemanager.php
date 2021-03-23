@@ -2795,6 +2795,8 @@ function fm_get_file_icon_class($path)
         case 'gz':
         case 'tar':
         case '7z':
+        case 'xz':
+        case 'bz2':
             $img = 'fa fa-file-archive-o';
             break;
         case 'php':
