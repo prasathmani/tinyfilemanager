@@ -2029,7 +2029,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     </td>
                     <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY): ?><a title="<?php echo lng('ChangePermissions') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
                         <td><?php if (!FM_READONLY && posix_getuid()==0): ?><a title="<?php echo lng('ChangeOwnership') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chown=<?php echo urlencode($f) ?>"><?php endif; ?>
                           <?php echo $owner['name'] . ':' . $group['name'] ?><?php if (!FM_READONLY && posix_getuid()==0): ?></a><?php endif; ?></td>
@@ -2092,7 +2092,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         </span></td>
                     <td data-sort="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY): ?><a title="<?php echo lng('ChangePermissions') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
 
                         <td><?php if (!FM_READONLY && posix_getuid()==0): ?><a title="<?php echo lng('ChangeOwnership') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chown=<?php echo urlencode($f) ?>"><?php endif; ?>
