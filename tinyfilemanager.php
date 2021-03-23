@@ -1550,6 +1550,8 @@ if (isset($_GET['view'])) {
     $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
     $file_path = $path . '/' . $file;
 
+    $download_url = '?p=' .urlencode(FM_PATH) . '&amp;dl=' . urlencode($file);
+
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $mime_type = fm_get_mime_type($file_path);
     $filesize_raw = fm_get_size($file_path);
@@ -1641,9 +1643,14 @@ if (isset($_GET['view'])) {
                 </p>
                 <p>
                     <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
+                    <?php
+		    // Disable Open option if $root_path is not a substring of DOCUMENT_ROOT
+                    if ( substr($root_path, 0, strlen($_SERVER['DOCUMENT_ROOT'])) == $_SERVER['DOCUMENT_ROOT']) {
+                      ?>
                     <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                     &nbsp;
-                    <?php
+                      <?php
+                    }
                     // ZIP actions
                     if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
                         $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
@@ -1689,7 +1696,7 @@ if (isset($_GET['view'])) {
             } elseif ($is_image) {
                 // Image content
                 if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp'))) {
-                    echo '<p><img src="' . fm_enc($file_url) . '" alt="" class="preview-img"></p>';
+                    echo '<p><img src="' . $download_url . '" alt="" class="preview-img"></p>';
                 }
             } elseif ($is_audio) {
                 // Audio content
@@ -2118,7 +2125,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <div class="filename">
                         <?php
                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp'))): ?>
-                                <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
+                                <?php $imagePreview = '?p=' .urlencode(FM_PATH) . '&amp;dl=' . urlencode($f); ?>
                                 <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
                            <?php else: ?>
                                 <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
