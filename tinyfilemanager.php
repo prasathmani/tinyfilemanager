@@ -1663,7 +1663,7 @@ if (isset($_GET['view'])) {
                                 <?php echo lng('UnZipToFolder') ?></a></b> &nbsp;
                         <?php
                     }
-                    if ($is_text && !FM_READONLY) {
+                    if (($is_text || $filesize_raw == 0) && !FM_READONLY) {
                         ?>
                         <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
                             </a></b> &nbsp;
@@ -1782,7 +1782,7 @@ if (isset($_GET['edit'])) {
     $is_text = false;
     $content = ''; // for text
 
-    if (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
+    if (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes()) || $filesize == 0) {
         $is_text = true;
         $content = file_get_contents($file_path);
     } else {
