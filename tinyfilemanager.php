@@ -3730,7 +3730,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         <style>
             body.theme-dark { background-color: #2f2a2a; }
             .list-group .list-group-item { background: #343a40; }
-            .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #ffffff; }
+            pre, .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #ffffff; }
             a, a:hover, a:visited, a:active, #main-table .filename a { color: #00ff1f; }
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
             .theme-dark .btn-outline-primary { color: #00ff1f; border-color: #00ff1f; }
