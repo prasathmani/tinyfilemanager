@@ -371,7 +371,10 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
 // clean and check $root_path
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
-if (!@is_dir($root_path)) {
+if ($root_path == '') {
+  $root_path='/';
+}
+if ($root_path !== '' && !@is_dir($root_path)) {
     echo "<h1>Root path \"{$root_path}\" not found!</h1>";
     exit;
 }
@@ -1611,7 +1614,7 @@ if (isset($_GET['view'])) {
                         $total_comp = 0;
                         $total_uncomp = 0;
                         foreach ($filenames as $fn) {
-                            if (!$fn['folder']) {
+                            if (substr($fn['name'], -1) !== '/') {
                                 $total_files++;
                             }
                             $total_comp += $fn['compressed_size'];
@@ -1683,7 +1686,7 @@ if (isset($_GET['view'])) {
                 if ($filenames !== false) {
                     echo '<code class="maxheight">';
                     foreach ($filenames as $fn) {
-                        if ($fn['folder']) {
+                        if ($fn['folder'] && (substr($fn['name'], -1) == '/')) {
                             echo '<b>' . fm_enc($fn['name']) . '</b><br>';
                         } else {
                             echo $fn['name'] . ' (' . fm_get_filesize($fn['filesize']) . ')<br>';
