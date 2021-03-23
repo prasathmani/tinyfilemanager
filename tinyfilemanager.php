@@ -2025,8 +2025,18 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 }
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    $owner = posix_getpwuid(fileowner($path . '/' . $f));
-                    $group = posix_getgrgid(filegroup($path . '/' . $f));
+                    $uid = fileowner($path . '/' . $f);
+                    $gid = filegroup($path . '/' . $f);
+                    if (posix_getpwuid($uid) == '') {
+                        $owner = array('name' => $uid);
+                    } else {
+                        $owner = posix_getpwuid($uid);
+                    }
+                    if (posix_getgrgid($gid) == '') {
+                        $group = array('name' => $gid);
+                    } else {
+                        $group = posix_getgrgid($gid);
+                    }
                 } else {
                     $owner = array('name' => '?');
                     $group = array('name' => '?');
@@ -2078,8 +2088,18 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $all_files_size += $filesize_raw;
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    $owner = posix_getpwuid(fileowner($path . '/' . $f));
-                    $group = posix_getgrgid(filegroup($path . '/' . $f));
+                    $uid = fileowner($path . '/' . $f);
+                    $gid = filegroup($path . '/' . $f);
+                    if (posix_getpwuid($uid) == '') {
+                        $owner = array('name' => $uid);
+                    } else {
+                        $owner = posix_getpwuid($uid);
+                    }
+                    if (posix_getgrgid($gid) == '') {
+                        $group = array('name' => $gid);
+                    } else {
+                        $group = posix_getgrgid($gid);
+                    }
                 } else {
                     $owner = array('name' => '?');
                     $group = array('name' => '?');
