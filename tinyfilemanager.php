@@ -145,6 +145,10 @@ define('DATATABLES_VERSION', '1.10.23');
 define('EKKO_LIGHTBOX_VERSION','5.3.0');
 define('FONT_AWESOME_VERSION', '4.7.0');
 define('HIGHLIGHT_VERSION', '10.6.0');
+
+// max dump for binary files
+define('MAX_HEX_DUMP', 4096);
+
 // max upload file size
 define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
 
@@ -1557,6 +1561,7 @@ if (isset($_GET['view'])) {
     $is_audio = false;
     $is_video = false;
     $is_text = false;
+    $is_binary = false;
     $is_onlineViewer = false;
 
     $view_title = 'File';
@@ -1583,6 +1588,9 @@ if (isset($_GET['view'])) {
     } elseif (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
         $is_text = true;
         $content = file_get_contents($file_path);
+    } else {
+        $is_binary = true;
+        $content = file_get_contents($file_path, false, NULL, 0, MAX_HEX_DUMP);
     }
 
     ?>
@@ -1711,6 +1719,8 @@ if (isset($_GET['view'])) {
                     $content = '<pre>' . fm_enc($content) . '</pre>';
                 }
                 echo $content;
+            } elseif ($is_binary) {
+                echo '<pre>' . hex_dump($content) . '</pre>';
             }
             ?>
         </div>
@@ -1763,6 +1773,9 @@ if (isset($_GET['edit'])) {
 
     if (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
         $is_text = true;
+        $content = file_get_contents($file_path);
+    } else {
+        $is_binary = true;
         $content = file_get_contents($file_path);
     }
 
@@ -4101,6 +4114,59 @@ function lng($txt) {
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
     else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
     else return "$txt";
+}
+
+/**
+* Dumps a string into a traditional hex dump for programmers,
+* in a format similar to the output of the BSD command hexdump -C file.
+* The default result is a string.
+* Supported options:
+* <pre>
+*   line_sep        - line seperator char, default = "\n"
+*   bytes_per_line  - default = 16
+*   pad_char        - character to replace non-readble characters with, default = '.'
+* </pre>
+*
+* @param string $string
+* @param array $options
+* @param string|array
+*/
+function hex_dump($string, array $options = null) {
+    if (!is_scalar($string)) {
+        throw new InvalidArgumentException('$string argument must be a string');
+    }
+    if (!is_array($options)) {
+        $options = array();
+    }
+    $line_sep       = isset($options['line_sep'])   ? $options['line_sep']          : "\n";
+    $bytes_per_line = @$options['bytes_per_line']   ? $options['bytes_per_line']    : 16;
+    $pad_char       = isset($options['pad_char'])   ? $options['pad_char']          : '.'; # padding for non-readable characters
+
+    $text_lines = str_split($string, $bytes_per_line);
+    $hex_lines  = str_split(bin2hex($string), $bytes_per_line * 2);
+
+    $offset = 0;
+    $output = array();
+    $output []= '<em style="color: green;">  Offset   ' . '00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F         ASCII</em>';
+    $bytes_per_line_div_2 = (int)($bytes_per_line / 2);
+    foreach ($hex_lines as $i => $hex_line) {
+        $text_line = $text_lines[$i];
+        $output []=
+            '<em style="color: green;">' .
+            sprintf('%08X',$offset) . '</em>   ' .
+            str_pad(
+                strlen($text_line) > $bytes_per_line_div_2
+                ?
+                    implode(' ', str_split(substr($hex_line,0,$bytes_per_line),2)) . '  ' .
+                    implode(' ', str_split(substr($hex_line,$bytes_per_line),2))
+                :
+                implode(' ', str_split($hex_line,2))
+            , $bytes_per_line * 3) .
+            '  |<strong>' . fm_enc(preg_replace('/[^\x20-\x7E]/', $pad_char, $text_line)) . '</strong>|';
+        $offset += $bytes_per_line;
+    }
+    //$output []= sprintf('%08X', strlen($string));
+    return @$options['want_array'] ? $output : join($line_sep, $output) . $line_sep;
 }
 
 ?>
