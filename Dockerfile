@@ -19,9 +19,9 @@ RUN	if [ $RUNUSER != "root" ] ; then addgroup -S $RUNUSER \
 
 WORKDIR /var/www/html
 
-RUN	apk add --no-cache zip libzip openssl bzip2\
-&&	apk add --no-cache --virtual .build-deps libzip-dev openssl-dev bzip2-dev \
-&&	docker-php-ext-install zip fileinfo phar bz2\
+RUN	apk add --no-cache zip libzip openssl bzip2 \
+&&	apk add --no-cache --virtual .build-deps libzip-dev openssl-dev bzip2-dev oniguruma-dev \
+&&	docker-php-ext-install zip fileinfo phar bz2 iconv mbstring\
 &&	runDeps="$( \
 		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
 			| tr ',' '\n' \
