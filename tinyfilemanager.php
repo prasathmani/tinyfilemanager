@@ -3040,7 +3040,11 @@ function fm_get_file_mimes($extension)
     $fileTypes['php'] = ['application/x-php'];
     $fileTypes['html'] = ['text/html'];
     $fileTypes['txt'] = ['text/plain'];
-    return $fileTypes[$extension];
+    if (array_key_exists($extension, $fileTypes)) {
+        return $fileTypes[$extension];
+    } else {
+        return 'application/octet-stream';
+    }
 }
 
 /**
