@@ -1100,6 +1100,39 @@ if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
+// Change Owners (not for Windows)
+if (isset($_POST['chown']) && !FM_READONLY && !FM_IS_WIN && posix_getuid()==0) {
+    $path = FM_ROOT_PATH;
+    if (FM_PATH != '') {
+        $path .= '/' . FM_PATH;
+    }
+
+    $file = $_POST['chown'];
+    $file = fm_clean_path($file);
+    $file = str_replace('/', '', $file);
+    if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
+        fm_set_msg('File not found', 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $uid = 0;
+    if (!empty($_POST['uid'])) {
+        $uid = $_POST['uid'];
+    }
+    $gid = 0;
+    if (!empty($_POST['gid'])) {
+        $gid = $_POST['gid'];
+    }
+
+    if (@chown($path . '/' . $file, intval($uid)) && @chgrp($path . '/' . $file, intval($gid))) {
+        fm_set_msg('Ownership changed');
+    } else {
+        fm_set_msg('Ownership not changed', 'error');
+    }
+
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+}
+
 /*************************** /ACTIONS ***************************/
 
 // get current path
@@ -1849,6 +1882,61 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     exit;
 }
 
+// chown (not for Windows)
+if (isset($_GET['chown']) && !FM_READONLY && !FM_IS_WIN && posix_getuid()==0) {
+    $file = $_GET['chown'];
+    $file = fm_clean_path($file);
+    $file = str_replace('/', '', $file);
+    if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
+        fm_set_msg('File not found', 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
+
+    $file_url = FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file;
+    $file_path = $path . '/' . $file;
+
+    $uid = fileowner($path . '/' . $file);
+    $gid = filegroup($path . '/' . $file);
+
+    ?>
+    <div class="path">
+        <div class="card mb-2 <?php echo fm_get_theme(); ?>">
+            <h6 class="card-header">
+                <?php echo lng('ChangeOwner') ?>
+            </h6>
+            <div class="card-body">
+                <p class="card-text">
+                    Full path: <?php echo $file_path ?><br>
+                </p>
+                <form action="" method="post">
+                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="chown" value="<?php echo fm_enc($file) ?>">
+
+                    <table class="table compact-table <?php echo fm_get_theme(); ?>">
+                        <tr>
+                            <td><b><?php echo lng('Owner') ?></b></td><td><label><input type="text" name="uid" value="<?php echo $uid ?>"></label></td>
+                        </tr>
+                        <tr>
+                            <td><b><?php echo lng('Group') ?></b></td><td><label><input type="text" name="gid" value="<?php echo $gid ?>"></label></td>
+                        </tr>
+                    </table>
+                    <p>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Change') ?></button> &nbsp;
+                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+    fm_show_footer();
+    exit;
+}
+
+
 //--- FILEMANAGER MAIN
 fm_show_header(); // HEADER
 fm_show_nav_path(FM_PATH); // current path
@@ -2005,7 +2093,9 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
+
+                        <td><?php if (!FM_READONLY && posix_getuid()==0): ?><a title="<?php echo lng('ChangeOwnership') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chown=<?php echo urlencode($f) ?>"><?php endif; ?>
+                          <?php echo fm_enc($owner['name'] . ':' . $group['name']) ?><?php if (!FM_READONLY && posix_getuid()==0): ?></a><?php endif; ?></td>
                     <?php endif; ?>
                     <td class="inline-actions">
                         <a title="<?php echo lng('Preview') ?>" href="<?php echo $filelink.'&quickView=1'; ?>" data-toggle="lightbox" data-gallery="tiny-gallery" data-title="<?php echo fm_convert_win(fm_enc($f)) ?>" data-max-width="100%" data-width="100%"><i class="fa fa-eye"></i></a>
@@ -3995,7 +4085,7 @@ function lng($txt) {
     $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
-
+    $tr['en']['ChangeOwnership']  = 'Change Ownership';
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
 
