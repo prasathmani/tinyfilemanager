@@ -20,26 +20,53 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+#    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
+#    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+
 );
 
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'user'
+//    'user'
 );
+
+function encode_password_if_not_encoded($password) {
+  if (substr($password,0,3) == '$2y') {
+    return $password;
+  } else {
+    return password_hash($password, PASSWORD_BCRYPT);
+  }
+}
+
+if ( getenv('ADMIN_USER') != false && getenv('ADMIN_PASS') != false)  {
+    $auth_users[getenv('ADMIN_USER')] = encode_password_if_not_encoded(getenv('ADMIN_PASS'));
+}
+
+if ( getenv('RO_USER') != false && getenv('RO_PASS') != false)  {
+    $auth_users[getenv('RO_USER')] = encode_password_if_not_encoded(getenv('RO_PASS'));
+    array_push($readonly_users, getenv('RO_USER'));
+}
 
 //set application theme
 //options - 'light' and 'dark'
-$theme = 'light';
+if ( getenv('THEME') !== false) {
+  $theme = getenv('THEME');
+} else {
+  $theme = 'light';
+}
+
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 
 // highlight.js style
 // for dark theme use 'ir-black'
-$highlightjs_style = 'vs';
+if ($theme == 'light') {
+    $highlightjs_style = 'vs';
+} else {
+    $highlightjs_style = 'ir-black';
+}
 
 // Enable ace.js (https://ace.c9.io/) on view's page
 $edit_files = true;
