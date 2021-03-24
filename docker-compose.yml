@@ -1,0 +1,13 @@
+version: '3.3'
+
+services:
+    tinyfilemanager:
+        ports:
+            - '8111:8080'
+        volumes:
+            - '/opt:/opt'
+        environment:
+            - ADMIN_USER=admin
+            - ADMIN_PASS=pass
+            - ROOT_FS=/opt
+        image: jpralvesatdocker/tinyfilemanager:2.4.4-root
