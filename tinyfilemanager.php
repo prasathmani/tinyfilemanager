@@ -2312,6 +2312,7 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
     } elseif (is_file($path)) {
         return fm_copy($path, $dest, $upd);
     }
+    error_log("'{$path}' is not a file or a folder.");
     return false;
 }
 
@@ -2333,7 +2334,7 @@ function fm_mkdir($dir, $force)
     }
     return mkdir($dir, 0777, true);
 }
-
+pinentry
 /**
  * Safely copy file
  * @param string $f1
