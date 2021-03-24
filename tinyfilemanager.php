@@ -943,7 +943,7 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
             $res = $zipper->create($zipname, $files);
         } elseif ($ext == 'tar') {
             $tar = new FM_Zipper_Tar();
-            $res = $tar->create($zipname, $files);
+            $res = $tar->create('./'.$zipname, $files); //Quick Hack!
         }
 
         if ($res) {
@@ -1569,7 +1569,7 @@ if (isset($_GET['view'])) {
                         Files in archive: <?php echo $total_files ?><br>
                         Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
                         Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
-                        Compression: <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
+                        Compression: <?php echo $total_uncomp > 0 ? round(($total_comp / $total_uncomp) * 100) : 0 ?>%<br>
                         <?php
                     }
                     // Image info
@@ -2334,7 +2334,7 @@ function fm_mkdir($dir, $force)
     }
     return mkdir($dir, 0777, true);
 }
-pinentry
+
 /**
  * Safely copy file
  * @param string $f1
