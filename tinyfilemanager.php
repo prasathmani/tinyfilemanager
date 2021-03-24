@@ -933,9 +933,9 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
         if (count($files) == 1) {
             $one_file = reset($files);
             $one_file = basename($one_file);
-            $zipname = $one_file . '_' . date('ymd_His') . '.'.$ext;
+            $zipname = $one_file . '_' . date('Ymd_His') . '.'.$ext;
         } else {
-            $zipname = 'archive_' . date('ymd_His') . '.'.$ext;
+            $zipname = 'archive_' . date('Ymd_His') . '.'.$ext;
         }
 
         if($ext == 'zip') {
