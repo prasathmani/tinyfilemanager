@@ -468,7 +468,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             $relativeDirPath = fm_clean_path($_POST['path']);
             $fullPath .= "{$relativeDirPath}/";
         }
-        $date = date("dMy-His");
+        $date = date("Ymd-His");
         $newFileName = "{$fileName}-{$date}.bak";
         $fullyQualifiedFileName = $fullPath . $fileName;
         try {
