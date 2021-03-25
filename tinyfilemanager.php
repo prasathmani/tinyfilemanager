@@ -816,6 +816,22 @@ if (isset($_GET['dl'])) {
     }
 }
 
+// Execute
+if (isset($_GET['exec'] && !FM_READONLY)) {
+    $exec = str_replace('/', '', fm_clean_path($_GET['exec']));
+    $path = os_path_join(FM_ROOT_PATH, FM_PATH);
+    $file_path = os_path_join($path, $exec);
+    if ($exec != '' && is_file($file_path)) {
+        chdir($path);
+        $output = shell_exec($file_path);
+        fm_set_msg("<PRE class=\"ok\">Output of command '{$file_path}':\n".$output."</PRE>");
+    } else {
+        fm_set_msg('File not found', 'error');
+    }
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+}
+
+
 // Upload
 if (!empty($_FILES) && !FM_READONLY) {
     $override_file_name = false;
@@ -2040,6 +2056,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
                 $all_files_size += $filesize_raw;
+                $is_exec = is_executable($file_path);
                 $perms = substr(decoct(fileperms($file_path)), -4);
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     $uid = fileowner($file_path);
@@ -2104,6 +2121,9 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
                         <?php endif; ?>
                         <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
+                        <?php if ( $is_exec && !FM_READONLY ): ?>
+                        <a title="<?php echo lng('Execute') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;exec=<?php echo urlencode($f) ?>"><i class="fa fa-bolt"></i></a>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php
@@ -3469,7 +3489,7 @@ function fm_show_message()
 {
     if (isset($_SESSION[FM_SESSION_ID]['message'])) {
         $class = isset($_SESSION[FM_SESSION_ID]['status']) ? $_SESSION[FM_SESSION_ID]['status'] : 'ok';
-        echo '<p class="message ' . $class . '">' . $_SESSION[FM_SESSION_ID]['message'] . '</p>';
+        echo '<div class="message ' . $class . '">' . $_SESSION[FM_SESSION_ID]['message'] . '</div>';
         unset($_SESSION[FM_SESSION_ID]['message']);
         unset($_SESSION[FM_SESSION_ID]['status']);
     }
@@ -3607,6 +3627,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .center, .close, .login-form { text-align:center  }
         .message { padding:4px 7px;border:1px solid #ddd;background-color:#fff  }
         .message.ok { border-color:green;color:green  }
+        pre.ok { color:green  }
         .message.error { border-color:red;color:red  }
         .message.alert { border-color:orange;color:orange  }
         .preview-img { max-width:100%;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC)  }
