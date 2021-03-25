@@ -817,7 +817,7 @@ if (isset($_GET['dl'])) {
 }
 
 // Execute
-if (isset($_GET['exec'] && !FM_READONLY)) {
+if (isset($_GET['exec']) && !FM_READONLY) {
     $exec = str_replace('/', '', fm_clean_path($_GET['exec']));
     $path = os_path_join(FM_ROOT_PATH, FM_PATH);
     $file_path = os_path_join($path, $exec);
