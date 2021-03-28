@@ -10,6 +10,7 @@ or
 -Put inside this file all the static configuration you want and forgot to configure "tinyfilemanager.php".
 #################################################################################################################
 */
+$fm_base_path = '';
 
 // Auth with login/password
 // set true/false to enable/disable it
@@ -54,7 +55,7 @@ $root_path = $_SERVER['DOCUMENT_ROOT'];
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
 // Will not working if $root_path will be outside of server document root
-$root_url = '';
+$root_url = $GLOBALS['root_url'] = '';
 
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
@@ -81,7 +82,7 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$favicon_path = '';
+$GLOBALS['favicon_path'] = '';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', ...)
@@ -97,8 +98,7 @@ $online_viewer = 'google';
 // Sticky Nav bar
 // true => enable sticky header
 // false => disable sticky header
-$sticky_navbar = true;
-
+$GLOBALS['sticky_navbar'] = true;
 
 // max upload file size
 $max_upload_size_bytes = 5000;
