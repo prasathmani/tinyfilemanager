@@ -31,7 +31,7 @@ $auth_users = array(
     'reyarb' => '$2y$10$4X3gqurnA7KmcybjbqWAOu31Ntg6mjB8q669IP/waEGtegISwpm3G',
     'MartinTrionfetti' => '$2y$10$GeoDYYo43edC9FmN2ZmygePg2J2l7YLYOGl9JBZztxdI/W5ROpPKu',
     'ronin' => '$2y$10$C0JNU8RK8GDp1OLOyFWuLOLa4B7/nqcYIhVf0rNyGcnGD7uQNE1SC',
-    'emancu' => '$2y$10$uLge8lUyQ1WPk/oBQPeq6ekRrw3W.NoTCLXhU/R/gDR/5Oeu/hAT2'
+    'emancu' => '$2y$10$YVgOfXhD3BfJT1LeCKqYMOl7.DWJXMJz2OK3.z6AW5meFO3jzGgMW'
 );
 
 //set application theme
