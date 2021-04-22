@@ -38,7 +38,7 @@ Default username/password: **admin/admin@123** and **user/12345**.
 
 To enable/disable authentication set `$use_auth` to true or false.
 
-:information_source: The default configuration will be loaded from `config.php`, it is an additional configuration file, Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
+:information_source: Rename the `config-sample.php` file into `config.php` to use configuration, it is an additional configuration file, Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
 
 ### :loudspeaker: Features
 

@@ -2,7 +2,7 @@
 
 /*
 #################################################################################################################
-This is an OPTIONAL configuration file.
+This is an OPTIONAL configuration file. rename this file into config.php to use this configuration 
 The role of this file is to make updating of "tinyfilemanager.php" easier.
 So you can:
 -Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
@@ -85,7 +85,7 @@ $favicon_path = '';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', ...)
-$exclude_items = array();
+$exclude_items = array('');
 
 // Online office Docs Viewer
 // Availabe rules are 'google', 'microsoft' or false
