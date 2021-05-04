@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
 /**
  * H3K | Tiny File Manager V2.4.5
@@ -28,10 +28,6 @@ $auth_users = array(
     'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
     'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
-
-//set application theme
-//options - 'light' and 'dark'
-$theme = 'light';
 
 // Readonly users
 // e.g. array('users', 'guest', ...)
@@ -141,8 +137,6 @@ if (is_readable($config_file)) {
 // max upload file size
 define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
 
-define('FM_THEME', $theme);
-
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
     define('FM_SESSION_ID', 'filemanager');
@@ -165,6 +159,11 @@ $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 
 // Show directory size: true or speedup output: false
 $calc_folder = isset($cfg->data['calc_folder']) ? $cfg->data['calc_folder'] : true;
+
+// Theme
+$theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
+
+define('FM_THEME', $theme);
 
 //available languages
 $lang_list = array(
@@ -473,7 +472,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $calc_folder;
+        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $calc_folder, $theme;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
         if (!array_key_exists($newLng, $lang_list)) {
@@ -484,6 +483,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
         $caf = isset($_POST['js-calc-folder']) && $_POST['js-calc-folder'] == "true" ? true : false;
+        $te3 = $_POST['js-theme-3'];
 
         if ($cfg->data['lang'] != $newLng) {
             $cfg->data['lang'] = $newLng;
@@ -508,6 +508,10 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         if ($cfg->data['calc_folder'] != $caf) {
             $cfg->data['calc_folder'] = $caf;
             $calc_folder = $caf;
+        }
+        if ($cfg->data['theme'] != $te3) {
+            $cfg->data['theme'] = $te3;
+            $theme = $te3;
         }
         $cfg->save();
         echo true;
@@ -1433,6 +1437,16 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                                     <input type="radio" name="js-calc-folder" id="js-dir-0" autocomplete="off" value="false" <?php echo getChecked($calc_folder, '', 'checked') ?> > OFF
                                 </label>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('Theme') ?></label>
+                        <div class="col-sm-5">
+                            <select class="form-control" id="js-3-0" name="js-theme-3" style="width:100px;">
+                         <option value='light' <?php if($theme == "light"){echo "selected";} ?>><?php echo lng('light') ?></option>
+                         <option value='dark' <?php if($theme == "dark"){echo "selected";} ?>><?php echo lng('dark') ?></option>
+                            </select>
                         </div>
                     </div>
 
