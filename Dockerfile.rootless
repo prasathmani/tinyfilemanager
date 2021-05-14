@@ -8,8 +8,6 @@ RUN	echo "upload_max_filesize = 128M" >> /usr/local/etc/php/conf.d/0-upload_larg
 
 STOPSIGNAL SIGINT
 
-ARG RUNUSER=tinyfilemanager
-
 WORKDIR /var/www/html
 
 RUN	apk add --no-cache zip libzip openssl bzip2 \
@@ -24,17 +22,21 @@ RUN	apk add --no-cache zip libzip openssl bzip2 \
 &&	apk add --virtual .phpexts-rundeps $runDeps \
 &&	apk del .build-deps
 
-COPY	*.php /var/www/html/
-COPY	*.json /var/www/html/
+COPY *.php /var/www/html/
+COPY *.json /var/www/html/
 
 RUN ln -sf tinyfilemanager.php index.php
 
-RUN	addgroup -S $RUNUSER \
-&&	adduser -S -G $RUNUSER $RUNUSER \
-&&	mkdir -p /var/www/html \
-&&	chown -R $RUNUSER:$RUNUSER /var/www/html
-
-USER $RUNUSER
 CMD	[ "php", "-S", "[::]:8080", "-t", "/var/www/html" ]
 
 EXPOSE 8080
+
+ARG RUNUSER=tinyfilemanager
+
+RUN addgroup -S $RUNUSER \
+&& adduser -S -G $RUNUSER $RUNUSER \
+&& mkdir -p /var/www/html \
+&& chown -R $RUNUSER:$RUNUSER /var/www/html
+
+USER $RUNUSER
+

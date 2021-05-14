@@ -27,7 +27,9 @@ COPY *.json /var/www/html/
 
 RUN ln -sf tinyfilemanager.php index.php
 
-USER root
 CMD	[ "php", "-S", "[::]:8080", "-t", "/var/www/html" ]
 
 EXPOSE 8080
+
+USER root
+
