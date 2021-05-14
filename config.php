@@ -95,7 +95,7 @@ $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 // Doc - https://www.php.net/manual/en/datetime.format.php
-$datetime_format = 'd.m.y H:i:s';
+$datetime_format = 'Y-m-d H:i:s';
 
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
