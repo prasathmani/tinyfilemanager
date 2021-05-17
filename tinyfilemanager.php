@@ -3,13 +3,13 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.4.5
+ * H3K | Tiny File Manager V2.4.6
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.4.5');
+define('VERSION', '2.4.6');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');

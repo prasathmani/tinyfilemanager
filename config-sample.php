@@ -30,10 +30,6 @@ $readonly_users = array(
     'user'
 );
 
-//set application theme
-//options - 'light' and 'dark'
-$theme = 'light';
-
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 

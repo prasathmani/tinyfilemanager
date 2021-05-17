@@ -1,8 +1,8 @@
 {
   "appName": "Tiny File Manager",
-  "version": "2.4.5",
+  "version": "2.4.6",
   "language": [
-      {
+    {
       "name": "Hungarian",
       "code": "hu",
       "translation": {
@@ -81,7 +81,8 @@
         "Login failed. Invalid username or password": "Sikertelen bejelentkezés. Hibás felhasználói név vagy jelszó.",
         "password_hash not supported, Upgrade PHP version": "password_hash ebben a PHP verzióban nem támogatott"
       }
-      }, {
+    },
+    {
       "name": "Norsk",
       "code": "no",
       "translation": {
@@ -1077,8 +1078,7 @@
         "Check Latest Version": "Verifique a última versão",
         "HideColumns": "Ocultar colunas Perms / Owner",
         "CalculateFolderSize": "Calcular o tamanho da pasta",
-        
-        
+
         "Advanced Search": "Busca Avançada",
         "Nothing selected": "Nada selecionado",
         "Renamed from": "Renomeado de",
@@ -1117,13 +1117,12 @@
         "Invalid characters in file or folder name": "Caracteres inválidos no nome do arquivo ou pasta",
         "Operations with archives are not available": "Operações com arquivos não estão disponíveis",
         "File or folder with this path already exists": "O arquivo ou pasta com este caminho já existe",
-        
+
         "Folder is empty": "A pasta está vazia",
         "Moved from": "Movido de",
         "Created": "Criado",
         "You are logged in": "Você está logado",
         "Login failed. Invalid username or password": "Falha na autenticação. nome de usuário ou senha inválidos"
-
       }
     },
     {
