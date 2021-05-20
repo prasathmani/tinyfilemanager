@@ -551,7 +551,29 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     if(isset($_POST['type']) && $_POST['type'] == "upload" && !empty($_REQUEST["uploadurl"])) {
         $path = os_path_join(FM_ROOT_PATH, FM_PATH);
 
+         function event_callback ($message) {
+            global $callback;
+            echo json_encode($message);
+        }
+
+        function get_file_path () {
+            global $path, $fileinfo, $temp_file;
+            return $path."/".basename($fileinfo->name);
+        }
+
         $url = !empty($_REQUEST["uploadurl"]) && preg_match("|^http(s)?://.+$|", stripslashes($_REQUEST["uploadurl"])) ? stripslashes($_REQUEST["uploadurl"]) : null;
+
+        //prevent 127.* domain and known ports
+        $domain = parse_url($url, PHP_URL_HOST);
+        $port = parse_url($url, PHP_URL_PORT);
+        $knownPorts = [22, 23, 25, 3306];
+
+        if (preg_match("/^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^(?:0*\:)*?:?0*1$/i", $domain) || in_array($port, $knownPorts)) {
+            $err = array("message" => "URL is not allowed");
+            event_callback(array("fail" => $err));
+            exit();
+        }
+
         $use_curl = false;
         $temp_file = tempnam(sys_get_temp_dir(), "upload-");
         $fileinfo = new stdClass();
@@ -560,16 +582,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
         $ext = strtolower(pathinfo($fileinfo->name, PATHINFO_EXTENSION));
         $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
-
-        function event_callback ($message) {
-            global $callback;
-            echo json_encode($message);
-        }
-
-        function get_file_path () {
-            global $path, $fileinfo, $temp_file;
-            return os_path_join($path, basename($fileinfo->name));
-        }
 
         $err = false;
 
