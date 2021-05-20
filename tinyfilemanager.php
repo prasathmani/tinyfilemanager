@@ -234,7 +234,7 @@ if (defined('FM_EMBED')) {
     restore_error_handler();
 }
 
-if (empty($auth_users)) {
+if (empty($auth_users) && !$use_ldap) {
     $use_auth = false;
 }
 
@@ -254,6 +254,8 @@ defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') .
 // logout
 if (isset($_GET['logout'])) {
     unset($_SESSION[FM_SESSION_ID]['logged']);
+    unset($_SESSION[FM_SESSION_ID]['username']);
+    unset($_SESSION[FM_SESSION_ID]['is_admin']);
     fm_redirect(FM_SELF_URL);
 }
 
@@ -292,18 +294,32 @@ if($ip_ruleset != 'OFF'){
 
 // Auth
 if ($use_auth) {
-    if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
+    if (isset($_SESSION[FM_SESSION_ID]['logged'])) {
         // Logged
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
+        validate_ldap_login();
         if(function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
+                $is_admin = !in_array($_POST['fm_usr'], $readonly_users);
+                $_SESSION[FM_SESSION_ID]['is_admin'] = $is_admin;
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
-                fm_set_msg(lng('You are logged in'));
-                fm_redirect(FM_SELF_URL . '?p=');
+                $_SESSION[FM_SESSION_ID]['username'] = $_POST['fm_usr'];
+                if ($is_admin) {
+                  fm_set_msg(lng('You are logged in (as admin)'));
+                } else {
+                  fm_set_msg(lng('You are logged in'));
+                }
+                $audit_username = $_SESSION[FM_SESSION_ID]['username'];
+                audit_action('login', 'auth=local,is_admin='.($is_admin ? '1' : '0'), 'ok');
+                //fm_redirect(FM_SELF_URL . '?p=');
+                fm_redirect(FM_SELF_URL . '?' . (isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'p='));
             } else {
                 unset($_SESSION[FM_SESSION_ID]['logged']);
+                unset($_SESSION[FM_SESSION_ID]['username']);
+                unset($_SESSION[FM_SESSION_ID]['is_admin']);
+                audit_action('login', 'fm_usr='.$_POST['fm_usr'].',msg=invalid-username-or-password', 'error');
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
                 fm_redirect(FM_SELF_URL);
             }
@@ -313,6 +329,8 @@ if ($use_auth) {
     } else {
         // Form
         unset($_SESSION[FM_SESSION_ID]['logged']);
+        unset($_SESSION[FM_SESSION_ID]['username']);
+        unset($_SESSION[FM_SESSION_ID]['is_admin']);
         fm_show_header_login();
         ?>
         <section class="h-100">
@@ -396,7 +414,11 @@ defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extens
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items) : $exclude_items));
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
-define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users));
+if (isset($_SESSION[FM_SESSION_ID]['logged'], $_SESSION[FM_SESSION_ID]['is_admin'])) {
+  define('FM_READONLY', !$_SESSION[FM_SESSION_ID]['is_admin']);
+} else {
+  define('FM_READONLY', true);
+}
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 // always use ?p=
@@ -4325,6 +4347,120 @@ function cmd_exec($cmd, &$stdout, &$stderr) {
     unlink($outfile);
     unlink($errfile);
     return $exit;
+}
+
+/**
+ * Try to authenticate with an LDAP system.
+ *
+ * Uses a user and a password to bind to a LDAP system and obtain its LDAP attributes.
+ *
+ * @param string $username The user used for authentication
+ * @param string $password The password used for authentication
+ * @return array<int|string, mixed>|false {
+       @type string $key Description.
+ */
+function get_ldap_auth($username, $password) {
+  global $ldap_server, $ldap_searchfilter, $ldap_domain, $ldap_filter, $ldap_audit_field, $stderr;
+
+  $ret = False;
+
+  if (!function_exists("ldap_connect")) {
+         die ("get_ldap_auth(): php-ldap is not installed. Search aborted.");
+  }
+
+  $attributes = array("name", "sn", "givenname", "distinguishedname", "mail", $ldap_audit_field, "memberof");
+
+  $ldap_conn = @ldap_connect($ldap_server);
+
+  if ($ldap_domain !== '' && (strpos($username, "\\") === false) && (strpos($username, "@") === false)) {
+    $ldaprdn = "$ldap_domain\\$username";
+    $plain_user = $username;
+  } else {
+    $ldaprdn = $username;
+    if (strpos($username, "\\") !== false) {
+      list($domain, $plain_user) = explode("\\", $username);
+    } elseif (strpos($username, "@") !== false) {
+      list($plain_user, $domain) = explode("@", $username);
+    } else {
+      $plain_user = $username;
+    }
+  }
+
+  if ($ldap_conn) {
+    @ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+    @ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
+    @ldap_set_option($ldap_conn, LDAP_OPT_NETWORK_TIMEOUT, 5);
+
+    $bind = @ldap_bind($ldap_conn, $ldaprdn, $password);
+    if ($bind) {
+      $filter = sprintf($ldap_filter, $plain_user, str_replace('\\', '\\\\', $ldaprdn));
+      $result = @ldap_search($ldap_conn, $ldap_searchfilter, $filter, $attributes);
+      if ($result) {
+        $info = @ldap_get_entries($ldap_conn, $result);
+        @ldap_close($ldap_conn);
+        if ($info && count($info) == 2)  {
+          $ret = [];
+
+          for ($i = 0; $i < count($attributes); $i++) {
+            if ($info[0][$attributes[$i]]["count"] > 1) { // Add sub-array if multiple items detected
+              $ret += [ $attributes[$i] => $info[0][$attributes[$i]] ];
+            } else {
+              $ret += [ $attributes[$i] => $info[0][$attributes[$i]][0] ];
+            }
+          }
+        }
+      }
+    }
+  }
+  return $ret;
+}
+
+function validate_ldap_login() {
+  global $use_ldap, $ldap_admin_groups, $ldap_user_groups, $audit_username, $ldap_audit_field;
+
+  if($use_ldap) {
+    $ldap_res = get_ldap_auth($_POST['fm_usr'], $_POST['fm_pwd']);
+    if ($ldap_res !== false) {
+      $_SESSION[FM_SESSION_ID]['username'] = strtolower($ldap_res[$ldap_audit_field]); // $_POST['fm_usr'];
+      $_SESSION[FM_SESSION_ID]['logged'] = $ldap_res['name'];
+      $is_admin = false;
+      if (!empty($ldap_admin_groups)) {
+        foreach($ldap_admin_groups as $admin_group) {
+          $is_admin = in_array($admin_group, array_values($ldap_res['memberof']));
+          if ($is_admin) {
+            break;
+          }
+        }
+      }
+      if (!empty($ldap_user_groups) && !$is_admin) {
+        $is_user = false;
+        foreach($ldap_user_groups as $user_group) {
+          $is_user = in_array($user_group, array_values($ldap_res['memberof']));
+          if ($is_user) {
+            $_SESSION[FM_SESSION_ID]['is_admin'] = false;
+            break;
+          }
+        }
+        if (!$is_user) {
+          // User valid but not member of admins or users
+          unset($_SESSION[FM_SESSION_ID]['logged']);
+          unset($_SESSION[FM_SESSION_ID]['username']);
+          unset($_SESSION[FM_SESSION_ID]['is_admin']);
+          fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
+          fm_redirect(FM_SELF_URL);
+        }
+      }
+      if ($is_admin) {
+        fm_set_msg(lng('You are logged in (as admin)'));
+      } else {
+        fm_set_msg(lng('You are logged in'));
+      }
+      $_SESSION[FM_SESSION_ID]['is_admin'] = $is_admin;
+      $audit_username = $_SESSION[FM_SESSION_ID]['username'];
+      audit_action('login', 'auth=ldap,is_admin='.($is_admin ? '1' : '0'), 'ok');
+      fm_redirect(FM_SELF_URL . '?' . (isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'p='));
+    }
+  }
 }
 
 ?>
