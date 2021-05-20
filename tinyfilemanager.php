@@ -1636,6 +1636,7 @@ if (isset($_GET['help'])) {
                               <li class="list-group-item">HTTPS: <b><?php echo $is_https ? 'yes' : 'no'; ?></b></li>
                               <li class="list-group-item">LDAP Use: <b><?php echo $use_ldap ? "$ldap_server" : 'no'; ?></b></li>
                               <li class="list-group-item">Local Users: <b><?php echo !empty($auth_users)>0 ? 'yes' : 'no'; ?></b></li>
+                              <li class="list-group-item">Syslog Use: <b><?php echo $use_syslog ? "$syslog_server:$syslog_port/$syslog_proto" : 'no'; ?></b></li>
                             </ul>
                           </div>
                    </div>
@@ -4559,6 +4560,95 @@ function validate_ldap_login() {
       audit_action('login', 'auth=ldap,is_admin='.($is_admin ? '1' : '0'), 'ok');
       fm_redirect(FM_SELF_URL . '?' . (isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'p='));
     }
+  }
+}
+
+function array_to_attributes ($array_attributes) {
+  $attributes_str = '';
+  foreach ( $array_attributes as $attribute => $value ) {
+    if (is_array($value)) {
+      $value = "\"" . array_to_attributes($value) . "\"";
+    }
+    $attributes_str .= "$attribute=$value,";
+  }
+  return substr($attributes_str, 0, -1);
+}
+
+function stringkv_to_array($kvstring) {
+  $array = [];
+  foreach (explode(',', $kvstring) as $key_string ) {
+    $kv = explode('=', $key_string);
+    $array[$kv[0]] = $kv[1];
+  }
+  return $array;
+}
+
+function send_remote_syslog($message, $message_string, $type, $program = "tinyfilemanager") {
+  // Send messages to syslog in RFC5424 format
+  global $syslog_server,  $syslog_port, $syslog_proto, $use_syslog, $syslog_json, $syslog_facility, $syslog_hostname, $stderr;
+
+  if ($type == 'error') {
+    $severity = 3;
+  } else {
+    $severity = 6;
+  }
+  if ($use_syslog) {
+    if ($syslog_proto == 'udp') {
+      $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+    } else {
+      $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+      try {
+        $sc = socket_connect($sock, $syslog_server,  $syslog_port);
+      } catch (Exception $e) {
+      } finally {
+        if ($sc === false) {
+          fwrite($stderr, "unable to connect syslog to $syslog_server:$syslog_port/$syslog_proto" . PHP_EOL);
+          return false;
+        }
+      }
+    }
+    if ($syslog_json) {
+      $m = json_encode($message);
+    } else {
+      $m = $message_string;
+    }
+
+    $pri = $syslog_facility * 8 + $severity;
+
+    if (!isset($_SESSION[FM_SESSION_ID]['syslog_msgid'])) {
+      $_SESSION[FM_SESSION_ID]['syslog_msgid'] = 0;
+    }
+    $msgid = $_SESSION[FM_SESSION_ID]['syslog_msgid'] + 1;
+    $_SESSION[FM_SESSION_ID]['syslog_msgid'] = $msgid;
+
+    if (!isset($_SESSION[FM_SESSION_ID]['syslog_pid'])) {
+      $syslog_pid = getmypid();
+      if ($syslog_pid === 1) {
+      // syslog pid is fake if running in docker - one different by session:
+        $syslog_pid = time()-1621000000;
+      }
+      $_SESSION[FM_SESSION_ID]['syslog_pid'] = $syslog_pid;
+    } else {
+      $syslog_pid = $_SESSION[FM_SESSION_ID]['syslog_pid'];
+    }
+
+    if ($sock) {
+      try {
+        foreach(explode("\n", $m) as $line) {
+          $syslog_message = "<$pri>" . date('M d H:i:s') . " $syslog_hostname $program $syslog_pid $msgid: $line";
+          if ($syslog_proto == 'tcp') {
+            $syslog_message = strlen($syslog_message) . ' ' . $syslog_message;
+          }
+          socket_sendto($sock, $syslog_message, strlen($syslog_message), 0, $syslog_server,  $syslog_port);
+        }
+        socket_close($sock);
+      } catch(Exception $e) {
+        fwrite($stderr, "unable to send syslog to $syslog_server:$syslog_port/$syslog_proto" . PHP_EOL);
+        return false;
+      }
+    }
+  }
+}
 
 function audit_action($action, $parameters, $type) {
   global $stderr, $audit_username, $audit_remote_ip, $use_auditing;
@@ -4573,6 +4663,7 @@ function audit_action($action, $parameters, $type) {
                      "PARAMETERS"=>stringkv_to_array($parameters));
     $message_string = array_to_attributes($message);
     fwrite($stderr, "AuditEvent: $message_string" . PHP_EOL);
+    send_remote_syslog($message , $message_string, $type);
   }
 }
 
