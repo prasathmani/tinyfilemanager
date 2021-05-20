@@ -468,7 +468,11 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup" && !empty($_POST['file'])) {
         $fileName = $_POST['file'];
-        $fullPath = FM_ROOT_PATH . '/';
+        if (FM_ROOT_PATH != '/') {
+          $fullPath = FM_ROOT_PATH . '/';
+        } else {
+          $fullPath = FM_ROOT_PATH;
+        }
         if (!empty($_POST['path'])) {
             $relativeDirPath = fm_clean_path($_POST['path']);
             $fullPath .= "{$relativeDirPath}/";
