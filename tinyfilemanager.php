@@ -194,6 +194,11 @@ if ($report_errors == true) {
 $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
     || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
 
+$stderr = fopen('php://stderr', 'w');
+
+$audit_remote_ip = isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? explode(',',
+$_SERVER['HTTP_X_FORWARDED_FOR'])[0] : $_SERVER['REMOTE_ADDR'];
+$audit_username = "";
 
 // if fm included
 if (defined('FM_EMBED')) {
@@ -296,6 +301,7 @@ if($ip_ruleset != 'OFF'){
 if ($use_auth) {
     if (isset($_SESSION[FM_SESSION_ID]['logged'])) {
         // Logged
+        $audit_username = $_SESSION[FM_SESSION_ID]['username'];
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
@@ -463,6 +469,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $file = str_replace('/', '', fm_clean_path($_GET['edit']));
         $file_path = os_path_join($path, $file);
         if ($file == '' || !is_file($file_path)) {
+            audit_action('edit', "path=$file_path,msg=file-not-found", 'error');
             fm_set_msg(lng('File not found'), 'error');
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
         }
@@ -474,8 +481,10 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         fclose($fd);
         if ($write_results === false){
             header("HTTP/1.1 500 Internal Server Error");
+            audit_action('edit', "path=$file_path,msg=unable-to-write-file", 'error');
             die("Could Not Write File! - Check Permissions / Ownership");
         }
+        audit_action('edit', "path=$file_path", 'ok');
         die(true);
     }
 
@@ -504,11 +513,14 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         $fullyQualifiedFileName = $fullPath . $fileName;
         try {
             if (!file_exists($fullyQualifiedFileName)) {
+                audit_action('backup', "src=$fullyQualifiedFileName,dst=$fullPath,msg=file-not-found" . $newFileName, 'error');
                 throw new Exception("File {$fileName} not found");
             }
             if (copy($fullyQualifiedFileName, $fullPath . $newFileName)) {
+                audit_action('backup', "src=$fullyQualifiedFileName,dst=$fullPath" . $newFileName, 'ok');
                 echo "Backup {$newFileName} created";
             } else {
+                audit_action('backup', "src=$fullyQualifiedFileName,dst=$fullPath,msg=unable-to-copy" . $newFileName, 'error');
                 throw new Exception("Could not copy file {$fileName}");
             }
         } catch (Exception $e) {
@@ -592,6 +604,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
         if (preg_match("/^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^(?:0*\:)*?:?0*1$/i", $domain) || in_array($port, $knownPorts)) {
             $err = array("message" => "URL is not allowed");
+            audit_action('uploadurl',"url=$url,msg=url-not-allowed",'error');
             event_callback(array("fail" => $err));
             exit();
         }
@@ -609,6 +622,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
         if(!$isFileAllowed) {
             $err = array("message" => "File extension is not allowed");
+            audit_action('uploadurl',"url=$url,msg=file-extension-not-allowed",'error');
             event_callback(array("fail" => $err));
             exit();
         }
@@ -640,6 +654,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
         if ($success) {
             $success = rename($temp_file, get_file_path());
+            audit_action('uploadurl',"url=$url,path=".get_file_path(),'ok');
         }
 
         if ($success) {
@@ -649,6 +664,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
             if (!$err) {
                 $err = array("message" => "Invalid url parameter");
             }
+            audit_action('uploadurl',"url=$url,err=$err",'error');
             event_callback(array("fail" => $err));
         }
     }
@@ -664,10 +680,12 @@ if (isset($_GET['del']) && !FM_READONLY) {
         $file_path = os_path_join($path, $del);
         $is_dir = is_dir($file_path);
         if (fm_rdelete($file_path)) {
+            audit_action('delete', "path=$file_path", 'ok');
             $msg = $is_dir ? lng('Folder').' <b>%s</b> '.lng('Deleted') : lng('File').' <b>%s</b> '.lng('Deleted');
             fm_set_msg(sprintf($msg, fm_enc($del)));
         } else {
             $msg = $is_dir ? lng('Folder').' <b>%s</b> '.lng('not deleted') : lng('File').' <b>%s</b> '.lng('not deleted');
+            audit_action('delete', "path=$file_path", 'error');
             fm_set_msg(sprintf($msg, fm_enc($del)), 'error');
         }
     } else {
@@ -687,23 +705,30 @@ if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
             if (!file_exists($file_path)) {
                 if(fm_is_valid_ext($new)) {
                     @fopen($file_path, 'w') or die('Cannot open file:  ' . $new);
+                    audit_action('createfile', "path=$file_path", 'ok');
                     fm_set_msg(sprintf(lng('File').' <b>%s</b> '.lng('Created'), fm_enc($new)));
                 } else {
+                    audit_action('createfile', "path=$file_path,msg=extension-not-allowed", 'error');
                     fm_set_msg(lng('File extension is not allowed'), 'error');
                 }
             } else {
+                audit_action('createfile', "path=$file_path,msg=already-exists", 'error');
                 fm_set_msg(sprintf('File <b>%s</b> already exists', fm_enc($new)), 'alert');
             }
         } else {
             if (fm_mkdir($file_path, false) === true) {
+                audit_action('createfolder', "path=$file_path", 'ok');
                 fm_set_msg(sprintf(lng('Folder').' <b>%s</b> '.lng('Created'), $new));
             } elseif (fm_mkdir($file_path, false) === $file_path) {
+                audit_action('createfolder', "path=$file_path,msg=already-exists", 'error');
                 fm_set_msg(sprintf(lng('Folder').' <b>%s</b> '.lng('already exists'), fm_enc($new)), 'alert');
             } else {
+                audit_action('createfolder', "path=$file_path,msg=not-created", 'error');
                 fm_set_msg(sprintf(lng('Folder').' <b>%s</b> '.lng('not created'), fm_enc($new)), 'error');
             }
         }
     } else {
+        audit_action('createfolder', "path=$file_path,msg=invalid-characters", 'error');
         fm_set_msg(lng('Invalid characters in file or folder name'), 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -715,6 +740,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     $copy = fm_clean_path($_GET['copy']);
     // empty path
     if ($copy == '') {
+        audit_action('copy', "path=$copy,msg=not-defined", 'error');
         fm_set_msg(lng('Source path not defined'), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
@@ -730,16 +756,21 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
         if ($move) { // Move and to != from so just perform move
             $rename = fm_rename($from, $dest);
             if ($rename) {
+                audit_action('move', "src=$from,dst=$dest", 'ok');
                 fm_set_msg(sprintf(lng('Moved from').' <b>%s</b> '.lng('to').' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
             } elseif ($rename === null) {
+                audit_action('move', "src=$from,dst=$dest,msg=already-exists", 'error');
                 fm_set_msg(lng('File or folder with this path already exists'), 'alert');
             } else {
+                audit_action('move', "src=$from,dst=$dest", 'error');
                 fm_set_msg(sprintf(lng('Error while moving from').' <b>%s</b> '.lng('to').' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)), 'error');
             }
         } else { // Not move and to != from so copy with original name
             if (fm_rcopy($from, $dest)) {
+                audit_action('copy', "src=$from,dst=$dest", 'ok');
                 fm_set_msg(sprintf(lng('Copied from').' <b>%s</b> '.lng('to').' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
             } else {
+                audit_action('copy', "src=$from,dst=$dest", 'error');
                 fm_set_msg(sprintf(lng('Error while copying from').' <b>%s</b> '.lng('to').' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)), 'error');
             }
         }
@@ -762,12 +793,15 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
                $loop_count++;
             }
             if (fm_rcopy($from, $fn_duplicate, False)) {
+                audit_action('copy', "src=$from,dst=$fn_duplicate", 'ok');
                 fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
             } else {
+                audit_action('copy', "src=$from,dst=$fn_duplicate", 'error');
                 fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
             }
        }
-       else{
+       else {
+           audit_action('copy', "src=$from,dst=$dest,msg=paths-equal", 'error');
            fm_set_msg(lng('Paths must be not equal'), 'alert');
        }
     }
@@ -782,21 +816,25 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY) 
     // to
     $copy_to_path = FM_ROOT_PATH;
     $copy_to = fm_clean_path($_POST['copy_to']);
+
+    // move?
+    $move = isset($_POST['move']);
+
     if ($copy_to != '') {
         $copy_to_path .= '/' . $copy_to;
     }
     if ($path == $copy_to_path) {
+        audit_action($move ? 'move' : 'copy', "src=$path,dst=$copy_to_path,msg=paths-equal", 'error');
         fm_set_msg(lng('Paths must be not equal'), 'alert');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
     if (!is_dir($copy_to_path)) {
         if (!fm_mkdir($copy_to_path, true)) {
+            audit_action($move ? 'move' : 'copy', "src=$path,dst=$copy_to_path,msg=unable-to-create-destination", 'error');
             fm_set_msg('Unable to create destination folder', 'error');
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
         }
     }
-    // move?
-    $move = isset($_POST['move']);
     // copy/move
     $errors = 0;
     $files = $_POST['file'];
@@ -812,10 +850,16 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY) 
                     $rename = fm_rename($from, $dest);
                     if ($rename === false) {
                         $errors++;
+                        audit_action('move', "src=$from,dst=$dest", 'error');
+                    } else {
+                        audit_action('move', "src=$from,dst=$dest", 'ok');
                     }
                 } else {
                     if (!fm_rcopy($from, $dest)) {
                         $errors++;
+                        audit_action('copy', "src=$from,dst=$dest", 'error');
+                    } else {
+                        audit_action('copy', "src=$from,dst=$dest", 'ok');
                     }
                 }
             }
@@ -844,11 +888,14 @@ if (isset($_GET['ren'], $_GET['to']) && !FM_READONLY) {
     // rename
     if (fm_isvalid_filename($new) && $old != '' && $new != '') {
         if (fm_rename(os_path_join($path, $old), os_path_join($path, $new))) {
+            audit_action('rename', "src=".os_path_join($path, $old).",dst=".os_path_join($path, $new), 'ok');
             fm_set_msg(sprintf(lng('Renamed from').' <b>%s</b> '. lng('to').' <b>%s</b>', fm_enc($old), fm_enc($new)));
         } else {
+            audit_action('rename', "src=".os_path_join($path, $old).",dst=".os_path_join($path, $new), 'error');
             fm_set_msg(sprintf(lng('Error while renaming from').' <b>%s</b> '. lng('to').' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');
         }
     } else {
+        audit_action('rename', "dst=".os_path_join($path, $new).",msg=invalid-characters", 'error');
         fm_set_msg(lng('Invalid characters in file name'), 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -860,9 +907,11 @@ if (isset($_GET['dl'])) {
     $path = os_path_join(FM_ROOT_PATH, FM_PATH);
     $file_path = os_path_join($path, $dl);
     if ($dl != '' && is_file($file_path)) {
+        audit_action('download', "path=$file_path", 'ok');
         fm_download_file($file_path, $dl, 1024);
         exit;
     } else {
+        audit_action('download', "path=$file_path,msg=file-not-found", 'error');
         fm_set_msg(lng('File not found'), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
@@ -877,9 +926,12 @@ if (isset($_GET['exec']) && !FM_READONLY) {
         chdir($path);
 
         //$output = shell_exec($file_path);
-        cmd_exec($file_path,$output, $error);
-        fm_set_msg("<PRE class=\"ok\">Output of command '{$file_path}':\n".implode("\n",$output). (count($error)>0 ? "\nstderr:\n".implode("\n", $error) : "") . "\n</PRE>");
+        $exit = cmd_exec($file_path,$output, $error);
+        $msg_type = count($error)>0 || $exit>0 ? 'error' : 'ok';
+        audit_action('execute', "path=$file_path,exit=$exit,stdout=".base64_encode(implode("\n",$output)).",stderr=".base64_encode(implode("\n",$error)), $msg_type);
+        fm_set_msg("<PRE class=\"". $msg_type. "\">Output of command '{$file_path}':\n".implode("\n",$output). (count($error)>0 ? "\nstderr:\n".implode("\n", $error) : "") . "\n</PRE>", $msg_type);
     } else {
+        audit_action('execute', "path=$file_path,msg=file-not-found", 'error');
         fm_set_msg(lng('File not found'), 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -926,11 +978,13 @@ if (!empty($_FILES) && !FM_READONLY) {
             if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
                 if ( file_exists($fullPath) ) {
+                    audit_action('upload', "path=$fullPath", 'ok');
                     $response = array (
                         'status'    => 'success',
                         'info' => "file upload successful"
                     );
                 } else {
+                    audit_action('upload', "path=$fullPath", 'error');
                     $response = array (
                         'status' => 'error',
                         'info'   => 'Couldn\'t upload the requested file.'
@@ -944,6 +998,7 @@ if (!empty($_FILES) && !FM_READONLY) {
             }
         }
     } else {
+        audit_action('upload', "path=$targetPath,msg=folder-not-writeable", 'error');
         $response = array (
             'status' => 'error',
             'info'   => 'The specified folder for upload isn\'t writeable.'
@@ -966,6 +1021,9 @@ if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
                 $new_path = os_path_join($path, $f);
                 if (!fm_rdelete($new_path)) {
                     $errors++;
+                    audit_action('delete', "path=$new_path", 'error');
+                } else {
+                    audit_action('delete', "path=$new_path", 'ok');
                 }
             }
         }
@@ -1017,8 +1075,10 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
         }
 
         if ($res) {
+            audit_action('pack', "path=$zipname", 'ok');
             fm_set_msg(sprintf(lng('Archive').' <b>%s</b> '.lng('Created'), fm_enc($zipname)));
         } else {
+            audit_action('pack', "path=$zipname", 'error');
             fm_set_msg(lng('Archive not created'), 'error');
         }
     } else {
@@ -1041,11 +1101,13 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
         $ext = pathinfo($zip_path, PATHINFO_EXTENSION);
         $isValid = true;
     } else {
+        audit_action('unpack', "path=$file_path,msg=file-not-found", 'ok');
         fm_set_msg(lng('File not found'), 'error');
     }
 
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
+        audit_action('unpack', "path=$file_path,msg=operations-with-archives-not-available", 'error');
         fm_set_msg(lng('Operations with archives are not available'), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
@@ -1078,12 +1140,15 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
         }
 
         if ($res) {
+            audit_action('unpack', "path=$zip_path,dst=$path", 'ok');
             fm_set_msg(lng('Archive unpacked'));
         } else {
+            audit_action('unpack', "path=$zip_path,dst=$path", 'error');
             fm_set_msg(lng('Archive not unpacked'), 'error');
         }
 
     } else {
+        audit_action('unpack', "path=$zip_path,msg=file-not-found", 'error');
         fm_set_msg(lng('File not found'), 'error');
     }
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -1096,6 +1161,7 @@ if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     $file = str_replace('/', '', fm_clean_path($_POST['chmod']));
     $file_path = os_path_join($path, $file);
     if ($file == '' || (!is_file($file_path) && !is_dir($file_path))) {
+        audit_action('chmod', "path=$zip_path,msg=file-not-found", 'error');
         fm_set_msg(lng('File not found'), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
@@ -1138,8 +1204,10 @@ if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
         $mode |= 01000;
     }
     if (@chmod($file_path, $mode)) {
+        audit_action('chmod', "path=$file_path,mode=".substr(decoct($mode), -4), 'ok');
         fm_set_msg(lng('Permissions changed'));
     } else {
+        audit_action('chmod', "path=$file_path,mode=".substr(decoct($mode), -4), 'error');
         fm_set_msg(lng('Permissions not changed'), 'error');
     }
 
@@ -1167,8 +1235,10 @@ if (isset($_POST['chown']) && !FM_READONLY && !FM_IS_WIN && posix_getuid()==0) {
     }
 
     if (@chown($file_path, intval($uid)) && @chgrp($file_path, intval($gid))) {
+        audit_action('chown', "path=$file_path,uid=$uid,gid=$gid", 'ok');
         fm_set_msg('Ownership changed');
     } else {
+        audit_action('chown', "path=$file_path,uid=$uid,gid=$gid", 'error');
         fm_set_msg('Ownership not changed', 'error');
     }
 
@@ -1593,10 +1663,11 @@ if (isset($_GET['view'])) {
     $file = str_replace('/', '', fm_clean_path($_GET['view'], false));
     $file_path = os_path_join($path, $file);
     if ($file == '' || !is_file($file_path) || in_array($file, $GLOBALS['exclude_items'])) {
+        audit_action('view', "path=$file_path", 'error');
         fm_set_msg('File not found', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
-
+    audit_action('view', "path=$file_path", 'ok');
     if(!$quickView) {
         fm_show_header(); // HEADER
         fm_show_nav_path(FM_PATH); // current path
@@ -1814,6 +1885,7 @@ if (isset($_GET['edit'])) {
     $file = str_replace('/', '', fm_clean_path($_GET['edit'], false));
     $file_path = os_path_join($path, $file);
     if ($file == '' || !is_file($file_path)) {
+        audit_action('edit', "path=$file_path,msg=file-not-found", 'error');
         fm_set_msg(lng('File not found'), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
@@ -1837,6 +1909,7 @@ if (isset($_GET['edit'])) {
         $fd = fopen($file_path, "w");
         @fwrite($fd, $writedata);
         fclose($fd);
+        audit_action('edit', "path=$file_path", 'ok');
         fm_set_msg(lng('File Saved Successfully'));
     }
 
@@ -3753,6 +3826,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .message { padding:4px 7px;border:1px solid #ddd;background-color:#fff  }
         .message.ok { border-color:green;color:green  }
         pre.ok { color:green  }
+        pre.error { color:red  }
         .message.error { border-color:red;color:red  }
         .message.alert { border-color:orange;color:orange  }
         .preview-img { max-width:100%;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC)  }
@@ -4477,6 +4551,20 @@ function validate_ldap_login() {
       audit_action('login', 'auth=ldap,is_admin='.($is_admin ? '1' : '0'), 'ok');
       fm_redirect(FM_SELF_URL . '?' . (isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'p='));
     }
+
+function audit_action($action, $parameters, $type) {
+  global $stderr, $audit_username, $audit_remote_ip, $use_auditing;
+  if ($use_auditing) {
+    $objDateTime = new DateTime('NOW');
+    $datetime = $objDateTime->format(DateTime::ISO8601);
+    $message = array("DATE"=>$datetime,
+                     "IPADDRESS"=>$audit_remote_ip,
+                     "USER"=>$audit_username,
+                     "ACTION"=>$action,
+                     "TYPE"=>$type,
+                     "PARAMETERS"=>stringkv_to_array($parameters));
+    $message_string = array_to_attributes($message);
+    fwrite($stderr, "AuditEvent: $message_string" . PHP_EOL);
   }
 }
 
