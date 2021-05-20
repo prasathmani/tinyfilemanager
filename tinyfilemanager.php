@@ -4245,8 +4245,7 @@ function os_path_join(...$parts) {
   return preg_replace('#/+#', '/', implode('/', array_filter($parts)));
 }
 
-function cmd_exec($cmd, &$stdout, &$stderr)
-{
+function cmd_exec($cmd, &$stdout, &$stderr) {
     $outfile = tempnam(".", "cmd");
     $errfile = tempnam(".", "cmd");
     $descriptorspec = array(
