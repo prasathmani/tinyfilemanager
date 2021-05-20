@@ -2181,6 +2181,14 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                             <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>
                             <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> '.lng('FreeOf').' <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
+                            <?php $disk_percent = intval((@disk_total_space($path)-@disk_free_space($path))*100/@disk_total_space($path));
+                                  $percent_color = array('success','info','warning','danger')[intval($disk_percent/25)];
+                            ?>
+                            <div style="display: inline-block">
+                            <div class="progress" style="width: 100px; border-radius: 5px !important">
+                              <div class="progress-bar bg-<?php echo $percent_color ?>" role="progressbar" style="width: <?php echo $disk_percent ?>%;" aria-valuenow="<?php echo $disk_percent ?>" aria-valuemin="0" aria-valuemax="100"><?php echo $disk_percent ?>%</div>
+                            </div>
+                            </div>
                         </td>
                     </tr>
                 </tfoot>
