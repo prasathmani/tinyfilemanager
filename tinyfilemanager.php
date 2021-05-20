@@ -1605,7 +1605,19 @@ if (isset($_GET['view'])) {
                     File size: <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
                     Modify Date: <?php echo $modif ?><br>
                     MIME-type: <?php echo $mime_type ?><br>
-
+                    <?php
+                    if (!FM_IS_WIN && function_exists("xattr_list")) {
+                      if (xattr_supported($file_path)) {
+                        $xattr_list = xattr_list($file_path, XATTR_DONTFOLLOW);
+                        if (!empty($xattr_list)) {
+                          foreach ($xattr_list as $attr_name) {
+                            $attr_value = xattr_get($file_path, $attr_name, XATTR_DONTFOLLOW);
+                            echo "Xattr: $attr_name = $attr_value<br>";
+                          }
+                        }
+                      }
+                    }
+                    ?>
                     <?php
                     // ZIP info
                     if (($is_zip || $is_gzip) && $filenames !== false) {
