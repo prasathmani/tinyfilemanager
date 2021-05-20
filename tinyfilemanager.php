@@ -145,6 +145,8 @@ define('DATATABLES_VERSION', '1.10.24');
 define('EKKO_LIGHTBOX_VERSION','5.3.0');
 define('FONT_AWESOME_VERSION', '4.7.0');
 define('HIGHLIGHT_VERSION', '10.6.0');
+define('DROPZONE_VERSION', '5.7.0');
+define('ACE_VERSION', '1.4.12');
 
 // max dump for binary files
 define('MAX_HEX_DUMP', 4096);
@@ -1171,7 +1173,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     }
     ?>
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/<?php echo DROPZONE_VERSION ?>/min/dropzone.min.css" rel="stylesheet">
     <div class="path">
 
         <div class="card mb-2 fm-upload-wrapper <?php echo fm_get_theme(); ?>">
@@ -1211,7 +1213,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             </div>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/<?php echo DROPZONE_VERSION ?>/min/dropzone.min.js"></script>
     <script>
         Dropzone.options.fileUploader = {
             timeout: 120000,
@@ -4017,9 +4019,9 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         $ext = "javascript";
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
         ?>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/<?php echo ACE_VERSION ?>/ace.min.js"></script>
     <script>
-        ace.config.set("basePath", "https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/");
+        ace.config.set("basePath", "https://cdnjs.cloudflare.com/ajax/libs/ace/<?php echo ACE_VERSION ?>/");
         var editor = ace.edit("editor");
         editor.getSession().setMode( {path:"ace/mode/<?php echo $ext; ?>", inline:true} );
         //editor.setTheme("ace/theme/twilight"); //Dark Theme
