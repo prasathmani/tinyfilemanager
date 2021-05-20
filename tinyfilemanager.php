@@ -1090,7 +1090,15 @@ if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     if (!empty($_POST['ox'])) {
         $mode |= 0001;
     }
-
+    if (!empty($_POST['us'])) {
+        $mode |= 04000;
+    }
+    if (!empty($_POST['gs'])) {
+        $mode |= 02000;
+    }
+    if (!empty($_POST['os'])) {
+        $mode |= 01000;
+    }
     if (@chmod($file_path, $mode)) {
         fm_set_msg(lng('Permissions changed'));
     } else {
@@ -1886,6 +1894,12 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
                             <td><label><input type="checkbox" name="gx" value="1"<?php echo ($mode & 00010) ? ' checked' : '' ?>></label></td>
                             <td><label><input type="checkbox" name="ox" value="1"<?php echo ($mode & 00001) ? ' checked' : '' ?>></label></td>
                         </tr>
+                        <tr>
+                            <td style="text-align: right"><b><?php echo lng('Special') ?></b></td>
+                            <td><label>sticky<br><input type="checkbox" name="os" value="1"<?php echo ($mode & 01000) ? ' checked' : '' ?>></label></td>
+                            <td><label>setgid<br><input type="checkbox" name="gs" value="1"<?php echo ($mode & 02000) ? ' checked' : '' ?>></label></td>
+                            <td><label>setuid<br><input type="checkbox" name="us" value="1"<?php echo ($mode & 04000) ? ' checked' : '' ?>></label></td>
+                       </tr>
                     </table>
 
                     <p>
