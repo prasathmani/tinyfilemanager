@@ -958,6 +958,14 @@ if (!empty($_FILES) && !FM_READONLY) {
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
+    if(!fm_isvalid_filename($filename) && !fm_isvalid_filename($_REQUEST['fullpath'])) {
+        $response = array (
+            'status'    => 'error',
+            'info'      => "Invalid File name!",
+        );
+        echo json_encode($response); exit();
+    }
+
     $targetPath = $path . $ds;
     if ( is_writable($targetPath) ) {
         $fullPath = os_path_join($path, $_REQUEST['fullpath']);
