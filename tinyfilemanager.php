@@ -2498,7 +2498,12 @@ function fm_get_parent_path($path)
  */
 function fm_is_exclude_items($file) {
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if(!in_array($file, FM_EXCLUDE_ITEMS) && !in_array("*.$ext", FM_EXCLUDE_ITEMS)) {
+
+    $exclude_items = FM_EXCLUDE_ITEMS;
+    if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+        $exclude_items = unserialize($exclude_items);
+    }
+    if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
         return true;
     }
     return false;
