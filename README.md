@@ -1,5 +1,34 @@
 # Tiny File Manager
 
+This [fork](https://github.com/jpralves/tinyfilemanager) adds a number of additional options that were missing in the original Tiny File Manager.
+I give credit to the original author but added the following enhancements:
+
+- Docker images ready to be used. More instructions on this [document](README-docker.md).
+- Ability to change owner of files and folders (Root run image)
+- Added dynamic user variables to be used in docker images
+- Updated external JS/CSS libraries to latest versions
+- Show binary files in HEX dump format
+- Support for webp images
+- xz and bz2 compressed extension icons
+- Markdown highlighting
+- Edit empty files
+- Fix problem in compression information
+- Show Modify date in file information
+- Show ownership in numeric uid:gid when username and/or group are not available
+- Execute of commands/scripts for admin users
+- LDAP authentication with membership authorization (bind-only mode) (Requires ldap extension)
+- Manipulate special file bits (sticky, setuid, setgid)
+- System information page in Help
+- Partition Space usage in a progress bar
+- Support for xattr (extended attributes) information of files (Requires pear xattr extension)
+- Auditing information of operations
+- syslog support for shipping auditing information
+- do not reset url parameters after autentication
+
+Setup of features (LDAP, syslog) is explained in the config.php file or the [Docker README](README-docker.md).
+
+Remainder of original document:
+
 [![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.github.io/demo/)
 [![Live demo](https://img.shields.io/badge/Help-Docs-lightgrey.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/wiki)
 [![GitHub Release](https://img.shields.io/github/release/qubyte/rubidium.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/releases)

@@ -4,8 +4,8 @@ These docker images are the [tinyfilemanager](https://github.com/jpralves/tinyfi
 The original work of tinyfilemanager is from this [site](https://tinyfilemanager.github.io/)
 
 There are two versions of the images:
-- 2.4.4-root - With the chown capability
-- 2.4.4-user - php is run under a non-privileged user
+- 2.4.6.1 - php is run with root user giving acess to privileged operations
+- 2.4.6.1-user - php is run under a non-privileged user
 
 ## Options
 - ADMIN_USER - (optional) The username of the admin user
@@ -13,12 +13,37 @@ There are two versions of the images:
 - RO_USER - (optional) The username of the read/only user
 - RO_PASS - (optional) The password (This can be in clear-text or in the encrypted format)
 - ROOT_FS - (optional) The base of the viewed filesystem
+- THEME - (optional) Set the default theme (light/dark)
+
+### Syslog Specific
+- SYSLOG_SERVER - Syslog server to send auditing messages
+- SYSLOG_PROTO - (optional) Protocol (tcp/udp) for syslog server (default: udp)
+- SYSLOG_PORT - (optional) Port for syslog server (default: 514)
+- SYSLOG_JSON - (optional) Format messages in json format
+- SYSLOG_FACILITY - (optional) Facility to use (default: 13)
+
+### LDAP Specific
+- LDAP_URL - URL to LDAP server (ldap://server:port)
+- LDAP_BASE_SEARCH - Filter for LDAP search (dc=example,dc=org)
+- LDAP_DOMAIN - (optional) LDAP domain prefix for authentication (ex: example)
+- LDAP_ADMIN_GROUPS - (optional) LDAP admin groups to match separated by ';' (ex: CN=tinyfilemanager-admins,OU=GROUPS,DC=example,DC=org)
+- LDAP_USER_GROUPS - (optional) LDAP user groups to match separated by ';' (ex: CN=tinyfilemanager-users,OU=GROUPS,DC=example,DC=org)
+- LDAP_FILTER - (optional) - LDAP authentication attribute (default: "(|(sAMAccountName=%s)(UserPrincipalName=%s))")
+
+For LDAP use the following Environment variables must be defined:
+- LDAP_URL
+- LDAP_BASE_SEARCH
+
+If you want to use username without domain also define LDAP_DOMAIN (Users will be LDAP_DOMAIN \ username)
+If you want to have admin users please define group or groups to match separated by ";"
+If LDAP_ADMIN_GROUPS or LDAP_USER_GROUPS are not defined all authenticated users will be accepted as users.
+If LDAP_USER_GROUPS is defined all authenticated users must belong to one of the groups in this list.
 
 ## Sample execution
 
 With docker:
 ```
-docker run -it -p 8111:8080 -v /opt:/opt -e ADMIN_USER=admin -e ADMIN_PASS=password -e ROOT_FS=/opt/ jpralvesatdocker/tinyfilemanager:2.4.4-root
+docker run -it -p 8111:8080 -v /opt:/opt -e ADMIN_USER=admin -e ADMIN_PASS=password -e ROOT_FS=/opt/ jpralvesatdocker/tinyfilemanager:2.4.6.1
 ```
 
 With docker-compose:
@@ -35,14 +60,14 @@ services:
             - ADMIN_USER=admin
             - ADMIN_PASS=pass
             - ROOT_FS=/opt
-        image: jpralvesatdocker/tinyfilemanager:2.4.4-root
+        image: jpralvesatdocker/tinyfilemanager:2.4.6.1
 ```
 
 ## Building images
 ```
 git clone https://github.com/jpralves/tinyfilemanager
 cd tinyfilemanager
-docker build . -t jpralvesatdocker/tinyfilemanager-root:latest-root
+docker build . -t jpralvesatdocker/tinyfilemanager:latest
 docker build --build-arg RUNUSER=tinyuser . -t jpralvesatdocker/tinyfilemanager:latest-user
 ```
 
