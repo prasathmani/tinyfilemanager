@@ -3,13 +3,18 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.4.4
+ * H3K | Tiny File Manager V2.4.6
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
+ *
+ *
+ * Modified by João Alves <jpralves@gmail.com>
+ * Details and source in: https://github.com/jpralves/tinyfilemanager
+ *
  */
 
 //TFM version
-define('VERSION', '2.4.4');
+define('VERSION', '2.4.6.1');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -1610,9 +1615,11 @@ if (isset($_GET['help'])) {
             <div class="card-body">
                 <div class="row">
                     <div class="col-xs-12 col-sm-6">
-                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager <?php echo VERSION; ?></a></h3></p>
-                        <p>Author: Prasath Mani</p>
-                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers[at]gmail.com</a> </p>
+                        <p><h3><a href="<?php echo APP_URL; ?>" target="_blank" class="app-v-title"> Tiny File Manager <?php echo VERSION; ?></a></h3></p>
+                        <p>Original Author: Prasath Mani <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers[at]gmail.com</a><br>
+                        Original repo: <a href="https://github.com/prasathmani/tinyfilemanager">https://github.com/prasathmani/tinyfilemanager</a></p>
+
+                        <p>Customizations: João Alves <a href="mailto:jpralves@gmail.com">jpralves[at]gmail.com</a></p>
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
