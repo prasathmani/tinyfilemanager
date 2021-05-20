@@ -4,8 +4,8 @@ These docker images are the [tinyfilemanager](https://github.com/jpralves/tinyfi
 The original work of tinyfilemanager is from this [site](https://tinyfilemanager.github.io/)
 
 There are two versions of the images:
-- 2.4.6.1 - php is run with root user giving acess to privileged operations
-- 2.4.6.1-user - php is run under a non-privileged user
+- tinyfilemanager - With the chown capability (php is run with root)
+- tinyfilemanager-user - php is run under a non-privileged user
 
 ## Options
 - ADMIN_USER - (optional) The username of the admin user
@@ -68,6 +68,6 @@ services:
 git clone https://github.com/jpralves/tinyfilemanager
 cd tinyfilemanager
 docker build . -t jpralvesatdocker/tinyfilemanager:latest
-docker build --build-arg RUNUSER=tinyuser . -t jpralvesatdocker/tinyfilemanager:latest-user
+docker build --build-arg RUNUSER=tinyuser . -t jpralvesatdocker/tinyfilemanager-user:latest
 ```
 
