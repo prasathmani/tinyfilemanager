@@ -1542,9 +1542,26 @@ if (isset($_GET['help'])) {
                                 <?php if(!FM_READONLY) { ?>
                                 <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
                                 <?php } ?>
+                                <li class="list-group-item"><a data-toggle="collapse" href="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo"><i class="fa fa-microchip"></i> System Info</a></li>
                             </ul>
                         </div>
                     </div>
+                </div>
+                <div class="row mt-2">
+                  <div class="col-sm-12">
+                   <div class="collapse" id="collapseInfo">
+                          <div class="card card-body">
+                            <ul class="list-group list-group-flush">
+                              <li class="list-group-item">System: <b><?php echo php_uname('s').' '.php_uname('m').' '.php_uname('r'); ?></b></li>
+                              <li class="list-group-item">PHP version: <b><?php echo phpversion(); ?></b></li>
+                              <li class="list-group-item">Memory usage: <b><?php echo fm_get_filesize(memory_get_usage(true)); ?></b></li>
+                              <li class="list-group-item">HTTPS: <b><?php echo $is_https ? 'yes' : 'no'; ?></b></li>
+                              <li class="list-group-item">LDAP Use: <b><?php echo $use_ldap ? "$ldap_server" : 'no'; ?></b></li>
+                              <li class="list-group-item">Local Users: <b><?php echo !empty($auth_users)>0 ? 'yes' : 'no'; ?></b></li>
+                            </ul>
+                          </div>
+                   </div>
+                   </div>
                 </div>
                 <div class="row js-new-pwd hidden mt-2">
                     <div class="col-12">
