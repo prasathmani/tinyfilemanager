@@ -4036,6 +4036,9 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE):
         $ext = "javascript";
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
+        if ($ext == "") {
+          $ext = "text";
+        }
         ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/<?php echo ACE_VERSION ?>/ace.min.js"></script>
     <script>
