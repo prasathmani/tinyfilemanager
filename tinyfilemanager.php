@@ -4149,6 +4149,36 @@ function lng($txt) {
     $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
     $tr['en']['ChangeOwnership']  = 'Change Ownership';
+
+    // new - novos
+
+    $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying fro']    = 'Error while copying fro';
+    $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
+    $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
+    $tr['en']['Deleted']            = 'Deleted';            $tr['en']['Archive not created']        = 'Archive not created';
+    $tr['en']['Copied from']        = 'Copied from';        $tr['en']['Permissions changed']        = 'Permissions changed';
+    $tr['en']['to']                 = 'to';                 $tr['en']['Saved Successfully']         = 'Saved Successfully';
+    $tr['en']['not found!']         = 'not found!';         $tr['en']['File Saved Successfully']    = 'File Saved Successfully';
+    $tr['en']['Archive']            = 'Archive';            $tr['en']['Permissions not changed']    = 'Permissions not changed';
+    $tr['en']['Select folder']      = 'Select folder';      $tr['en']['Source path not defined']    = 'Source path not defined';
+    $tr['en']['already exists']     = 'already exists';     $tr['en']['Error while moving from']    = 'Error while moving from';
+    $tr['en']['Create archive?']    = 'Create archive?';    $tr['en']['Invalid file or folder name']    = 'Invalid file or folder name';
+    $tr['en']['Archive unpacked']   = 'Archive unpacked';   $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
+    $tr['en']['Root path']          = 'Root path';          $tr['en']['Error while renaming from']  = 'Error while renaming from';
+    $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';
+    $tr['en']['Invalid characters in file name']                = 'Invalid characters in file name';
+    $tr['en']['FILE EXTENSION HAS NOT SUPPORTED']               = 'FILE EXTENSION HAS NOT SUPPORTED';
+    $tr['en']['Selected files and folder deleted']              = 'Selected files and folder deleted';
+    $tr['en']['Error while fetching archive info']              = 'Error while fetching archive info';
+    $tr['en']['Delete selected files and folders?']             = 'Delete selected files and folders?';
+    $tr['en']['Search file in folder and subfolders...']        = 'Search file in folder and subfolders...';
+    $tr['en']['Access denied. IP restriction applicable']       = 'Access denied. IP restriction applicable';
+    $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
+    $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
+    $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
+
+    $tr['en']['Moved from']                 = 'Moved from';
+
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
 
