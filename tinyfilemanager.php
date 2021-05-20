@@ -14,6 +14,9 @@ define('VERSION', '2.4.4');
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
 
+// URL:
+define('APP_URL', 'https://github.com/jpralves/tinyfilemanager');
+
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
 // Auth with login/password
