@@ -1944,7 +1944,6 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     $arrInfo = fm_get_directorysize($path . '/' . $f);
                     $dirCount = $arrInfo[1];
                     $fileSize = $arrInfo[0];
-                    // $filesize_raw = fm_get_directorysize($path . '/' . $f)[1].'/'.fm_get_directorysize($path . '/' . $f)[0];
                     $filesize = $dirCount. ' files / ' .fm_get_filesize($fileSize);
                 }
                 else {
