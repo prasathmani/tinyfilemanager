@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":true,"theme":"light"}';
 
 /**
  * H3K | Tiny File Manager V2.4.6
@@ -1940,9 +1940,12 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
                 $modif_raw = filemtime($path . '/' . $f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
-                if ($calc_folder) {
-                    $filesize_raw = fm_get_directorysize($path . '/' . $f);
-                    $filesize = fm_get_filesize($filesize_raw);
+                if ($calc_folder==true) {
+                    $arrInfo = fm_get_directorysize($path . '/' . $f);
+                    $dirCount = $arrInfo[1];
+                    $fileSize = $arrInfo[0];
+                    // $filesize_raw = fm_get_directorysize($path . '/' . $f)[1].'/'.fm_get_directorysize($path . '/' . $f)[0];
+                    $filesize = $dirCount. ' files / ' .fm_get_filesize($fileSize);
                 }
                 else {
                     $filesize_raw = "";
@@ -2520,8 +2523,8 @@ function fm_get_directorysize($directory) {
             $count++;
         }
     else if ($file->isDir()) { $dirCount++; }
-    // return [$size, $count, $dirCount];
-    return $size;
+    return [$size, $count, $dirCount];
+    // return $size;
     }
     else return 'Folder'; //  Quick output
 }
