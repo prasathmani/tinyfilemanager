@@ -1969,8 +1969,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
                     </td>
-                    <td data-sort="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
-                        <?php echo $filesize; ?>
+                    <td style="text-align:center;">
+                        <?php echo '<span style="display:none">a-'.str_pad($filesize_raw, 18, "0", STR_PAD_LEFT).'</span>'. $filesize; ?>
                     </td>
                     <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
@@ -2031,8 +2031,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                                 <?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
                         </div>
                     </td>
-                    <td data-sort=b-"<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
-                        <?php echo $filesize; ?>
+                    <td style="text-align:right;"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
+                        <?php echo '<span style="display:none">b-'.str_pad($filesize_raw, 18, "0", STR_PAD_LEFT).'</span>'. $filesize; ?>
                         </span></td>
                     <td data-sort="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
@@ -2500,9 +2500,9 @@ function fm_get_size($file)
 function fm_get_filesize($size)
 {
     $size = (float) $size;
-    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $units = array('&nbsp;B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $power = $size > 0 ? floor(log($size, 1024)) : 0;
-    return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
+    return sprintf('%s %s', number_format(round($size / pow(1024, $power), 2),2), $units[$power]);
 }
 
 /**
