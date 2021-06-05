@@ -360,7 +360,7 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
 if (!@is_dir($root_path)) {
-    echo "<h1>".lang('Root path')." \"{$root_path}\" ".lang('not found!')." </h1>";
+    echo "<h1>".lng('Root path')." \"{$root_path}\" ".lng('not found!')." </h1>";
     exit;
 }
 
@@ -2683,6 +2683,7 @@ function fm_get_file_icon_class($path)
         case 'cpp':
         case 'cs':
         case 'py':
+        case 'rs':
         case 'map':
         case 'lock':
         case 'dtd':
@@ -2701,11 +2702,13 @@ function fm_get_file_icon_class($path)
         case 'scss':
             $img = 'fa fa-css3';
             break;
+        case 'bz2':
         case 'zip':
         case 'rar':
         case 'gz':
         case 'tar':
         case '7z':
+        case 'xz':
             $img = 'fa fa-file-archive-o';
             break;
         case 'php':
@@ -2743,6 +2746,7 @@ function fm_get_file_icon_class($path)
         case 'm3u8':
         case 'pls':
         case 'cue':
+        case 'xspf':
             $img = 'fa fa-headphones';
             break;
         case 'avi':
@@ -2774,6 +2778,7 @@ function fm_get_file_icon_class($path)
             $img = 'fa fa-file-text-o';
             break;
         case 'bak':
+        case 'swp':
             $img = 'fa fa-clipboard';
             break;
         case 'doc':
