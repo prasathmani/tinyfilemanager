@@ -2681,6 +2681,7 @@ function fm_get_file_icon_class($path)
         case 'cpp':
         case 'cs':
         case 'py':
+        case 'rs':
         case 'map':
         case 'lock':
         case 'dtd':
@@ -2699,11 +2700,13 @@ function fm_get_file_icon_class($path)
         case 'scss':
             $img = 'fa fa-css3';
             break;
+        case 'bz2':
         case 'zip':
         case 'rar':
         case 'gz':
         case 'tar':
         case '7z':
+        case 'xz':
             $img = 'fa fa-file-archive-o';
             break;
         case 'php':
@@ -2741,6 +2744,7 @@ function fm_get_file_icon_class($path)
         case 'm3u8':
         case 'pls':
         case 'cue':
+        case 'xspf':
             $img = 'fa fa-headphones';
             break;
         case 'avi':
@@ -2772,6 +2776,7 @@ function fm_get_file_icon_class($path)
             $img = 'fa fa-file-text-o';
             break;
         case 'bak':
+        case 'swp':
             $img = 'fa fa-clipboard';
             break;
         case 'doc':
