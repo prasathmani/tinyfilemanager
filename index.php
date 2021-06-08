@@ -2087,6 +2087,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
     </div>
 
     <div class="row">
+        <li class="list-inline-item"> <a href="#" class="btn btn-outline-primary btn-2" onclick="update_logs();"><i class="fa fa-check-square"></i> Actualizar Logs </a></li>
+
         <?php if (!FM_READONLY): ?>
         <div class="col-xs-12 col-sm-9">
             <ul class="list-inline footer-action">
@@ -3789,6 +3791,13 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function rename(e, t) {var n = prompt("New name", t);null !== n && "" !== n && n != t && (window.location.search = "p=" + encodeURIComponent(e) + "&ren=" + encodeURIComponent(t) + "&to=" + encodeURIComponent(n))}
     function change_checkboxes(e, t) { for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked }
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
+
+    function update_logs() { 
+        window.open('http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores');
+        window.open('http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores');
+        alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+    }
+
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
     function unselect_all() { change_checkboxes(get_checkboxes(), !1) }
     function invert_all() { change_checkboxes(get_checkboxes()) }
