@@ -2,7 +2,7 @@
 
 /*
 #################################################################################################################
-This is an OPTIONAL configuration file.
+This is an OPTIONAL configuration file. rename this file into config.php to use this configuration 
 The role of this file is to make updating of "tinyfilemanager.php" easier.
 So you can:
 -Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
@@ -76,8 +76,8 @@ $directories_users = array();
 $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
-// Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'd.m.y H:i';
+// Doc - https://www.php.net/manual/en/datetime.format.php
+$datetime_format = 'd.m.y H:i:s';
 
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
@@ -90,11 +90,11 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$favicon_path = '?img=favicon';
+$favicon_path = '';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', ...)
-$exclude_items = array();
+$exclude_items = array('');
 
 // Online office Docs Viewer
 // Availabe rules are 'google', 'microsoft' or false
@@ -110,7 +110,7 @@ $sticky_navbar = true;
 
 
 // max upload file size
-$max_upload_size_bytes = 2048;
+$max_upload_size_bytes = 5000;
 
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
