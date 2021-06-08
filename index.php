@@ -2087,7 +2087,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
     </div>
 
     <div class="row">
-        <li class="list-inline-item"> <a href="#" class="btn btn-outline-primary btn-2" onclick="update_logs();"><i class="fa fa-check-square"></i> Actualizar Logs </a></li>
+        <a href="#" class="btn btn-outline-primary" onclick="update_logs();"><i class="fa fa-file-text-o"></i> Actualizar Logs </a>
 
         <?php if (!FM_READONLY): ?>
         <div class="col-xs-12 col-sm-9">
@@ -3793,8 +3793,16 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
 
     function update_logs() { 
-        window.open('http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores', '_blank');
-        window.open('http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores', '_blank');
+        fetch("http://ao20-test.duckdnsorg:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores")
+        .catch(function (error) {
+            alert("No se pudo actualizar log de Produccion Error: " + error);
+        });
+
+        fetch("http://ao20-test.duckdnsorg:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores")
+        .catch(function (error) {
+            alert("No se pudo actualizar log de Test Error: " + error);
+        });
+
         alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
     }
 
