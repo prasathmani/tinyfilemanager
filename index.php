@@ -3793,17 +3793,17 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
 
     function update_logs() { 
-        function httpGet(theUrl) {
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open("GET", theUrl, false); // false for synchronous request
-            xmlHttp.send(null);
-            return xmlHttp.responseText;
+        var actualizarProduccion = confirm("Queres actualizar los logs de Produccion?");
+        if (actualizarProduccion) {
+            window.open("http://ao20-test.duckdnsorg:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores");
         }
-        
-        httpGet("http://ao20-test.duckdnsorg:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores");
-        httpGet("http://ao20-test.duckdnsorg:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores");
 
-        alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+        var actualizarTest = confirm("Queres actualizar los logs de Test?");
+        if (actualizarTest) {
+            window.open("http://ao20-test.duckdnsorg:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores");
+        }
+
+        alert("Por favor espera unos minutos para que se terminen de subir los logs correspondientes. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
     }
 
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
