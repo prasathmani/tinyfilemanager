@@ -2087,8 +2087,6 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
     </div>
 
     <div class="row">
-        <a href="#" class="btn btn-outline-primary" onclick="update_logs();"><i class="fa fa-file-text-o"></i> Actualizar Logs </a>
-
         <?php if (!FM_READONLY): ?>
         <div class="col-xs-12 col-sm-9">
             <ul class="list-inline footer-action">
@@ -3348,6 +3346,10 @@ function fm_show_nav_path($path)
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+
+        <a href="#" class="btn btn-outline-primary" onclick="update_logs_test();"><i class="fa fa-file-text-o"></i> Actualizar Logs Test</a>
+        <a href="#" class="btn btn-outline-primary" onclick="update_logs_produccion();"><i class="fa fa-file-text-o"></i> Actualizar Logs Prod</a>
+        
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
             <?php
@@ -3792,22 +3794,25 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function change_checkboxes(e, t) { for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked }
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
 
-    function update_logs() { 
-        window.open("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+" + <?php echo $_SESSION[FM_SESSION_ID]['logged']?>, "_blank");
-        setTimeout(function(){ console.log("Un timeout para que pueda abrir las 2 paginas correctamente."); }, 2000);
-        window.open("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+" + <?php echo $_SESSION[FM_SESSION_ID]['logged']?>, "_blank");
+    function update_logs_test() { 
+        var actualizarTest = confirm("Actualizar logs de Test?");
+        if (actualizarTest) {
+            var myWindow = window.open("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
+            setTimeout(function(){ myWindow.close() }, 4000);            
+            alert("Se estan actualizando los logs de test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+        }
 
-        alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
     }
-    // function update_logs() { 
-    //     window.open("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+PUTO", "PRODUCCION");
-    //     setTimeout(function(){ console.log("Un timeout para que pueda abrir las 2 paginas correctamente."); }, 2000);
-       
-    //     window.open("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+PUTO", "TEST");
 
-    //     alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
-    // }
+    function update_logs_produccion() { 
+        var actualizarTest = confirm("Actualizar logs de Produccion?");
+        if (actualizarTest) {
+            var myWindow = window.open("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
+            setTimeout(function(){ myWindow.close() }, 4000);            
+            alert("Se estan actualizando los logs de produccion. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+        }
 
+    }
 
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
     function unselect_all() { change_checkboxes(get_checkboxes(), !1) }
