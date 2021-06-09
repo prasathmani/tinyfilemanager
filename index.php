@@ -3793,18 +3793,21 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
 
     function update_logs() { 
-        fetch("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores")
-        .catch(function (error) {
-            alert("No se pudo actualizar log de Produccion Error: " + error);
-        });
-
-        fetch("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores")
-        .catch(function (error) {
-            alert("No se pudo actualizar log de Test Error: " + error);
-        });
+        window.open("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+" + <?php echo $_SESSION[FM_SESSION_ID]['logged']?>, "_blank");
+        setTimeout(function(){ console.log("Un timeout para que pueda abrir las 2 paginas correctamente."); }, 2000);
+        window.open("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+" + <?php echo $_SESSION[FM_SESSION_ID]['logged']?>, "_blank");
 
         alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
     }
+    // function update_logs() { 
+    //     window.open("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+PUTO", "PRODUCCION");
+    //     setTimeout(function(){ console.log("Un timeout para que pueda abrir las 2 paginas correctamente."); }, 2000);
+       
+    //     window.open("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+PUTO", "TEST");
+
+    //     alert("Se estan actualizando los logs de produccion y test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+    // }
+
 
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
     function unselect_all() { change_checkboxes(get_checkboxes(), !1) }
