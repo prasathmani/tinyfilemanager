@@ -898,10 +898,16 @@ if (!empty($_FILES) && !FM_READONLY) {
             if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
                 if ( file_exists($fullPath) ) {
-                    $response = array (
-                        'status'    => 'success',
-                        'info' => "file upload successful"
-                    );
+                    $response = null;
+                    if (defined('UPLOAD_CALLBACK')) {
+                        $response = call_user_func(UPLOAD_CALLBACK, $fullPath);
+                    }
+                    if (!is_array($response)) {
+                        $response = array (
+                            'status'    => 'success',
+                            'info' => "file upload successful"
+                        );
+                    }
                 } else {
                     $response = array (
                         'status' => 'error',
