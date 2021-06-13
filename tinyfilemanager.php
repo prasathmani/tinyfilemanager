@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":true,"theme":"light"}';
 
 /**
  * H3K | Tiny File Manager V2.4.6
@@ -1934,6 +1934,13 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 </tr>
                 <?php
             }
+            if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
+                $posix = true;
+            } else {
+                $posix = false;
+                $owner = array('name' => '?');
+                $group = array('name' => '?');
+            }
             $ii = 3399;
             foreach ($folders as $f) {
                 $is_link = is_link($path . '/' . $f);
@@ -1941,20 +1948,25 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $modif_raw = filemtime($path . '/' . $f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 if ($calc_folder) {
-                    $filesize_raw = fm_get_directorysize($path . '/' . $f);
+                    $dir_data = fm_get_directoryInfo($path . '/' . $f);
+                    $filesize_raw = $dir_data[0];
+                    $fileCount = $dir_data[1];
+                    $dir_Count = $dir_data[2];
                     $filesize = fm_get_filesize($filesize_raw);
+                    $dir_info = lng('Folder content').': 
+        '. $dir_Count.     ' '. lng('folders').'
+        '. $fileCount.     ' '. lng('files').'
+        '. $filesize_raw.  ' '. lng('bytes');
                 }
                 else {
                     $filesize_raw = "";
                     $filesize = lng('Folder');
                 }
+                $sizeSort= '<span class="hidden">a-'. str_pad($filesize_raw, 18, "0", STR_PAD_LEFT). '</span>';
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
-                if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
+                if ($posix==true) {
                     $owner = posix_getpwuid(fileowner($path . '/' . $f));
                     $group = posix_getgrgid(filegroup($path . '/' . $f));
-                } else {
-                    $owner = array('name' => '?');
-                    $group = array('name' => '?');
                 }
                 ?>
                 <tr>
@@ -1969,8 +1981,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
                     </td>
-                    <td data-sort="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
-                        <?php echo $filesize; ?>
+                    <td class="right bold" title="<?php echo $dir_info; ?>'" >
+                        <?php echo $sizeSort. $filesize; ?>
                     </td>
                     <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
@@ -2000,13 +2012,11 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
                 $all_files_size += $filesize_raw;
+                $sizeSort= '<span class="hidden">b-'. str_pad($filesize_raw, 18, "0", STR_PAD_LEFT). '</span>';
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
-                if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
+                if ($posix==true) {
                     $owner = posix_getpwuid(fileowner($path . '/' . $f));
                     $group = posix_getgrgid(filegroup($path . '/' . $f));
-                } else {
-                    $owner = array('name' => '?');
-                    $group = array('name' => '?');
                 }
                 ?>
                 <tr>
@@ -2031,9 +2041,9 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                                 <?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
                         </div>
                     </td>
-                    <td data-sort=b-"<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
-                        <?php echo $filesize; ?>
-                        </span></td>
+                    <td class="right" title="<?php printf('%s bytes', $filesize_raw); ?>">
+                        <?php echo $sizeSort. $filesize; ?>
+                    </td>
                     <td data-sort="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
@@ -2500,30 +2510,29 @@ function fm_get_size($file)
 function fm_get_filesize($size)
 {
     $size = (float) $size;
-    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $units = array('&nbsp;B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $power = $size > 0 ? floor(log($size, 1024)) : 0;
-    return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
+    return sprintf('%s %s', number_format(round($size / pow(1024, $power), 2), $size > 1024 ? 2 : 0), $units[$power]);
 }
 
 /**
- * Get director total size
+ * Get director total size and info
  * @param string $directory
- * @return int
+ * @return array or string
  */
-function fm_get_directorysize($directory) {
+function fm_get_directoryInfo($directory) {
     global $calc_folder;
     if ($calc_folder==true) { //  Slower output
-      $size = 0;  $count= 0;  $dirCount= 0;
+      $size = 0;  $count= 0;  $dirCount= -2;
     foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file)
     if ($file->isFile())
         {   $size+=$file->getSize();
             $count++;
         }
     else if ($file->isDir()) { $dirCount++; }
-    // return [$size, $count, $dirCount];
-    return $size;
+    return [$size, $count, $dirCount];
     }
-    else return 'Folder'; //  Quick output
+    else return lng('Folder'); //  Quick output
 }
 
 /**
@@ -3556,7 +3565,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .fa.fa-home { font-size:1.3em;vertical-align:bottom  }
         .path { margin-bottom:10px  }
         form.dropzone { min-height:200px;border:2px dashed #007bff;line-height:6rem; }
-        .right { text-align:right  }
+        .right { text-align:right }
+        .bold { font-weight:600 }
         .center, .close, .login-form { text-align:center  }
         .message { padding:4px 7px;border:1px solid #ddd;background-color:#fff  }
         .message.ok { border-color:green;color:green  }
