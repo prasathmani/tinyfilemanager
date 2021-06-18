@@ -272,6 +272,9 @@ if($ip_ruleset != 'OFF'){
 if ($use_auth) {
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
+    } elseif (isset($_SERVER['PHP_AUTH_USER'], $auth_users[$_SERVER['PHP_AUTH_USER']])) {
+        // Logging in by basic auth information
+        $_SESSION[FM_SESSION_ID]['logged'] = $_SERVER['PHP_AUTH_USER'];
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'])) {
         // Logging In
         sleep(1);
