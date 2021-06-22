@@ -16,6 +16,9 @@ or
 // Is independent from IP white- and blacklisting
 $use_auth = true;
 
+// Allow guest user when using auth
+$auth_allow_guest = true;
+
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
@@ -27,7 +30,7 @@ $auth_users = array(
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'user'
+    'user', 'guest'
 );
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
