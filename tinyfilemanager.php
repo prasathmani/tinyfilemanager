@@ -21,6 +21,9 @@ define('APP_TITLE', 'Tiny File Manager');
 // Is independent from IP white- and blacklisting
 $use_auth = true;
 
+// Allow guest user when using auth
+$auth_allow_guest = true;
+
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
@@ -32,7 +35,7 @@ $auth_users = array(
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'user'
+    'user', 'guest'
 );
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
@@ -283,12 +286,12 @@ if ($use_auth) {
             } else {
                 unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
-                fm_redirect(FM_SELF_URL);
+                fm_redirect(FM_SELF_URL . '?login=1');
             }
         } else {
             fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
         }
-    } else {
+    } elseif(!$auth_allow_guest || $_GET['login'] ?? false) {
         // Form
         unset($_SESSION[FM_SESSION_ID]['logged']);
         fm_show_header_login();
@@ -349,6 +352,10 @@ if ($use_auth) {
         fm_show_footer_login();
         exit;
     }
+}
+
+if($use_auth && $auth_allow_guest && !isset($_SESSION[FM_SESSION_ID]['logged'])){
+    $_SESSION[FM_SESSION_ID]['logged'] = 'guest';
 }
 
 // update root path
@@ -3398,7 +3405,8 @@ function fm_show_nav_path($path)
                             <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                             <?php endif ?>
                             <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
-                            <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>
+                            <?php $is_guest = $_SESSION[FM_SESSION_ID]['logged'] == 'guest' ?>
+                            <a title="<?php echo $is_guest ? lng('Login') : lng('Logout') ?>" class="dropdown-item nav-link" href=<?php echo $is_guest ? "?login=1": "?logout=1" ?>><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo $is_guest ? lng('Login') : lng('Logout') ?></a>
                         </div>
                     </li>
                     <?php else: ?>
