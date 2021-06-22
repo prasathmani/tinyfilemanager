@@ -291,7 +291,7 @@ if ($use_auth) {
         } else {
             fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
         }
-    } elseif(!$auth_allow_guest || $_GET['login'] ?? false) {
+    } elseif(!$auth_allow_guest || ($_GET['login'] ?? false)) {
         // Form
         unset($_SESSION[FM_SESSION_ID]['logged']);
         fm_show_header_login();
@@ -336,6 +336,13 @@ if ($use_auth) {
                                             <?php echo lng('Login'); ?>
                                         </button>
                                     </div>
+                                    <?php if ($auth_allow_guest) { ?>
+                                    <div class="form-group">
+                                        <a href="<?php echo FM_SELF_URL?>" class="btn btn-secondary btn-block mt-4" role="button">
+                                            <?php echo "Guest" ?>
+                                        </a>
+                                    </div>
+                                    <?php } ?>
                                 </form>
                             </div>
                         </div>
