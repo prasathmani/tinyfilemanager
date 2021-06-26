@@ -1673,7 +1673,7 @@ if (isset($_GET['view'])) {
                 }
             } elseif ($is_image) {
                 // Image content
-                if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))) {
+                if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
                     echo '<p><img src="' . fm_enc($file_url) . '" alt="" class="preview-img"></p>';
                 }
             } elseif ($is_audio) {
@@ -2020,7 +2020,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <td>
                         <div class="filename">
                         <?php
-                           if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg'))): ?>
+                           if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
                                 <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
                                 <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
                            <?php else: ?>
@@ -2401,7 +2401,7 @@ function fm_get_parent_path($path)
  */
 function fm_is_exclude_items($file) {
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (sizeof($exclude_items)) {
+    if (isset($exclude_items) and sizeof($exclude_items)) {
         unset($exclude_items);
     }
 
@@ -2663,6 +2663,8 @@ function fm_get_file_icon_class($path)
         case 'bmp':
         case 'tif':
         case 'tiff':
+        case 'webp':
+        case 'avif':
         case 'svg':
             $img = 'fa fa-picture-o';
             break;
@@ -2681,6 +2683,7 @@ function fm_get_file_icon_class($path)
         case 'cpp':
         case 'cs':
         case 'py':
+        case 'rs':
         case 'map':
         case 'lock':
         case 'dtd':
@@ -2699,11 +2702,13 @@ function fm_get_file_icon_class($path)
         case 'scss':
             $img = 'fa fa-css3';
             break;
+        case 'bz2':
         case 'zip':
         case 'rar':
         case 'gz':
         case 'tar':
         case '7z':
+        case 'xz':
             $img = 'fa fa-file-archive-o';
             break;
         case 'php':
@@ -2741,6 +2746,7 @@ function fm_get_file_icon_class($path)
         case 'm3u8':
         case 'pls':
         case 'cue':
+        case 'xspf':
             $img = 'fa fa-headphones';
             break;
         case 'avi':
@@ -2772,6 +2778,7 @@ function fm_get_file_icon_class($path)
             $img = 'fa fa-file-text-o';
             break;
         case 'bak':
+        case 'swp':
             $img = 'fa fa-clipboard';
             break;
         case 'doc':
@@ -2822,7 +2829,7 @@ function fm_get_file_icon_class($path)
  */
 function fm_get_image_exts()
 {
-    return array('ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg');
+    return array('ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
 }
 
 /**
@@ -2909,6 +2916,8 @@ function fm_get_file_mimes($extension)
     $fileTypes['png'] = 'image/png';
     $fileTypes['jpeg'] = 'image/jpg';
     $fileTypes['jpg'] = 'image/jpg';
+    $fileTypes['webp'] = 'image/webp';
+    $fileTypes['avif'] = 'image/avif';
     $fileTypes['rar'] = 'application/rar';
 
     $fileTypes['ra'] = 'audio/x-pn-realaudio';
@@ -2936,6 +2945,10 @@ function fm_get_file_mimes($extension)
     $fileTypes['php'] = ['application/x-php'];
     $fileTypes['html'] = ['text/html'];
     $fileTypes['txt'] = ['text/plain'];
+    //Unknown mime-types should be 'application/octet-stream'
+    if(empty($fileTypes[$extension])) {
+      $fileTypes[$extension] = ['application/octet-stream'];
+    }
     return $fileTypes[$extension];
 }
 
@@ -3624,7 +3637,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .lds-facebook div { position:absolute;left:6px;width:13px;background:#007bff;animation:lds-facebook 1.2s cubic-bezier(0,.5,.5,1) infinite }
         .lds-facebook div:nth-child(1) { left:6px;animation-delay:-.24s }
         .lds-facebook div:nth-child(2) { left:26px;animation-delay:-.12s }
-        .lds-facebook div:nth-child(3) { left:45px;animation-delay:0 }
+        .lds-facebook div:nth-child(3) { left:45px;animation-delay:0s }
         @keyframes lds-facebook { 0% { top:6px;height:51px }
         100%,50% { top:19px;height:26px }
         }
