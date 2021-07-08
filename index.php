@@ -12,7 +12,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
 define('VERSION', '2.4.6');
 
 //Application Title
-define('APP_TITLE', 'Tiny File Manager');
+define('APP_TITLE', 'AO20 LOGS');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
@@ -1691,6 +1691,7 @@ if (isset($_GET['view'])) {
                         'phtml' => 'php',
                         'lock' => 'json',
                         'svg' => 'xml',
+                        'log' => 'php',
                     );
                     $hljs_class = isset($hljs_classes[$ext]) ? 'lang-' . $hljs_classes[$ext] : 'lang-' . $ext;
                     if (empty($ext) || in_array(strtolower($file), fm_get_text_names()) || preg_match('#\.min\.(css|js)$#i', $file)) {
@@ -3345,6 +3346,10 @@ function fm_show_nav_path($path)
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+
+        <a href="#" class="btn btn-outline-primary" onclick="update_logs_test();"><i class="fa fa-file-text-o"></i> Actualizar Logs Test</a>
+        <a href="#" class="btn btn-outline-primary" onclick="update_logs_produccion();"><i class="fa fa-file-text-o"></i> Actualizar Logs Prod</a>
+        
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
             <?php
@@ -3788,6 +3793,27 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function rename(e, t) {var n = prompt("New name", t);null !== n && "" !== n && n != t && (window.location.search = "p=" + encodeURIComponent(e) + "&ren=" + encodeURIComponent(t) + "&to=" + encodeURIComponent(n))}
     function change_checkboxes(e, t) { for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked }
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
+
+    function update_logs_test() { 
+        var actualizarTest = confirm("Actualizar logs de Test?");
+        if (actualizarTest) {
+            var myWindow = window.open("http://ao20-testing-secreto.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
+            setTimeout(function(){ myWindow.close() }, 4000);            
+            alert("Se estan actualizando los logs de test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+        }
+
+    }
+
+    function update_logs_produccion() { 
+        var actualizarTest = confirm("Actualizar logs de Produccion?");
+        if (actualizarTest) {
+            var myWindow = window.open("http://ao20-testing-secreto.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
+            setTimeout(function(){ myWindow.close() }, 4000);            
+            alert("Se estan actualizando los logs de produccion. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
+        }
+
+    }
+
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
     function unselect_all() { change_checkboxes(get_checkboxes(), !1) }
     function invert_all() { change_checkboxes(get_checkboxes()) }
