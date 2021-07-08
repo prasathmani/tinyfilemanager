@@ -3797,7 +3797,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function update_logs_test() { 
         var actualizarTest = confirm("Actualizar logs de Test?");
         if (actualizarTest) {
-            var myWindow = window.open("http://ao20-test.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
+            var myWindow = window.open("http://ao20-testing-secreto.duckdns.org:9090/job/re20-server-test-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
             setTimeout(function(){ myWindow.close() }, 4000);            
             alert("Se estan actualizando los logs de test. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
         }
@@ -3807,7 +3807,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function update_logs_produccion() { 
         var actualizarTest = confirm("Actualizar logs de Produccion?");
         if (actualizarTest) {
-            var myWindow = window.open("http://ao20-test.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
+            var myWindow = window.open("http://ao20-testing-secreto.duckdns.org:9090/job/re20-server-produccion-upload-logs-to-ftp/build?token=actualizarlogsparavererrores&cause=Iniciado+Por+<?php echo $_SESSION[FM_SESSION_ID]['logged']?>", "Produccion", "width=200, height=100");
             setTimeout(function(){ myWindow.close() }, 4000);            
             alert("Se estan actualizando los logs de produccion. Por favor espera unos minutos para que se terminen de subir. Podes ver el proceso desde Jenkins o desde el chat de discord en #dev-logs");
         }
