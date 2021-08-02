@@ -297,7 +297,7 @@ if ($use_auth) {
             <div class="container h-100">
                 <div class="row justify-content-md-center h-100">
                     <div class="card-wrapper">
-                        <div class="card fat <?php echo fm_get_theme(); ?>">
+                        <div class="card fat <?=fm_get_theme();?>">
                             <div class="card-body">
                                 <form class="form-signin" action="" method="post" autocomplete="off">
                                     <div class="form-group">
@@ -310,27 +310,27 @@ if ($use_auth) {
                                             </svg>
                                         </div>
                                         <div class="text-center">
-                                            <h1 class="card-title"><?php echo APP_TITLE; ?></h1>
+                                            <h1 class="card-title"><?=APP_TITLE;?></h1>
                                         </div>
                                     </div>
                                     <hr />
                                     <div class="form-group">
-                                        <label for="fm_usr"><?php echo lng('Username'); ?></label>
+                                        <label for="fm_usr"><?=lng('Username');?></label>
                                         <input type="text" class="form-control" id="fm_usr" name="fm_usr" required autofocus>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="fm_pwd"><?php echo lng('Password'); ?></label>
+                                        <label for="fm_pwd"><?=lng('Password');?></label>
                                         <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
                                     </div>
 
                                     <div class="form-group">
-                                        <?php fm_show_message(); ?>
+                                        <?php fm_show_message();?>
                                     </div>
 
                                     <div class="form-group">
                                         <button type="submit" class="btn btn-success btn-block mt-4" role="button">
-                                            <?php echo lng('Login'); ?>
+                                            <?=lng('Login');?>
                                         </button>
                                     </div>
                                 </form>
@@ -338,7 +338,7 @@ if ($use_auth) {
                         </div>
                         <div class="footer text-center">
                             &mdash;&mdash; &copy;
-                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-muted" data-version="<?php echo VERSION; ?>">CCP Programmers</a> &mdash;&mdash;
+                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-muted" data-version="<?=VERSION;?>">CCP Programmers</a> &mdash;&mdash;
                         </div>
                     </div>
                 </div>
@@ -1185,11 +1185,11 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.5.1/min/dropzone.min.css" rel="stylesheet">
     <div class="path">
 
-        <div class="card mb-2 fm-upload-wrapper <?php echo fm_get_theme(); ?>">
+        <div class="card mb-2 fm-upload-wrapper <?=fm_get_theme();?>">
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
+                        <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?=lng('UploadingFiles') ?></a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> Upload from URL</a>
@@ -1198,13 +1198,13 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             </div>
             <div class="card-body">
                 <p class="card-text">
-                    <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
-                    <?php echo lng('DestinationFolder') ?>: <?php echo fm_enc(fm_convert_win(FM_PATH)) ?>
+                    <a href="?p=<?=FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?=lng('Back')?></a>
+                    <?=lng('DestinationFolder') ?>: <?=fm_enc(fm_convert_win(FM_PATH)) ?>
                 </p>
 
-                <form action="<?php echo htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
-                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-                    <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
+                <form action="<?=htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
+                    <input type="hidden" name="p" value="<?=fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="fullpath" id="fullpath" value="<?=fm_enc(FM_PATH) ?>">
                     <div class="fallback">
                         <input name="file" type="file" multiple/>
                     </div>
@@ -1214,7 +1214,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     <form id="js-form-url-upload" class="form-inline" onsubmit="return upload_from_url(this);" method="POST" action="">
                         <input type="hidden" name="type" value="upload" aria-label="hidden" aria-hidden="true">
                         <input type="url" placeholder="URL" name="uploadurl" required class="form-control" style="width: 80%">
-                        <button type="submit" class="btn btn-primary ml-3"><?php echo lng('Upload') ?></button>
+                        <button type="submit" class="btn btn-primary ml-3"><?=lng('Upload') ?></button>
                         <div class="lds-facebook"><div></div><div></div><div></div></div>
                     </form>
                     <div id="js-url-upload__list" class="col-9 mt-3"></div>
@@ -1226,8 +1226,8 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <script>
         Dropzone.options.fileUploader = {
             timeout: 120000,
-            maxFilesize: <?php echo MAX_UPLOAD_SIZE; ?>,
-            acceptedFiles : "<?php echo getUploadExt() ?>",
+            maxFilesize: <?=MAX_UPLOAD_SIZE;?>,
+            acceptedFiles : "<?=getUploadExt() ?>",
             init: function () {
                 this.on("sending", function (file, xhr, formData) {
                     let _path = (file.fullPath) ? file.fullPath : file.name;
@@ -1263,28 +1263,28 @@ if (isset($_POST['copy']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <div class="card <?php echo fm_get_theme(); ?>">
+        <div class="card <?=fm_get_theme();?>">
             <div class="card-header">
-                <h6><?php echo lng('Copying') ?></h6>
+                <h6><?=lng('Copying') ?></h6>
             </div>
             <div class="card-body">
                 <form action="" method="post">
-                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="p" value="<?=fm_enc(FM_PATH) ?>">
                     <input type="hidden" name="finish" value="1">
                     <?php
                     foreach ($copy_files as $cf) {
                         echo '<input type="hidden" name="file[]" value="' . fm_enc($cf) . '">' . PHP_EOL;
                     }
                     ?>
-                    <p class="break-word"><?php echo lng('Files') ?>: <b><?php echo implode('</b>, <b>', $copy_files) ?></b></p>
-                    <p class="break-word"><?php echo lng('SourceFolder') ?>: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?><br>
-                        <label for="inp_copy_to"><?php echo lng('DestinationFolder') ?>:</label>
-                        <?php echo FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <p class="break-word"><?=lng('Files') ?>: <b><?=implode('</b>, <b>', $copy_files) ?></b></p>
+                    <p class="break-word"><?=lng('SourceFolder') ?>: <?=fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?><br>
+                        <label for="inp_copy_to"><?=lng('DestinationFolder') ?>:</label>
+                        <?=FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?=fm_enc(FM_PATH) ?>">
                     </p>
-                    <p class="custom-checkbox custom-control"><input type="checkbox" name="move" value="1" id="js-move-files" class="custom-control-input"><label for="js-move-files" class="custom-control-label" style="vertical-align: sub"> <?php echo lng('Move') ?></label></p>
+                    <p class="custom-checkbox custom-control"><input type="checkbox" name="move" value="1" id="js-move-files" class="custom-control-input"><label for="js-move-files" class="custom-control-label" style="vertical-align: sub"> <?=lng('Move') ?></label></p>
                     <p>
-                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Copy') ?></button> &nbsp;
-                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?=lng('Copy') ?></button> &nbsp;
+                        <b><a href="?p=<?=urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?=lng('Cancel') ?></a></b>
                     </p>
                 </form>
             </div>
@@ -1310,26 +1310,26 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     <div class="path">
         <p><b>Copying</b></p>
         <p class="break-word">
-            Source path: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
-            Destination folder: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
+            Source path: <?=fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
+            Destination folder: <?=fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
         </p>
         <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> Move</a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> Cancel</a></b>
+            <b><a href="?p=<?=urlencode(FM_PATH) ?>&amp;copy=<?=urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
+            <b><a href="?p=<?=urlencode(FM_PATH) ?>&amp;copy=<?=urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> Move</a></b> &nbsp;
+            <b><a href="?p=<?=urlencode(FM_PATH) ?>"><i class="fa fa-times-circle"></i> Cancel</a></b>
         </p>
-        <p><i><?php echo lng('Select folder') ?></i></p>
+        <p><i><?=lng('Select folder') ?></i></p>
         <ul class="folders break-word">
             <?php
             if ($parent !== false) {
                 ?>
-                <li><a href="?p=<?php echo urlencode($parent) ?>&amp;copy=<?php echo urlencode($copy) ?>"><i class="fa fa-chevron-circle-left"></i> ..</a></li>
+                <li><a href="?p=<?=urlencode($parent) ?>&amp;copy=<?=urlencode($copy) ?>"><i class="fa fa-chevron-circle-left"></i> ..</a></li>
                 <?php
             }
             foreach ($folders as $f) {
                 ?>
                 <li>
-                    <a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>&amp;copy=<?php echo urlencode($copy) ?>"><i class="fa fa-folder-o"></i> <?php echo fm_convert_win($f) ?></a></li>
+                    <a href="?p=<?=urlencode(trim(FM_PATH . '/' . $f, '/')) ?>&amp;copy=<?=urlencode($copy) ?>"><i class="fa fa-folder-o"></i> <?=fm_convert_win($f) ?></a></li>
                 <?php
             }
             ?>
@@ -1347,16 +1347,16 @@ if (isset($_GET['settings']) && !FM_READONLY) {
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
-        <div class="card mb-2 <?php echo fm_get_theme(); ?>">
+        <div class="card mb-2 <?=fm_get_theme();?>">
             <h6 class="card-header">
-                <i class="fa fa-cog"></i>  <?php echo lng('Settings') ?>
-                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?php echo lng('Cancel')?></a>
+                <i class="fa fa-cog"></i>  <?=lng('Settings') ?>
+                <a href="?p=<?=FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?=lng('Cancel')?></a>
             </h6>
             <div class="card-body">
                 <form id="js-settings-form" action="" method="post" data-type="ajax" onsubmit="return save_settings(this)">
                     <input type="hidden" name="type" value="settings" aria-label="hidden" aria-hidden="true">
                     <div class="form-group row">
-                        <label for="js-language" class="col-sm-3 col-form-label"><?php echo lng('Language') ?></label>
+                        <label for="js-language" class="col-sm-3 col-form-label"><?=lng('Language') ?></label>
                         <div class="col-sm-5">
                             <select class="form-control" id="js-language" name="js-language">
                                 <?php
@@ -1384,74 +1384,74 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     }
                     ?>
                     <div class="form-group row">
-                        <label for="js-err-rpt-1" class="col-sm-3 col-form-label"><?php echo lng('ErrorReporting') ?></label>
+                        <label for="js-err-rpt-1" class="col-sm-3 col-form-label"><?=lng('ErrorReporting') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-secondary <?php echo getChecked($report_errors, 1, 'active') ?>">
-                                    <input type="radio" name="js-error-report" id="js-err-rpt-1" autocomplete="off" value="true" <?php echo getChecked($report_errors, 1, 'checked') ?> > ON
+                                <label class="btn btn-secondary <?=getChecked($report_errors, 1, 'active') ?>">
+                                    <input type="radio" name="js-error-report" id="js-err-rpt-1" autocomplete="off" value="true" <?=getChecked($report_errors, 1, 'checked') ?> > ON
                                 </label>
-                                <label class="btn btn-secondary <?php echo getChecked($report_errors, '', 'active') ?>">
-                                    <input type="radio" name="js-error-report" id="js-err-rpt-0" autocomplete="off" value="false" <?php echo getChecked($report_errors, '', 'checked') ?> > OFF
+                                <label class="btn btn-secondary <?=getChecked($report_errors, '', 'active') ?>">
+                                    <input type="radio" name="js-error-report" id="js-err-rpt-0" autocomplete="off" value="false" <?=getChecked($report_errors, '', 'checked') ?> > OFF
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group row">
-                        <label for="js-hdn-1" class="col-sm-3 col-form-label"><?php echo lng('ShowHiddenFiles') ?></label>
+                        <label for="js-hdn-1" class="col-sm-3 col-form-label"><?=lng('ShowHiddenFiles') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-secondary <?php echo getChecked($show_hidden_files, 1, 'active') ?>">
-                                    <input type="radio" name="js-show-hidden" id="js-hdn-1" autocomplete="off" value="true" <?php echo getChecked($show_hidden_files, 1, 'checked') ?> > ON
+                                <label class="btn btn-secondary <?=getChecked($show_hidden_files, 1, 'active') ?>">
+                                    <input type="radio" name="js-show-hidden" id="js-hdn-1" autocomplete="off" value="true" <?=getChecked($show_hidden_files, 1, 'checked') ?> > ON
                                 </label>
-                                <label class="btn btn-secondary <?php echo getChecked($show_hidden_files, '', 'active') ?>">
-                                    <input type="radio" name="js-show-hidden" id="js-hdn-0" autocomplete="off" value="false" <?php echo getChecked($show_hidden_files, '', 'checked') ?> > OFF
+                                <label class="btn btn-secondary <?=getChecked($show_hidden_files, '', 'active') ?>">
+                                    <input type="radio" name="js-show-hidden" id="js-hdn-0" autocomplete="off" value="false" <?=getChecked($show_hidden_files, '', 'checked') ?> > OFF
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group row">
-                        <label for="js-hid-1" class="col-sm-3 col-form-label"><?php echo lng('HideColumns') ?></label>
+                        <label for="js-hid-1" class="col-sm-3 col-form-label"><?=lng('HideColumns') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-secondary <?php echo getChecked($hide_Cols, 1, 'active') ?>">
-                                    <input type="radio" name="js-hide-cols" id="js-hid-1" autocomplete="off" value="true" <?php echo getChecked($hide_Cols, 1, 'checked') ?> > ON
+                                <label class="btn btn-secondary <?=getChecked($hide_Cols, 1, 'active') ?>">
+                                    <input type="radio" name="js-hide-cols" id="js-hid-1" autocomplete="off" value="true" <?=getChecked($hide_Cols, 1, 'checked') ?> > ON
                                 </label>
-                                <label class="btn btn-secondary <?php echo getChecked($hide_Cols, '', 'active') ?>">
-                                    <input type="radio" name="js-hide-cols" id="js-hid-0" autocomplete="off" value="false" <?php echo getChecked($hide_Cols, '', 'checked') ?> > OFF
+                                <label class="btn btn-secondary <?=getChecked($hide_Cols, '', 'active') ?>">
+                                    <input type="radio" name="js-hide-cols" id="js-hid-0" autocomplete="off" value="false" <?=getChecked($hide_Cols, '', 'checked') ?> > OFF
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group row">
-                        <label for="js-dir-1" class="col-sm-3 col-form-label"><?php echo lng('CalculateFolderSize') ?></label>
+                        <label for="js-dir-1" class="col-sm-3 col-form-label"><?=lng('CalculateFolderSize') ?></label>
                         <div class="col-sm-9">
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-secondary <?php echo getChecked($calc_folder, 1, 'active') ?>">
-                                    <input type="radio" name="js-calc-folder" id="js-dir-1" autocomplete="off" value="true" <?php echo getChecked($calc_folder, 1, 'checked') ?> > ON
+                                <label class="btn btn-secondary <?=getChecked($calc_folder, 1, 'active') ?>">
+                                    <input type="radio" name="js-calc-folder" id="js-dir-1" autocomplete="off" value="true" <?=getChecked($calc_folder, 1, 'checked') ?> > ON
                                 </label>
-                                <label class="btn btn-secondary <?php echo getChecked($calc_folder, '', 'active') ?>">
-                                    <input type="radio" name="js-calc-folder" id="js-dir-0" autocomplete="off" value="false" <?php echo getChecked($calc_folder, '', 'checked') ?> > OFF
+                                <label class="btn btn-secondary <?=getChecked($calc_folder, '', 'active') ?>">
+                                    <input type="radio" name="js-calc-folder" id="js-dir-0" autocomplete="off" value="false" <?=getChecked($calc_folder, '', 'checked') ?> > OFF
                                 </label>
                             </div>
                         </div>
                     </div>
                     
                     <div class="form-group row">
-                        <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('Theme') ?></label>
+                        <label for="js-3-1" class="col-sm-3 col-form-label"><?=lng('Theme') ?></label>
                         <div class="col-sm-5">
                             <select class="form-control" id="js-3-0" name="js-theme-3" style="width:100px;">
-                         <option value='light' <?php if($theme == "light"){echo "selected";} ?>><?php echo lng('light') ?></option>
-                         <option value='dark' <?php if($theme == "dark"){echo "selected";} ?>><?php echo lng('dark') ?></option>
+                         <option value='light' <?php if($theme == "light"){echo "selected";} ?>><?=lng('light') ?></option>
+                         <option value='dark' <?php if($theme == "dark"){echo "selected";} ?>><?=lng('dark') ?></option>
                             </select>
                         </div>
                     </div>
 
                     <div class="form-group row">
                         <div class="col-sm-10">
-                            <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?></button>
+                            <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?=lng('Save');?></button>
                         </div>
                     </div>
 
@@ -1471,26 +1471,26 @@ if (isset($_GET['help'])) {
     ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
-        <div class="card mb-2 <?php echo fm_get_theme(); ?>">
+        <div class="card mb-2 <?=fm_get_theme();?>">
             <h6 class="card-header">
-                <i class="fa fa-exclamation-circle"></i> <?php echo lng('Help') ?>
-                <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?php echo lng('Cancel')?></a>
+                <i class="fa fa-exclamation-circle"></i> <?=lng('Help') ?>
+                <a href="?p=<?=FM_PATH ?>" class="float-right"><i class="fa fa-window-close"></i> <?=lng('Cancel')?></a>
             </h6>
             <div class="card-body">
                 <div class="row">
                     <div class="col-xs-12 col-sm-6">
-                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager <?php echo VERSION; ?></a></h3></p>
+                        <p><h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager <?=VERSION;?></a></h3></p>
                         <p>Author: Prasath Mani</p>
                         <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers[at]gmail.com</a> </p>
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> <?php echo lng('Help Documents') ?> </a> </li>
-                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
-                                <li class="list-group-item"><a href="javascript:latest_release_info('<?php echo VERSION; ?>');"><i class="fa fa-link"> </i> <?php echo lng('Check Latest Version') ?></a></li>
+                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> <?=lng('Help Documents') ?> </a> </li>
+                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?=lng('Report Issue') ?></a></li>
+                                <li class="list-group-item"><a href="javascript:latest_release_info('<?=VERSION;?>');"><i class="fa fa-link"> </i> <?=lng('Check Latest Version') ?></a></li>
                                 <?php if(!FM_READONLY) { ?>
-                                <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
+                                <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?=lng('Generate new password hash') ?></a></li>
                                 <?php } ?>
                             </ul>
                         </div>
@@ -1501,13 +1501,13 @@ if (isset($_GET['help'])) {
                         <form class="form-inline" onsubmit="return new_password_hash(this)" method="POST" action="">
                             <input type="hidden" name="type" value="pwdhash" aria-label="hidden" aria-hidden="true">
                             <div class="form-group mb-2">
-                                <label for="staticEmail2"><?php echo lng('Generate new password hash') ?></label>
+                                <label for="staticEmail2"><?=lng('Generate new password hash') ?></label>
                             </div>
                             <div class="form-group mx-sm-3 mb-2">
-                                <label for="inputPassword2" class="sr-only"><?php echo lng('Password') ?></label>
+                                <label for="inputPassword2" class="sr-only"><?=lng('Password') ?></label>
                                 <input type="text" class="form-control btn-sm" id="inputPassword2" name="inputPassword2" placeholder="Password" required>
                             </div>
-                            <button type="submit" class="btn btn-success btn-sm mb-2"><?php echo lng('Generate') ?></button>
+                            <button type="submit" class="btn btn-success btn-sm mb-2"><?=lng('Generate') ?></button>
                         </form>
                         <textarea class="form-control" rows="2" readonly id="js-pwd-result"></textarea>
                     </div>
@@ -1582,11 +1582,11 @@ if (isset($_GET['view'])) {
     <div class="row">
         <div class="col-12">
             <?php if(!$quickView) { ?>
-                <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
+                <p class="break-word"><b><?=$view_title ?> "<?=fm_enc(fm_convert_win($file)) ?>"</b></p>
                 <p class="break-word">
-                    Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-                    File size: <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
-                    MIME-type: <?php echo $mime_type ?><br>
+                    Full path: <?=fm_enc(fm_convert_win($file_path)) ?><br>
+                    File size: <?=($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize;?><br>
+                    MIME-type: <?=$mime_type ?><br>
                     <?php
                     // ZIP info
                     if (($is_zip || $is_gzip) && $filenames !== false) {
@@ -1601,10 +1601,10 @@ if (isset($_GET['view'])) {
                             $total_uncomp += $fn['filesize'];
                         }
                         ?>
-                        Files in archive: <?php echo $total_files ?><br>
-                        Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
-                        Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
-                        Compression: <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
+                        Files in archive: <?=$total_files ?><br>
+                        Total size: <?=fm_get_filesize($total_uncomp) ?><br>
+                        Size in archive: <?=fm_get_filesize($total_comp) ?><br>
+                        Compression: <?=round(($total_comp / $total_uncomp) * 100) ?>%<br>
                         <?php
                     }
                     // Image info
@@ -1625,28 +1625,28 @@ if (isset($_GET['view'])) {
                     ?>
                 </p>
                 <p>
-                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
-                    <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                    <b><a href="?p=<?=urlencode(FM_PATH) ?>&amp;dl=<?=urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?=lng('Download') ?></a></b> &nbsp;
+                    <b><a href="<?=fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?=lng('Open') ?></a></b>
                     &nbsp;
                     <?php
                     // ZIP actions
                     if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
                         $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
                         ?>
-                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> <?php echo lng('UnZip') ?></a></b> &nbsp;
-                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>&amp;tofolder=1" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
-                                <?php echo lng('UnZipToFolder') ?></a></b> &nbsp;
+                        <b><a href="?p=<?=urlencode(FM_PATH) ?>&amp;unzip=<?=urlencode($file) ?>"><i class="fa fa-check-circle"></i> <?=lng('UnZip') ?></a></b> &nbsp;
+                        <b><a href="?p=<?=urlencode(FM_PATH) ?>&amp;unzip=<?=urlencode($file) ?>&amp;tofolder=1" title="UnZip to <?=fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i>
+                                <?=lng('UnZipToFolder') ?></a></b> &nbsp;
                         <?php
                     }
                     if ($is_text && !FM_READONLY) {
                         ?>
-                        <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
+                        <b><a href="?p=<?=urlencode(trim(FM_PATH)) ?>&amp;edit=<?=urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?=lng('Edit') ?>
                             </a></b> &nbsp;
-                        <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
-                              class="edit-file"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?>
+                        <b><a href="?p=<?=urlencode(trim(FM_PATH)) ?>&amp;edit=<?=urlencode($file) ?>&env=ace"
+                              class="edit-file"><i class="fa fa-pencil-square-o"></i> <?=lng('AdvancedEditor') ?>
                             </a></b> &nbsp;
                     <?php } ?>
-                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a></b>
+                    <b><a href="?p=<?=urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?=lng('Back') ?></a></b>
                 </p>
                 <?php
             }
@@ -1780,16 +1780,16 @@ if (isset($_GET['edit'])) {
                 </div>
             </div>
             <div class="edit-file-actions col-xs-12 col-sm-7 col-lg-6 text-right pt-1">
-                <a title="<?php echo lng('Back') ?>" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
-                <a title="<?php echo lng('BackUp') ?>" class="btn btn-sm btn-outline-primary" href="javascript:void(0);" onclick="backup('<?php echo urlencode(trim(FM_PATH)) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
+                <a title="<?=lng('Back') ?>" class="btn btn-sm btn-outline-primary" href="?p=<?=urlencode(trim(FM_PATH)) ?>&amp;view=<?=urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?=lng('Back') ?></a>
+                <a title="<?=lng('BackUp') ?>" class="btn btn-sm btn-outline-primary" href="javascript:void(0);" onclick="backup('<?=urlencode(trim(FM_PATH)) ?>','<?=urlencode($file) ?>')"><i class="fa fa-database"></i> <?=lng('BackUp') ?></a>
                 <?php if ($is_text) { ?>
                     <?php if ($isNormalEditor) { ?>
-                        <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
-                        <button type="button" class="btn btn-sm btn-outline-primary name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
+                        <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?=urlencode(trim(FM_PATH)) ?>&amp;edit=<?=urlencode($file) ?>&amp;env=ace"><i class="fa fa-pencil-square-o"></i> <?=lng('AdvancedEditor') ?></a>
+                        <button type="button" class="btn btn-sm btn-outline-primary name="Save" data-url="<?=fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
                         </button>
                     <?php } else { ?>
-                        <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
-                        <button type="button" class="btn btn-sm btn-outline-primary" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
+                        <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?=urlencode(trim(FM_PATH)) ?>&amp;edit=<?=urlencode($file) ?>"><i class="fa fa-text-height"></i> <?=lng('NormalEditor') ?></a>
+                        <button type="button" class="btn btn-sm btn-outline-primary" name="Save" data-url="<?=fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?=lng('Save') ?>
                         </button>
                     <?php } ?>
                 <?php } ?>
@@ -1830,48 +1830,48 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
 
     ?>
     <div class="path">
-        <div class="card mb-2 <?php echo fm_get_theme(); ?>">
+        <div class="card mb-2 <?=fm_get_theme();?>">
             <h6 class="card-header">
-                <?php echo lng('ChangePermissions') ?>
+                <?=lng('ChangePermissions') ?>
             </h6>
             <div class="card-body">
                 <p class="card-text">
-                    Full path: <?php echo $file_path ?><br>
+                    Full path: <?=$file_path ?><br>
                 </p>
                 <form action="" method="post">
-                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-                    <input type="hidden" name="chmod" value="<?php echo fm_enc($file) ?>">
+                    <input type="hidden" name="p" value="<?=fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="chmod" value="<?=fm_enc($file) ?>">
 
-                    <table class="table compact-table <?php echo fm_get_theme(); ?>">
+                    <table class="table compact-table <?=fm_get_theme();?>">
                         <tr>
                             <td></td>
-                            <td><b><?php echo lng('Owner') ?></b></td>
-                            <td><b><?php echo lng('Group') ?></b></td>
-                            <td><b><?php echo lng('Other') ?></b></td>
+                            <td><b><?=lng('Owner') ?></b></td>
+                            <td><b><?=lng('Group') ?></b></td>
+                            <td><b><?=lng('Other') ?></b></td>
                         </tr>
                         <tr>
-                            <td style="text-align: right"><b><?php echo lng('Read') ?></b></td>
-                            <td><label><input type="checkbox" name="ur" value="1"<?php echo ($mode & 00400) ? ' checked' : '' ?>></label></td>
-                            <td><label><input type="checkbox" name="gr" value="1"<?php echo ($mode & 00040) ? ' checked' : '' ?>></label></td>
-                            <td><label><input type="checkbox" name="or" value="1"<?php echo ($mode & 00004) ? ' checked' : '' ?>></label></td>
+                            <td style="text-align: right"><b><?=lng('Read') ?></b></td>
+                            <td><label><input type="checkbox" name="ur" value="1"<?=($mode & 00400) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="gr" value="1"<?=($mode & 00040) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="or" value="1"<?=($mode & 00004) ? ' checked' : '' ?>></label></td>
                         </tr>
                         <tr>
-                            <td style="text-align: right"><b><?php echo lng('Write') ?></b></td>
-                            <td><label><input type="checkbox" name="uw" value="1"<?php echo ($mode & 00200) ? ' checked' : '' ?>></label></td>
-                            <td><label><input type="checkbox" name="gw" value="1"<?php echo ($mode & 00020) ? ' checked' : '' ?>></label></td>
-                            <td><label><input type="checkbox" name="ow" value="1"<?php echo ($mode & 00002) ? ' checked' : '' ?>></label></td>
+                            <td style="text-align: right"><b><?=lng('Write') ?></b></td>
+                            <td><label><input type="checkbox" name="uw" value="1"<?=($mode & 00200) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="gw" value="1"<?=($mode & 00020) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="ow" value="1"<?=($mode & 00002) ? ' checked' : '' ?>></label></td>
                         </tr>
                         <tr>
-                            <td style="text-align: right"><b><?php echo lng('Execute') ?></b></td>
-                            <td><label><input type="checkbox" name="ux" value="1"<?php echo ($mode & 00100) ? ' checked' : '' ?>></label></td>
-                            <td><label><input type="checkbox" name="gx" value="1"<?php echo ($mode & 00010) ? ' checked' : '' ?>></label></td>
-                            <td><label><input type="checkbox" name="ox" value="1"<?php echo ($mode & 00001) ? ' checked' : '' ?>></label></td>
+                            <td style="text-align: right"><b><?=lng('Execute') ?></b></td>
+                            <td><label><input type="checkbox" name="ux" value="1"<?=($mode & 00100) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="gx" value="1"<?=($mode & 00010) ? ' checked' : '' ?>></label></td>
+                            <td><label><input type="checkbox" name="ox" value="1"<?=($mode & 00001) ? ' checked' : '' ?>></label></td>
                         </tr>
                     </table>
 
                     <p>
-                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Change') ?></button> &nbsp;
-                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?=lng('Change') ?></button> &nbsp;
+                        <b><a href="?p=<?=urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?=lng('Cancel') ?></a></b>
                     </p>
                 </form>
             </div>
@@ -1895,10 +1895,10 @@ $all_files_size = 0;
 $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white";
 ?>
 <form action="" method="post" class="pt-3">
-    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+    <input type="hidden" name="p" value="<?=fm_enc(FM_PATH) ?>">
     <input type="hidden" name="group" value="1">
     <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm <?php echo $tableTheme; ?>" id="main-table">
+        <table class="table table-bordered table-hover table-sm <?=$tableTheme;?>" id="main-table">
             <thead class="thead-white">
             <tr>
                 <?php if (!FM_READONLY): ?>
@@ -1908,13 +1908,13 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                             <label class="custom-control-label" for="js-select-all-items"></label>
                         </div>
                     </th><?php endif; ?>
-                <th><?php echo lng('Name') ?></th>
-                <th><?php echo lng('Size') ?></th>
-                <th><?php echo lng('Modified') ?></th>
+                <th><?=lng('Name') ?></th>
+                <th><?=lng('Size') ?></th>
+                <th><?=lng('Modified') ?></th>
                 <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                    <th><?php echo lng('Perms') ?></th>
-                    <th><?php echo lng('Owner') ?></th><?php endif; ?>
-                <th><?php echo lng('Actions') ?></th>
+                    <th><?=lng('Perms') ?></th>
+                    <th><?=lng('Owner') ?></th><?php endif; ?>
+                <th><?=lng('Actions') ?></th>
             </tr>
             </thead>
             <?php
@@ -1923,7 +1923,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 ?>
                 <tr><?php if (!FM_READONLY): ?>
                     <td class="nosort"></td><?php endif; ?>
-                    <td class="border-0"><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
+                    <td class="border-0"><a href="?p=<?=urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
@@ -1943,8 +1943,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 if ($calc_folder) {
                     $filesize_raw = fm_get_directorysize($path . '/' . $f);
                     $filesize = fm_get_filesize($filesize_raw);
-                }
-                else {
+                } else {
                     $filesize_raw = "";
                     $filesize = lng('Folder');
                 }
@@ -1961,29 +1960,29 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <?php if (!FM_READONLY): ?>
                         <td class="custom-checkbox-td">
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="<?php echo $ii ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
-                            <label class="custom-control-label" for="<?php echo $ii ?>"></label>
+                            <input type="checkbox" class="custom-control-input" id="<?=$ii ?>" name="file[]" value="<?=fm_enc($f) ?>">
+                            <label class="custom-control-label" for="<?=$ii ?>"></label>
                         </div>
                         </td><?php endif; ?>
                     <td>
-                        <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
+                        <div class="filename"><a href="?p=<?=urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?=$img ?>"></i> <?=fm_convert_win(fm_enc($f)) ?>
                             </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
                     </td>
-                    <td data-sort="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
-                        <?php echo $filesize; ?>
+                    <td data-sort="a-<?=str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
+                        <?=$filesize;?>
                     </td>
-                    <td data-sort="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
+                    <td data-sort="a-<?=$modif_raw;?>"><?=$modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?=urlencode(FM_PATH) ?>&amp;chmod=<?=urlencode($f) ?>"><?=$perms ?></a><?php else: ?><?=$perms ?><?php endif; ?>
                         </td>
-                        <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
+                        <td><?=$owner['name'] . ':' . $group['name'];?></td>
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('Folder').'?'; ?>\n \n ( <?php echo urlencode($f) ?> )');"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
+                            <a title="<?=lng('Delete');?>" href="?p=<?=urlencode(FM_PATH) ?>&amp;del=<?=urlencode($f) ?>" onclick="return confirm('<?=lng('Delete').' '.lng('Folder').'?';?>\n \n ( <?=urlencode($f);?> )');"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                            <a title="<?=lng('Rename');?>" href="#" onclick="rename('<?=fm_enc(addslashes(FM_PATH)) ?>', '<?=fm_enc(addslashes($f));?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                            <a title="<?=lng('CopyTo');?>..." href="?p=&amp;copy=<?=urlencode(trim(FM_PATH . '/' . $f, '/'));?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink')?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        <a title="<?=lng('DirectLink');?>" href="<?=fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/');?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                     </td>
                 </tr>
                 <?php
@@ -2013,8 +2012,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <?php if (!FM_READONLY): ?>
                         <td class="custom-checkbox-td">
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="<?php echo $ik ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
-                            <label class="custom-control-label" for="<?php echo $ik ?>"></label>
+                            <input type="checkbox" class="custom-control-input" id="<?=$ik;?>" name="file[]" value="<?=fm_enc($f);?>">
+                            <label class="custom-control-label" for="<?=$ik;?>"></label>
                         </div>
                         </td><?php endif; ?>
                     <td>
@@ -2022,34 +2021,34 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <?php
                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
                                 <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
-                                <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
+                                <a href="<?=$filelink ?>" data-preview-image="<?=$imagePreview;?>" title="<?=fm_enc($f);?>">
                            <?php else: ?>
-                                <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
+                                <a href="<?=$filelink ?>" title="<?=$f;?>">
                             <?php endif; ?>
-                                    <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
+                                    <i class="<?=$img ?>"></i> <?=fm_convert_win(fm_enc($f));?>
                                 </a>
-                                <?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                                <?=($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '');?>
                         </div>
                     </td>
-                    <td data-sort=b-"<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
-                        <?php echo $filesize; ?>
+                    <td data-sort=b-"<?=str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
+                        <?=$filesize;?>
                         </span></td>
-                    <td data-sort="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
+                    <td data-sort="b-<?=$modif_raw;?>"><?=$modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY): ?><a title="<?='Change Permissions';?>" href="?p=<?=urlencode(FM_PATH);?>&amp;chmod=<?=urlencode($f);?>"><?=$perms;?></a><?php else: ?><?=$perms;?><?php endif; ?>
                         </td>
-                        <td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
+                        <td><?=fm_enc($owner['name'] . ':' . $group['name']);?></td>
                     <?php endif; ?>
                     <td class="inline-actions">
-                        <a title="<?php echo lng('Preview') ?>" href="<?php echo $filelink.'&quickView=1'; ?>" data-toggle="lightbox" data-gallery="tiny-gallery" data-title="<?php echo fm_convert_win(fm_enc($f)) ?>" data-max-width="100%" data-width="100%"><i class="fa fa-eye"></i></a>
+                        <a title="<?=lng('Preview');?>" href="<?=$filelink.'&quickView=1';?>" data-toggle="lightbox" data-gallery="tiny-gallery" data-title="<?=fm_convert_win(fm_enc($f)) ?>" data-max-width="100%" data-width="100%"><i class="fa fa-eye"></i></a>
                         <?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('File').'?'; ?>\n \n ( <?php echo urlencode($f) ?> )');"> <i class="fa fa-trash-o"></i></a>
-                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
-                            <a title="<?php echo lng('CopyTo') ?>..."
-                               href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
+                            <a title="<?=lng('Delete');?>" href="?p=<?=urlencode(FM_PATH);?>&amp;del=<?=urlencode($f);?>" onclick="return confirm('<?=lng('Delete').' '.lng('File').'?';?>\n \n ( <?=urlencode($f);?> )');"> <i class="fa fa-trash-o"></i></a>
+                            <a title="<?=lng('Rename');?>" href="#" onclick="rename('<?=fm_enc(addslashes(FM_PATH));?>', '<?=fm_enc(addslashes($f));?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
+                            <a title="<?=lng('CopyTo');?>..."
+                               href="?p=<?=urlencode(FM_PATH);?>&amp;copy=<?=urlencode(trim(FM_PATH . '/' . $f, '/'));?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
-                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>"><i class="fa fa-download"></i></a>
+                        <a title="<?=lng('DirectLink');?>" href="<?=fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f);?>" target="_blank"><i class="fa fa-link"></i></a>
+                        <a title="<?=lng('Download');?>" href="?p=<?=urlencode(FM_PATH);?>&amp;dl=<?=urlencode($f);?>"><i class="fa fa-download"></i></a>
                     </td>
                 </tr>
                 <?php
@@ -2062,7 +2061,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <tfoot>
                     <tr><?php if (!FM_READONLY): ?>
                             <td></td><?php endif; ?>
-                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?php echo 'Folder is empty' ?></em></td>
+                        <td colspan="<?=(!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?='Folder is empty';?></em></td>
                     </tr>
                 </tfoot>
                 <?php
@@ -2071,11 +2070,11 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <tfoot>
                     <tr><?php if (!FM_READONLY): ?>
                             <td class="gray"></td><?php endif; ?>
-                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>">
-                            <?php echo lng('FullSize').': <span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?>
-                            <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>
-                            <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>
-                            <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> '.lng('FreeOf').' <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
+                        <td class="gray" colspan="<?=(!FM_IS_WIN && !$hide_Cols) ? '6' : '4';?>">
+                            <?=lng('FullSize').': <span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>';?>
+                            <?=lng('File').': <span class="badge badge-light">'.$num_files.'</span>';?>
+                            <?=lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>';?>
+                            <?=lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> '.lng('FreeOf').' <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>';?>
                         </td>
                     </tr>
                 </tfoot>
@@ -2089,25 +2088,24 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
         <?php if (!FM_READONLY): ?>
         <div class="col-xs-12 col-sm-9">
             <ul class="list-inline footer-action">
-                <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a></li>
-                <li class="list-inline-item"><a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a></li>
-                <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a></li>
-                <li class="list-inline-item"><input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('<?php echo lng('Delete selected files and folders?'); ?>')">
-                    <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> <?php echo lng('Delete') ?> </a></li>
-                <li class="list-inline-item"><input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
-                    <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Zip') ?> </a></li>
-                <li class="list-inline-item"><input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
-                    <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a></li>
+                <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?=lng('SelectAll');?></a></li>
+                <li class="list-inline-item"><a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?=lng('UnSelectAll');?></a></li>
+                <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?=lng('InvertSelection');?></a></li>
+                <li class="list-inline-item"><input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('<?=lng('Delete selected files and folders?');?>')">
+                    <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> <?=lng('Delete');?></a></li>
+                <li class="list-inline-item"><input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('<?=lng('Create archive?');?>')">
+                    <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?=lng('Zip');?></a></li>
+                <li class="list-inline-item"><input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('<?=lng('Create archive?');?>')">
+                    <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?=lng('Tar');?></a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
-                    <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
+                    <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?=lng('Copy');?></a></li>
             </ul>
         </div>
-        <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
+        <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?=VERSION;?></a></div>
         <?php else: ?>
-            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
+            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?=VERSION;?></a></div>
         <?php endif; ?>
     </div>
-
 </form>
 
 <?php
@@ -2122,8 +2120,7 @@ fm_show_footer();
  * @param string $filename
  * @return bool
  */
-function fm_is_file_allowed($filename)
-{
+function fm_is_file_allowed($filename) {
     // By default, no file is allowed
     $allowed = false;
 
@@ -2143,8 +2140,7 @@ function fm_is_file_allowed($filename)
  * @param string $path
  * @return bool
  */
-function fm_rdelete($path)
-{
+function fm_rdelete($path) {
     if (is_link($path)) {
         return unlink($path);
     } elseif (is_dir($path)) {
@@ -2174,8 +2170,7 @@ function fm_rdelete($path)
  * @return bool
  * @todo Will use in mass chmod
  */
-function fm_rchmod($path, $filemode, $dirmode)
-{
+function fm_rchmod($path, $filemode, $dirmode) {
     if (is_dir($path)) {
         if (!chmod($path, $dirmode)) {
             return false;
@@ -2204,8 +2199,7 @@ function fm_rchmod($path, $filemode, $dirmode)
  * @param string $filename
  * @return bool
  */
-function fm_is_valid_ext($filename)
-{
+function fm_is_valid_ext($filename) {
     $allowed = (FM_FILE_EXTENSION) ? explode(',', FM_FILE_EXTENSION) : false;
 
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
@@ -2220,8 +2214,7 @@ function fm_is_valid_ext($filename)
  * @param string $new
  * @return bool|null
  */
-function fm_rename($old, $new)
-{
+function fm_rename($old, $new) {
     $isFileAllowed = fm_is_valid_ext($new);
 
     if(!$isFileAllowed) return false;
@@ -2237,8 +2230,7 @@ function fm_rename($old, $new)
  * @param bool $force Create folder with same names instead file
  * @return bool
  */
-function fm_rcopy($path, $dest, $upd = true, $force = true)
-{
+function fm_rcopy($path, $dest, $upd = true, $force = true) {
     if (is_dir($path)) {
         if (!fm_mkdir($dest, $force)) {
             return false;
@@ -2267,8 +2259,7 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
  * @param bool $force
  * @return bool
  */
-function fm_mkdir($dir, $force)
-{
+function fm_mkdir($dir, $force) {
     if (file_exists($dir)) {
         if (is_dir($dir)) {
             return $dir;
@@ -2287,8 +2278,7 @@ function fm_mkdir($dir, $force)
  * @param bool $upd Indicates if file should be updated with new content
  * @return bool
  */
-function fm_copy($f1, $f2, $upd)
-{
+function fm_copy($f1, $f2, $upd) {
     $time1 = filemtime($f1);
     if (file_exists($f2)) {
         $time2 = filemtime($f2);
@@ -2308,8 +2298,7 @@ function fm_copy($f1, $f2, $upd)
  * @param string $file_path
  * @return mixed|string
  */
-function fm_get_mime_type($file_path)
-{
+function fm_get_mime_type($file_path) {
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file_path);
@@ -2331,8 +2320,7 @@ function fm_get_mime_type($file_path)
  * @param string $url
  * @param int $code
  */
-function fm_redirect($url, $code = 302)
-{
+function fm_redirect($url, $code = 302) {
     header('Location: ' . $url, true, $code);
     exit;
 }
@@ -2448,8 +2436,7 @@ function fm_get_translations($tr) {
  * Works on php 32bits and 64bits and supports linux
  * @return int|string
  */
-function fm_get_size($file)
-{
+function fm_get_size($file) {
     static $iswin;
     static $isdarwin;
     if (!isset($iswin)) {
@@ -2475,7 +2462,7 @@ function fm_get_size($file)
     }
 
     // try the Windows COM interface
-    if ($iswin && class_exists("COM")) {
+    if ($iswin && class_exists('COM')) {
         try {
             $fsobj = new COM('Scripting.FileSystemObject');
             $f = $fsobj->GetFile( realpath($file) );
@@ -2497,8 +2484,7 @@ function fm_get_size($file)
  * @param int $size
  * @return string
  */
-function fm_get_filesize($size)
-{
+function fm_get_filesize($size) {
     $size = (float) $size;
     $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $power = $size > 0 ? floor(log($size, 1024)) : 0;
@@ -2576,8 +2562,7 @@ function fm_get_zif_info($path, $ext) {
  * @param string $text
  * @return string
  */
-function fm_enc($text)
-{
+function fm_enc($text) {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 
@@ -2595,8 +2580,7 @@ function fm_isvalid_filename($text) {
  * @param string $msg
  * @param string $status
  */
-function fm_set_msg($msg, $status = 'ok')
-{
+function fm_set_msg($msg, $status = 'ok') {
     $_SESSION[FM_SESSION_ID]['message'] = $msg;
     $_SESSION[FM_SESSION_ID]['status'] = $status;
 }
@@ -2606,8 +2590,7 @@ function fm_set_msg($msg, $status = 'ok')
  * @param string $string
  * @return int
  */
-function fm_is_utf8($string)
-{
+function fm_is_utf8($string) {
     return preg_match('//u', $string);
 }
 
@@ -2616,8 +2599,7 @@ function fm_is_utf8($string)
  * @param string $filename
  * @return string
  */
-function fm_convert_win($filename)
-{
+function fm_convert_win($filename) {
     if (FM_IS_WIN && function_exists('iconv')) {
         $filename = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $filename);
     }
@@ -2628,8 +2610,7 @@ function fm_convert_win($filename)
  * @param $obj
  * @return array
  */
-function fm_object_to_array($obj)
-{
+function fm_object_to_array($obj) {
     if (!is_object($obj) && !is_array($obj)) {
         return $obj;
     }
@@ -2644,8 +2625,7 @@ function fm_object_to_array($obj)
  * @param string $path
  * @return string
  */
-function fm_get_file_icon_class($path)
-{
+function fm_get_file_icon_class($path) {
     // get extension
     $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
@@ -2827,8 +2807,7 @@ function fm_get_file_icon_class($path)
  * Get image files extensions
  * @return array
  */
-function fm_get_image_exts()
-{
+function fm_get_image_exts() {
     return array('ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
 }
 
@@ -2836,8 +2815,7 @@ function fm_get_image_exts()
  * Get video files extensions
  * @return array
  */
-function fm_get_video_exts()
-{
+function fm_get_video_exts() {
     return array('avi', 'webm', 'wmv', 'mp4', 'm4v', 'ogm', 'ogv', 'mov', 'mkv');
 }
 
@@ -2845,8 +2823,7 @@ function fm_get_video_exts()
  * Get audio files extensions
  * @return array
  */
-function fm_get_audio_exts()
-{
+function fm_get_audio_exts() {
     return array('wav', 'mp3', 'ogg', 'm4a');
 }
 
@@ -2854,8 +2831,7 @@ function fm_get_audio_exts()
  * Get text file extensions
  * @return array
  */
-function fm_get_text_exts()
-{
+function fm_get_text_exts() {
     return array(
         'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'json', 'sh', 'config',
         'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue',
@@ -2868,8 +2844,7 @@ function fm_get_text_exts()
  * Get mime types of text files
  * @return array
  */
-function fm_get_text_mimes()
-{
+function fm_get_text_mimes() {
     return array(
         'application/xml',
         'application/javascript',
@@ -2883,8 +2858,7 @@ function fm_get_text_mimes()
  * Get file names of text files w/o extensions
  * @return array
  */
-function fm_get_text_names()
-{
+function fm_get_text_names() {
     return array(
         'license',
         'readme',
@@ -2898,13 +2872,11 @@ function fm_get_text_names()
  * Get online docs viewer supported files extensions
  * @return array
  */
-function fm_get_onlineViewer_exts()
-{
+function fm_get_onlineViewer_exts() {
     return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar', 'odt', 'ods');
 }
 
-function fm_get_file_mimes($extension)
-{
+function fm_get_file_mimes($extension) {
     $fileTypes['swf'] = 'application/x-shockwave-flash';
     $fileTypes['pdf'] = 'application/pdf';
     $fileTypes['exe'] = 'application/octet-stream';
@@ -2988,8 +2960,7 @@ instead of download prompt
 https://stackoverflow.com/a/13821992/1164642
 */
 
-function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
-{
+function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024) {
     if (connection_status() != 0)
         return (false);
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
@@ -3058,12 +3029,10 @@ function fm_get_theme() {
 /**
  * Class to work with zip files (using ZipArchive)
  */
-class FM_Zipper
-{
+class FM_Zipper {
     private $zip;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->zip = new ZipArchive();
     }
 
@@ -3073,8 +3042,7 @@ class FM_Zipper
      * @param array|string $files
      * @return bool
      */
-    public function create($filename, $files)
-    {
+    public function create($filename, $files) {
         $res = $this->zip->open($filename, ZipArchive::CREATE);
         if ($res !== true) {
             return false;
@@ -3103,8 +3071,7 @@ class FM_Zipper
      * @param string $path
      * @return bool
      */
-    public function unzip($filename, $path)
-    {
+    public function unzip($filename, $path) {
         $res = $this->zip->open($filename);
         if ($res !== true) {
             return false;
@@ -3121,8 +3088,7 @@ class FM_Zipper
      * @param string $filename
      * @return bool
      */
-    private function addFileOrDir($filename)
-    {
+    private function addFileOrDir($filename) {
         if (is_file($filename)) {
             return $this->zip->addFile($filename);
         } elseif (is_dir($filename)) {
@@ -3136,8 +3102,7 @@ class FM_Zipper
      * @param string $path
      * @return bool
      */
-    private function addDir($path)
-    {
+    private function addDir($path) {
         if (!$this->zip->addEmptyDir($path)) {
             return false;
         }
@@ -3165,12 +3130,10 @@ class FM_Zipper
 /**
  * Class to work with Tar files (using PharData)
  */
-class FM_Zipper_Tar
-{
+class FM_Zipper_Tar {
     private $tar;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->tar = null;
     }
 
@@ -3180,8 +3143,7 @@ class FM_Zipper_Tar
      * @param array|string $files
      * @return bool
      */
-    public function create($filename, $files)
-    {
+    public function create($filename, $files) {
         $this->tar = new PharData($filename);
         if (is_array($files)) {
             foreach ($files as $f) {
@@ -3204,8 +3166,7 @@ class FM_Zipper_Tar
      * @param string $path
      * @return bool
      */
-    public function unzip($filename, $path)
-    {
+    public function unzip($filename, $path) {
         $res = $this->tar->open($filename);
         if ($res !== true) {
             return false;
@@ -3221,8 +3182,7 @@ class FM_Zipper_Tar
      * @param string $filename
      * @return bool
      */
-    private function addFileOrDir($filename)
-    {
+    private function addFileOrDir($filename) {
         if (is_file($filename)) {
             try {
                 $this->tar->addFile($filename);
@@ -3241,8 +3201,7 @@ class FM_Zipper_Tar
      * @param string $path
      * @return bool
      */
-    private function addDir($path)
-    {
+    private function addDir($path) {
         $objects = scandir($path);
         if (is_array($objects)) {
             foreach ($objects as $file) {
@@ -3271,12 +3230,10 @@ class FM_Zipper_Tar
 /**
  * Save Configuration
  */
- class FM_Config
-{
-     var $data;
+class FM_Config {
+    var $data;
 
-    function __construct()
-    {
+    function __construct() {
         global $root_path, $root_url, $CONFIG;
         $fm_url = $root_url.$_SERVER["PHP_SELF"];
         $this->data = array(
@@ -3301,8 +3258,7 @@ class FM_Zipper_Tar
         else $this->save();
     }
 
-    function save()
-    {
+    function save() {
         $fm_file = __FILE__;
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
@@ -3328,25 +3284,23 @@ class FM_Zipper_Tar
  * Show nav block
  * @param string $path
  */
-function fm_show_nav_path($path)
-{
+function fm_show_nav_path($path) {
     global $lang, $sticky_navbar;
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
     $getTheme = fm_get_theme();
-    $getTheme .= " navbar-light";
+    $getTheme .= ' navbar-light';
     if(FM_THEME == "dark") {
-        $getTheme .= " navbar-dark";
+        $getTheme .= ' navbar-dark';
     } else {
-        $getTheme .= " bg-white";
+        $getTheme .= ' bg-white';
     }
     ?>
-    <nav class="navbar navbar-expand-lg <?php echo $getTheme; ?> mb-4 main-nav <?php echo $isStickyNavBar ?>">
-        <a class="navbar-brand" href=""> <?php echo lng('AppTitle') ?> </a>
+    <nav class="navbar navbar-expand-lg <?=$getTheme;?> mb-4 main-nav <?=$isStickyNavBar;?>">
+        <a class="navbar-brand" href=""> <?=lng('AppTitle') ?> </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
             <?php
             $path = fm_clean_path($path);
             $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
@@ -3367,44 +3321,44 @@ function fm_show_nav_path($path)
             ?>
 
             <div class="col-xs-6 col-sm-7 text-right">
-                <ul class="navbar-nav mr-auto float-right <?php echo fm_get_theme();  ?>">
+                <ul class="navbar-nav mr-auto float-right <?=fm_get_theme();?>">
                     <li class="nav-item mr-2">
                         <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
-                            <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
+                            <input type="text" class="form-control" placeholder="<?=lng('Search');?>" aria-label="<?=lng('Search');?>" aria-describedby="search-addon2" id="search-addon">
                             <div class="input-group-append">
                                 <span class="input-group-text" id="search-addon2"><i class="fa fa-search"></i></span>
                             </div>
                             <div class="input-group-append btn-group">
                                 <span class="input-group-text dropdown-toggle" id="search-addon2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
                                   <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="<?php echo $path2 = $path ? $path : '.'; ?>" id="js-search-modal" data-toggle="modal" data-target="#searchModal"><?php echo lng('Advanced Search') ?></a>
+                                    <a class="dropdown-item" href="<?php echo $path2 = $path ? $path : '.'; ?>" id="js-search-modal" data-toggle="modal" data-target="#searchModal"><?=lng('Advanced Search');?></a>
                                   </div>
                             </div>
                         </div>
                     </li>
                     <?php if (!FM_READONLY): ?>
                     <li class="nav-item">
-                        <a title="<?php echo lng('Upload') ?>" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php echo lng('Upload') ?></a>
+                        <a title="<?=lng('Upload') ?>" class="nav-link" href="?p=<?=urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?=lng('Upload');?></a>
                     </li>
                     <li class="nav-item">
-                        <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
+                        <a title="<?=lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> <?=lng('NewItem');?></a>
                     </li>
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php if(isset($_SESSION[FM_SESSION_ID]['logged'])) { echo $_SESSION[FM_SESSION_ID]['logged']; } ?></a>
-                        <div class="dropdown-menu dropdown-menu-right <?php echo fm_get_theme(); ?>" aria-labelledby="navbarDropdownMenuLink-5">
+                        <div class="dropdown-menu dropdown-menu-right <?=fm_get_theme();?>" aria-labelledby="navbarDropdownMenuLink-5">
                             <?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
+                            <a title="<?=lng('Settings');?>" class="dropdown-item nav-link" href="?p=<?=urlencode(FM_PATH);?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?=lng('Settings');?></a>
                             <?php endif ?>
-                            <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
-                            <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>
+                            <a title="<?=lng('Help');?>" class="dropdown-item nav-link" href="?p=<?=urlencode(FM_PATH);?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?=lng('Help');?></a>
+                            <a title="<?=lng('Logout');?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?=lng('Logout') ?></a>
                         </div>
                     </li>
                     <?php else: ?>
                         <?php if (!FM_READONLY): ?>
                             <li class="nav-item">
-                                <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
+                                <a title="<?=lng('Settings');?>" class="dropdown-item nav-link" href="?p=<?=urlencode(FM_PATH);?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?=lng('Settings');?></a>
                             </li>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -3431,8 +3385,7 @@ function fm_show_message()
 /**
  * Show page header in Login Form
  */
-function fm_show_header_login()
-{
+function fm_show_header_login() {
 $sprites_ver = '20160315';
 header("Content-Type: text/html; charset=utf-8");
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
@@ -3451,7 +3404,7 @@ global $lang, $root_url, $favicon_path;
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
     <?php if($favicon_path) { echo '<link rel="icon" href="'.fm_enc($favicon_path).'" type="image/png">'; } ?>
-    <title><?php echo fm_enc(APP_TITLE) ?></title>
+    <title><?=fm_enc(APP_TITLE) ?></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body.fm-login-page{ background-color:#f7f9fb;font-size:14px;background-color:#f7f9fb;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%23e2e9f1' fill-opacity='0.4' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E");}
@@ -3479,7 +3432,7 @@ global $lang, $root_url, $favicon_path;
         .theme-dark svg g, .theme-dark svg path {fill: #ffffff; }
     </style>
 </head>
-<body class="fm-login-page <?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?>">
+<body class="fm-login-page <?=(FM_THEME == "dark") ? 'theme-dark' : '';?>">
 <div id="wrapper" class="container-fluid">
 
     <?php
@@ -3488,8 +3441,7 @@ global $lang, $root_url, $favicon_path;
     /**
      * Show page footer in Login Form
      */
-    function fm_show_footer_login()
-    {
+    function fm_show_footer_login() {
     ?>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
@@ -3502,8 +3454,7 @@ global $lang, $root_url, $favicon_path;
 /**
  * Show Header after login
  */
-function fm_show_header()
-{
+function fm_show_header() {
 $sprites_ver = '20160315';
 header("Content-Type: text/html; charset=utf-8");
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
@@ -3523,12 +3474,12 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
     <?php if($favicon_path) { echo '<link rel="icon" href="'.fm_enc($favicon_path).'" type="image/png">'; } ?>
-    <title><?php echo fm_enc(APP_TITLE) ?></title>
+    <title><?=fm_enc(APP_TITLE);?></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.css" />
     <?php if (FM_USE_HIGHLIGHTJS): ?>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/<?php echo FM_HIGHLIGHTJS_STYLE ?>.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/<?=FM_HIGHLIGHTJS_STYLE;?>.min.css">
     <?php endif; ?>
     <style>
         body { font-size:14px;color:#222;background:#F7F7F7; }
@@ -3660,38 +3611,38 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         </style>
     <?php endif; ?>
 </head>
-<body class="<?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?>">
+<body class="<?=(FM_THEME == "dark") ? 'theme-dark' : '';?> <?=$isStickyNavBar;?>">
 <div id="wrapper" class="container-fluid">
 
     <!-- New Item creation -->
     <div class="modal fade" id="createNewItem" tabindex="-1" role="dialog" aria-label="newItemModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <div class="modal-content <?php echo fm_get_theme(); ?>">
+            <div class="modal-content <?=fm_get_theme();?>">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newItemModalLabel"><i class="fa fa-plus-square fa-fw"></i><?php echo lng('CreateNewItem') ?></h5>
+                    <h5 class="modal-title" id="newItemModalLabel"><i class="fa fa-plus-square fa-fw"></i><?=lng('CreateNewItem') ?></h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p><label for="newfile"><?php echo lng('ItemType') ?> </label></p>
+                    <p><label for="newfile"><?=lng('ItemType') ?> </label></p>
 
                     <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" id="customRadioInline1" name="newfile" value="file" class="custom-control-input">
-                        <label class="custom-control-label" for="customRadioInline1"><?php echo lng('File') ?></label>
+                        <label class="custom-control-label" for="customRadioInline1"><?=lng('File') ?></label>
                     </div>
 
                     <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" id="customRadioInline2" name="newfile" value="folder" class="custom-control-input" checked="">
-                        <label class="custom-control-label" for="customRadioInline2"><?php echo lng('Folder') ?></label>
+                        <label class="custom-control-label" for="customRadioInline2"><?=lng('Folder') ?></label>
                     </div>
 
-                    <p class="mt-3"><label for="newfilename"><?php echo lng('ItemName') ?> </label></p>
+                    <p class="mt-3"><label for="newfilename"><?=lng('ItemName') ?> </label></p>
                     <input type="text" name="newfilename" id="newfilename" value="" class="form-control">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-primary" data-dismiss="modal"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></button>
-                    <button type="button" class="btn btn-success" onclick="newfolder('<?php echo fm_enc(FM_PATH) ?>');return false;"><i class="fa fa-check-circle"></i> <?php echo lng('CreateNow') ?></button>
+                    <button type="button" class="btn btn-outline-primary" data-dismiss="modal"><i class="fa fa-times-circle"></i> <?=lng('Cancel') ?></button>
+                    <button type="button" class="btn btn-success" onclick="newfolder('<?=fm_enc(FM_PATH) ?>');return false;"><i class="fa fa-check-circle"></i> <?=lng('CreateNow') ?></button>
                 </div>
             </div>
         </div>
@@ -3700,11 +3651,11 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <!-- Modal -->
     <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content <?php echo fm_get_theme(); ?>">
+        <div class="modal-content <?=fm_get_theme();?>">
           <div class="modal-header">
             <h5 class="modal-title col-10" id="searchModalLabel">
                 <div class="input-group input-group">
-                    <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> a files" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
+                    <input type="text" class="form-control" placeholder="<?=lng('Search') ?> a files" aria-label="<?=lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
                     <div class="input-group-append">
                         <span class="input-group-text" id="search-addon3"><i class="fa fa-search"></i></span>
                     </div>
@@ -3718,7 +3669,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             <form action="" method="post">
                 <div class="lds-facebook"><div></div><div></div><div></div></div>
                 <ul id="search-wrapper">
-                    <p class="m-2"><?php echo lng('Search file in folder and subfolders...') ?></p>
+                    <p class="m-2"><?=lng('Search file in folder and subfolders...') ?></p>
                 </ul>
             </form>
           </div>
@@ -3739,7 +3690,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                         <%this.content%>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-primary" data-dismiss="modal"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></button>
+                        <button type="button" class="btn btn-outline-primary" data-dismiss="modal"><i class="fa fa-times-circle"></i> <?=lng('Cancel') ?></button>
                         <%if(this.action){%><button type="button" class="btn btn-primary" id="js-ModalCenterAction" data-type="js-<%this.action%>"><%this.action%></button><%}%>
                     </div>
                 </div>
@@ -3753,8 +3704,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     /**
      * Show page footer
      */
-    function fm_show_footer()
-    {
+    function fm_show_footer() {
     ?>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -3945,7 +3895,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
     <script>
         var editor = ace.edit("editor");
-        editor.getSession().setMode( {path:"ace/mode/<?php echo $ext; ?>", inline:true} );
+        editor.getSession().setMode( {path:"ace/mode/<?=$ext;?>", inline:true} );
         //editor.setTheme("ace/theme/twilight"); //Dark Theme
         function ace_commend (cmd) { editor.commands.exec(cmd, editor); }
         editor.commands.addCommands([{
@@ -4076,8 +4026,8 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
-    
-    $tr['en']['Moved from']                 = 'Moved from'; 
+
+    $tr['en']['Moved from']                 = 'Moved from';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
@@ -4085,7 +4035,5 @@ function lng($txt) {
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
     else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
-    else return "$txt";
+    else return $txt;
 }
-
-?>
