@@ -3804,8 +3804,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     //Save file
     function edit_save(e, t) {
         var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
-        if (n) {
-            if(true){
+        if (typeof n !== 'undefined' && n !== null) {
+            if (true) {
                 var data = {ajax: true, content: n, type: 'save'};
 
                 $.ajax({
@@ -3819,9 +3819,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     failure: function(mes) {toast("Error: try again");},
                     error: function(mes) {toast(`<p style="background-color:red">${mes.responseText}</p>`);}
                 });
-
-            }
-            else{
+            } else {
                 var a = document.createElement("form");
                 a.setAttribute("method", "POST"), a.setAttribute("action", "");
                 var o = document.createElement("textarea");
