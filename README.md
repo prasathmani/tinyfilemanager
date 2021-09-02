@@ -40,6 +40,68 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 :information_source: Rename the `config-sample.php` file into `config.php` to use configuration, it is an additional configuration file, Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
 
+### Deploy by Docker
+
+Make sure you have **already installed docker**, [Install reference](https://docs.docker.com/engine/install/)
+
+> **Notice:** Your need an absolute path, and it will be served by tinyfilemanager.
+> 
+> If you want to serve this project at **raspberry pi or another special platform**, you can download project and **build image by yourself**.
+
+You can execute this following commands:
+
+```shell
+$ docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager prasathmani/tinyfilemanager:master
+$ docker ps
+CONTAINER ID   IMAGE                                COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+648dfba9c0ff   prasathmani/tinyfilemanager:master   "docker-php-entrypoi…"   4 minutes ago   Up 4 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           tinyfilemanager
+```
+Access `http://127.0.0.1/` and enter default username and password, then enjoy it.
+
+DockerHub: [https://hub.docker.com/repository/docker/prasathmani/tinyfilemanager](https://hub.docker.com/repository/docker/prasathmani/tinyfilemanager)
+
+#### How to change config within docker
+
+**Important!!!** First, you can copy `config-sample.php` to `config.php`, and must modify this following config
+
+Origin:
+
+```php
+// Root path for file manager
+// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
+$root_path = $_SERVER['DOCUMENT_ROOT'];
+
+// Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
+// Will not working if $root_path will be outside of server document root
+$root_url = '';
+```
+
+Modified:
+
+```php
+// Root path for file manager
+// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
+$root_path = $_SERVER['DOCUMENT_ROOT'].'/data';
+
+// Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
+// Will not working if $root_path will be outside of server document root
+$root_url = 'data/';
+```
+
+Then, change another config what you want, and add a new volume `-v /absolute/path/config.php:/var/www/html/config.php` in `docker run` command, like this:
+
+```shell
+$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/config.php:/var/www/html/config.php -p 80:80 --restart=always --name tinyfilemanager prasathmani/tinyfilemanager:master
+```
+
+#### Stop running
+
+If you want to stop a running docker service, or you want to restart a service, you should stop it first, or you got `docker: Error response from daemon: Conflict. The container name "/tinyfilemanager" is already in use by container ...` problem. You can execute this command:
+
+```shell
+$ docker rm -f tinyfilemanager
+```
+
 ### :loudspeaker: Features
 
 - :cd: Open Source, light and extremely simple
