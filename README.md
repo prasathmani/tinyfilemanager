@@ -76,7 +76,7 @@ CONTAINER ID   IMAGE                                COMMAND                  CRE
 ```
 Access `http://127.0.0.1/` and enter default username and password, then enjoy it.
 
-DockerHub: [https://hub.docker.com/r/docker/prasathmani/tinyfilemanager](https://hub.docker.com/r/docker/prasathmani/tinyfilemanager)
+DockerHub: [https://hub.docker.com/r/tinyfilemanager/tinyfilemanager](https://hub.docker.com/r/tinyfilemanager/tinyfilemanager)
 
 #### How to change config within docker
 
