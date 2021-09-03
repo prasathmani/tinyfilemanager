@@ -1,11 +1,11 @@
 # how to build?
 # docker login
 ## .....input your docker id and password
-#docker build . -t prasathmani/tinyfilemanager:master
-#docker push prasathmani/tinyfilemanager:master
+#docker build . -t tinyfilemanager/tinyfilemanager:master
+#docker push tinyfilemanager/tinyfilemanager:master
 
 # how to use?
-# docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager prasathmani/tinyfilemanager:master
+# docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
 
 FROM php:7.4-cli-alpine
 

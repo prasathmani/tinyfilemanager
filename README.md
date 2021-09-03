@@ -69,10 +69,10 @@ Make sure you have **already installed docker**, [Install reference](https://doc
 You can execute this following commands:
 
 ```shell
-$ docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager prasathmani/tinyfilemanager:master
+$ docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
 $ docker ps
 CONTAINER ID   IMAGE                                COMMAND                  CREATED         STATUS         PORTS                                       NAMES
-648dfba9c0ff   prasathmani/tinyfilemanager:master   "docker-php-entrypoi…"   4 minutes ago   Up 4 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           tinyfilemanager
+648dfba9c0ff   tinyfilemanager/tinyfilemanager:master   "docker-php-entrypoi…"   4 minutes ago   Up 4 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           tinyfilemanager
 ```
 Access `http://127.0.0.1/` and enter default username and password, then enjoy it.
 
@@ -109,7 +109,7 @@ $root_url = 'data/';
 Then, change another config what you want, and add a new volume `-v /absolute/path/config.php:/var/www/html/config.php` in `docker run` command, like this:
 
 ```shell
-$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/config.php:/var/www/html/config.php -p 80:80 --restart=always --name tinyfilemanager prasathmani/tinyfilemanager:master
+$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/config.php:/var/www/html/config.php -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
 ```
 
 #### Stop running
