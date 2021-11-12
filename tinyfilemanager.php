@@ -880,7 +880,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $targetPath = $path . $ds;
     if ( is_writable($targetPath) ) {
-        $fullPath = $path . '/' . $_REQUEST['fullpath'];
+        $fullPath = $path . '/' . str_replace("./","_",$_REQUEST['fullpath']);
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
         if(file_exists ($fullPath) && !$override_file_name) {
