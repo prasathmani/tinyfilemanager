@@ -938,7 +938,10 @@
         "Generate new password hash": "Buat hash kata sandi baru",
         "You are logged in": "Anda sudah masuk",
         "Login failed. Invalid username or password": "Gagal masuk. Nama pengguna atau kata sandi tidak valid",
-        "password_hash not supported, Upgrade PHP version": "Tidak mendukung password_hash, Perbarui versi PHP"
+        "password_hash not supported, Upgrade PHP version": "Tidak mendukung password_hash, Perbarui versi PHP",
+        "Theme": "Tema",
+        "dark": "Gelap",
+        "light": "Terang"
       }
     },
     {
