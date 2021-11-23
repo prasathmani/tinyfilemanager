@@ -2499,10 +2499,20 @@ function fm_get_size($file)
  */
 function fm_get_filesize($size)
 {
-    $size = (float) $size;
+    $size = (int) $size;
     $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
-    $power = $size > 0 ? floor(log($size, 1024)) : 0;
-    return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
+    
+    $i = 0;
+    
+    while (($size / 1024) > 0.9) {
+        $size = $size / 1024;
+        $i++;
+    }
+    
+    // Fix 32bit integer overflow
+    $size = ($size < 0) ? ($size + (2.0 * (PHP_INT_MAX + 1))) : $size;
+
+    return round($size, 2).' '.$units[$i];
 }
 
 /**
