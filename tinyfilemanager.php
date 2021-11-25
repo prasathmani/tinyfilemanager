@@ -127,7 +127,7 @@ $ip_blacklist = array(
 );
 
 // if User has the customized config file, try to use it to override the default config above
-if (defined('CONFIG_FILE') && is_readable(CONFIG_FILE))) {
+if (defined('CONFIG_FILE') && is_readable(CONFIG_FILE)) {
     @include(CONFIG_FILE);
 }
 
