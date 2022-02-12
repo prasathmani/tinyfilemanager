@@ -12,7 +12,6 @@
 
 [Demo](https://tinyfilemanager.github.io/demo/)
 
-Login Details : admin/admin@123 | user/12345
 
 ## Documentation
 

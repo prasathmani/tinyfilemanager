@@ -4,13 +4,13 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
 
 
 /**
- * H3K | Tiny File Manager V2.4.6
+ * H3K | Tiny File Manager V2.4.7
  * CCP Programmers | ccpprogrammers@gmail.com
  * https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.4.6');
+define('VERSION', '2.4.7');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -1988,7 +1988,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             if ($parent !== false) {
                 ?>
                 <tr><?php if (!FM_READONLY): ?>
-                    <td class="nosort"></td><?php endif; ?><a href="?p=<?php echo urlencode($parent) ?>" style="font-size: 20px"><i class="fa fa-chevron-circle-left go-back" ></i> .. <?php echo lng('Back') ?></a>
+                    <td class="nosort"></td><?php endif; ?>
                     <td class="border-0"><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
                     <td class="border-0"></td>
                     <td class="border-0"></td>
