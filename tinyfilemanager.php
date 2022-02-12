@@ -245,7 +245,7 @@ if (isset($_GET['logout'])) {
 
 // Validate connection IP
 if ($ip_ruleset != 'OFF') {
-    function getClientIP() {       
+    function getClientIP() {
         if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
             return  $_SERVER["HTTP_X_FORWARDED_FOR"];
         }else if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
@@ -255,7 +255,7 @@ if ($ip_ruleset != 'OFF') {
         }
         return '';
     }
-    
+
     $clientIp = getClientIP();
 
     $proceed = false;
@@ -904,28 +904,28 @@ if (!empty($_FILES) && !FM_READONLY) {
     if ( is_writable($targetPath) ) {
         $fullPath = $path . '/' . basename($_REQUEST['fullpath']);
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
-        
+
         if(file_exists ($fullPath) && !$override_file_name && !$chunks) {
             $ext_1 = $ext ? '.'.$ext : '';
             $fullPath = $path . '/' . basename($_REQUEST['fullpath'], $ext_1) .'_'. date('ymdHis'). $ext_1;
         }
-        
+
         if (!is_dir($folder)) {
             $old = umask(0);
             mkdir($folder, 0777, true);
             umask($old);
         }
-        
-        
-        
+
+
+
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if ($chunkTotal){
                 $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? "wb" : "ab");
                 if ($out) {
                     $in = @fopen($tmp_name, "rb");
-                    if ($in) { 
-                        while ($buff = fread($in, 4096)) { fwrite($out, $buff); } 
-                    } else { 
+                    if ($in) {
+                        while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
+                    } else {
                         $response = array (
                         'status'    => 'error',
                         'info' => "failed to open output stream"
@@ -934,25 +934,25 @@ if (!empty($_FILES) && !FM_READONLY) {
                     @fclose($in);
                     @fclose($out);
                     @unlink($tmp_name);
-                    
+
                     $response = array (
                         'status'    => 'success',
                         'info' => "file upload successful",
                         'fullPath' => $fullPath
                     );
-                } else { 
+                } else {
                     $response = array (
                         'status'    => 'error',
                         'info' => "failed to open output stream"
                         );
                 }
-                
-                
 
-                if ($chunkIndex == $chunkTotal - 1) { 
-                    rename("{$fullPath}.part", $fullPath); 
+
+
+                if ($chunkIndex == $chunkTotal - 1) {
+                    rename("{$fullPath}.part", $fullPath);
                 }
-                
+
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
                 if ( file_exists($fullPath) ) {
@@ -1300,11 +1300,11 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     });
                 }).on("success", function (res) {
                     let _response = JSON.parse(res.xhr.response);
-                    
+
                     if(_response.status == "error") {
                         toast(_response.info);
                     }
-                    
+
                 }).on("error", function(file, response) {
                     toast(response);
                 });
@@ -1503,7 +1503,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group row">
                         <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('Theme') ?></label>
                         <div class="col-sm-5">
@@ -2573,24 +2573,20 @@ function fm_get_filesize($size)
 }
 
 /**
- * Get director total size
- * @param string $directory
- * @return int
+ * Get total size of directory tree.
+ *
+ * @param  string $directory Relative or absolute directory name.
+ * @return int Total number of bytes.
  */
 function fm_get_directorysize($directory) {
-    global $calc_folder;
-    if ($calc_folder==true) { //  Slower output
-      $size = 0;  $count= 0;  $dirCount= 0;
-    foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file)
-    if ($file->isFile())
-        {   $size+=$file->getSize();
-            $count++;
+    $bytes = 0;
+    $directory = realpath($directory);
+    if ($directory !== false && $directory != '' && file_exists($directory)){
+        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS)) as $file){
+            $bytes += $file->getSize();
         }
-    else if ($file->isDir()) { $dirCount++; }
-    // return [$size, $count, $dirCount];
-    return $size;
     }
-    else return 'Folder'; //  Quick output
+    return $bytes;
 }
 
 /**
@@ -4110,27 +4106,27 @@ function lng($txt) {
     $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';
     $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
     $tr['en']['ProcessID']      = 'Process ID';             $tr['en']['Created']    = 'Created';
-    $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in'; 
+    $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in';
     $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
-    
+
     // new - novos
-    
+
     $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying from']    = 'Error while copying from';
     $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
     $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
-    $tr['en']['Deleted']            = 'Deleted';            $tr['en']['Archive not created']        = 'Archive not created';        
+    $tr['en']['Deleted']            = 'Deleted';            $tr['en']['Archive not created']        = 'Archive not created';
     $tr['en']['Copied from']        = 'Copied from';        $tr['en']['Permissions changed']        = 'Permissions changed';
     $tr['en']['to']                 = 'to';                 $tr['en']['Saved Successfully']         = 'Saved Successfully';
     $tr['en']['not found!']         = 'not found!';         $tr['en']['File Saved Successfully']    = 'File Saved Successfully';
-    $tr['en']['Archive']            = 'Archive';            $tr['en']['Permissions not changed']    = 'Permissions not changed';         
+    $tr['en']['Archive']            = 'Archive';            $tr['en']['Permissions not changed']    = 'Permissions not changed';
     $tr['en']['Select folder']      = 'Select folder';      $tr['en']['Source path not defined']    = 'Source path not defined';
     $tr['en']['already exists']     = 'already exists';     $tr['en']['Error while moving from']    = 'Error while moving from';
     $tr['en']['Create archive?']    = 'Create archive?';    $tr['en']['Invalid file or folder name']    = 'Invalid file or folder name';
     $tr['en']['Archive unpacked']   = 'Archive unpacked';   $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
     $tr['en']['Root path']          = 'Root path';          $tr['en']['Error while renaming from']  = 'Error while renaming from';
-    $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';   
+    $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';
     $tr['en']['Invalid characters in file name']                = 'Invalid characters in file name';
     $tr['en']['FILE EXTENSION HAS NOT SUPPORTED']               = 'FILE EXTENSION HAS NOT SUPPORTED';
     $tr['en']['Selected files and folder deleted']              = 'Selected files and folder deleted';
@@ -4141,8 +4137,8 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
-    
-    $tr['en']['Moved from']                 = 'Moved from'; 
+
+    $tr['en']['Moved from']                 = 'Moved from';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
