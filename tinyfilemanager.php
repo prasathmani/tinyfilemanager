@@ -3230,6 +3230,9 @@ class FM_Zipper
  */
 class FM_Zipper_Tar
 {
+    /**
+     * @var PharData|null
+     */
     private $tar;
 
     public function __construct()
