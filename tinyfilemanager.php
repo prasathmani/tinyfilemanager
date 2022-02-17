@@ -2937,6 +2937,7 @@ function fm_get_text_mimes()
         'application/xml',
         'application/javascript',
         'application/x-javascript',
+        'application/x-empty',
         'image/svg+xml',
         'message/rfc822',
     );
