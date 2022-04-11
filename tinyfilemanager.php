@@ -3058,9 +3058,14 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
     $contentType = fm_get_file_mimes($extension);
+
+    if(is_array($contentType)) {
+        $contentType = implode(' ', $contentType);
+    }
+
     header("Cache-Control: public");
     header("Content-Transfer-Encoding: binary\n");
-    header('Content-Type: $contentType');
+    header("Content-Type: $contentType");
 
     $contentDisposition = 'attachment';
 
