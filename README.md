@@ -55,6 +55,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :mag_right: Search - Search and filter files using `datatable js`
 - :file_folder: Exclude folders and files from listing
 - :globe_with_meridians: Multi-language(20+) support and for translations `translation.json` is file required
+- Support for Nginx X-Accel-Redirect for non blocking download
 - :bangbang: lots more...
 
 ## Deploy by Docker
