@@ -16,6 +16,12 @@ or
 // Is independent from IP white- and blacklisting
 $use_auth = true;
 
+// Use nginx / apache for download acceleration
+$use_download_accel = false;
+
+// Currently only nginx
+$download_accel_provider = "nginx";
+
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html

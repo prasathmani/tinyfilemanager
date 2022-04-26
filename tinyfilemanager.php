@@ -22,6 +22,12 @@ define('APP_TITLE', 'Tiny File Manager');
 // Is independent from IP white- and blacklisting
 $use_auth = true;
 
+// X-Accel-Redirect for nginx
+$use_download_accel = false;
+
+// Currently only nginx
+$download_accel_provider = "nginx";
+
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
@@ -411,6 +417,8 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 // instead globals vars
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
+define('FM_USE_DOWNLOAD_ACCEL', $use_download_accel);
+define('FM_DOWNLOAD_ACCEL_PROVIDER', $download_accel_provider);
 define('FM_EDIT_FILE', $edit_files);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
@@ -3067,6 +3075,13 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
     header("Content-Transfer-Encoding: binary\n");
     header("Content-Type: $contentType");
 
+    if (FM_USE_DOWNLOAD_ACCEL == true) {
+        $fileLocationAsUrl=str_replace($_SERVER['DOCUMENT_ROOT'], '', $fileLocation);
+        if (FM_DOWNLOAD_ACCEL_PROVIDER == "nginx") {
+            header("X-Accel-Redirect: " . urlencode($fileLocationAsUrl));
+        }
+    }
+
     $contentDisposition = 'attachment';
 
 
@@ -3099,19 +3114,20 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         die('Zero byte file! Aborting download');
     }
     @ini_set('magic_quotes_runtime', 0);
-    $fp = fopen("$fileLocation", "rb");
+    if (FM_USE_DOWNLOAD_ACCEL == false) {
+        $fp = fopen("$fileLocation", "rb");
 
-    fseek($fp, $range);
+        fseek($fp, $range);
 
-    while (!feof($fp) and (connection_status() == 0)) {
-        set_time_limit(0);
-        print(@fread($fp, 1024*$chunkSize));
-        flush();
-        ob_flush();
-        // sleep(1);
+        while (!feof($fp) and (connection_status() == 0)) {
+            set_time_limit(0);
+            print(@fread($fp, 1024*$chunkSize));
+            flush();
+            ob_flush();
+            // sleep(1);
+        }
+        fclose($fp);
     }
-    fclose($fp);
-
     return ((connection_status() == 0) and !connection_aborted());
 }
 
