@@ -456,14 +456,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         die(true);
     }
 
-    //search : get list of files from the current folder
-    if(isset($_POST['type']) && $_POST['type']=="search") {
-        $dir = FM_ROOT_PATH;
-        $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
-        echo json_encode($response);
-        exit();
-    }
-
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup" && !empty($_POST['file'])) {
         $fileName = $_POST['file'];
@@ -630,6 +622,16 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     }
 
     exit();
+}
+
+if (isset($_POST['ajax'])) {
+    //search : get list of files from the current folder
+    if(isset($_POST['type']) && $_POST['type']=="search") {
+        $dir = FM_ROOT_PATH;
+        $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
+        echo json_encode($response);
+        exit();
+    }
 }
 
 // Delete file / folder
