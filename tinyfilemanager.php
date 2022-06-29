@@ -1671,7 +1671,7 @@ if (isset($_GET['view'])) {
                         Files in archive: <?php echo $total_files ?><br>
                         Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
                         Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
-                        Compression: <?php echo round(($total_comp / $total_uncomp) * 100) ?>%<br>
+                        Compression: <?php echo round(($total_comp / max($total_uncomp, 1)) * 100) ?>%<br>
                         <?php
                     }
                     // Image info
