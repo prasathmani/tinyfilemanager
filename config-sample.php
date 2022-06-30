@@ -20,8 +20,8 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW',  // admin@123
+    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO'    // 12345
 );
 
 // Readonly users
@@ -30,14 +30,14 @@ $readonly_users = array(
     'user'
 );
 
-// Enable highlight.js (https://highlightjs.org/) on view's page
+// Enable highlight.js (https://highlightjs.org) on view's page
 $use_highlightjs = true;
 
 // highlight.js style
 // for dark theme use 'ir-black'
 $highlightjs_style = 'vs';
 
-// Enable ace.js (https://ace.c9.io/) on view's page
+// Enable ace.js (https://ace.c9.io) on view's page
 $edit_files = true;
 
 // Default timezone for date() and time()
@@ -95,7 +95,6 @@ $online_viewer = 'google';
 // false => disable sticky header
 $sticky_navbar = true;
 
-
 // max upload file size
 $max_upload_size_bytes = 5000;
 
@@ -119,5 +118,3 @@ $ip_blacklist = array(
     '0.0.0.0',      // non-routable meta ipv4
     '::'            // non-routable meta ipv6
 );
-
-?>
