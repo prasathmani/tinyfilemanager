@@ -1,7 +1,7 @@
 <?php
+
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
-
 
 /**
  * H3K | Tiny File Manager V2.4.7
@@ -923,8 +923,6 @@ if (!empty($_FILES) && !FM_READONLY) {
             umask($old);
         }
 
-
-
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if ($chunkTotal) {
                 $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? "wb" : "ab");
@@ -955,8 +953,6 @@ if (!empty($_FILES) && !FM_READONLY) {
                         'info' => "failed to open output stream"
                     );
                 }
-
-
 
                 if ($chunkIndex == $chunkTotal - 1) {
                     rename("{$fullPath}.part", $fullPath);
@@ -1033,7 +1029,6 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
     //set pack type
     $ext = isset($_POST['tar']) ? 'tar' : 'zip';
 
-
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg(lng('Operations with archives are not available'), 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
@@ -1090,7 +1085,6 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
     } else {
         fm_set_msg(lng('File not found'), 'error');
     }
-
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg(lng('Operations with archives are not available'), 'error');
@@ -3102,7 +3096,6 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     $contentDisposition = 'attachment';
 
-
     if (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
         $fileName = preg_replace('/\./', '%2e', $fileName, substr_count($fileName, '.') - 1);
         header("Content-Disposition: $contentDisposition;filename=\"$fileName\"");
@@ -3368,8 +3361,6 @@ class FM_Zipper_Tar
     }
 }
 
-
-
 /**
  * Save Configuration
  */
@@ -3421,8 +3412,6 @@ class FM_Config
         }
     }
 }
-
-
 
 //--- templates functions
 
