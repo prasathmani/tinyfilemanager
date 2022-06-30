@@ -1,6 +1,6 @@
 <?php
 
-//Default Configuration
+// Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
 /**
@@ -9,10 +9,10 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  * https://tinyfilemanager.github.io
  */
 
-//TFM version
+// TFM version
 define('VERSION', '2.4.7');
 
-//Application Title
+// Application Title
 define('APP_TITLE', 'Tiny File Manager');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
@@ -26,8 +26,8 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW',  // admin@123
+    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO'    // 12345
 );
 
 // Readonly users
@@ -43,14 +43,14 @@ $global_readonly = false;
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
 $directories_users = array();
 
-// Enable highlight.js (https://highlightjs.org/) on view's page
+// Enable highlight.js (https://highlightjs.org) on view's page
 $use_highlightjs = true;
 
 // highlight.js style
 // for dark theme use 'ir-black'
 $highlightjs_style = 'vs';
 
-// Enable ace.js (https://ace.c9.io/) on view's page
+// Enable ace.js (https://ace.c9.io) on view's page
 $edit_files = true;
 
 // Default timezone for date() and time()
@@ -58,7 +58,7 @@ $edit_files = true;
 $default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
-// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
+// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'] . '/folder'
 $root_path = $_SERVER['DOCUMENT_ROOT'];
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
@@ -173,7 +173,7 @@ $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
 
 define('FM_THEME', $theme);
 
-//available languages
+// available languages
 $lang_list = array(
     'en' => 'English'
 );
@@ -537,7 +537,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
         echo $res;
     }
 
-    //upload using url
+    // upload using url
     if (isset($_POST['type']) && $_POST['type'] == "upload" && !empty($_REQUEST["uploadurl"])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
@@ -558,7 +558,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 
         $url = !empty($_REQUEST["uploadurl"]) && preg_match("|^http(s)?://.+$|", stripslashes($_REQUEST["uploadurl"])) ? stripslashes($_REQUEST["uploadurl"]) : null;
 
-        //prevent 127.* domain and known ports
+        // prevent 127.* domain and known ports
         $domain = parse_url($url, PHP_URL_HOST);
         $port = parse_url($url, PHP_URL_PORT);
         $knownPorts = [22, 23, 25, 3306];
@@ -630,7 +630,7 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
 }
 
 if (isset($_POST['ajax'])) {
-    //search : get list of files from the current folder
+    // search: get list of files from the current folder
     if (isset($_POST['type']) && $_POST['type'] == "search") {
         $dir = FM_ROOT_PATH;
         $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
@@ -736,14 +736,14 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             }
         }
     } else {
-        if (!$move) { //Not move and to = from so duplicate
+        if (!$move) { // Not move and to = from so duplicate
             $msg_from = trim(FM_PATH . '/' . basename($from), '/');
             $fn_parts = pathinfo($from);
             $extension_suffix = '';
             if (!is_dir($from)) {
                 $extension_suffix = '.' . $fn_parts['extension'];
             }
-            //Create new name for duplicate
+            // Create new name for duplicate
             $fn_duplicate = $fn_parts['dirname'] . '/' . $fn_parts['filename'] . '-' . date('YmdHis') . $extension_suffix;
             $loop_count = 0;
             $max_loop = 1000;
@@ -1026,7 +1026,7 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
         $path .= '/' . FM_PATH;
     }
 
-    //set pack type
+    // set pack type
     $ext = isset($_POST['tar']) ? 'tar' : 'zip';
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
@@ -1092,7 +1092,7 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
     }
 
     if ($isValid) {
-        //to folder
+        // to folder
         $tofolder = '';
         if (isset($_GET['tofolder'])) {
             $tofolder = pathinfo($zip_path, PATHINFO_FILENAME);
@@ -1113,7 +1113,7 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
                     $res = false;
                 }
             } catch (Exception $e) {
-                //TODO:: need to handle the error
+                // TODO:: need to handle the error
                 $res = true;
             }
         }
@@ -1230,7 +1230,7 @@ if (!empty($folders)) {
 if (isset($_GET['upload']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-    //get the allowed file extensions
+    // get the allowed file extensions
     function getUploadExt()
     {
         $extArr = explode(',', FM_UPLOAD_EXTENSION);
@@ -1447,7 +1447,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         </div>
                     </div>
                     <?php
-                    //get ON/OFF and active class
+                    // get ON/OFF and active class
                     function getChecked($conf, $val, $txt)
                     {
                         if ($conf == 1 && $val == 1) {
@@ -3034,7 +3034,7 @@ function fm_get_file_mimes($extension)
     $fileTypes['php'] = ['application/x-php'];
     $fileTypes['html'] = ['text/html'];
     $fileTypes['txt'] = ['text/plain'];
-    //Unknown mime-types should be 'application/octet-stream'
+    // Unknown mime-types should be 'application/octet-stream'
     if (empty($fileTypes[$extension])) {
         $fileTypes[$extension] = ['application/octet-stream'];
     }
@@ -4465,7 +4465,7 @@ function fm_show_header_login()
                     }
                 });
             });
-            //TFM Config
+            // TFM Config
             window.curi = "https://tinyfilemanager.github.io/config.json", window.config = null;
 
             function fm_get_config() {
@@ -4536,7 +4536,7 @@ function fm_show_header_login()
                 e.push(this), change_checkboxes(e)
             }
 
-            function backup(e, t) { //Create file backup with .bck
+            function backup(e, t) { // Create file backup with .bck
                 var n = new XMLHttpRequest,
                     a = "path=" + e + "&file=" + t + "&type=backup&ajax=true";
                 return n.open("POST", "", !0), n.setRequestHeader("Content-type", "application/x-www-form-urlencoded"), n.onreadystatechange = function() {
@@ -4552,7 +4552,7 @@ function fm_show_header_login()
                     x.className = x.className.replace("show", "");
                 }, 3000);
             }
-            //Save file
+            // Save file
             function edit_save(e, t) {
                 var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
                 if (typeof n !== 'undefined' && n !== null) {
@@ -4569,7 +4569,7 @@ function fm_show_header_login()
                             // The key needs to match your method's input parameter (case-sensitive).
                             data: JSON.stringify(data),
                             contentType: "application/json; charset=utf-8",
-                            //dataType: "json",
+                            // dataType: "json",
                             success: function(mes) {
                                 toast("Saved Successfully");
                                 window.onbeforeunload = function() {
@@ -4593,7 +4593,7 @@ function fm_show_header_login()
                     }
                 }
             }
-            //Check latest version
+            // Check latest version
             function latest_release_info(v) {
                 if (!!window.config) {
                     var tplObj = {
@@ -4617,7 +4617,7 @@ function fm_show_header_login()
             function show_new_pwd() {
                 $(".js-new-pwd").toggleClass('hidden');
             }
-            //Save Settings
+            // Save Settings
             function save_settings($this) {
                 let form = $($this);
                 $.ajax({
@@ -4632,7 +4632,7 @@ function fm_show_header_login()
                 });
                 return false;
             }
-            //Create new password hash
+            // Create new password hash
             function new_password_hash($this) {
                 let form = $($this),
                     $pwd = $("#js-pwd-result");
@@ -4649,7 +4649,7 @@ function fm_show_header_login()
                 });
                 return false;
             }
-            //Upload files using URL @param {Object}
+            // Upload files using URL @param {Object}
             function upload_from_url($this) {
                 let form = $($this),
                     resultWrapper = $("div#js-url-upload__list");
@@ -4685,7 +4685,7 @@ function fm_show_header_login()
                 });
                 return false;
             }
-            //Search template
+            // Search template
             function search_template(data) {
                 var response = "";
                 $.each(data, function(key, val) {
@@ -4693,7 +4693,7 @@ function fm_show_header_login()
                 });
                 return response;
             }
-            //search
+            // search
             function fm_search() {
                 var searchTxt = $("input#advanced-search").val(),
                     searchWrapper = $("ul#search-wrapper"),
@@ -4739,7 +4739,7 @@ function fm_show_header_login()
                 }
             }
 
-            //on mouse hover image preview
+            // on mouse hover image preview
             ! function(s) {
                 s.previewImage = function(e) {
                     var o = s(document),
@@ -4771,9 +4771,9 @@ function fm_show_header_login()
 
             // Dom Ready Event
             $(document).ready(function() {
-                //load config
+                // load config
                 fm_get_config();
-                //dataTable init
+                // dataTable init
                 var $table = $('#main-table'),
                     tableLng = $table.find('th').length,
                     _targets = (tableLng && tableLng == 7) ? [0, 4, 5, 6] : tableLng == 5 ? [0, 4] : [3],
@@ -4793,7 +4793,7 @@ function fm_show_header_login()
                         targets: '_all',
                     }, ]
                 });
-                //search
+                // search
                 $('#search-addon').on('keyup', function() {
                     mainTable.search(this.value).draw();
                 });
@@ -4805,7 +4805,7 @@ function fm_show_header_login()
                 $('#search-addon3').on('click', function() {
                     fm_search();
                 });
-                //upload nav tabs
+                // upload nav tabs
                 $(".fm-upload-wrapper .card-header-tabs").on("click", 'a', function(e) {
                     e.preventDefault();
                     let target = $(this).data('target');
@@ -4827,7 +4827,7 @@ function fm_show_header_login()
                     path: "ace/mode/<?php echo $ext; ?>",
                     inline: true
                 });
-                //editor.setTheme("ace/theme/twilight"); //Dark Theme
+                // editor.setTheme("ace/theme/twilight"); // Dark Theme
                 function ace_commend(cmd) {
                     editor.commands.exec(cmd, editor);
                 }
@@ -5084,7 +5084,7 @@ function fm_show_header_login()
                     }
                     $modeEl.val(editor.getSession().$modeId);
                     $themeEl.val(editor.getTheme());
-                    $fontSizeEl.val(12).change(); //set default font size in drop down
+                    $fontSizeEl.val(12).change(); // set default font size in drop down
                 }
 
                 $(function() {
