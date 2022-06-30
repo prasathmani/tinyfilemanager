@@ -2186,27 +2186,6 @@ fm_show_footer();
 // Functions
 
 /**
- * Check if the filename is allowed.
- * @param string $filename
- * @return bool
- */
-function fm_is_file_allowed($filename)
-{
-    // By default, no file is allowed
-    $allowed = false;
-
-    if (FM_EXTENSION) {
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-        if (in_array($ext, explode(',', strtolower(FM_EXTENSION)))) {
-            $allowed = true;
-        }
-    }
-
-    return $allowed;
-}
-
-/**
  * Delete  file or folder (recursively)
  * @param string $path
  * @return bool
