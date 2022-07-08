@@ -200,7 +200,7 @@ if (defined('FM_EMBED')) {
     }
 
     session_cache_limiter('');
-    session_name(FM_SESSION_ID );
+    session_name(FM_SESSION_ID);
     function session_error_handling_function($code, $msg, $file, $line) {
         // Permission denied for default session, try to create a new one
         if ($code == 2) {
