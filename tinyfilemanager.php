@@ -2009,8 +2009,13 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $modif_raw = filemtime($path . '/' . $f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 if ($calc_folder) {
-                    $filesize_raw = fm_get_directorysize($path . '/' . $f);
-                    $filesize = fm_get_filesize($filesize_raw);
+                    try {
+                        $filesize_raw = fm_get_directorysize($path . '/' . $f);
+                        $filesize = fm_get_filesize($filesize_raw);
+                    } catch(Exception $e) {
+                        $filesize_raw = "";
+                        $filesize = lng('Folder');
+                    }
                 }
                 else {
                     $filesize_raw = "";
