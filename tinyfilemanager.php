@@ -1,4 +1,5 @@
 <?php
+
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
@@ -868,6 +869,7 @@ if (isset($_GET['dl'])) {
 
 // Upload
 if (!empty($_FILES) && !FM_READONLY) {
+
     $override_file_name = false;
     $chunkIndex = $_POST['dzchunkindex'];
     $chunkTotal = $_POST['dztotalchunkcount'];
@@ -925,27 +927,31 @@ if (!empty($_FILES) && !FM_READONLY) {
                     $in = @fopen($tmp_name, "rb");
                     if ($in) {
                         while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
+
+                        $response = array (
+                            'status'    => 'success',
+                            'info' => "file upload successful",
+                            'fullPath' => $fullPath
+                        );
                     } else {
                         $response = array (
                         'status'    => 'error',
-                        'info' => "failed to open output stream"
+                        'info' => "failed to open output stream",
+                        'errorDetails' => error_get_last()
                         );
                     }
+
                     @fclose($in);
                     @fclose($out);
                     @unlink($tmp_name);
 
-                    $response = array (
-                        'status'    => 'success',
-                        'info' => "file upload successful",
-                        'fullPath' => $fullPath
-                    );
                 } else {
                     $response = array (
                         'status'    => 'error',
                         'info' => "failed to open output stream"
                         );
                 }
+
 
 
 
@@ -1295,13 +1301,16 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                 this.on("sending", function (file, xhr, formData) {
                     let _path = (file.fullPath) ? file.fullPath : file.name;
                     document.getElementById("fullpath").value = _path;
+
                     xhr.ontimeout = (function() {
                         toast('Error: Server Timeout');
                     });
+
                 }).on("success", function (res) {
                     let _response = JSON.parse(res.xhr.response);
 
                     if(_response.status == "error") {
+                        console.log(_response.errorDetails)
                         toast(_response.info);
                     }
 
