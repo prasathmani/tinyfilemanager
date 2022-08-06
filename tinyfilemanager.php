@@ -2817,6 +2817,7 @@ function fm_get_file_icon_class($path)
         case '3gp':
         case 'asf':
         case 'wmv':
+        case 'webm':
             $img = 'fa fa-file-video-o';
             break;
         case 'eml':
