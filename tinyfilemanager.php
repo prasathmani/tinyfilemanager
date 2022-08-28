@@ -2,7 +2,6 @@
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
-
 /**
  * H3K | Tiny File Manager V2.4.7
  * CCP Programmers | ccpprogrammers@gmail.com
@@ -27,7 +26,8 @@ $use_auth = true;
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
     'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
+    'upload' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
 );
 
 // Readonly users
@@ -35,6 +35,16 @@ $auth_users = array(
 $readonly_users = array(
     'user'
 );
+
+// Upload-only users
+// e.g. array('users', 'guest', ...)
+$uponly_users = array(
+    'upload'
+);
+
+// Subfolder name where upload-only files will be stored
+// in each user sub-directory (like $uponly_folder/<USERNAME>/<FILENAME>)
+$uponly_folder = "incoming";
 
 // Global readonly, including when auth is not being used
 $global_readonly = false;
@@ -393,6 +403,7 @@ defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items) : $exclude_items));
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
 define('FM_READONLY', $use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users));
+define('FM_UPONLY', $use_auth && !empty($uponly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $uponly_users));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 // always use ?p=
@@ -424,7 +435,7 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 /*************************** ACTIONS ***************************/
 
 // AJAX Request
-if (isset($_POST['ajax']) && !FM_READONLY) {
+if (isset($_POST['ajax']) && !FM_READONLY && !FM_UPONLY) {
 
     // save
     if (isset($_POST['type']) && $_POST['type'] == "save") {
@@ -637,7 +648,7 @@ if (isset($_POST['ajax'])) {
 }
 
 // Delete file / folder
-if (isset($_GET['del']) && !FM_READONLY) {
+if (isset($_GET['del']) && !FM_READONLY && !FM_UPONLY) {
     $del = str_replace( '/', '', fm_clean_path( $_GET['del'] ) );
     if ($del != '' && $del != '..' && $del != '.') {
         $path = FM_ROOT_PATH;
@@ -694,7 +705,7 @@ if (isset($_GET['new']) && isset($_GET['type']) && !FM_READONLY) {
 }
 
 // Copy folder / file
-if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
+if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY && !FM_UPONLY) {
     // from
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
@@ -764,7 +775,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
 }
 
 // Mass copy files/ folders
-if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY) {
+if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY && !FM_UPONLY) {
     // from
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
@@ -825,7 +836,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish']) && !FM_READONLY) 
 }
 
 // Rename
-if (isset($_GET['ren'], $_GET['to']) && !FM_READONLY) {
+if (isset($_GET['ren'], $_GET['to']) && !FM_READONLY&& !FM_UPONLY) {
     // old name
     $old = $_GET['ren'];
     $old = fm_clean_path($old);
@@ -880,9 +891,15 @@ if (!empty($_FILES) && !FM_READONLY) {
     $path = FM_ROOT_PATH;
     $ds = DIRECTORY_SEPARATOR;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= $ds . FM_PATH;
     }
 
+    if (FM_UPONLY){
+        $path .= $ds . $uponly_folder . $ds . $_SESSION[FM_SESSION_ID]['logged'] . $ds . date("Y-m-d_H.i.s");
+        $old = umask(0);
+        mkdir($path, 0777, true);
+        umask($old);
+    }
     $errors = 0;
     $uploads = 0;
     $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
@@ -913,23 +930,22 @@ if (!empty($_FILES) && !FM_READONLY) {
             $ext_1 = $ext ? '.'.$ext : '';
             $fullPath = $path . '/' . basename($_REQUEST['fullpath'], $ext_1) .'_'. date('ymdHis'). $ext_1;
         }
-
+        
         if (!is_dir($folder)) {
             $old = umask(0);
             mkdir($folder, 0777, true);
             umask($old);
         }
-
-
-
+        
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if ($chunkTotal){
                 $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? "wb" : "ab");
                 if ($out) {
                     $in = @fopen($tmp_name, "rb");
-                    if ($in) {
-                        while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
-                    } else {
+
+                if ($in) {
+                    while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
+                } else {
                         $response = array (
                         'status'    => 'error',
                         'info' => "failed to open output stream"
@@ -944,18 +960,19 @@ if (!empty($_FILES) && !FM_READONLY) {
                         'info' => "file upload successful",
                         'fullPath' => $fullPath
                     );
+
                 } else {
+
                     $response = array (
                         'status'    => 'error',
                         'info' => "failed to open output stream"
                         );
                 }
 
-
-
                 if ($chunkIndex == $chunkTotal - 1) {
                     rename("{$fullPath}.part", $fullPath);
                 }
+
 
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
@@ -989,7 +1006,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 }
 
 // Mass deleting
-if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
+if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY && !FM_UPONLY) {
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
@@ -1019,7 +1036,7 @@ if (isset($_POST['group'], $_POST['delete']) && !FM_READONLY) {
 }
 
 // Pack files
-if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && !FM_READONLY) {
+if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && !FM_READONLY && !FM_UPONLY) {
     $path = FM_ROOT_PATH;
     $ext = 'zip';
     if (FM_PATH != '') {
@@ -1068,7 +1085,7 @@ if (isset($_POST['group']) && (isset($_POST['zip']) || isset($_POST['tar'])) && 
 }
 
 // Unpack
-if (isset($_GET['unzip']) && !FM_READONLY) {
+if (isset($_GET['unzip']) && !FM_READONLY && !FM_UPONLY) {
     $unzip = $_GET['unzip'];
     $unzip = fm_clean_path($unzip);
     $unzip = str_replace('/', '', $unzip);
@@ -1133,7 +1150,7 @@ if (isset($_GET['unzip']) && !FM_READONLY) {
 }
 
 // Change Perms (not for Windows)
-if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN) {
+if (isset($_POST['chmod']) && !FM_READONLY && !FM_IS_WIN && !FM_UPONLY) {
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
@@ -1230,7 +1247,7 @@ if (!empty($folders)) {
 }
 
 // upload form
-if (isset($_GET['upload']) && !FM_READONLY) {
+if (FM_UPONLY || (isset($_GET['upload']) && !FM_READONLY)) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     //get the allowed file extensions
@@ -1258,11 +1275,12 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                 </ul>
             </div>
             <div class="card-body">
+                <?php if (!FM_UPONLY): ?>
                 <p class="card-text">
                     <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
                     <?php echo lng('DestinationFolder') ?>: <?php echo fm_enc(fm_convert_win(FM_PATH)) ?>
                 </p>
-
+                <?php endif; ?>
                 <form action="<?php echo htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
                     <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
@@ -1308,7 +1326,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     if(_response.status == "error") {
                         toast(_response.info);
                     }
-
+                    
                 }).on("error", function(file, response) {
                     toast(response);
                 });
@@ -1321,7 +1339,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
 }
 
 // copy form POST
-if (isset($_POST['copy']) && !FM_READONLY) {
+if (isset($_POST['copy']) && !FM_READONLY && !FM_UPONLY) {
     $copy_files = isset($_POST['file']) ? $_POST['file'] : null;
     if (!is_array($copy_files) || empty($copy_files)) {
         fm_set_msg(lng('Nothing selected'), 'alert');
@@ -1365,7 +1383,7 @@ if (isset($_POST['copy']) && !FM_READONLY) {
 }
 
 // copy form
-if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
+if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY && !FM_UPONLY) {
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
     if ($copy == '' || !file_exists(FM_ROOT_PATH . '/' . $copy)) {
@@ -1409,7 +1427,7 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     exit;
 }
 
-if (isset($_GET['settings']) && !FM_READONLY) {
+if (isset($_GET['settings']) && !FM_READONLY && !FM_UPONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     global $cfg, $lang, $lang_list;
@@ -1558,7 +1576,7 @@ if (isset($_GET['help'])) {
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> <?php echo lng('Help Documents') ?> </a> </li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <li class="list-group-item"><a href="javascript:latest_release_info('<?php echo VERSION; ?>');"><i class="fa fa-link"> </i> <?php echo lng('Check Latest Version') ?></a></li>
-                                <?php if(!FM_READONLY) { ?>
+                                <?php if(!FM_READONLY && !FM_UPONLY) { ?>
                                 <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
                                 <?php } ?>
                             </ul>
@@ -1699,7 +1717,7 @@ if (isset($_GET['view'])) {
                     &nbsp;
                     <?php
                     // ZIP actions
-                    if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
+                    if (!FM_READONLY && !FM_UPONLY && ($is_zip || $is_gzip) && $filenames !== false) {
                         $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
                         ?>
                         <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;unzip=<?php echo urlencode($file) ?>"><i class="fa fa-check-circle"></i> <?php echo lng('UnZip') ?></a></b> &nbsp;
@@ -1707,7 +1725,7 @@ if (isset($_GET['view'])) {
                                 <?php echo lng('UnZipToFolder') ?></a></b> &nbsp;
                         <?php
                     }
-                    if ($is_text && !FM_READONLY) {
+                    if ($is_text && !FM_READONLY && !FM_UPONLY) {
                         ?>
                         <b><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
                             </a></b> &nbsp;
@@ -1881,7 +1899,7 @@ if (isset($_GET['edit'])) {
 }
 
 // chmod (not for Windows)
-if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
+if (isset($_GET['chmod']) && !FM_READONLY && !FM_UPONLY && !FM_IS_WIN) {
     $file = $_GET['chmod'];
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
@@ -1971,7 +1989,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
         <table class="table table-bordered table-hover table-sm <?php echo $tableTheme; ?>" id="main-table">
             <thead class="thead-white">
             <tr>
-                <?php if (!FM_READONLY): ?>
+                <?php if (!FM_READONLY && !FM_UPONLY): ?>
                     <th style="width:3%" class="custom-checkbox-header">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="js-select-all-items" onclick="checkbox_toggle()">
@@ -1991,7 +2009,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             // link to parent folder
             if ($parent !== false) {
                 ?>
-                <tr><?php if (!FM_READONLY): ?>
+                <tr><?php if (!FM_READONLY && !FM_UPONLY): ?>
                     <td class="nosort"></td><?php endif; ?>
                     <td class="border-0" data-sort><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
                     <td class="border-0" data-order></td>
@@ -2033,7 +2051,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 }
                 ?>
                 <tr>
-                    <?php if (!FM_READONLY): ?>
+                    <?php if (!FM_READONLY && !FM_UPONLY): ?>
                         <td class="custom-checkbox-td">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="<?php echo $ii ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
@@ -2049,11 +2067,11 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     </td>
                     <td data-order="a-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY && !FM_UPONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
                         <td><?php echo $owner['name'] . ':' . $group['name'] ?></td>
                     <?php endif; ?>
-                    <td class="inline-actions"><?php if (!FM_READONLY): ?>
+                    <td class="inline-actions"><?php if (!FM_READONLY && !FM_UPONLY): ?>
                             <a title="<?php echo lng('Delete')?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('Folder').'?'; ?>\n \n ( <?php echo urlencode($f) ?> )');"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('Rename')?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo')?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
@@ -2085,7 +2103,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 }
                 ?>
                 <tr>
-                    <?php if (!FM_READONLY): ?>
+                    <?php if (!FM_READONLY && !FM_UPONLY): ?>
                         <td class="custom-checkbox-td">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="<?php echo $ik ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
@@ -2111,13 +2129,13 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         </span></td>
                     <td data-order="b-<?php echo $modif_raw;?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY && !FM_UPONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
                         <td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
                     <?php endif; ?>
                     <td class="inline-actions">
                         <a title="<?php echo lng('Preview') ?>" href="<?php echo $filelink.'&quickView=1'; ?>" data-toggle="lightbox" data-gallery="tiny-gallery" data-title="<?php echo fm_convert_win(fm_enc($f)) ?>" data-max-width="100%" data-width="100%"><i class="fa fa-eye"></i></a>
-                        <?php if (!FM_READONLY): ?>
+                        <?php if (!FM_READONLY && !FM_UPONLY): ?>
                             <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="return confirm('<?php echo lng('Delete').' '.lng('File').'?'; ?>\n \n ( <?php echo urlencode($f) ?> )');"> <i class="fa fa-trash-o"></i></a>
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..."
@@ -2135,16 +2153,16 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             if (empty($folders) && empty($files)) {
                 ?>
                 <tfoot>
-                    <tr><?php if (!FM_READONLY): ?>
+                    <tr><?php if (!FM_READONLY && !FM_UPONLY): ?>
                             <td></td><?php endif; ?>
-                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?php echo lng('Folder is empty') ?></em></td>
+                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?php echo 'Folder is empty' ?></em></td>
                     </tr>
                 </tfoot>
                 <?php
             } else {
                 ?>
                 <tfoot>
-                    <tr><?php if (!FM_READONLY): ?>
+                    <tr><?php if (!FM_READONLY && !FM_UPONLY): ?>
                             <td class="gray"></td><?php endif; ?>
                         <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>">
                             <?php echo lng('FullSize').': <span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?>
@@ -2161,7 +2179,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
     </div>
 
     <div class="row">
-        <?php if (!FM_READONLY): ?>
+        <?php if (!FM_READONLY && !FM_UPONLY): ?>
         <div class="col-xs-12 col-sm-9">
             <ul class="list-inline footer-action">
                 <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a></li>
@@ -3430,6 +3448,7 @@ function fm_show_nav_path($path)
 
             <div class="col-xs-6 col-sm-7 text-right">
                 <ul class="navbar-nav mr-auto float-right <?php echo fm_get_theme();  ?>">
+                    <?php if (!FM_READONLY && !FM_UPONLY): ?>
                     <li class="nav-item mr-2">
                         <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
                             <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
@@ -3444,13 +3463,16 @@ function fm_show_nav_path($path)
                             </div>
                         </div>
                     </li>
+                    <?php endif; ?>
                     <?php if (!FM_READONLY): ?>
                     <li class="nav-item">
                         <a title="<?php echo lng('Upload') ?>" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php echo lng('Upload') ?></a>
                     </li>
-                    <li class="nav-item">
-                        <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
-                    </li>
+                    <?php if (!FM_UPONLY): ?>
+                        <li class="nav-item">
+                            <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
+                        </li>
+                    <?php endif; ?>
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
@@ -3464,7 +3486,7 @@ function fm_show_nav_path($path)
                         </div>
                     </li>
                     <?php else: ?>
-                        <?php if (!FM_READONLY): ?>
+                        <?php if (!FM_READONLY && !FM_UPONLY): ?>
                             <li class="nav-item">
                                 <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                             </li>
@@ -3876,7 +3898,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     url: window.location,
                     // The key needs to match your method's input parameter (case-sensitive).
                     data: JSON.stringify(data),
-                    contentType: "application/json; charset=utf-8",
+                    contentType: "multipart/form-data-encoded; charset=utf-8",
                     //dataType: "json",
                     success: function(mes){toast("Saved Successfully"); window.onbeforeunload = function() {return}},
                     failure: function(mes) {toast("Error: try again");},
