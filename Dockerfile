@@ -17,10 +17,7 @@ RUN apk add \
     oniguruma-dev
 
 RUN docker-php-ext-install \
-    zip \
-    mbstring \
-    iconv \
-    fileinfo
+    zip 
 
 WORKDIR /var/www/html
 
