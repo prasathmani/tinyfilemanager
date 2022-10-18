@@ -68,10 +68,6 @@ $root_url = '';
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
 
-// user specific directories
-// array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
-$directories_users = array();
-
 // input encoding for iconv
 $iconv_input_encoding = 'UTF-8';
 
