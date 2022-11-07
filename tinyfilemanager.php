@@ -424,6 +424,17 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 /*************************** ACTIONS ***************************/
 
 // AJAX Request
+
+if (isset($_POST['ajax'])) {
+    //search : get list of files from the current folder
+    if(isset($_POST['type']) && $_POST['type']=="search") {
+        $dir = FM_ROOT_PATH;
+        $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
+        echo json_encode($response);
+        exit();
+    }
+}
+
 if (isset($_POST['ajax']) && !FM_READONLY) {
 
     // save
@@ -626,15 +637,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     exit();
 }
 
-if (isset($_POST['ajax'])) {
-    //search : get list of files from the current folder
-    if(isset($_POST['type']) && $_POST['type']=="search") {
-        $dir = FM_ROOT_PATH;
-        $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
-        echo json_encode($response);
-        exit();
-    }
-}
 
 // Delete file / folder
 if (isset($_GET['del']) && !FM_READONLY) {
