@@ -3058,26 +3058,6 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         $contentType = implode(' ', $contentType);
     }
 
-    $size = filesize($fileLocation);
-
-    if ($size == 0) {
-        fm_set_msg(lng('Zero byte file! Aborting download'), 'error');
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
-
-        return (false);
-    }
-
-    @ini_set('magic_quotes_runtime', 0);
-    $fp = fopen("$fileLocation", "rb");
-
-    if ($fp === false) {
-        fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
-
-        return (false);
-
-    }
-    
     header("Cache-Control: public");
     header("Content-Transfer-Encoding: binary\n");
     header("Content-Type: $contentType");
@@ -3094,6 +3074,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     header("Accept-Ranges: bytes");
     $range = 0;
+    $size = filesize($fileLocation);
 
     if (isset($_SERVER['HTTP_RANGE'])) {
         list($a, $range) = explode("=", $_SERVER['HTTP_RANGE']);
@@ -3108,6 +3089,12 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         header("Content-Range: bytes 0-$size2/$size");
         header("Content-Length: " . $size);
     }
+
+    if ($size == 0) {
+        die('Zero byte file! Aborting download');
+    }
+    @ini_set('magic_quotes_runtime', 0);
+    $fp = fopen("$fileLocation", "rb");
 
     fseek($fp, $range);
 
