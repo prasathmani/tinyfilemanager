@@ -1872,6 +1872,70 @@ if (isset($_GET['edit'])) {
         }
         ?>
     </div>
+
+    <script>
+    function setFileDirty(status) {
+        console.log("setFileDirty", status);
+        if (status) {
+            window.onbeforeunload = function() { return 'Your changes may not be saved.' };
+        } else {
+            window.onbeforeunload = null;
+        }
+    }
+
+    function registerFileDirtyListeners(area) {
+        if (area.addEventListener) {
+            // event handling code for sane browsers
+            area.addEventListener('input', function() {
+                setFileDirty(true);
+            });
+            area.addEventListener('change', function() {
+                setFileDirty(true);
+            });
+            area.addEventListener('paste', function() {
+                setFileDirty(true);
+            });
+        } else if (area.attachEvent) {
+            area.attachEvent('onpropertychange', function() {
+                // IE-specific event handling code
+                setFileDirty(true);
+            });
+        } else {
+            setFileDirty(true); // handle edge cases I guess
+        }
+    }
+
+    <?php if ($is_text && $isNormalEditor) { ?>
+    registerFileDirtyListeners(document.getElementById("normal-editor"));
+
+    <?php } else { ?>
+    var editorArea = document.getElementById("editor");
+
+    let observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (!mutation.addedNodes) return;
+
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+            let node = mutation.addedNodes[i];
+            if (node.nodeName == 'TEXTAREA') {
+                console.log("registerFileDirtyListeners", node);
+                registerFileDirtyListeners(node);
+                observer.disconnect();
+            }
+        }
+    })
+    })
+
+    observer.observe(editorArea, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+        characterData: false
+    });
+    <?php } ?>
+
+    </script>
+
     <?php
     fm_show_footer();
     exit;
@@ -3890,7 +3954,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     data: JSON.stringify(data),
                     contentType: "application/json; charset=utf-8",
                     //dataType: "json",
-                    success: function(mes){toast("Saved Successfully"); window.onbeforeunload = function() {return}},
+                    success: function(mes){toast("Saved Successfully"); setFileDirty(false)},
                     failure: function(mes) {toast("Error: try again");},
                     error: function(mes) {toast(`<p style="background-color:red">${mes.responseText}</p>`);}
                 });
