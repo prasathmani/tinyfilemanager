@@ -37,13 +37,13 @@ Default username/password: **admin/admin@123** and **user/12345**.
 
 To enable/disable authentication set `$use_auth` to true or false.
 
-:information_source: Rename the `config-sample.php` file into `config.php` to use configuration, it is an additional configuration file, Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
+:information_source: Add your own configuration file `config.php` in the same folder to use as additional configuration file.
 
 ### :loudspeaker: Features
 
 - :cd: Open Source, light and extremely simple
 - :iphone: Mobile friendly view for touch devices
-- :information_source: Basic features likes Create, Delete, Modify, View, Quick Preview, Download, Copy and Move files
+- :information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files
 - :arrow_double_up: Ajax Upload, Ability to drag & drop, upload from URL, multiple files upload with file extensions filter
 - :file_folder: Ability to create folders and files
 - :gift: Ability to compress, extract files (`zip`, `tar`)
@@ -78,8 +78,6 @@ Access `http://127.0.0.1/` and enter default username and password, then enjoy i
 DockerHub: [https://hub.docker.com/r/tinyfilemanager/tinyfilemanager](https://hub.docker.com/r/tinyfilemanager/tinyfilemanager)
 
 #### How to change config within docker
-
-**Important!!!** First, you can copy `config-sample.php` to `config.php`, and must modify this following config
 
 Origin:
 
