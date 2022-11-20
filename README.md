@@ -54,7 +54,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :zap: Backup files and IP blacklist and whitelist
 - :mag_right: Search - Search and filter files using `datatable js`
 - :file_folder: Exclude folders and files from listing
-- :globe_with_meridians: Multi-language(20+) support and for translations `translation.json` is file required
+- :globe_with_meridians: Multi-language(32+) support and for translations `translation.json` is file required
 - :bangbang: lots more...
 
 ## Deploy by Docker
@@ -103,10 +103,10 @@ $root_path = $_SERVER['DOCUMENT_ROOT'].'/data';
 $root_url = 'data/';
 ```
 
-Then, change another config what you want, and add a new volume `-v /absolute/path/config.php:/var/www/html/config.php` in `docker run` command, like this:
+Then, change another config what you want, and add a new volume `-v /absolute/path/index.php:/var/www/html/index.php` in `docker run` command, like this:
 
 ```shell
-$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/config.php:/var/www/html/config.php -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
+$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/index.php:/var/www/html/index.php -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
 ```
 
 #### Stop running
@@ -121,6 +121,6 @@ $ docker rm -f tinyfilemanager
 
 - Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
 - Original concept and development by github.com/alexantr/filemanager
-- CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, ekko-lightbox js, and DataTable js_
+- CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, and DataTable js_
 - To report a bug or request a feature, please file an [issue](https://github.com/prasathmani/tinyfilemanager/issues)
 - [Contributors](https://github.com/prasathmani/tinyfilemanager/wiki/Authors-and-Contributors)

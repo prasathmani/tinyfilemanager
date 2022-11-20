@@ -2,11 +2,12 @@
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
-
 /**
  * H3K | Tiny File Manager V2.5.0
- * CCP Programmers | ccpprogrammers@gmail.com
- * https://tinyfilemanager.github.io
+ * @author Prasath Mani | CCP Programmers
+ * @email ccpprogrammers@gmail.com
+ * @github https://github.com/prasathmani/tinyfilemanager
+ * @link https://tinyfilemanager.github.io
  */
 
 //TFM version
@@ -95,8 +96,8 @@ $exclude_items = array();
 
 // Online office Docs Viewer
 // Availabe rules are 'google', 'microsoft' or false
-// google => View documents using Google Docs Viewer
-// microsoft => View documents using Microsoft Web Apps Viewer
+// Google => View documents using Google Docs Viewer
+// Microsoft => View documents using Microsoft Web Apps Viewer
 // false => disable online doc viewer
 $online_viewer = 'google';
 
@@ -132,6 +133,7 @@ $ip_blacklist = array(
 );
 
 // if User has the customized config file, try to use it to override the default config above
+// sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__.'/config.php';
 if (is_readable($config_file)) {
     @include($config_file);
@@ -259,9 +261,7 @@ if ($ip_ruleset != 'OFF') {
     }
 
     $clientIp = getClientIP();
-
     $proceed = false;
-
     $whitelisted = in_array($clientIp, $ip_whitelist);
     $blacklisted = in_array($clientIp, $ip_blacklist);
 
@@ -284,12 +284,11 @@ if ($ip_ruleset != 'OFF') {
             fm_show_header_login();
             fm_show_message();
         }
-
         exit();
     }
 }
 
-// Auth
+// Checking if the user is logged in or not. If not, it will show the login form.
 if ($use_auth) {
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
@@ -423,7 +422,7 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 
 /*************************** ACTIONS ***************************/
 
-// AJAX Request
+// Handle all AJAX Request
 if (isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
     if(!verifyToken($_POST['token'])) {
         header('HTTP/1.0 401 Unauthorized');
@@ -630,10 +629,8 @@ if (isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
             event_callback(array("fail" => $err));
         }
     }
-
     exit();
 }
-
 
 // Delete file / folder
 if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
@@ -941,8 +938,6 @@ if (!empty($_FILES) && !FM_READONLY) {
             umask($old);
         }
 
-
-
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if ($chunkTotal){
                 $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? "wb" : "ab");
@@ -977,8 +972,6 @@ if (!empty($_FILES) && !FM_READONLY) {
                         'info' => "failed to open output stream"
                         );
                 }
-
-
 
                 if ($chunkIndex == $chunkTotal - 1) {
                     rename("{$fullPath}.part", $fullPath);
@@ -1050,7 +1043,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
     $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
-// Pack files
+// Pack files zip, tar
 if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_POST['tar'])) && !FM_READONLY) {
 
     if(!verifyToken($_POST['token'])) {
@@ -1065,7 +1058,6 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
 
     //set pack type
     $ext = isset($_POST['tar']) ? 'tar' : 'zip';
-
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg(lng('Operations with archives are not available'), 'error');
@@ -1104,7 +1096,7 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
-// Unpack
+// Unpack zip, tar
 if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 
     if(!verifyToken($_POST['token'])) {
@@ -1128,7 +1120,6 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
     } else {
         fm_set_msg(lng('File not found'), 'error');
     }
-
 
     if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
         fm_set_msg(lng('Operations with archives are not available'), 'error');
@@ -1167,7 +1158,6 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
         } else {
             fm_set_msg(lng('Archive not unpacked'), 'error');
         }
-
     } else {
         fm_set_msg(lng('File not found'), 'error');
     }
@@ -1232,7 +1222,7 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
     $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
-/*************************** /ACTIONS ***************************/
+/*************************** ACTIONS ***************************/
 
 // get current path
 $path = FM_ROOT_PATH;
@@ -1340,7 +1330,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             forceChunking: true,
             retryChunks: true,
             retryChunksLimit: 3,
-            parallelUploads: 2, // does not support more than 1!
+            parallelUploads: 2,
             parallelChunkUploads: true,
             timeout: 120000,
             maxFilesize: "<?php echo MAX_UPLOAD_SIZE; ?>",
@@ -1358,7 +1348,6 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     if(_response.status == "error") {
                         toast(_response.info);
                     }
-
                 }).on("error", function(file, response) {
                     toast(response);
                 });
@@ -1491,18 +1480,6 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             </select>
                         </div>
                     </div>
-                    <?php
-                    //get ON/OFF and active class
-                    function getChecked($conf, $val, $txt) {
-                        if($conf== 1 && $val ==1) {
-                            return $txt;
-                        } else if($conf == '' && $val == '') {
-                            return $txt;
-                        } else {
-                            return '';
-                        }
-                    }
-                    ?>
                     <div class="mt-3 mb-3 row ">
                         <label for="js-error-report" class="col-sm-3 col-form-label"><?php echo lng('ErrorReporting') ?></label>
                         <div class="col-sm-9">
@@ -1924,7 +1901,6 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     $file_path = $path . '/' . $file;
 
     $mode = fileperms($path . '/' . $file);
-
     ?>
     <div class="path">
         <div class="card mb-2 <?php echo fm_get_theme(); ?>">
@@ -1980,11 +1956,11 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     exit;
 }
 
-//--- FILEMANAGER MAIN
+// --- TINYFILEMANAGER MAIN ---
 fm_show_header(); // HEADER
 fm_show_nav_path(FM_PATH); // current path
 
-// messages
+// show alert messages
 fm_show_message();
 
 $num_files = count($files);
@@ -2196,13 +2172,12 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
         <?php endif; ?>
     </div>
-
 </form>
 
 <?php
 fm_show_footer();
 
-//--- END
+// --- END HTML ---
 
 // Functions
 
@@ -2752,6 +2727,10 @@ function fm_get_file_icon_class($path)
         case 'ftpquota':
         case 'sql':
         case 'js':
+        case 'ts':
+        case 'jsx':
+        case 'tsx':
+        case 'hbs':
         case 'json':
         case 'sh':
         case 'config':
@@ -2941,11 +2920,12 @@ function fm_get_audio_exts()
 function fm_get_text_exts()
 {
     return array(
-        'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'json', 'sh', 'config',
-        'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue',
-        'eml', 'msg', 'csv', 'bat', 'twig', 'tpl', 'md', 'gitignore', 'less', 'sass', 'scss', 'c', 'cpp', 'cs', 'py',
-        'map', 'lock', 'dtd', 'svg', 'scss', 'asp', 'aspx', 'asx', 'asmx', 'ashx', 'jsx', 'jsp', 'jspx', 'cfm', 'cgi',
-        'yml', 'yaml', 'toml'
+        'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'ts', 'jsx', 'tsx', 'mjs', 'json', 'sh', 'config',
+        'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue', 'bash', 'tpl', 'vue',
+        'eml', 'msg', 'csv', 'bat', 'twig', 'tpl', 'md', 'gitignore', 'less', 'sass', 'scss', 'c', 'cpp', 'cs', 'py', 'go', 'zsh', 'swift', 'yml',
+        'map', 'lock', 'dtd', 'svg', 'scss', 'asp', 'aspx', 'asx', 'asmx', 'ashx', 'jsp', 'jspx', 'cfm', 'cgi', 'dockerfile', 'ruby', 'twig',
+        'yml', 'yaml', 'toml', 'md', 'vhost', 'scpt', 'applescript', 'c', 'cs', 'csx', 'cshtml', 'cpp', 'c++', 'coffee', 'cfm', 'rb',
+        'graphql', 'mustache', 'jinja', 'phtml', 'http', 'handlebars', 'lock', 'java', 'es', 'es6', 'markdown', 'wiki', 'vhost', 'sql',
     );
 }
 
@@ -2989,6 +2969,11 @@ function fm_get_onlineViewer_exts()
     return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar', 'odt', 'ods');
 }
 
+/**
+ * It returns the mime type of a file based on its extension.
+ * @param extension The file extension of the file you want to get the mime type for.
+ * @return The mime type of the file.
+ */
 function fm_get_file_mimes($extension)
 {
     $fileTypes['swf'] = 'application/x-shockwave-flash';
@@ -3066,14 +3051,13 @@ function fm_get_file_mimes($extension)
      }
 }
 
-/*
-Parameters: downloadFile(File Location, File Name,
-max speed, is streaming
-If streaming - videos will show as videos, images as images
-instead of download prompt
-https://stackoverflow.com/a/13821992/1164642
+/**
+* Parameters: downloadFile(File Location, File Name,
+* max speed, is streaming
+* If streaming - videos will show as videos, images as images
+* instead of download prompt
+* https://stackoverflow.com/a/13821992/1164642
 */
-
 function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 {
     if (connection_status() != 0)
@@ -3151,6 +3135,10 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
     return ((connection_status() == 0) and !connection_aborted());
 }
 
+/**
+ * If the theme is dark, return the text-white and bg-dark classes.
+ * @return the value of the  variable.
+ */
 function fm_get_theme() {
     $result = '';
     if(FM_THEME == "dark") {
@@ -3370,8 +3358,6 @@ class FM_Zipper_Tar
     }
 }
 
-
-
 /**
  * Save Configuration
  */
@@ -3424,9 +3410,7 @@ class FM_Zipper_Tar
     }
 }
 
-
-
-//--- templates functions
+//--- Templates Functions ---
 
 /**
  * Show nav block
@@ -3520,7 +3504,7 @@ function fm_show_nav_path($path)
 }
 
 /**
- * Show message from session
+ * Show alert message from session
  */
 function fm_show_message()
 {
@@ -3762,12 +3746,13 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
             .theme-dark .btn-outline-primary { color: #00ff1f; border-color: #00ff1f; }
             .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #028211;}
+            .theme-dark input.form-control { background-color: #222222; }
+            .theme-dark .dropzone { background: transparent; }
         </style>
     <?php endif; ?>
 </head>
 <body class="<?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?>">
 <div id="wrapper" class="container-fluid">
-
     <!-- New Item creation -->
     <div class="modal fade" id="createNewItem" tabindex="-1" role="dialog" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="newItemModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -3799,7 +3784,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Advance Search Modal -->
     <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content <?php echo fm_get_theme(); ?>">
@@ -3824,6 +3809,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
       </div>
     </div>
 
+    <!--Rename Modal -->
     <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="renameDailog">
       <div class="modal-dialog" role="document">
         <form class="modal-content rounded-3 shadow" method="post" autocomplete="off">
@@ -3843,6 +3829,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
       </div>
     </div>
 
+    <!-- Confirm Modal -->
     <script type="text/html" id="js-tpl-confirm">
         <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="confirmDailog-<%this.id%>">
           <div class="modal-dialog" role="document">
@@ -3865,7 +3852,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     }
 
     /**
-     * Show page footer
+     * Show page footer after login
      */
     function fm_show_footer()
     {
@@ -3891,7 +3878,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function unselect_all() { change_checkboxes(get_checkboxes(), !1) }
     function invert_all() { change_checkboxes(get_checkboxes()) }
     function checkbox_toggle() { var e = get_checkboxes(); e.push(this), change_checkboxes(e) }
-    function backup(e, t) { //Create file backup with .bck
+    function backup(e, t) { // Create file backup with .bck
         var n = new XMLHttpRequest,
             a = "path=" + e + "&file=" + t + "&token="+ window.csrf +"&type=backup&ajax=true";
         return n.open("POST", "", !0), n.setRequestHeader("Content-type", "application/x-www-form-urlencoded"), n.onreadystatechange = function () {
@@ -3900,7 +3887,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     }
     // Toast message
     function toast(txt) { var x = document.getElementById("snackbar");x.innerHTML=txt;x.className = "show";setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000); }
-    //Save file
+    // Save file
     function edit_save(e, t) {
         var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
         if (typeof n !== 'undefined' && n !== null) {
@@ -3928,7 +3915,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         }
     }
     function show_new_pwd() { $(".js-new-pwd").toggleClass('hidden'); }
-    //Save Settings
+    // Save Settings
     function save_settings($this) {
         let form = $($this);
         $.ajax({
@@ -3944,7 +3931,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             success: function (data) { if(data) { $pwd.val(data); } }
         }); return false;
     }
-    //Upload files using URL @param {Object}
+    // Upload files using URL @param {Object}
     function upload_from_url($this) {
         let form = $($this), resultWrapper = $("div#js-url-upload__list");
         $.ajax({
@@ -3964,7 +3951,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             }
         }); return false;
     }
-    //Search template
+    // Search template
     function search_template(data) {
         var response = "";
         $.each(data, function (key, val) {
@@ -3972,7 +3959,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         });
         return response;
     }
-    //search
+    // Advance search
     function fm_search() {
         var searchTxt = $("input#advanced-search").val(), searchWrapper = $("ul#search-wrapper"), path = $("#js-search-modal").attr("href"), _html = "", $loader = $("div.lds-facebook");
         if(!!searchTxt && searchTxt.length > 2 && path) {
@@ -3999,7 +3986,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         } else { searchWrapper.html("OOPS: minimum 3 characters required!"); }
     }
 
-    //action confirm dailog modal
+    // action confirm dailog modal
     function confirmDailog(e, id = 0, title = "Action", content = "", action = null) {
         e.preventDefault();
         const tplObj = {id, title, content, action};
@@ -4010,18 +3997,18 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     }
     
 
-    //on mouse hover image preview
+    // on mouse hover image preview
     !function(s){s.previewImage=function(e){var o=s(document),t=".previewImage",a=s.extend({xOffset:20,yOffset:-20,fadeIn:"fast",css:{padding:"5px",border:"1px solid #cccccc","background-color":"#fff"},eventSelector:"[data-preview-image]",dataKey:"previewImage",overlayId:"preview-image-plugin-overlay"},e);return o.off(t),o.on("mouseover"+t,a.eventSelector,function(e){s("p#"+a.overlayId).remove();var o=s("<p>").attr("id",a.overlayId).css("position","absolute").css("display","none").append(s('<img class="c-preview-img">').attr("src",s(this).data(a.dataKey)));a.css&&o.css(a.css),s("body").append(o),o.css("top",e.pageY+a.yOffset+"px").css("left",e.pageX+a.xOffset+"px").fadeIn(a.fadeIn)}),o.on("mouseout"+t,a.eventSelector,function(){s("#"+a.overlayId).remove()}),o.on("mousemove"+t,a.eventSelector,function(e){s("#"+a.overlayId).css("top",e.pageY+a.yOffset+"px").css("left",e.pageX+a.xOffset+"px")}),this},s.previewImage()}(jQuery);
 
-    // Dom Ready Event
+    // Dom Ready Events
     $(document).ready( function () {
-        //dataTable init
+        // dataTable init
         var $table = $('#main-table'),
             tableLng = $table.find('th').length,
             _targets = (tableLng && tableLng == 7 ) ? [0, 4,5,6] : tableLng == 5 ? [0,4] : [3];
             mainTable = $('#main-table').DataTable({paging: false, info: false, order: [], columnDefs: [{targets: _targets, orderable: false}]
         });
-        //search
+        // filter table
         $('#search-addon').on( 'keyup', function () {
             mainTable.search( this.value ).draw();
         });
@@ -4135,21 +4122,14 @@ function lng($txt) {
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
     $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
-    $tr['en']['Folder is empty']    = 'Folder is empty';    $tr['en']['PartitionSize']      = 'Partition size';
+    $tr['en']['Folder is empty']= 'Folder is empty';    $tr['en']['PartitionSize']      = 'Partition size';
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
-    $tr['en']['Help']               = 'Help';               $tr['en']['Created']    = 'Created';
+    $tr['en']['Help']           = 'Help';                   $tr['en']['Created']            = 'Created';
     $tr['en']['Free of']        = 'Free of';                $tr['en']['Preview']            = 'Preview';
     $tr['en']['Help Documents'] = 'Help Documents';         $tr['en']['Report Issue']       = 'Report Issue';
     $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';
     $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
     $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in';
-    $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
-    $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
-    $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
-
-    // new - novos
-
-    $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying from']    = 'Error while copying from';
     $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
     $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
     $tr['en']['Deleted']            = 'Deleted';            $tr['en']['Archive not created']        = 'Archive not created';
@@ -4163,6 +4143,11 @@ function lng($txt) {
     $tr['en']['Archive unpacked']   = 'Archive unpacked';   $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
     $tr['en']['Root path']          = 'Root path';          $tr['en']['Error while renaming from']  = 'Error while renaming from';
     $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';
+    $tr['en']['Moved from']         = 'Moved from';
+    $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
+    $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
+    $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
+    $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying from']    = 'Error while copying from';
     $tr['en']['Invalid characters in file name']                = 'Invalid characters in file name';
     $tr['en']['FILE EXTENSION HAS NOT SUPPORTED']               = 'FILE EXTENSION HAS NOT SUPPORTED';
     $tr['en']['Selected files and folder deleted']              = 'Selected files and folder deleted';
@@ -4173,8 +4158,6 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
-
-    $tr['en']['Moved from']                 = 'Moved from';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;

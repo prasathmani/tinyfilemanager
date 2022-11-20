@@ -866,7 +866,7 @@
         "Renamed from": "Umbenannt von",
         "Archive not unpacked": "Archiv nicht entpackt",
         "Deleted": "Gelöscht",
-        "Archive not created": "Archiv nicht erstellt",  
+        "Archive not created": "Archiv nicht erstellt",
         "Copied from": "Kopiert aus",
         "Permissions changed": "Berechtigungen geändert",
         "to": "nach",
@@ -874,7 +874,7 @@
         "not found!": "nicht gefunden!",
         "File Saved Successfully": "Datei erfolgreich gespeichert",
         "Archive": "Archiv",
-        "Permissions not changed": "Berechtigungen nicht geändert",  
+        "Permissions not changed": "Berechtigungen nicht geändert",
         "Select folder": "Ordner auswählen",
         "Source path not defined": "Quellpfad nicht definiert",
         "already exists": "existiert bereits",
@@ -1334,7 +1334,6 @@
         "Check Latest Version": "Verifique a última versão",
         "HideColumns": "Ocultar colunas Perms / Owner",
         "CalculateFolderSize": "Calcular o tamanho da pasta",
-
         "Advanced Search": "Busca Avançada",
         "Nothing selected": "Nada selecionado",
         "Renamed from": "Renomeado de",
@@ -1373,7 +1372,6 @@
         "Invalid characters in file or folder name": "Caracteres inválidos no nome do arquivo ou pasta",
         "Operations with archives are not available": "Operações com arquivos não estão disponíveis",
         "File or folder with this path already exists": "O arquivo ou pasta com este caminho já existe",
-
         "Folder is empty": "A pasta está vazia",
         "Moved from": "Movido de",
         "Created": "Criado",
@@ -2522,7 +2520,7 @@
         "not found!": "ikke fundet!",
         "password_hash not supported, Upgrade PHP version": "password_hash er ikke understøttet, opgrader PHP-versionen",
         "to": "til"
-      }                                                     
+      }
     }
   ]
 }
