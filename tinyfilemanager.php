@@ -3,7 +3,7 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.5.0
+ * H3K | Tiny File Manager V2.5.1
  * @author Prasath Mani | CCP Programmers
  * @email ccpprogrammers@gmail.com
  * @github https://github.com/prasathmani/tinyfilemanager
@@ -11,7 +11,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.5.0');
+define('VERSION', '2.5.1');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -471,7 +471,7 @@ if (isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
 
     // backup files
     if (isset($_POST['type']) && $_POST['type'] == "backup" && !empty($_POST['file'])) {
-        $fileName = $_POST['file'];
+        $fileName = fm_clean_path($_POST['file']);
         $fullPath = FM_ROOT_PATH . '/';
         if (!empty($_POST['path'])) {
             $relativeDirPath = fm_clean_path($_POST['path']);
@@ -795,6 +795,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
     if (is_array($files) && count($files)) {
         foreach ($files as $f) {
             if ($f != '') {
+                $f = fm_clean_path($f);
                 // abs path from
                 $from = $path . '/' . $f;
                 // abs path to
@@ -893,6 +894,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $override_file_name = false;
     $chunkIndex = $_POST['dzchunkindex'];
     $chunkTotal = $_POST['dztotalchunkcount'];
+    $fullPathInput = fm_clean_path($_REQUEST['fullpath']);
 
     $f = $_FILES;
     $path = FM_ROOT_PATH;
@@ -914,7 +916,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $ext = pathinfo($filename, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($filename, PATHINFO_EXTENSION)) : '';
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
-    if(!fm_isvalid_filename($filename) && !fm_isvalid_filename($_REQUEST['fullpath'])) {
+    if(!fm_isvalid_filename($filename) && !fm_isvalid_filename($fullPathInput)) {
         $response = array (
             'status'    => 'error',
             'info'      => "Invalid File name!",
@@ -924,12 +926,12 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $targetPath = $path . $ds;
     if ( is_writable($targetPath) ) {
-        $fullPath = $path . '/' . basename($_REQUEST['fullpath']);
+        $fullPath = $path . '/' . basename($fullPathInput);
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
         if(file_exists ($fullPath) && !$override_file_name && !$chunks) {
             $ext_1 = $ext ? '.'.$ext : '';
-            $fullPath = $path . '/' . basename($_REQUEST['fullpath'], $ext_1) .'_'. date('ymdHis'). $ext_1;
+            $fullPath = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
         }
 
         if (!is_dir($folder)) {
@@ -1025,7 +1027,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
     if (is_array($files) && count($files)) {
         foreach ($files as $f) {
             if ($f != '') {
-                $new_path = $path . '/' . $f;
+                $new_path = fm_clean_path($path . '/' . $f);
                 if (!fm_rdelete($new_path)) {
                     $errors++;
                 }
@@ -1590,7 +1592,6 @@ if (isset($_GET['help'])) {
 // file viewer
 if (isset($_GET['view'])) {
     $file = $_GET['view'];
-    $quickView = (isset($_GET['quickView']) && $_GET['quickView'] == 1) ? true : false;
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
     if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items'])) {
@@ -1598,10 +1599,8 @@ if (isset($_GET['view'])) {
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
 
-    if(!$quickView) {
-        fm_show_header(); // HEADER
-        fm_show_nav_path(FM_PATH); // current path
-    }
+    fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
 
     $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
     $file_path = $path . '/' . $file;
@@ -1648,82 +1647,80 @@ if (isset($_GET['view'])) {
     ?>
     <div class="row">
         <div class="col-12">
-            <?php if(!$quickView) { ?>
-                <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
-                <p class="break-word">
-                    <strong>Full path:</strong> <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-                    <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
-                    <strong>MIME-type:</strong> <?php echo $mime_type ?><br>
-                    <?php
-                    // ZIP info
-                    if (($is_zip || $is_gzip) && $filenames !== false) {
-                        $total_files = 0;
-                        $total_comp = 0;
-                        $total_uncomp = 0;
-                        foreach ($filenames as $fn) {
-                            if (!$fn['folder']) {
-                                $total_files++;
-                            }
-                            $total_comp += $fn['compressed_size'];
-                            $total_uncomp += $fn['filesize'];
+            <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
+            <p class="break-word">
+                <strong>Full path:</strong> <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
+                <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
+                <strong>MIME-type:</strong> <?php echo $mime_type ?><br>
+                <?php
+                // ZIP info
+                if (($is_zip || $is_gzip) && $filenames !== false) {
+                    $total_files = 0;
+                    $total_comp = 0;
+                    $total_uncomp = 0;
+                    foreach ($filenames as $fn) {
+                        if (!$fn['folder']) {
+                            $total_files++;
                         }
-                        ?>
-                        Files in archive: <?php echo $total_files ?><br>
-                        Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
-                        Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
-                        Compression: <?php echo round(($total_comp / max($total_uncomp, 1)) * 100) ?>%<br>
-                        <?php
-                    }
-                    // Image info
-                    if ($is_image) {
-                        $image_size = getimagesize($file_path);
-                        echo 'Image sizes: ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
-                    }
-                    // Text info
-                    if ($is_text) {
-                        $is_utf8 = fm_is_utf8($content);
-                        if (function_exists('iconv')) {
-                            if (!$is_utf8) {
-                                $content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
-                            }
-                        }
-                        echo '<strong>Charset:</strong> ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
+                        $total_comp += $fn['compressed_size'];
+                        $total_uncomp += $fn['filesize'];
                     }
                     ?>
-                </p>
-                <div class="d-flex align-items-center mb-3">
-                    <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
-                    <b class="ms-2"><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                    Files in archive: <?php echo $total_files ?><br>
+                    Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
+                    Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
+                    Compression: <?php echo round(($total_comp / max($total_uncomp, 1)) * 100) ?>%<br>
                     <?php
-                    // ZIP actions
-                    if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
-                        $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
-                        ?>
-                        <form method="post" class="d-inline ms-2">
-                            <input type="hidden" name="token" value="<php <?php echo $_SESSION['token']; ?>">
-                            <input type="hidden" name="unzip" value="<?php echo urlencode($file); ?>">
-                            <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0" style="font-size: 14px;"><i class="fa fa-check-circle"></i> <?php echo lng('UnZip') ?></button>
-                        </form>&nbsp;
-                        <form method="post" class="d-inline ms-2">
-                            <input type="hidden" name="token" value="<php <?php echo $_SESSION['token']; ?>">
-                            <input type="hidden" name="unzip" value="<?php echo urlencode($file); ?>">
-                            <input type="hidden" name="tofolder" value="1">
-                            <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0" style="font-size: 14px;" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i> <?php echo lng('UnZipToFolder') ?></button>
-                        </form>&nbsp;
-                        <?php
+                }
+                // Image info
+                if ($is_image) {
+                    $image_size = getimagesize($file_path);
+                    echo 'Image sizes: ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
+                }
+                // Text info
+                if ($is_text) {
+                    $is_utf8 = fm_is_utf8($content);
+                    if (function_exists('iconv')) {
+                        if (!$is_utf8) {
+                            $content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
+                        }
                     }
-                    if ($is_text && !FM_READONLY) {
-                        ?>
-                        <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
-                            </a></b> &nbsp;
-                        <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
-                              class="edit-file"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?>
-                            </a></b> &nbsp;
-                    <?php } ?>
-                    <b class="ms-2"><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a></b>
-                </div>
+                    echo '<strong>Charset:</strong> ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
+                }
+                ?>
+            </p>
+            <div class="d-flex align-items-center mb-3">
+                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
+                <b class="ms-2"><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 <?php
-            }
+                // ZIP actions
+                if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
+                    $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
+                    ?>
+                    <form method="post" class="d-inline ms-2">
+                        <input type="hidden" name="token" value="<php <?php echo $_SESSION['token']; ?>">
+                        <input type="hidden" name="unzip" value="<?php echo urlencode($file); ?>">
+                        <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0" style="font-size: 14px;"><i class="fa fa-check-circle"></i> <?php echo lng('UnZip') ?></button>
+                    </form>&nbsp;
+                    <form method="post" class="d-inline ms-2">
+                        <input type="hidden" name="token" value="<php <?php echo $_SESSION['token']; ?>">
+                        <input type="hidden" name="unzip" value="<?php echo urlencode($file); ?>">
+                        <input type="hidden" name="tofolder" value="1">
+                        <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0" style="font-size: 14px;" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i> <?php echo lng('UnZipToFolder') ?></button>
+                    </form>&nbsp;
+                    <?php
+                }
+                if ($is_text && !FM_READONLY) {
+                    ?>
+                    <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
+                        </a></b> &nbsp;
+                    <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
+                            class="edit-file"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?>
+                        </a></b> &nbsp;
+                <?php } ?>
+                <b class="ms-2"><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a></b>
+            </div>
+            <?php
             if($is_onlineViewer) {
                 if($online_viewer == 'google') {
                     echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
@@ -1783,14 +1780,12 @@ if (isset($_GET['view'])) {
         </div>
     </div>
     <?php
-    if(!$quickView) {
         fm_show_footer();
-    }
     exit;
 }
 
 // file editor
-if (isset($_GET['edit'])) {
+if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
@@ -3173,6 +3168,7 @@ class FM_Zipper
         }
         if (is_array($files)) {
             foreach ($files as $f) {
+                $f = fm_clean_path($f);
                 if (!$this->addFileOrDir($f)) {
                     $this->zip->close();
                     return false;
@@ -3277,6 +3273,7 @@ class FM_Zipper_Tar
         $this->tar = new PharData($filename);
         if (is_array($files)) {
             foreach ($files as $f) {
+                $f = fm_clean_path($f);
                 if (!$this->addFileOrDir($f)) {
                     return false;
                 }
@@ -4024,7 +4021,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         });
     });
 </script>
-<?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE):
+<?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
         
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
         $ext =  $ext == "js" ? "javascript" :  $ext;
