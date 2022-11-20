@@ -75,7 +75,7 @@ $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 // Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'd.m.y H:i';
+$datetime_format = 'm/d/yy g:i A';
 
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
@@ -3622,7 +3622,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <?php endif; ?>
     <script type="text/javascript">window.csrf = '<?php echo $_SESSION['token']; ?>';</script>
     <style>
-        body { font-size:14px;color:#222;background:#F7F7F7; }
+        body { font-size:15px; color:#222;background:#F7F7F7; }
         body.navbar-fixed { margin-top:55px; }
         a, a:hover, a:visited, a:focus { text-decoration:none !important; }
         .filename, td, th { white-space:nowrap  }
@@ -3732,19 +3732,31 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .c-preview-img { max-width: 300px; }
         .border-radius-0 { border-radius: 0; }
         .float-right { float: right; }
+        .table-hover>tbody>tr:hover>td:first-child { border-left: 1px solid #1b77fd; }
+        #main-table tr.even { background-color: #F8F9Fa; }
+        .filename>a>i {margin-right: 3px;}
     </style>
     <?php
     if (FM_THEME == "dark"): ?>
         <style>
-            body.theme-dark { background-color: #2f2a2a; }
+            :root {
+                --bs-bg-opacity: 1;
+                background-color: rgba(var(28, 36, 41),var(--bs-bg-opacity))!important;
+            }
+            body.theme-dark { background-image: linear-gradient(90deg, #1c2429, #263238); color: #CFD8DC; }
             .list-group .list-group-item { background: #343a40; }
-            .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #ffffff; }
-            a, a:hover, a:visited, a:active, #main-table .filename a { color: #00ff1f; }
+            .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #CFD8DC; }
+            a, a:hover, a:visited, a:active, #main-table .filename a, i.fa.fa-folder-o, i.go-back { color: #85fd94; }
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
-            .theme-dark .btn-outline-primary { color: #00ff1f; border-color: #00ff1f; }
+            .theme-dark .btn-outline-primary { color: #85fd94; border-color: #85fd94; }
             .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #028211;}
-            .theme-dark input.form-control { background-color: #222222; }
+            .theme-dark input.form-control { background-color: #101518; color: #CFD8DC; }
             .theme-dark .dropzone { background: transparent; }
+            .theme-dark .inline-actions > a > i { background: #607d8b; }
+            .theme-dark .text-white { color: #CFD8DC !important; }
+            .theme-dark .table-bordered td, .table-bordered th { border-color: #343434; }
+            .theme-dark .table-bordered td .custom-control-input, .theme-dark .table-bordered th .custom-control-input { opacity: 0.678; }
+            .message { background-color: #212529; }
         </style>
     <?php endif; ?>
 </head>
@@ -3809,7 +3821,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <!--Rename Modal -->
     <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="renameDailog">
       <div class="modal-dialog" role="document">
-        <form class="modal-content rounded-3 shadow" method="post" autocomplete="off">
+        <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off">
           <div class="modal-body p-4 text-center">
             <h5 class="mb-3">Are you sure want to rename?</h5>
             <p class="mb-1">
@@ -3830,7 +3842,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <script type="text/html" id="js-tpl-confirm">
         <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="confirmDailog-<%this.id%>">
           <div class="modal-dialog" role="document">
-            <form class="modal-content rounded-3 shadow" method="post" autocomplete="off" action="<%this.action%>">
+            <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off" action="<%this.action%>">
               <div class="modal-body p-4 text-center">
                 <h5 class="mb-2">Are you sure want to <%this.title%> ?</h5>
                 <p class="mb-1"><%this.content%></p>
