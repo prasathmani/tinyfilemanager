@@ -521,6 +521,7 @@
       "translation": {
         "Actions": "Actions",
         "AdvancedEditor": "Editeur avancé",
+        "Advanced Search": "Recherche avancée...",
         "AppName": "Tiny File Manager",
         "AppTitle": "Gestionnaire de fichiers",
         "Back": "Retour",
@@ -543,6 +544,7 @@
         "ErrorReporting": "Rapport d'erreurs",
         "File": "Fichier",
         "Files": "Fichiers",
+        "Filter": "Filtrer",
         "Folder": "Dossier",
         "Free of": "libres sur",
         "FreeOf": "Espace libre : ",
