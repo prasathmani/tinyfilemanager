@@ -142,6 +142,13 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// A callable that can be called when a file is uploaded.
+// We'll send it 2 arguments:
+// 1. a string containing the absolute path of the file uploaded
+// 2. an array with the default response data 
+// It can return null or an array: in this second case it's the customized response data
+$uploadCallback = null;
+
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__ . '/config.php';
@@ -1052,6 +1059,9 @@ if (!empty($_FILES) && !FM_READONLY) {
                         $fullPathTarget = $fullPath;
                     }
                     rename("{$fullPath}.part", $fullPathTarget);
+                    if (is_callable($uploadCallback)) {
+                        $response = call_user_func($uploadCallback, $fullPath, $response) ?: $response;
+                    }
                 }
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
@@ -1060,6 +1070,9 @@ if (!empty($_FILES) && !FM_READONLY) {
                         'status'    => 'success',
                         'info' => "file upload successful"
                     );
+                    if (is_callable($uploadCallback)) {
+                        $response = call_user_func($uploadCallback, $fullPath, $response) ?: $response;
+                    }
                 } else {
                     $response = array(
                         'status' => 'error',
