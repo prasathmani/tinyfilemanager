@@ -2496,7 +2496,7 @@ function fm_get_translations($tr) {
 }
 
 /**
- * @param $file
+ * @param string $file
  * Recover all file sizes larger than > 2GB.
  * Works on php 32bits and 64bits and supports linux
  * @return int|string
@@ -2967,7 +2967,7 @@ function fm_get_onlineViewer_exts()
 /**
  * It returns the mime type of a file based on its extension.
  * @param extension The file extension of the file you want to get the mime type for.
- * @return The mime type of the file.
+ * @return string|string[] The mime type of the file.
  */
 function fm_get_file_mimes($extension)
 {
@@ -3022,7 +3022,7 @@ function fm_get_file_mimes($extension)
  * This function scans the files and folder recursively, and return matching files
  * @param string $dir
  * @param string $filter
- * @return json
+ * @return array|null
  */
  function scan($dir = '', $filter = '') {
     $path = FM_ROOT_PATH.'/'.$dir;
@@ -3132,7 +3132,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
 /**
  * If the theme is dark, return the text-white and bg-dark classes.
- * @return the value of the  variable.
+ * @return string the value of the  variable.
  */
 function fm_get_theme() {
     $result = '';
