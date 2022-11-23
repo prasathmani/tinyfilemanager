@@ -4201,7 +4201,6 @@ function getTranslatableStrings()
         'Logout' => 'Sign Out',
         'Modified' => 'Modified',
         'Move' => 'Move',
-        'Move' => 'Move',
         'Moved from' => 'Moved from',
         'Name' => 'Name',
         'NewItem' => 'New Item',
