@@ -423,7 +423,7 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 /*************************** ACTIONS ***************************/
 
 // Handle all AJAX Request
-if (isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
+if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) && isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
     if(!verifyToken($_POST['token'])) {
         header('HTTP/1.0 401 Unauthorized');
         die("Invalid Token.");
@@ -616,7 +616,7 @@ if (isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
         }
 
         if ($success) {
-            $success = rename($temp_file, get_file_path());
+            $success = rename($temp_file, strtok(get_file_path(), '?'));
         }
 
         if ($success) {
@@ -654,9 +654,9 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
     $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
-// Create folder
+// Create a new file/folder
 if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READONLY) {
-    $type = $_POST['newfile'];
+    $type = urldecode($_POST['newfile']);
     $new = str_replace( '/', '', fm_clean_path( strip_tags( $_POST['newfilename'] ) ) );
     if (fm_isvalid_filename($new) && $new != '' && $new != '..' && $new != '.' && verifyToken($_POST['token'])) {
         $path = FM_ROOT_PATH;
@@ -692,7 +692,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
 // Copy folder / file
 if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     // from
-    $copy = $_GET['copy'];
+    $copy = urldecode($_GET['copy']);
     $copy = fm_clean_path($copy);
     // empty path
     if ($copy == '') {
@@ -709,6 +709,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     $dest .= '/' . basename($from);
     // move?
     $move = isset($_GET['move']);
+    $move = fm_clean_path(urldecode($move));
     // copy/move/duplicate
     if ($from != $dest) {
         $msg_from = trim(FM_PATH . '/' . basename($from), '/');
@@ -832,11 +833,11 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
         fm_set_msg("Invalid Token.", 'error');
     }
     // old name
-    $old = $_POST['rename_from'];
+    $old = urldecode($_POST['rename_from']);
     $old = fm_clean_path($old);
     $old = str_replace('/', '', $old);
     // new name
-    $new = $_POST['rename_to'];
+    $new = urldecode($_POST['rename_to']);
     $new = fm_clean_path(strip_tags($new));
     $new = str_replace('/', '', $new);
     // path
@@ -863,7 +864,7 @@ if (isset($_GET['dl'], $_POST['token'])) {
         fm_set_msg("Invalid Token.", 'error');
     }
 
-    $dl = $_GET['dl'];
+    $dl = urldecode($_GET['dl']);
     $dl = fm_clean_path($dl);
     $dl = str_replace('/', '', $dl);
     $path = FM_ROOT_PATH;
@@ -949,8 +950,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                         while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
                         $response = array (
                             'status'    => 'success',
-                            'info' => "file upload successful",
-                            'fullPath' => $fullPath
+                            'info' => "file upload successful"
                         );
                     } else {
                         $response = array (
@@ -965,8 +965,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
                     $response = array (
                         'status'    => 'success',
-                        'info' => "file upload successful",
-                        'fullPath' => $fullPath
+                        'info' => "file upload successful"
                     );
                 } else {
                     $response = array (
@@ -1027,7 +1026,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
     if (is_array($files) && count($files)) {
         foreach ($files as $f) {
             if ($f != '') {
-                $new_path = fm_clean_path($path . '/' . $f);
+                $new_path = $path . '/' . $f;
                 if (!fm_rdelete($new_path)) {
                     $errors++;
                 }
@@ -1105,7 +1104,7 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
         fm_set_msg(lng("Invalid Token."), 'error');
     }
 
-    $unzip = $_POST['unzip'];
+    $unzip = urldecode($_POST['unzip']);
     $unzip = fm_clean_path($unzip);
     $unzip = str_replace('/', '', $unzip);
     $isValid = false;
@@ -1698,12 +1697,12 @@ if (isset($_GET['view'])) {
                     $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
                     ?>
                     <form method="post" class="d-inline ms-2">
-                        <input type="hidden" name="token" value="<php <?php echo $_SESSION['token']; ?>">
+                        <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                         <input type="hidden" name="unzip" value="<?php echo urlencode($file); ?>">
                         <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0" style="font-size: 14px;"><i class="fa fa-check-circle"></i> <?php echo lng('UnZip') ?></button>
                     </form>&nbsp;
                     <form method="post" class="d-inline ms-2">
-                        <input type="hidden" name="token" value="<php <?php echo $_SESSION['token']; ?>">
+                        <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                         <input type="hidden" name="unzip" value="<?php echo urlencode($file); ?>">
                         <input type="hidden" name="tofolder" value="1">
                         <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0" style="font-size: 14px;" title="UnZip to <?php echo fm_enc($zip_name) ?>"><i class="fa fa-check-circle"></i> <?php echo lng('UnZipToFolder') ?></button>
@@ -1867,6 +1866,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
         <?php
         if ($is_text && $isNormalEditor) {
             echo '<textarea class="mt-2" id="normal-editor" rows="33" cols="120" style="width: 99.5%;">' . htmlspecialchars($content) . '</textarea>';
+            echo '<script>document.addEventListener("keydown", function(e) {if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) { e.preventDefault();edit_save(this,"nrl");}}, false);</script>';
         } elseif ($is_text) {
             echo '<div id="editor" contenteditable="true">' . htmlspecialchars($content) . '</div>';
         } else {
@@ -3622,6 +3622,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <?php endif; ?>
     <script type="text/javascript">window.csrf = '<?php echo $_SESSION['token']; ?>';</script>
     <style>
+        html { -moz-osx-font-smoothing: grayscale; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; height: 100%; scroll-behavior: smooth;}
+        *,*::before,*::after { box-sizing: border-box;}
         body { font-size:15px; color:#222;background:#F7F7F7; }
         body.navbar-fixed { margin-top:55px; }
         a, a:hover, a:visited, a:focus { text-decoration:none !important; }
@@ -3634,14 +3636,15 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .brl-0 { background:transparent;border-left:0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
         .brr-0 { border-top-right-radius: 0; border-bottom-right-radius: 0; }
         .bread-crumb { color:#cccccc;font-style:normal; }
+        #main-table { transition: transform .25s cubic-bezier(0.4, 0.5, 0, 1),width 0s .25s;}
         #main-table .filename a { color:#222222; }
         .table td, .table th { vertical-align:middle !important; }
         .table .custom-checkbox-td .custom-control.custom-checkbox, .table .custom-checkbox-header .custom-control.custom-checkbox { min-width:18px; display: flex;align-items: center; justify-content: center; }
         .table-sm td, .table-sm th { padding:.4rem; }
         .table-bordered td, .table-bordered th { border:1px solid #f1f1f1; }
         .hidden { display:none  }
-        pre.with-hljs { padding:0  }
-        pre.with-hljs code { margin:0;border:0;overflow:visible  }
+        pre.with-hljs { padding:0; overflow: hidden;  }
+        pre.with-hljs code { margin:0;border:0;overflow:scroll;  }
         code.maxheight, pre.maxheight { max-height:512px  }
         .fa.fa-caret-right { font-size:1.2em;margin:0 4px;vertical-align:middle;color:#ececec  }
         .fa.fa-home { font-size:1.3em;vertical-align:bottom  }
@@ -3741,22 +3744,29 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         <style>
             :root {
                 --bs-bg-opacity: 1;
-                background-color: rgba(var(28, 36, 41),var(--bs-bg-opacity))!important;
+                --bg-color: #f3daa6;
+                --bs-dark-rgb: 28, 36, 41 !important;
+                --bs-bg-opacity: 1;
             }
+            .table-dark { --bs-table-bg: 28, 36, 41 !important; }
+            .btn-primary { --bs-btn-bg: #26566c; --bs-btn-border-color: #26566c; }
             body.theme-dark { background-image: linear-gradient(90deg, #1c2429, #263238); color: #CFD8DC; }
             .list-group .list-group-item { background: #343a40; }
             .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #CFD8DC; }
-            a, a:hover, a:visited, a:active, #main-table .filename a, i.fa.fa-folder-o, i.go-back { color: #85fd94; }
+            a, a:hover, a:visited, a:active, #main-table .filename a, i.fa.fa-folder-o, i.go-back { color: var(--bg-color); }
             ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
-            .theme-dark .btn-outline-primary { color: #85fd94; border-color: #85fd94; }
-            .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #028211;}
+            .theme-dark .btn-outline-primary { color: #b8e59c; border-color: #b8e59c; }
+            .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #2d4121;}
             .theme-dark input.form-control { background-color: #101518; color: #CFD8DC; }
             .theme-dark .dropzone { background: transparent; }
-            .theme-dark .inline-actions > a > i { background: #607d8b; }
+            .theme-dark .inline-actions > a > i { background: #79755e; }
             .theme-dark .text-white { color: #CFD8DC !important; }
             .theme-dark .table-bordered td, .table-bordered th { border-color: #343434; }
             .theme-dark .table-bordered td .custom-control-input, .theme-dark .table-bordered th .custom-control-input { opacity: 0.678; }
             .message { background-color: #212529; }
+            .compact-table tr:hover td { background-color: #3d3d3d; }
+            #main-table tr.even { background-color: #21292f; }
+            form.dropzone { border-color: #79755e; }
         </style>
     <?php endif; ?>
 </head>
@@ -3998,7 +4008,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     // action confirm dailog modal
     function confirmDailog(e, id = 0, title = "Action", content = "", action = null) {
         e.preventDefault();
-        const tplObj = {id, title, content, action};
+        const tplObj = {id, title, content: decodeURIComponent(content.replace(/\+/g, ' ')), action};
         let tpl = $("#js-tpl-confirm").html();
         $('#wrapper').append(template(tpl,tplObj));
         $("#confirmDailog-"+tplObj.id).modal('show');
