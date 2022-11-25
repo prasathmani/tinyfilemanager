@@ -4114,69 +4114,10 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 function lng($txt) {
     global $lang;
 
-    // English Language
-    $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
-    $tr['en']['Login']          = 'Sign in';                $tr['en']['Username']           = 'Username';
-    $tr['en']['Password']       = 'Password';               $tr['en']['Logout']             = 'Sign Out';
-    $tr['en']['Move']           = 'Move';                   $tr['en']['Copy']               = 'Copy';
-    $tr['en']['Save']           = 'Save';                   $tr['en']['SelectAll']          = 'Select all';
-    $tr['en']['UnSelectAll']    = 'Unselect all';           $tr['en']['File']               = 'File';
-    $tr['en']['Back']           = 'Back';                   $tr['en']['Size']               = 'Size';
-    $tr['en']['Perms']          = 'Perms';                  $tr['en']['Modified']           = 'Modified';
-    $tr['en']['Owner']          = 'Owner';                  $tr['en']['Search']             = 'Search';
-    $tr['en']['NewItem']        = 'New Item';               $tr['en']['Folder']             = 'Folder';
-    $tr['en']['Delete']         = 'Delete';                 $tr['en']['Rename']             = 'Rename';
-    $tr['en']['CopyTo']         = 'Copy to';                $tr['en']['DirectLink']         = 'Direct link';
-    $tr['en']['UploadingFiles'] = 'Upload Files';           $tr['en']['ChangePermissions']  = 'Change Permissions';
-    $tr['en']['Copying']        = 'Copying';                $tr['en']['CreateNewItem']      = 'Create New Item';
-    $tr['en']['Name']           = 'Name';                   $tr['en']['AdvancedEditor']     = 'Advanced Editor';
-    $tr['en']['RememberMe']     = 'Remember Me';            $tr['en']['Actions']            = 'Actions';
-    $tr['en']['Upload']         = 'Upload';                 $tr['en']['Cancel']             = 'Cancel';
-    $tr['en']['InvertSelection']= 'Invert Selection';       $tr['en']['DestinationFolder']  = 'Destination Folder';
-    $tr['en']['ItemType']       = 'Item Type';              $tr['en']['ItemName']           = 'Item Name';
-    $tr['en']['CreateNow']      = 'Create Now';             $tr['en']['Download']           = 'Download';
-    $tr['en']['Open']           = 'Open';                   $tr['en']['UnZip']              = 'UnZip';
-    $tr['en']['UnZipToFolder']  = 'UnZip to folder';        $tr['en']['Edit']               = 'Edit';
-    $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
-    $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
-    $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
-    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
-    $tr['en']['Folder is empty']= 'Folder is empty';    $tr['en']['PartitionSize']      = 'Partition size';
-    $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
-    $tr['en']['Help']           = 'Help';                   $tr['en']['Created']            = 'Created';
-    $tr['en']['Free of']        = 'Free of';                $tr['en']['Preview']            = 'Preview';
-    $tr['en']['Help Documents'] = 'Help Documents';         $tr['en']['Report Issue']       = 'Report Issue';
-    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';
-    $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
-    $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in';
-    $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
-    $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
-    $tr['en']['Deleted']            = 'Deleted';            $tr['en']['Archive not created']        = 'Archive not created';
-    $tr['en']['Copied from']        = 'Copied from';        $tr['en']['Permissions changed']        = 'Permissions changed';
-    $tr['en']['to']                 = 'to';                 $tr['en']['Saved Successfully']         = 'Saved Successfully';
-    $tr['en']['not found!']         = 'not found!';         $tr['en']['File Saved Successfully']    = 'File Saved Successfully';
-    $tr['en']['Archive']            = 'Archive';            $tr['en']['Permissions not changed']    = 'Permissions not changed';
-    $tr['en']['Select folder']      = 'Select folder';      $tr['en']['Source path not defined']    = 'Source path not defined';
-    $tr['en']['already exists']     = 'already exists';     $tr['en']['Error while moving from']    = 'Error while moving from';
-    $tr['en']['Create archive?']    = 'Create archive?';    $tr['en']['Invalid file or folder name']    = 'Invalid file or folder name';
-    $tr['en']['Archive unpacked']   = 'Archive unpacked';   $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
-    $tr['en']['Root path']          = 'Root path';          $tr['en']['Error while renaming from']  = 'Error while renaming from';
-    $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';
-    $tr['en']['Moved from']         = 'Moved from';
-    $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
-    $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
-    $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
-    $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying from']    = 'Error while copying from';
-    $tr['en']['Invalid characters in file name']                = 'Invalid characters in file name';
-    $tr['en']['FILE EXTENSION HAS NOT SUPPORTED']               = 'FILE EXTENSION HAS NOT SUPPORTED';
-    $tr['en']['Selected files and folder deleted']              = 'Selected files and folder deleted';
-    $tr['en']['Error while fetching archive info']              = 'Error while fetching archive info';
-    $tr['en']['Delete selected files and folders?']             = 'Delete selected files and folders?';
-    $tr['en']['Search file in folder and subfolders...']        = 'Search file in folder and subfolders...';
-    $tr['en']['Access denied. IP restriction applicable']       = 'Access denied. IP restriction applicable';
-    $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
-    $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
-    $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
+    // English language
+    $tr = [
+        'en' => getTranslatableStrings(),
+    ];
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
@@ -4187,4 +4128,141 @@ function lng($txt) {
     else return "$txt";
 }
 
-?>
+/**
+ * Get the translatable strings.
+ *
+ * @return array array keys are the subject of the lng() function, values are the English strings.
+ */
+function getTranslatableStrings()
+{
+    static $strings = [
+        'Access denied. IP restriction applicable' => 'Access denied. IP restriction applicable',
+        'Actions' => 'Actions',
+        'Advanced Search' => 'Advanced Search',
+        'AdvancedEditor' => 'Advanced Editor',
+        'already exists' => 'already exists',
+        'AppName' => 'Tiny File Manager',
+        'AppTitle' => 'File Manager',
+        'Archive not created' => 'Archive not created',
+        'Archive not unpacked' => 'Archive not unpacked',
+        'Archive unpacked' => 'Archive unpacked',
+        'Archive' => 'Archive',
+        'Back' => 'Back',
+        'BackUp' => 'Back Up',
+        //'CalculateFolderSize' => 'Calculate folder size',
+        'Cancel' => 'Cancel',
+        'Cannot open file! Aborting download' => 'Cannot open file! Aborting download',
+        'Change' => 'Change',
+        'ChangePermissions' => 'Change Permissions',
+        //'Check Latest Version' => 'Check Latest Version',
+        'Copied from' => 'Copied from',
+        'Copy' => 'Copy',
+        'Copying' => 'Copying',
+        'CopyTo' => 'Copy to',
+        'Create archive?' => 'Create archive?',
+        'Created' => 'Created',
+        'CreateNewItem' => 'Create New Item',
+        'CreateNow' => 'Create Now',
+        'dark' => 'dark',
+        'Delete selected files and folders?' => 'Delete selected files and folders?',
+        'Delete' => 'Delete',
+        'Deleted' => 'Deleted',
+        'DestinationFolder' => 'Destination Folder',
+        'DirectLink' => 'Direct link',
+        'Download' => 'Download',
+        'Edit' => 'Edit',
+        'Error while copying from' => 'Error while copying from',
+        'Error while deleting items' => 'Error while deleting items',
+        'Error while fetching archive info' => 'Error while fetching archive info',
+        'Error while moving from' => 'Error while moving from',
+        'Error while renaming from' => 'Error while renaming from',
+        'ErrorReporting' => 'Error Reporting',
+        'Execute' => 'Execute',
+        'FILE EXTENSION HAS NOT SUPPORTED' => 'FILE EXTENSION HAS NOT SUPPORTED',
+        'File extension is not allowed' => 'File extension is not allowed',
+        'File not found' => 'File not found',
+        'File or folder with this path already exists' => 'File or folder with this path already exists',
+        'File Saved Successfully' => 'File Saved Successfully',
+        'File' => 'File',
+        'Files' => 'Files',
+        'Filter' => 'Filter',
+        'Folder is empty' => 'Folder is empty',
+        'Folder' => 'Folder',
+        //'Free of' => 'Free of',
+        //'FreeOf' => 'free of',
+        'FullSize' => 'Full Size',
+        'Generate new password hash' => 'Generate new password hash',
+        'Generate' => 'Generate',
+        'Group' => 'Group',
+        'Help Documents' => 'Help Documents',
+        'Help' => 'Help',
+        'HideColumns' => 'Hide Perms/Owner columns',
+        'Invalid characters in file name' => 'Invalid characters in file name',
+        'Invalid characters in file or folder name' => 'Invalid characters in file or folder name',
+        'Invalid file or folder name' => 'Invalid file or folder name',
+        'Invalid Token.' => 'Invalid Token.',
+        'InvertSelection' => 'Invert Selection',
+        'ItemName' => 'Item Name',
+        'ItemType' => 'Item Type',
+        'Language' => 'Language',
+        'light' => 'light',
+        'Login failed. Invalid username or password' => 'Login failed. Invalid username or password',
+        'Login' => 'Sign in',
+        'Logout' => 'Sign Out',
+        'Modified' => 'Modified',
+        'Move' => 'Move',
+        'Moved from' => 'Moved from',
+        'Name' => 'Name',
+        'NewItem' => 'New Item',
+        'NormalEditor' => 'Normal Editor',
+        'not created' => 'not created',
+        'not deleted' => 'not deleted',
+        'not found!' => 'not found!',
+        'Nothing selected' => 'Nothing selected',
+        'Open' => 'Open',
+        'Operations with archives are not available' => 'Operations with archives are not available',
+        'Other' => 'Other',
+        'Owner' => 'Owner',
+        //'PartitionSize' => 'Partition size',
+        'Password' => 'Password',
+        'password_hash not supported, Upgrade PHP version' => 'password_hash not supported, Upgrade PHP version',
+        'Paths must be not equal' => 'Paths must be not equal',
+        'Permissions changed' => 'Permissions changed',
+        'Permissions not changed' => 'Permissions not changed',
+        'Perms' => 'Perms',
+        //'Preview' => 'Preview',
+        'Read' => 'Read',
+        //'RememberMe' => 'Remember Me',
+        'Rename' => 'Rename',
+        'Renamed from' => 'Renamed from',
+        'Report Issue' => 'Report Issue',
+        'Root path' => 'Root path',
+        'Save' => 'Save',
+        'Saved Successfully' => 'Saved Successfully',
+        'Search file in folder and subfolders...' => 'Search file in folder and subfolders...',
+        'Search' => 'Search',
+        'Select folder' => 'Select folder',
+        'SelectAll' => 'Select all',
+        'Selected files and folder deleted' => 'Selected files and folder deleted',
+        'Settings' => 'Settings',
+        'ShowHiddenFiles' => 'Show Hidden Files',
+        'Size' => 'Size',
+        'Source path not defined' => 'Source path not defined',
+        'SourceFolder' => 'Source Folder',
+        'Tar' => 'Tar',
+        'Theme' => 'Theme',
+        'to' => 'to',
+        'UnSelectAll' => 'Unselect all',
+        'UnZip' => 'UnZip',
+        'UnZipToFolder' => 'UnZip to folder',
+        'Upload' => 'Upload',
+        'UploadingFiles' => 'Upload Files',
+        'Username' => 'Username',
+        'Write' => 'Write',
+        'You are logged in' => 'You are logged in',
+        'Zero byte file! Aborting download' => 'Zero byte file! Aborting download',
+        'Zip' => 'Zip',
+    ];
+
+    return $strings;
+}
