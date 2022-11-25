@@ -3,7 +3,7 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.5.1
+ * H3K | Tiny File Manager V2.5.2
  * @author Prasath Mani | CCP Programmers
  * @email ccpprogrammers@gmail.com
  * @github https://github.com/prasathmani/tinyfilemanager
@@ -11,7 +11,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.5.1');
+define('VERSION', '2.5.2');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -109,7 +109,7 @@ $sticky_navbar = true;
 // Maximum file upload size
 // Increase the following values in php.ini to work properly
 // memory_limit, upload_max_filesize, post_max_size
-$max_upload_size_bytes = 10000000000;
+$max_upload_size_bytes = 5000000000; // size 5,000,000,000 bytes (~5GB)
 
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
@@ -132,7 +132,7 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
-// if User has the customized config file, try to use it to override the default config above
+// if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__.'/config.php';
 if (is_readable($config_file)) {
@@ -335,12 +335,12 @@ if ($use_auth) {
                                     </div>
                                     <hr />
                                     <div class="mb-3">
-                                        <label for="fm_usr"><?php echo lng('Username'); ?></label>
+                                        <label for="fm_usr" class="pb-2"><?php echo lng('Username'); ?></label>
                                         <input type="text" class="form-control" id="fm_usr" name="fm_usr" required autofocus>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label for="fm_pwd"><?php echo lng('Password'); ?></label>
+                                        <label for="fm_pwd" class="pb-2"><?php echo lng('Password'); ?></label>
                                         <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
                                     </div>
 
@@ -1327,12 +1327,12 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <script>
         Dropzone.options.fileUploader = {
             chunking: true,
-            chunkSize: 10000000,
+            chunkSize: 2000000, // chunk size 2,000,000 bytes (~2MB)
             forceChunking: true,
             retryChunks: true,
             retryChunksLimit: 3,
-            parallelUploads: 2,
-            parallelChunkUploads: true,
+            parallelUploads: 1,
+            parallelChunkUploads: false,
             timeout: 120000,
             maxFilesize: "<?php echo MAX_UPLOAD_SIZE; ?>",
             acceptedFiles : "<?php echo getUploadExt() ?>",
@@ -2133,8 +2133,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             } else { ?>
                 <tfoot>
                     <tr>
-                        <?php if (!FM_READONLY): ?><td class="gray"></td><?php endif; ?>
-                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>">
+                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? FM_READONLY ? '6' :'7' : FM_READONLY ? '4' : '5' ?>">
                             <?php echo lng('FullSize').': <span class="badge text-bg-light border-radius-0">'.fm_get_filesize($all_files_size).'</span>' ?>
                             <?php echo lng('File').': <span class="badge text-bg-light border-radius-0">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge text-bg-light border-radius-0">'.$num_folders.'</span>' ?>
@@ -3080,17 +3079,18 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
     if ($fp === false) {
         fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-
         return (false);
-
     }
-    
-    header("Cache-Control: public");
-    header("Content-Transfer-Encoding: binary\n");
+
+    // headers
+    header('Content-Description: File Transfer');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Pragma: public');
+    header("Content-Transfer-Encoding: binary");
     header("Content-Type: $contentType");
 
     $contentDisposition = 'attachment';
-
 
     if (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
         $fileName = preg_replace('/\./', '%2e', $fileName, substr_count($fileName, '.') - 1);
@@ -3116,15 +3116,9 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         header("Content-Length: " . $size);
     }
 
-    fseek($fp, $range);
+    while (ob_get_level()) ob_end_clean();
+    readfile($download);
 
-    while (!@feof($fp) and (connection_status() == 0)) {
-        set_time_limit(0);
-        print(@fread($fp, 1024*$chunkSize));
-        flush();
-        @ob_flush();
-        // sleep(1);
-    }
     fclose($fp);
 
     return ((connection_status() == 0) and !connection_aborted());
@@ -3754,7 +3748,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             .list-group .list-group-item { background: #343a40; }
             .theme-dark .navbar-nav i, .navbar-nav .dropdown-toggle, .break-word { color: #CFD8DC; }
             a, a:hover, a:visited, a:active, #main-table .filename a, i.fa.fa-folder-o, i.go-back { color: var(--bg-color); }
-            ul#search-wrapper li:nth-child(odd) { background: #f9f9f9cc; }
+            ul#search-wrapper li:nth-child(odd) { background: #212a2f; }
             .theme-dark .btn-outline-primary { color: #b8e59c; border-color: #b8e59c; }
             .theme-dark .btn-outline-primary:hover, .theme-dark .btn-outline-primary:active { background-color: #2d4121;}
             .theme-dark input.form-control { background-color: #101518; color: #CFD8DC; }
@@ -4130,7 +4124,7 @@ function lng($txt) {
     $tr['en']['UploadingFiles'] = 'Upload Files';           $tr['en']['ChangePermissions']  = 'Change Permissions';
     $tr['en']['Copying']        = 'Copying';                $tr['en']['CreateNewItem']      = 'Create New Item';
     $tr['en']['Name']           = 'Name';                   $tr['en']['AdvancedEditor']     = 'Advanced Editor';
-    $tr['en']['RememberMe']     = 'Remember Me';            $tr['en']['Actions']            = 'Actions';
+    $tr['en']['Actions']        = 'Actions';                $tr['en']['Folder is empty']    = 'Folder is empty';
     $tr['en']['Upload']         = 'Upload';                 $tr['en']['Cancel']             = 'Cancel';
     $tr['en']['InvertSelection']= 'Invert Selection';       $tr['en']['DestinationFolder']  = 'Destination Folder';
     $tr['en']['ItemType']       = 'Item Type';              $tr['en']['ItemName']           = 'Item Name';
@@ -4140,14 +4134,11 @@ function lng($txt) {
     $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
     $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
-    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
-    $tr['en']['Folder is empty']= 'Folder is empty';    $tr['en']['PartitionSize']      = 'Partition size';
+    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';        
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
     $tr['en']['Help']           = 'Help';                   $tr['en']['Created']            = 'Created';
-    $tr['en']['Free of']        = 'Free of';                $tr['en']['Preview']            = 'Preview';
     $tr['en']['Help Documents'] = 'Help Documents';         $tr['en']['Report Issue']       = 'Report Issue';
-    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';
-    $tr['en']['FreeOf']         = 'free of';                $tr['en']['CalculateFolderSize']= 'Calculate folder size';
+    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';              
     $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in';
     $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
     $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
@@ -4162,8 +4153,7 @@ function lng($txt) {
     $tr['en']['Archive unpacked']   = 'Archive unpacked';   $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
     $tr['en']['Root path']          = 'Root path';          $tr['en']['Error while renaming from']  = 'Error while renaming from';
     $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';
-    $tr['en']['Moved from']         = 'Moved from';
-    $tr['en']['Check Latest Version'] = 'Check Latest Version';$tr['en']['Generate new password hash'] = 'Generate new password hash';
+    $tr['en']['Moved from']         = 'Moved from';         $tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
     $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying from']    = 'Error while copying from';
