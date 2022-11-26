@@ -138,10 +138,11 @@ if (getenv('TFM_USE_AUTH') !== false) {
 }
 
 if (getenv('TFM_AUTH_USERS') !== false) {
-    $auth_users = array_map(
-        function($x) { return explode('=', $x); },
-        explode(',', getenv('TFM_AUTH_USERS'))
-    );
+    $auth_users = array();
+    foreach(explode(',', getenv('TFM_AUTH_USERS')) as $u) {
+        $u = explode('=', $u);
+        $auth_users[$u[0]] = $u[1];
+    }
 }
 
 if (getenv('TFM_READONLY_USERS') !== false) {
