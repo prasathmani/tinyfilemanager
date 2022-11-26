@@ -299,11 +299,11 @@ if ($use_auth) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
                 fm_set_msg(lng('You are logged in'));
-                fm_redirect(FM_ROOT_URL . $_SERVER['REQUEST_URI']);
+                fm_redirect($_SERVER['REQUEST_URI']);
             } else {
                 unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
-                fm_redirect(FM_ROOT_URL . $_SERVER['REQUEST_URI']);
+                fm_redirect($_SERVER['REQUEST_URI']);
             }
         } else {
             fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
