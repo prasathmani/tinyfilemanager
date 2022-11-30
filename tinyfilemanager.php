@@ -764,7 +764,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
 if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) && !FM_READONLY) {
 
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
+        fm_set_msg(lng('Invalid Token.'), 'error');
     }
     
     // from
@@ -1291,7 +1291,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                         <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> Upload from URL</a>
+                        <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> <?php echo lng('Upload from URL') ?></a>
                     </li>
                 </ul>
             </div>
@@ -1646,7 +1646,7 @@ if (isset($_GET['view'])) {
     ?>
     <div class="row">
         <div class="col-12">
-            <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
+            <p class="break-word"><b><?php echo lng($view_title) ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
             <p class="break-word">
                 <strong>Full path:</strong> <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
                 <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
@@ -1665,16 +1665,16 @@ if (isset($_GET['view'])) {
                         $total_uncomp += $fn['filesize'];
                     }
                     ?>
-                    Files in archive: <?php echo $total_files ?><br>
-                    Total size: <?php echo fm_get_filesize($total_uncomp) ?><br>
-                    Size in archive: <?php echo fm_get_filesize($total_comp) ?><br>
-                    Compression: <?php echo round(($total_comp / max($total_uncomp, 1)) * 100) ?>%<br>
+                    <?php echo lng('Files in archive') ?>: <?php echo $total_files ?><br>
+                    <?php echo lng('Total size') ?>: <?php echo fm_get_filesize($total_uncomp) ?><br>
+                    <?php echo lng('Size in archive') ?>: <?php echo fm_get_filesize($total_comp) ?><br>
+                    <?php echo lng('Compression') ?>: <?php echo round(($total_comp / max($total_uncomp, 1)) * 100) ?>%<br>
                     <?php
                 }
                 // Image info
                 if ($is_image) {
                     $image_size = getimagesize($file_path);
-                    echo 'Image sizes: ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
+                    echo lng('Image sizes').': ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '<br>';
                 }
                 // Text info
                 if ($is_text) {
@@ -1684,7 +1684,7 @@ if (isset($_GET['view'])) {
                             $content = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
                         }
                     }
-                    echo '<strong>Charset:</strong> ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
+                    echo '<strong>'.lng('Charset').':</strong> ' . ($is_utf8 ? 'utf-8' : '8 bit') . '<br>';
                 }
                 ?>
             </p>
@@ -1835,14 +1835,14 @@ if (isset($_GET['edit']) && !FM_READONLY) {
                 <div class="btn-toolbar" role="toolbar">
                     <?php if (!$isNormalEditor) { ?>
                         <div class="btn-group js-ace-toolbar">
-                            <button data-cmd="none" data-option="fullscreen" class="btn btn-sm btn-outline-secondary" id="js-ace-fullscreen" title="Fullscreen"><i class="fa fa-expand" title="Fullscreen"></i></button>
-                            <button data-cmd="find" class="btn btn-sm btn-outline-secondary" id="js-ace-search" title="Search"><i class="fa fa-search" title="Search"></i></button>
-                            <button data-cmd="undo" class="btn btn-sm btn-outline-secondary" id="js-ace-undo" title="Undo"><i class="fa fa-undo" title="Undo"></i></button>
-                            <button data-cmd="redo" class="btn btn-sm btn-outline-secondary" id="js-ace-redo" title="Redo"><i class="fa fa-repeat" title="Redo"></i></button>
-                            <button data-cmd="none" data-option="wrap" class="btn btn-sm btn-outline-secondary" id="js-ace-wordWrap" title="Word Wrap"><i class="fa fa-text-width" title="Word Wrap"></i></button>
-                            <select id="js-ace-mode" data-type="mode" title="Select Document Type" class="btn-outline-secondary border-start-0 d-none d-md-block"><option>-- Select Mode --</option></select>
-                            <select id="js-ace-theme" data-type="theme" title="Select Theme" class="btn-outline-secondary border-start-0 d-none d-lg-block"><option>-- Select Theme --</option></select>
-                            <select id="js-ace-fontSize" data-type="fontSize" title="Select Font Size" class="btn-outline-secondary border-start-0 d-none d-lg-block"><option>-- Select Font Size --</option></select>
+                            <button data-cmd="none" data-option="fullscreen" class="btn btn-sm btn-outline-secondary" id="js-ace-fullscreen" title="<?php echo lng('Fullscreen') ?>"><i class="fa fa-expand" title="<?php echo lng('Fullscreen') ?>"></i></button>
+                            <button data-cmd="find" class="btn btn-sm btn-outline-secondary" id="js-ace-search" title="<?php echo lng('Search') ?>"><i class="fa fa-search" title="<?php echo lng('Search') ?>"></i></button>
+                            <button data-cmd="undo" class="btn btn-sm btn-outline-secondary" id="js-ace-undo" title="<?php echo lng('Undo') ?>"><i class="fa fa-undo" title="<?php echo lng('Undo') ?>"></i></button>
+                            <button data-cmd="redo" class="btn btn-sm btn-outline-secondary" id="js-ace-redo" title="<?php echo lng('Redo') ?>"><i class="fa fa-repeat" title="<?php echo lng('Redo') ?>"></i></button>
+                            <button data-cmd="none" data-option="wrap" class="btn btn-sm btn-outline-secondary" id="js-ace-wordWrap" title="<?php echo lng('Word Wrap') ?>"><i class="fa fa-text-width" title="<?php echo lng('Word Wrap') ?>"></i></button>
+                            <select id="js-ace-mode" data-type="mode" title="<?php echo lng('Select Document Type') ?>" class="btn-outline-secondary border-start-0 d-none d-md-block"><option>-- <?php echo lng('Select Mode') ?> --</option></select>
+                            <select id="js-ace-theme" data-type="theme" title="<?php echo lng('Select Theme') ?>" class="btn-outline-secondary border-start-0 d-none d-lg-block"><option>-- <?php echo lng('Select Theme') ?> --</option></select>
+                            <select id="js-ace-fontSize" data-type="fontSize" title="<?php echo lng('Select Font Size') ?>" class="btn-outline-secondary border-start-0 d-none d-lg-block"><option>-- <?php echo lng('Select Font Size') ?> --</option></select>
                         </div>
                     <?php } ?>
                 </div>
@@ -3786,7 +3786,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     </div>
 
                     <p class="mt-3"><label for="newfilename"><?php echo lng('ItemName') ?> </label></p>
-                    <input type="text" name="newfilename" id="newfilename" value="" class="form-control" placeholder="Enter here..." required>
+                    <input type="text" name="newfilename" id="newfilename" value="" class="form-control" placeholder="<?php echo lng('Enter here...') ?>" required>
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
@@ -3804,7 +3804,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
           <div class="modal-header">
             <h5 class="modal-title col-10" id="searchModalLabel">
                 <div class="input-group mb-3">
-                  <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> a files" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
+                  <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> <?php echo lng('a files') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
                   <span class="input-group-text" id="search-addon3"><i class="fa fa-search"></i></span>
                 </div>
             </h5>
@@ -3827,16 +3827,16 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
       <div class="modal-dialog" role="document">
         <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off">
           <div class="modal-body p-4 text-center">
-            <h5 class="mb-3">Are you sure want to rename?</h5>
+            <h5 class="mb-3"><?php echo lng('Are you sure want to rename?') ?></h5>
             <p class="mb-1">
-                <input type="text" name="rename_to" id="js-rename-to" class="form-control" placeholder="Enter new file name" required>
+                <input type="text" name="rename_to" id="js-rename-to" class="form-control" placeholder="<?php echo lng('Enter new file name') ?>" required>
                 <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                 <input type="hidden" name="rename_from" id="js-rename-from">
             </p>
           </div>
           <div class="modal-footer flex-nowrap p-0">
-            <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0"><strong>Okay</strong></button>
+            <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end" data-bs-dismiss="modal"><?php echo lng('Cancel') ?></button>
+            <button type="submit" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0"><strong><?php echo lng('Okay') ?></strong></button>
           </div>
         </form>
       </div>
@@ -3848,13 +3848,13 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
           <div class="modal-dialog" role="document">
             <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off" action="<%this.action%>">
               <div class="modal-body p-4 text-center">
-                <h5 class="mb-2">Are you sure want to <%this.title%> ?</h5>
+                <h5 class="mb-2"><?php echo lng('Are you sure want to') ?> <%this.title%> ?</h5>
                 <p class="mb-1"><%this.content%></p>
               </div>
               <div class="modal-footer flex-nowrap p-0">
-                <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end" data-bs-dismiss="modal"><?php echo lng('Cancel') ?></button>
                 <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
-                <button type="submit" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0" data-bs-dismiss="modal"><strong>Okay</strong></button>
+                <button type="submit" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0" data-bs-dismiss="modal"><strong><?php echo lng('Okay') ?></strong></button>
               </div>
             </form>
           </div>
