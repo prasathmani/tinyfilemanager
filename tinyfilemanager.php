@@ -145,7 +145,7 @@ if (is_readable($config_file)) {
 define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
 
 // private key and session name to store to the session
-if ( !defined( 'FM_SESSION_ID')) {
+if (!defined('FM_SESSION_ID')) {
     define('FM_SESSION_ID', 'filemanager');
 }
 
@@ -200,7 +200,7 @@ if (defined('FM_EMBED')) {
     }
 
     session_cache_limiter('');
-    session_name(FM_SESSION_ID );
+    session_name(FM_SESSION_ID);
     function session_error_handling_function($code, $msg, $file, $line) {
         // Permission denied for default session, try to create a new one
         if ($code == 2) {
@@ -241,7 +241,7 @@ defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') .
 // logout
 if (isset($_GET['logout'])) {
     unset($_SESSION[FM_SESSION_ID]['logged']);
-    unset( $_SESSION['token']); 
+    unset($_SESSION['token']); 
     fm_redirect(FM_SELF_URL);
 }
 
@@ -593,7 +593,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         } elseif ($use_curl) {
             @$fp = fopen($temp_file, "w");
             @$ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_NOPROGRESS, false );
+            curl_setopt($ch, CURLOPT_NOPROGRESS, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_FILE, $fp);
             @$success = curl_exec($ch);
@@ -632,7 +632,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
 
 // Delete file / folder
 if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
-    $del = str_replace( '/', '', fm_clean_path( $_GET['del'] ) );
+    $del = str_replace('/', '', fm_clean_path($_GET['del']));
     if ($del != '' && $del != '..' && $del != '.' && verifyToken($_POST['token'])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
@@ -655,7 +655,7 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
 // Create a new file/folder
 if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READONLY) {
     $type = urldecode($_POST['newfile']);
-    $new = str_replace( '/', '', fm_clean_path( strip_tags( $_POST['newfilename'] ) ) );
+    $new = str_replace('/', '', fm_clean_path(strip_tags($_POST['newfilename'])));
     if (fm_isvalid_filename($new) && $new != '' && $new != '..' && $new != '.' && verifyToken($_POST['token'])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
@@ -924,7 +924,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     }
 
     $targetPath = $path . $ds;
-    if ( is_writable($targetPath) ) {
+    if (is_writable($targetPath)) {
         $fullPath = $path . '/' . basename($fullPathInput);
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
@@ -978,7 +978,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
             } elseif (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
-                if ( file_exists($fullPath) ) {
+                if (file_exists($fullPath)) {
                     $response = array (
                         'status'    => 'success',
                         'info' => "file upload successful"
@@ -2528,7 +2528,7 @@ function fm_get_size($file)
     if ($iswin && class_exists("COM")) {
         try {
             $fsobj = new COM('Scripting.FileSystemObject');
-            $f = $fsobj->GetFile( realpath($file) );
+            $f = $fsobj->GetFile(realpath($file));
             $size = $f->Size;
         } catch (Exception $e) {
             $size = null;
