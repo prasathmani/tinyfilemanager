@@ -75,7 +75,7 @@ $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 // Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'm/d/yy g:i A';
+$datetime_format = 'm/d/Y g:i A';
 
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
@@ -299,11 +299,11 @@ if ($use_auth) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
                 fm_set_msg(lng('You are logged in'));
-                fm_redirect($_SERVER['REQUEST_URI']);
+                fm_redirect(FM_ROOT_URL . $_SERVER['REQUEST_URI']);
             } else {
                 unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
-                fm_redirect($_SERVER['REQUEST_URI']);
+                fm_redirect(FM_ROOT_URL . $_SERVER['REQUEST_URI']);
             }
         } else {
             fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
@@ -506,7 +506,6 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == "true" ? true : false;
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
-        $caf = isset($_POST['js-calc-folder']) && $_POST['js-calc-folder'] == "true" ? true : false;
         $te3 = $_POST['js-theme-3'];
 
         if ($cfg->data['lang'] != $newLng) {
@@ -3115,9 +3114,9 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         header("Content-Range: bytes 0-$size2/$size");
         header("Content-Length: " . $size);
     }
-
+    $fileLocation = realpath($fileLocation);
     while (ob_get_level()) ob_end_clean();
-    readfile($download);
+    readfile($fileLocation);
 
     fclose($fp);
 
@@ -3844,7 +3843,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 
     <!-- Confirm Modal -->
     <script type="text/html" id="js-tpl-confirm">
-        <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="confirmDailog-<%this.id%>">
+        <div class="modal modal-alert confirmDailog" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="confirmDailog-<%this.id%>">
           <div class="modal-dialog" role="document">
             <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off" action="<%this.action%>">
               <div class="modal-body p-4 text-center">
@@ -3884,7 +3883,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         while(match=re.exec(html)){add(html.slice(cursor,match.index))(match[1],!0);cursor=match.index+match[0].length}
         add(html.substr(cursor,html.length-cursor));code+='return r.join("");';return new Function(code.replace(/[\r\t\n]/g,'')).apply(options)
     }
-    function rename(e, t) { if(e && t) { $("#js-rename-from").val(t);$("#js-rename-to").val(t); $("#renameDailog").modal('show'); } }
+    function rename(e, t) { if(t) { $("#js-rename-from").val(t);$("#js-rename-to").val(t); $("#renameDailog").modal('show'); } }
     function change_checkboxes(e, t) { for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked }
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
@@ -4004,6 +4003,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         e.preventDefault();
         const tplObj = {id, title, content: decodeURIComponent(content.replace(/\+/g, ' ')), action};
         let tpl = $("#js-tpl-confirm").html();
+        $(".modal.confirmDailog").remove();
         $('#wrapper').append(template(tpl,tplObj));
         $("#confirmDailog-"+tplObj.id).modal('show');
         return false;
