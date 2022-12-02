@@ -425,7 +425,7 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) && isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
     if(!verifyToken($_POST['token'])) {
         header('HTTP/1.0 401 Unauthorized');
-        die("Invalid Token.");
+        exit("Invalid Token.");
     }
 
     //search : get list of files from the current folder
@@ -463,9 +463,9 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         fclose($fd);
         if ($write_results === false){
             header("HTTP/1.1 500 Internal Server Error");
-            die("Could Not Write File! - Check Permissions / Ownership");
+            exit("Could Not Write File! - Check Permissions / Ownership");
         }
-        die(true);
+        exit(true);
     }
 
     // backup files
@@ -664,7 +664,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
         if ($type == "file") {
             if (!file_exists($path . '/' . $new)) {
                 if(fm_is_valid_ext($new)) {
-                    @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
+                    @fopen($path . '/' . $new, 'w') or exit('Cannot open file:  ' . $new);
                     fm_set_msg(sprintf(lng('File').' <b>%s</b> '.lng('Created'), fm_enc($new)));
                 } else {
                     fm_set_msg(lng('File extension is not allowed'), 'error');
@@ -3374,7 +3374,7 @@ class FM_Zipper_Tar
                 $msg .= '<br>Seems like you have a trailing slash on the URL.';
                 $msg .= '<br>Try this link: <a href="' . $fm_url . '">' . $fm_url . '</a>';
             }
-            die($msg);
+            exit($msg);
         }
         if (is_array($data) && count($data)) $this->data = $data;
         else $this->save();
