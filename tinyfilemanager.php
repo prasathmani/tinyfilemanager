@@ -2030,7 +2030,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         </td><?php endif; ?>
                     <td data-sort=<?php echo fm_convert_win(fm_enc($f)) ?>>
                         <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
-                            </a><?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?></div>
+                            </a><?php echo $is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '' ?></div>
                     </td>
                     <td data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
                         <?php echo $filesize; ?>
@@ -2092,7 +2092,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                             <?php endif; ?>
                                     <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
                                 </a>
-                                <?php echo($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                                <?php echo $is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '' ?>
                         </div>
                     </td>
                     <td data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
@@ -3053,7 +3053,7 @@ function fm_get_file_mimes($extension)
 function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 {
     if (connection_status() != 0)
-        return (false);
+        return false;
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
     $contentType = fm_get_file_mimes($extension);
@@ -3068,7 +3068,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         fm_set_msg(lng('Zero byte file! Aborting download'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 
-        return (false);
+        return false;
     }
 
     @ini_set('magic_quotes_runtime', 0);
@@ -3077,7 +3077,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
     if ($fp === false) {
         fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-        return (false);
+        return false;
     }
 
     // headers
@@ -3119,7 +3119,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     fclose($fp);
 
-    return ((connection_status() == 0) and !connection_aborted());
+    return (connection_status() == 0) and !connection_aborted();
 }
 
 /**
