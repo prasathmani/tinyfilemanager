@@ -305,7 +305,7 @@ if ($use_auth) {
                 fm_redirect(FM_ROOT_URL . $_SERVER['REQUEST_URI']);
             }
         } else {
-            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
+            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');
         }
     } else {
         // Form
