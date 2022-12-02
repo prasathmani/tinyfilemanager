@@ -767,7 +767,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
     if(!verifyToken($_POST['token'])) {
         fm_set_msg(lng('Invalid Token.'), 'error');
     }
-    
+
     // from
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
@@ -1172,7 +1172,7 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
     if(!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
     }
-    
+
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
@@ -4110,7 +4110,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     });
 </script>
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
-        
+
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
         $ext = $ext == "js" ? "javascript" : $ext;
         ?>
