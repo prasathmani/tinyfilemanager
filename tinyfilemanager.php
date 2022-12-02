@@ -250,11 +250,11 @@ if ($ip_ruleset != 'OFF') {
     function getClientIP() {
         if (array_key_exists('HTTP_CF_CONNECTING_IP', $_SERVER)) {
             return  $_SERVER["HTTP_CF_CONNECTING_IP"];
-        }else if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
+        }elseif (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
             return  $_SERVER["HTTP_X_FORWARDED_FOR"];
-        }else if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
+        }elseif (array_key_exists('REMOTE_ADDR', $_SERVER)) {
             return $_SERVER['REMOTE_ADDR'];
-        }else if (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
+        }elseif (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
             return $_SERVER['HTTP_CLIENT_IP'];
         }
         return '';
@@ -269,8 +269,7 @@ if ($ip_ruleset != 'OFF') {
         if($whitelisted == true && $blacklisted == false){
             $proceed = true;
         }
-    } else
-    if($ip_ruleset == 'OR'){
+    } elseif($ip_ruleset == 'OR'){
          if($whitelisted == true || $blacklisted == false){
             $proceed = true;
         }
@@ -591,7 +590,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
 
         if (!$url) {
             $success = false;
-        } else if ($use_curl) {
+        } elseif ($use_curl) {
             @$fp = fopen($temp_file, "w");
             @$ch = curl_init($url);
             curl_setopt($ch, CURLOPT_NOPROGRESS, false );
@@ -977,7 +976,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                     rename("{$fullPath}.part", $fullPath);
                 }
 
-            } else if (move_uploaded_file($tmp_name, $fullPath)) {
+            } elseif (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
                 if ( file_exists($fullPath) ) {
                     $response = array (
@@ -1722,7 +1721,7 @@ if (isset($_GET['view'])) {
             if($is_onlineViewer) {
                 if($online_viewer == 'google') {
                     echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
-                } else if($online_viewer == 'microsoft') {
+                } elseif($online_viewer == 'microsoft') {
                     echo '<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
                 }
             } elseif ($is_zip) {
@@ -4173,7 +4172,7 @@ function lng($txt) {
 
     if (!strlen($lang)) $lang = 'en';
     if (isset($tr[$lang][$txt])) return fm_enc($tr[$lang][$txt]);
-    else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
+    elseif (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
     else return "$txt";
 }
 
