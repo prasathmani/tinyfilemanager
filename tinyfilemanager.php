@@ -2451,7 +2451,7 @@ function fm_get_parent_path($path)
  */
 function fm_is_exclude_items($file) {
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (isset($exclude_items) and sizeof($exclude_items)) {
+    if (isset($exclude_items) and count($exclude_items)) {
         unset($exclude_items);
     }
 
@@ -3389,9 +3389,9 @@ class FM_Zipper_Tar
         if (is_writable($fm_file)) {
             $lines = file($fm_file);
             if ($fh = @fopen($fm_file, "w")) {
-                @fputs($fh, $config_string, strlen($config_string));
+                @fwrite($fh, $config_string, strlen($config_string));
                 for ($x = 3; $x < count($lines); $x++) {
-                    @fputs($fh, $lines[$x], strlen($lines[$x]));
+                    @fwrite($fh, $lines[$x], strlen($lines[$x]));
                 }
                 @fclose($fh);
             }
