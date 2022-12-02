@@ -548,12 +548,12 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
             $path .= '/' . FM_PATH;
         }
 
-         function event_callback ($message) {
+         function event_callback($message) {
             global $callback;
             echo json_encode($message);
         }
 
-        function get_file_path () {
+        function get_file_path() {
             global $path, $fileinfo, $temp_file;
             return $path."/".basename($fileinfo->name);
         }
@@ -1273,7 +1273,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     function getUploadExt() {
         $extArr = explode(',', FM_UPLOAD_EXTENSION);
         if(FM_UPLOAD_EXTENSION && $extArr) {
-            array_walk($extArr, function(&$x) {$x = ".$x";});
+            array_walk($extArr, function (&$x) {$x = ".$x";});
             return implode(',', $extArr);
         }
         return '';
