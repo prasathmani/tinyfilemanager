@@ -3352,9 +3352,9 @@ class FM_Zipper_Tar
  */
  class FM_Config
 {
-     var $data;
+     public $data;
 
-    function __construct()
+    public function __construct()
     {
         global $root_path, $root_url, $CONFIG;
         $fm_url = $root_url.$_SERVER["PHP_SELF"];
@@ -3380,7 +3380,7 @@ class FM_Zipper_Tar
         else $this->save();
     }
 
-    function save()
+    public function save()
     {
         $fm_file = __FILE__;
         $var_name = '$CONFIG';
