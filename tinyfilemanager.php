@@ -430,7 +430,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
 
     //search : get list of files from the current folder
     if(isset($_POST['type']) && $_POST['type']=="search") {
-        $dir = $_POST['path'] == "." ? '': $_POST['path'];
+        $dir = $_POST['path'] == "." ? '' : $_POST['path'];
         $response = scan(fm_clean_path($dir), $_POST['content']);
         echo json_encode($response);
         exit();
@@ -2131,7 +2131,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
             } else { ?>
                 <tfoot>
                     <tr>
-                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' :'7') : (FM_READONLY ? '4' : '5') ?>">
+                        <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' : '7') : (FM_READONLY ? '4' : '5') ?>">
                             <?php echo lng('FullSize').': <span class="badge text-bg-light border-radius-0">'.fm_get_filesize($all_files_size).'</span>' ?>
                             <?php echo lng('File').': <span class="badge text-bg-light border-radius-0">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge text-bg-light border-radius-0">'.$num_folders.'</span>' ?>
@@ -4039,7 +4039,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
         
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
-        $ext =  $ext == "js" ? "javascript" :  $ext;
+        $ext =  $ext == "js" ? "javascript" : $ext;
         ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>
     <script>
