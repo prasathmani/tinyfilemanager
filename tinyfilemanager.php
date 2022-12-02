@@ -952,9 +952,9 @@ if (!empty($_FILES) && !FM_READONLY) {
                         );
                     } else {
                         $response = array (
-                        'status'    => 'error',
-                        'info' => "failed to open output stream",
-                        'errorDetails' => error_get_last()
+                            'status'    => 'error',
+                            'info' => "failed to open output stream",
+                            'errorDetails' => error_get_last()
                         );
                     }
                     @fclose($in);
@@ -969,7 +969,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                     $response = array (
                         'status'    => 'error',
                         'info' => "failed to open output stream"
-                        );
+                    );
                 }
 
                 if ($chunkIndex == $chunkTotal - 1) {
