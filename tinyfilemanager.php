@@ -882,11 +882,11 @@ if (isset($_GET['dl'], $_POST['token'])) {
 if (!empty($_FILES) && !FM_READONLY) {
     if(isset($_POST['token'])) {
         if(!verifyToken($_POST['token'])) {
-            $response = array ('status' => 'error','info' => "Invalid Token.");
+            $response = array ('status' => 'error', 'info' => "Invalid Token.");
             echo json_encode($response); exit();
         }
     } else {
-        $response = array ('status' => 'error','info' => "Token Missing.");
+        $response = array ('status' => 'error', 'info' => "Token Missing.");
         echo json_encode($response); exit();
     }
 
