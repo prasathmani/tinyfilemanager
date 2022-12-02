@@ -249,9 +249,9 @@ if (isset($_GET['logout'])) {
 if ($ip_ruleset != 'OFF') {
     function getClientIP() {
         if (array_key_exists('HTTP_CF_CONNECTING_IP', $_SERVER)) {
-            return  $_SERVER["HTTP_CF_CONNECTING_IP"];
+            return  $_SERVER['HTTP_CF_CONNECTING_IP'];
         }elseif (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
-            return  $_SERVER["HTTP_X_FORWARDED_FOR"];
+            return  $_SERVER['HTTP_X_FORWARDED_FOR'];
         }elseif (array_key_exists('REMOTE_ADDR', $_SERVER)) {
             return $_SERVER['REMOTE_ADDR'];
         }elseif (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
@@ -380,7 +380,7 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
 if (!@is_dir($root_path)) {
-    echo "<h1>".lng('Root path')." \"{$root_path}\" ".lng('not found!')." </h1>";
+    echo '<h1>'.lng('Root path')." \"{$root_path}\" ".lng('not found!').' </h1>';
     exit;
 }
 
@@ -426,19 +426,19 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) && isset($_POST['ajax'], $_POST['token']) && !FM_READONLY) {
     if(!verifyToken($_POST['token'])) {
         header('HTTP/1.0 401 Unauthorized');
-        exit("Invalid Token.");
+        exit('Invalid Token.');
     }
 
     //search : get list of files from the current folder
-    if(isset($_POST['type']) && $_POST['type'] == "search") {
-        $dir = $_POST['path'] == "." ? '' : $_POST['path'];
+    if(isset($_POST['type']) && $_POST['type'] == 'search') {
+        $dir = $_POST['path'] == '.' ? '' : $_POST['path'];
         $response = scan(fm_clean_path($dir), $_POST['content']);
         echo json_encode($response);
         exit();
     }
 
     // save editor file
-    if (isset($_POST['type']) && $_POST['type'] == "save") {
+    if (isset($_POST['type']) && $_POST['type'] == 'save') {
         // get current path
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
@@ -459,25 +459,25 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         $file_path = $path.'/'.$file;
 
         $writedata = $_POST['content'];
-        $fd = fopen($file_path, "w");
+        $fd = fopen($file_path, 'w');
         $write_results = @fwrite($fd, $writedata);
         fclose($fd);
         if ($write_results === false){
-            header("HTTP/1.1 500 Internal Server Error");
-            exit("Could Not Write File! - Check Permissions / Ownership");
+            header('HTTP/1.1 500 Internal Server Error');
+            exit('Could Not Write File! - Check Permissions / Ownership');
         }
         exit(true);
     }
 
     // backup files
-    if (isset($_POST['type']) && $_POST['type'] == "backup" && !empty($_POST['file'])) {
+    if (isset($_POST['type']) && $_POST['type'] == 'backup' && !empty($_POST['file'])) {
         $fileName = fm_clean_path($_POST['file']);
         $fullPath = FM_ROOT_PATH.'/';
         if (!empty($_POST['path'])) {
             $relativeDirPath = fm_clean_path($_POST['path']);
             $fullPath .= "{$relativeDirPath}/";
         }
-        $date = date("dMy-His");
+        $date = date('dMy-His');
         $newFileName = "{$fileName}-{$date}.bak";
         $fullyQualifiedFileName = $fullPath.$fileName;
 
@@ -496,7 +496,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
     }
 
     // Save Config
-    if (isset($_POST['type']) && $_POST['type'] == "settings") {
+    if (isset($_POST['type']) && $_POST['type'] == 'settings') {
         global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
@@ -504,9 +504,9 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
             $newLng = 'en';
         }
 
-        $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == "true" ? true : false;
-        $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
-        $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
+        $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == 'true' ? true : false;
+        $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == 'true' ? true : false;
+        $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == 'true' ? true : false;
         $te3 = $_POST['js-theme-3'];
 
         if ($cfg->data['lang'] != $newLng) {
@@ -538,13 +538,13 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
     }
 
     // new password hash
-    if (isset($_POST['type']) && $_POST['type'] == "pwdhash") {
+    if (isset($_POST['type']) && $_POST['type'] == 'pwdhash') {
         $res = isset($_POST['inputPassword2']) && !empty($_POST['inputPassword2']) ? password_hash($_POST['inputPassword2'], PASSWORD_DEFAULT) : '';
         echo $res;
     }
 
     //upload using url
-    if(isset($_POST['type']) && $_POST['type'] == "upload" && !empty($_REQUEST["uploadurl"])) {
+    if(isset($_POST['type']) && $_POST['type'] == 'upload' && !empty($_REQUEST['uploadurl'])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
             $path .= '/'.FM_PATH;
@@ -558,10 +558,10 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         function get_file_path() {
             global $path, $fileinfo, $temp_file;
 
-            return $path."/".basename($fileinfo->name);
+            return $path.'/'.basename($fileinfo->name);
         }
 
-        $url = !empty($_REQUEST["uploadurl"]) && preg_match("|^http(s)?://.+$|", stripslashes($_REQUEST["uploadurl"])) ? stripslashes($_REQUEST["uploadurl"]) : null;
+        $url = !empty($_REQUEST['uploadurl']) && preg_match('|^http(s)?://.+$|', stripslashes($_REQUEST['uploadurl'])) ? stripslashes($_REQUEST['uploadurl']) : null;
 
         //prevent 127.* domain and known ports
         $domain = parse_url($url, PHP_URL_HOST);
@@ -569,13 +569,13 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         $knownPorts = [22, 23, 25, 3306];
 
         if (preg_match("/^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^(?:0*\:)*?:?0*1$/i", $domain) || in_array($port, $knownPorts)) {
-            $err = array("message" => "URL is not allowed");
-            event_callback(array("fail" => $err));
+            $err = array('message' => 'URL is not allowed');
+            event_callback(array('fail' => $err));
             exit();
         }
 
         $use_curl = false;
-        $temp_file = tempnam(sys_get_temp_dir(), "upload-");
+        $temp_file = tempnam(sys_get_temp_dir(), 'upload-');
         $fileinfo = new stdClass();
         $fileinfo->name = trim(basename($url), ".\x00..\x20");
 
@@ -586,15 +586,15 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         $err = false;
 
         if(!$isFileAllowed) {
-            $err = array("message" => "File extension is not allowed");
-            event_callback(array("fail" => $err));
+            $err = array('message' => 'File extension is not allowed');
+            event_callback(array('fail' => $err));
             exit();
         }
 
         if (!$url) {
             $success = false;
         } elseif ($use_curl) {
-            @$fp = fopen($temp_file, "w");
+            @$fp = fopen($temp_file, 'w');
             @$ch = curl_init($url);
             curl_setopt($ch, CURLOPT_NOPROGRESS, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -602,12 +602,12 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
             @$success = curl_exec($ch);
             $curl_info = curl_getinfo($ch);
             if (!$success) {
-                $err = array("message" => curl_error($ch));
+                $err = array('message' => curl_error($ch));
             }
             @curl_close($ch);
             fclose($fp);
-            $fileinfo->size = $curl_info["size_download"];
-            $fileinfo->type = $curl_info["content_type"];
+            $fileinfo->size = $curl_info['size_download'];
+            $fileinfo->type = $curl_info['content_type'];
         } else {
             $ctx = stream_context_create();
             @$success = copy($url, $temp_file, $ctx);
@@ -621,13 +621,13 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         }
 
         if ($success) {
-            event_callback(array("done" => $fileinfo));
+            event_callback(array('done' => $fileinfo));
         } else {
             unlink($temp_file);
             if (!$err) {
-                $err = array("message" => "Invalid url parameter");
+                $err = array('message' => 'Invalid url parameter');
             }
-            event_callback(array("fail" => $err));
+            event_callback(array('fail' => $err));
         }
     }
     exit();
@@ -664,7 +664,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
         if (FM_PATH != '') {
             $path .= '/'.FM_PATH;
         }
-        if ($type == "file") {
+        if ($type == 'file') {
             if (!file_exists($path.'/'.$new)) {
                 if(fm_is_valid_ext($new)) {
                     @fopen($path.'/'.$new, 'w') or exit('Cannot open file:  '.$new);
@@ -831,7 +831,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
 // Rename
 if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_READONLY) {
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
+        fm_set_msg('Invalid Token.', 'error');
     }
     // old name
     $old = urldecode($_POST['rename_from']);
@@ -862,7 +862,7 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
 // Download
 if (isset($_GET['dl'], $_POST['token'])) {
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
+        fm_set_msg('Invalid Token.', 'error');
     }
 
     $dl = urldecode($_GET['dl']);
@@ -885,11 +885,11 @@ if (isset($_GET['dl'], $_POST['token'])) {
 if (!empty($_FILES) && !FM_READONLY) {
     if(isset($_POST['token'])) {
         if(!verifyToken($_POST['token'])) {
-            $response = array ('status' => 'error', 'info' => "Invalid Token.");
+            $response = array ('status' => 'error', 'info' => 'Invalid Token.');
             echo json_encode($response); exit();
         }
     } else {
-        $response = array ('status' => 'error', 'info' => "Token Missing.");
+        $response = array ('status' => 'error', 'info' => 'Token Missing.');
         echo json_encode($response); exit();
     }
 
@@ -921,7 +921,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     if(!fm_isvalid_filename($filename) && !fm_isvalid_filename($fullPathInput)) {
         $response = array (
             'status'    => 'error',
-            'info'      => "Invalid File name!",
+            'info'      => 'Invalid File name!',
         );
         echo json_encode($response); exit();
     }
@@ -929,7 +929,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $targetPath = $path.$ds;
     if (is_writable($targetPath)) {
         $fullPath = $path.'/'.basename($fullPathInput);
-        $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
+        $folder = substr($fullPath, 0, strrpos($fullPath, '/'));
 
         if(file_exists ($fullPath) && !$override_file_name && !$chunks) {
             $ext_1 = $ext ? '.'.$ext : '';
@@ -944,19 +944,19 @@ if (!empty($_FILES) && !FM_READONLY) {
 
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
             if ($chunkTotal){
-                $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? "wb" : "ab");
+                $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? 'wb' : 'ab');
                 if ($out) {
-                    $in = @fopen($tmp_name, "rb");
+                    $in = @fopen($tmp_name, 'rb');
                     if ($in) {
                         while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
                         $response = array (
                             'status'    => 'success',
-                            'info' => "file upload successful"
+                            'info' => 'file upload successful'
                         );
                     } else {
                         $response = array (
                             'status'    => 'error',
-                            'info' => "failed to open output stream",
+                            'info' => 'failed to open output stream',
                             'errorDetails' => error_get_last()
                         );
                     }
@@ -966,12 +966,12 @@ if (!empty($_FILES) && !FM_READONLY) {
 
                     $response = array (
                         'status'    => 'success',
-                        'info' => "file upload successful"
+                        'info' => 'file upload successful'
                     );
                 } else {
                     $response = array (
                         'status'    => 'error',
-                        'info' => "failed to open output stream"
+                        'info' => 'failed to open output stream'
                     );
                 }
 
@@ -984,7 +984,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                 if (file_exists($fullPath)) {
                     $response = array (
                         'status'    => 'success',
-                        'info' => "file upload successful"
+                        'info' => 'file upload successful'
                     );
                 } else {
                     $response = array (
@@ -1014,7 +1014,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
 
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg(lng("Invalid Token."), 'error');
+        fm_set_msg(lng('Invalid Token.'), 'error');
     }
 
     $path = FM_ROOT_PATH;
@@ -1049,7 +1049,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
 if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_POST['tar'])) && !FM_READONLY) {
 
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg(lng("Invalid Token."), 'error');
+        fm_set_msg(lng('Invalid Token.'), 'error');
     }
 
     $path = FM_ROOT_PATH;
@@ -1061,7 +1061,7 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     //set pack type
     $ext = isset($_POST['tar']) ? 'tar' : 'zip';
 
-    if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
+    if (($ext == 'zip' && !class_exists('ZipArchive')) || ($ext == 'tar' && !class_exists('PharData'))) {
         fm_set_msg(lng('Operations with archives are not available'), 'error');
         $FM_PATH = FM_PATH; fm_redirect(FM_SELF_URL.'?p='.urlencode($FM_PATH));
     }
@@ -1102,7 +1102,7 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
 if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg(lng("Invalid Token."), 'error');
+        fm_set_msg(lng('Invalid Token.'), 'error');
     }
 
     $unzip = urldecode($_POST['unzip']);
@@ -1123,7 +1123,7 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
         fm_set_msg(lng('File not found'), 'error');
     }
 
-    if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
+    if (($ext == 'zip' && !class_exists('ZipArchive')) || ($ext == 'tar' && !class_exists('PharData'))) {
         fm_set_msg(lng('Operations with archives are not available'), 'error');
         $FM_PATH = FM_PATH; fm_redirect(FM_SELF_URL.'?p='.urlencode($FM_PATH));
     }
@@ -1138,10 +1138,10 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
             }
         }
 
-        if($ext == "zip") {
+        if($ext == 'zip') {
             $zipper = new FM_Zipper();
             $res = $zipper->unzip($zip_path, $path);
-        } elseif ($ext == "tar") {
+        } elseif ($ext == 'tar') {
             try {
                 $gzipper = new PharData($zip_path);
                 if (@$gzipper->extractTo($path, null, true)) {
@@ -1170,7 +1170,7 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
 
     if(!verifyToken($_POST['token'])) {
-        fm_set_msg(lng("Invalid Token."), 'error');
+        fm_set_msg(lng('Invalid Token.'), 'error');
     }
 
     $path = FM_ROOT_PATH;
@@ -1243,7 +1243,7 @@ $parent = fm_get_parent_path(FM_PATH);
 $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
-$current_path = array_slice(explode("/", $path), -1)[0];
+$current_path = array_slice(explode('/', $path), -1)[0];
 if (is_array($objects) && fm_is_exclude_items($current_path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
@@ -1516,8 +1516,8 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('Theme') ?></label>
                         <div class="col-sm-5">
                             <select class="form-select w-100" id="js-3-0" name="js-theme-3">
-                                <option value='light' <?php if($theme == "light"){echo "selected";} ?>><?php echo lng('light') ?></option>
-                                <option value='dark' <?php if($theme == "dark"){echo "selected";} ?>><?php echo lng('dark') ?></option>
+                                <option value='light' <?php if($theme == 'light'){echo 'selected';} ?>><?php echo lng('light') ?></option>
+                                <option value='dark' <?php if($theme == 'dark'){echo 'selected';} ?>><?php echo lng('dark') ?></option>
                             </select>
                         </div>
                     </div>
@@ -1807,7 +1807,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     // normal editer
     $isNormalEditor = true;
     if (isset($_GET['env'])) {
-        if ($_GET['env'] == "ace") {
+        if ($_GET['env'] == 'ace') {
             $isNormalEditor = false;
         }
     }
@@ -1815,7 +1815,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     // Save File
     if (isset($_POST['savedata'])) {
         $writedata = $_POST['savedata'];
-        $fd = fopen($file_path, "w");
+        $fd = fopen($file_path, 'w');
         @fwrite($fd, $writedata);
         fclose($fd);
         fm_set_msg(lng('File Saved Successfully'));
@@ -1965,7 +1965,7 @@ fm_show_message();
 $num_files = count($files);
 $num_folders = count($folders);
 $all_files_size = 0;
-$tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white";
+$tableTheme = (FM_THEME == 'dark') ? 'text-white bg-dark table-dark' : 'bg-white';
 ?>
 <form action="" method="post" class="pt-3">
     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
@@ -2014,8 +2014,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
                 $modif_raw = filemtime($path.'/'.$f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
-                $date_sorting = strtotime(date("F d Y H:i:s.", $modif_raw));
-                $filesize_raw = "";
+                $date_sorting = strtotime(date('F d Y H:i:s.', $modif_raw));
+                $filesize_raw = '';
                 $filesize = lng('Folder');
                 $perms = substr(decoct(fileperms($path.'/'.$f)), -4);
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
@@ -2038,7 +2038,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                         <div class="filename"><a href="?p=<?php echo urlencode(trim(FM_PATH.'/'.$f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
                             </a><?php echo $is_link ? ' &rarr; <i>'.readlink($path.'/'.$f).'</i>' : '' ?></div>
                     </td>
-                    <td data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT);?>">
+                    <td data-order="a-<?php echo str_pad($filesize_raw, 18, '0', STR_PAD_LEFT);?>">
                         <?php echo $filesize; ?>
                     </td>
                     <td data-order="a-<?php echo $date_sorting;?>"><?php echo $modif ?></td>
@@ -2065,7 +2065,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path.'/'.$f);
                 $modif_raw = filemtime($path.'/'.$f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
-                $date_sorting = strtotime(date("F d Y H:i:s.", $modif_raw));
+                $date_sorting = strtotime(date('F d Y H:i:s.', $modif_raw));
                 $filesize_raw = fm_get_size($path.'/'.$f);
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p='.urlencode(FM_PATH).'&amp;view='.urlencode($f);
@@ -2101,7 +2101,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                                 <?php echo $is_link ? ' &rarr; <i>'.readlink($path.'/'.$f).'</i>' : '' ?>
                         </div>
                     </td>
-                    <td data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
+                    <td data-order="b-<?php echo str_pad($filesize_raw, 18, '0', STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
                         <?php echo $filesize; ?>
                         </span></td>
                     <td data-order="b-<?php echo $date_sorting;?>"><?php echo $modif ?></td>
@@ -2499,12 +2499,12 @@ function fm_get_translations($tr) {
         if($content !== false) {
             $lng = json_decode($content, true);
             global $lang_list;
-            foreach ($lng["language"] as $key => $value)
+            foreach ($lng['language'] as $key => $value)
             {
-                $code = $value["code"];
-                $lang_list[$code] = $value["name"];
+                $code = $value['code'];
+                $lang_list[$code] = $value['name'];
                 if ($tr)
-                    $tr[$code] = $value["translation"];
+                    $tr[$code] = $value['translation'];
             }
 
             return $tr;
@@ -2530,7 +2530,7 @@ function fm_get_size($file)
         $iswin = (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN');
     }
     if (!isset($isdarwin)) {
-        $isdarwin = (strtoupper(substr(PHP_OS, 0)) == "DARWIN");
+        $isdarwin = (strtoupper(substr(PHP_OS, 0)) == 'DARWIN');
     }
 
     static $exec_works;
@@ -2549,7 +2549,7 @@ function fm_get_size($file)
     }
 
     // try the Windows COM interface
-    if ($iswin && class_exists("COM")) {
+    if ($iswin && class_exists('COM')) {
         try {
             $fsobj = new COM('Scripting.FileSystemObject');
             $f = $fsobj->GetFile(realpath($file));
@@ -2629,7 +2629,7 @@ function fm_get_zif_info($path, $ext) {
         $filenames = array();
         foreach(new RecursiveIteratorIterator($archive) as $file) {
             $parent_info = $file->getPathInfo();
-            $zip_name = str_replace("phar://".$path, '', $file->getPathName());
+            $zip_name = str_replace('phar://'.$path, '', $file->getPathName());
             $zip_name = substr($zip_name, ($pos = strpos($zip_name, '/')) !== false ? $pos + 1 : 0);
             $zip_folder = $parent_info->getFileName();
             $zip_info = new SplFileInfo($file);
@@ -3079,7 +3079,7 @@ function fm_get_file_mimes($extension)
     $path = FM_ROOT_PATH.'/'.$dir;
      if($path) {
          $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-         $rii = new RegexIterator($ite, "/(".$filter.")/i");
+         $rii = new RegexIterator($ite, '/('.$filter.')/i');
 
          $files = array();
          foreach ($rii as $file) {
@@ -3087,9 +3087,9 @@ function fm_get_file_mimes($extension)
                  $fileName = $file->getFilename();
                  $location = str_replace(FM_ROOT_PATH, '', $file->getPath());
                  $files[] = array(
-                     "name" => $fileName,
-                     "type" => "file",
-                     "path" => $location,
+                     'name' => $fileName,
+                     'type' => 'file',
+                     'path' => $location,
                  );
              }
          }
@@ -3127,7 +3127,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize = 1024)
     }
 
     @ini_set('magic_quotes_runtime', 0);
-    $fp = fopen("$fileLocation", "rb");
+    $fp = fopen("$fileLocation", 'rb');
 
     if ($fp === false) {
         fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
@@ -3141,33 +3141,33 @@ function fm_download_file($fileLocation, $fileName, $chunkSize = 1024)
     header('Expires: 0');
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
     header('Pragma: public');
-    header("Content-Transfer-Encoding: binary");
+    header('Content-Transfer-Encoding: binary');
     header("Content-Type: $contentType");
 
     $contentDisposition = 'attachment';
 
-    if (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
+    if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
         $fileName = preg_replace('/\./', '%2e', $fileName, substr_count($fileName, '.') - 1);
         header("Content-Disposition: $contentDisposition;filename=\"$fileName\"");
     } else {
         header("Content-Disposition: $contentDisposition;filename=\"$fileName\"");
     }
 
-    header("Accept-Ranges: bytes");
+    header('Accept-Ranges: bytes');
     $range = 0;
 
     if (isset($_SERVER['HTTP_RANGE'])) {
-        list($a, $range) = explode("=", $_SERVER['HTTP_RANGE']);
-        str_replace($range, "-", $range);
+        list($a, $range) = explode('=', $_SERVER['HTTP_RANGE']);
+        str_replace($range, '-', $range);
         $size2 = $size - 1;
         $new_length = $size - $range;
-        header("HTTP/1.1 206 Partial Content");
+        header('HTTP/1.1 206 Partial Content');
         header("Content-Length: $new_length");
         header("Content-Range: bytes $range$size2/$size");
     } else {
         $size2 = $size - 1;
         header("Content-Range: bytes 0-$size2/$size");
-        header("Content-Length: ".$size);
+        header('Content-Length: '.$size);
     }
     $fileLocation = realpath($fileLocation);
     while (ob_get_level()) ob_end_clean();
@@ -3184,8 +3184,8 @@ function fm_download_file($fileLocation, $fileName, $chunkSize = 1024)
  */
 function fm_get_theme() {
     $result = '';
-    if(FM_THEME == "dark") {
-        $result = "text-white bg-dark";
+    if(FM_THEME == 'dark') {
+        $result = 'text-white bg-dark';
     }
 
     return $result;
@@ -3430,7 +3430,7 @@ class FM_Zipper_Tar
     public function __construct()
     {
         global $root_path, $root_url, $CONFIG;
-        $fm_url = $root_url.$_SERVER["PHP_SELF"];
+        $fm_url = $root_url.$_SERVER['PHP_SELF'];
         $this->data = array(
             'lang' => 'en',
             'error_reporting' => true,
@@ -3458,10 +3458,10 @@ class FM_Zipper_Tar
         $fm_file = __FILE__;
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
-        $config_string = "<?php".chr(13).chr(10)."//Default Configuration".chr(13).chr(10)."$var_name = $var_value;".chr(13).chr(10);
+        $config_string = '<?php'.chr(13).chr(10).'//Default Configuration'.chr(13).chr(10)."$var_name = $var_value;".chr(13).chr(10);
         if (is_writable($fm_file)) {
             $lines = file($fm_file);
-            if ($fh = @fopen($fm_file, "w")) {
+            if ($fh = @fopen($fm_file, 'w')) {
                 @fwrite($fh, $config_string, strlen($config_string));
                 for ($x = 3; $x < count($lines); $x++) {
                     @fwrite($fh, $lines[$x], strlen($lines[$x]));
@@ -3483,11 +3483,11 @@ function fm_show_nav_path($path)
     global $lang, $sticky_navbar, $editFile;
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
     $getTheme = fm_get_theme();
-    $getTheme .= " navbar-light";
-    if(FM_THEME == "dark") {
-        $getTheme .= " navbar-dark";
+    $getTheme .= ' navbar-light';
+    if(FM_THEME == 'dark') {
+        $getTheme .= ' navbar-dark';
     } else {
-        $getTheme .= " bg-white";
+        $getTheme .= ' bg-white';
     }
     ?>
     <nav class="navbar navbar-expand-lg <?php echo $getTheme; ?> mb-4 main-nav <?php echo $isStickyNavBar ?>">
@@ -3509,7 +3509,7 @@ function fm_show_nav_path($path)
                 for ($i = 0; $i < $count; $i++) {
                     $parent = trim($parent.'/'.$exploded[$i], '/');
                     $parent_enc = urlencode($parent);
-                    $array[] = "<a href='?p={$parent_enc}'>".fm_enc(fm_convert_win($exploded[$i]))."</a>";
+                    $array[] = "<a href='?p={$parent_enc}'>".fm_enc(fm_convert_win($exploded[$i])).'</a>';
                 }
                 $root_url .= $sep.implode($sep, $array);
             }
@@ -3584,10 +3584,10 @@ function fm_show_message()
 function fm_show_header_login()
 {
 $sprites_ver = '20160315';
-header("Content-Type: text/html; charset=utf-8");
-header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-header("Pragma: no-cache");
+header('Content-Type: text/html; charset=utf-8');
+header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+header('Pragma: no-cache');
 
 global $lang, $root_url, $favicon_path;
 ?>
@@ -3631,7 +3631,7 @@ global $lang, $root_url, $favicon_path;
         .theme-dark svg g, .theme-dark svg path {fill: #ffffff; }
     </style>
 </head>
-<body class="fm-login-page <?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?>">
+<body class="fm-login-page <?php echo (FM_THEME == 'dark') ? 'theme-dark' : ''; ?>">
 <div id="wrapper" class="container-fluid">
 
     <?php
@@ -3657,10 +3657,10 @@ global $lang, $root_url, $favicon_path;
 function fm_show_header()
 {
 $sprites_ver = '20160315';
-header("Content-Type: text/html; charset=utf-8");
-header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-header("Pragma: no-cache");
+header('Content-Type: text/html; charset=utf-8');
+header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+header('Pragma: no-cache');
 
 global $lang, $root_url, $sticky_navbar, $favicon_path;
 $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
@@ -3805,7 +3805,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .filename>a>i {margin-right: 3px;}
     </style>
     <?php
-    if (FM_THEME == "dark"): ?>
+    if (FM_THEME == 'dark'): ?>
         <style>
             :root {
                 --bs-bg-opacity: 1;
@@ -3835,7 +3835,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         </style>
     <?php endif; ?>
 </head>
-<body class="<?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?>">
+<body class="<?php echo (FM_THEME == 'dark') ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?>">
 <div id="wrapper" class="container-fluid">
     <!-- New Item creation -->
     <div class="modal fade" id="createNewItem" tabindex="-1" role="dialog" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="newItemModalLabel" aria-hidden="true">
@@ -4111,8 +4111,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 </script>
 <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
 
-        $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
-        $ext = $ext == "js" ? "javascript" : $ext;
+        $ext = pathinfo($_GET['edit'], PATHINFO_EXTENSION);
+        $ext = $ext == 'js' ? 'javascript' : $ext;
         ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>
     <script>
