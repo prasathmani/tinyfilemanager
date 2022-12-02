@@ -201,7 +201,8 @@ if (defined('FM_EMBED')) {
 
     session_cache_limiter('');
     session_name(FM_SESSION_ID);
-    function session_error_handling_function($code, $msg, $file, $line) {
+    function session_error_handling_function($code, $msg, $file, $line)
+    {
         // Permission denied for default session, try to create a new one
         if ($code == 2) {
             session_abort();
@@ -247,7 +248,8 @@ if (isset($_GET['logout'])) {
 
 // Validate connection IP
 if ($ip_ruleset != 'OFF') {
-    function getClientIP() {
+    function getClientIP()
+    {
         if (array_key_exists('HTTP_CF_CONNECTING_IP', $_SERVER)) {
             return  $_SERVER['HTTP_CF_CONNECTING_IP'];
         }elseif (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
@@ -266,20 +268,20 @@ if ($ip_ruleset != 'OFF') {
     $whitelisted = in_array($clientIp, $ip_whitelist);
     $blacklisted = in_array($clientIp, $ip_blacklist);
 
-    if($ip_ruleset == 'AND'){
-        if($whitelisted == true && $blacklisted == false){
+    if($ip_ruleset == 'AND') {
+        if($whitelisted == true && $blacklisted == false) {
             $proceed = true;
         }
-    } elseif($ip_ruleset == 'OR'){
-         if($whitelisted == true || $blacklisted == false){
+    } elseif($ip_ruleset == 'OR') {
+         if($whitelisted == true || $blacklisted == false) {
             $proceed = true;
         }
     }
 
-    if($proceed == false){
+    if($proceed == false) {
         trigger_error('User connection denied from: '.$clientIp, E_USER_WARNING);
 
-        if($ip_silent == false){
+        if($ip_silent == false) {
             fm_set_msg(lng('Access denied. IP restriction applicable'), 'error');
             fm_show_header_login();
             fm_show_message();
@@ -462,7 +464,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         $fd = fopen($file_path, 'w');
         $write_results = @fwrite($fd, $writedata);
         fclose($fd);
-        if ($write_results === false){
+        if ($write_results === false) {
             header('HTTP/1.1 500 Internal Server Error');
             exit('Could Not Write File! - Check Permissions / Ownership');
         }
@@ -550,12 +552,14 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
             $path .= '/'.FM_PATH;
         }
 
-         function event_callback($message) {
+         function event_callback($message)
+         {
             global $callback;
             echo json_encode($message);
         }
 
-        function get_file_path() {
+        function get_file_path()
+        {
             global $path, $fileinfo, $temp_file;
 
             return $path.'/'.basename($fileinfo->name);
@@ -731,11 +735,11 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             }
         }
     } else {
-       if (!$move){ //Not move and to = from so duplicate
+       if (!$move) { //Not move and to = from so duplicate
             $msg_from = trim(FM_PATH.'/'.basename($from), '/');
             $fn_parts = pathinfo($from);
             $extension_suffix = '';
-            if(!is_dir($from)){
+            if(!is_dir($from)) {
                $extension_suffix = '.'.$fn_parts['extension'];
             }
             //Create new name for duplicate
@@ -743,7 +747,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             $loop_count = 0;
             $max_loop = 1000;
             // Check if a file with the duplicate name already exists, if so, make new name (edge case...)
-            while(file_exists($fn_duplicate) & $loop_count < $max_loop){
+            while(file_exists($fn_duplicate) & $loop_count < $max_loop) {
                $fn_parts = pathinfo($fn_duplicate);
                $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy'.$extension_suffix;
                $loop_count++;
@@ -754,7 +758,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
                 fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
             }
        }
-       else{
+       else {
            fm_set_msg(lng('Paths must be not equal'), 'alert');
        }
     }
@@ -943,12 +947,14 @@ if (!empty($_FILES) && !FM_READONLY) {
         }
 
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
-            if ($chunkTotal){
+            if ($chunkTotal) {
                 $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? 'wb' : 'ab');
                 if ($out) {
                     $in = @fopen($tmp_name, 'rb');
                     if ($in) {
-                        while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
+                        while ($buff = fread($in, 4096)) {
+                        fwrite($out, $buff);
+                        }
                         $response = array (
                             'status'    => 'success',
                             'info' => 'file upload successful'
@@ -1273,7 +1279,8 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     //get the allowed file extensions
-    function getUploadExt() {
+    function getUploadExt()
+    {
         $extArr = explode(',', FM_UPLOAD_EXTENSION);
         if(FM_UPLOAD_EXTENSION && $extArr) {
             array_walk($extArr, function (&$x) {$x = ".$x";});
@@ -1473,7 +1480,8 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         <div class="col-sm-5">
                             <select class="form-select" id="js-language" name="js-language">
                                 <?php
-                                function getSelected($l) {
+                                function getSelected($l)
+                                {
                                     global $lang;
 
                                     return ($lang == $l) ? 'selected' : '';
@@ -1626,7 +1634,7 @@ if (isset($_GET['view'])) {
     $content = ''; // for text
     $online_viewer = strtolower(FM_DOC_VIEWER);
 
-    if($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())){
+    if($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())) {
         $is_onlineViewer = true;
     }
     elseif ($ext == 'zip' || $ext == 'tar') {
@@ -2410,7 +2418,8 @@ function fm_redirect($url, $code = 302)
  * @param $path
  * @return string
  */
-function get_absolute_path($path) {
+function get_absolute_path($path)
+{
     $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
     $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
     $absolutes = array();
@@ -2471,7 +2480,8 @@ function fm_get_parent_path($path)
  * @param string $file
  * @return bool
  */
-function fm_is_exclude_items($file) {
+function fm_is_exclude_items($file)
+{
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     if (isset($exclude_items) and count($exclude_items)) {
         unset($exclude_items);
@@ -2493,14 +2503,14 @@ function fm_is_exclude_items($file) {
  * @param int $tr
  * @return array
  */
-function fm_get_translations($tr) {
+function fm_get_translations($tr)
+{
     try {
         $content = @file_get_contents('translation.json');
         if($content !== false) {
             $lng = json_decode($content, true);
             global $lang_list;
-            foreach ($lng['language'] as $key => $value)
-            {
+            foreach ($lng['language'] as $key => $value) {
                 $code = $value['code'];
                 $lang_list[$code] = $value['name'];
                 if ($tr)
@@ -2587,11 +2597,12 @@ function fm_get_filesize($size)
  * @param  string $directory Relative or absolute directory name.
  * @return int Total number of bytes.
  */
-function fm_get_directorysize($directory) {
+function fm_get_directorysize($directory)
+{
     $bytes = 0;
     $directory = realpath($directory);
-    if ($directory !== false && $directory != '' && file_exists($directory)){
-        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS)) as $file){
+    if ($directory !== false && $directory != '' && file_exists($directory)) {
+        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS)) as $file) {
             $bytes += $file->getSize();
         }
     }
@@ -2604,7 +2615,8 @@ function fm_get_directorysize($directory) {
  * @param string $path
  * @return array|bool
  */
-function fm_get_zif_info($path, $ext) {
+function fm_get_zif_info($path, $ext)
+{
     if ($ext == 'zip' && function_exists('zip_open')) {
         $arch = @zip_open($path);
         if ($arch) {
@@ -2662,7 +2674,8 @@ function fm_enc($text)
  * @param string $text
  * @return string
  */
-function fm_isvalid_filename($text) {
+function fm_isvalid_filename($text)
+{
     return (strpbrk($text, '/?%*:|"<>') === false) ? true : false;
 }
 
@@ -3075,7 +3088,8 @@ function fm_get_file_mimes($extension)
  * @param string $filter
  * @return array|null
  */
- function scan($dir = '', $filter = '') {
+ function scan($dir = '', $filter = '')
+ {
     $path = FM_ROOT_PATH.'/'.$dir;
      if($path) {
          $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
@@ -3182,7 +3196,8 @@ function fm_download_file($fileLocation, $fileName, $chunkSize = 1024)
  * If the theme is dark, return the text-white and bg-dark classes.
  * @return string the value of the  variable.
  */
-function fm_get_theme() {
+function fm_get_theme()
+{
     $result = '';
     if(FM_THEME == 'dark') {
         $result = 'text-white bg-dark';
@@ -3423,7 +3438,7 @@ class FM_Zipper_Tar
 /**
  * Save Configuration
  */
- class FM_Config
+class FM_Config
 {
      public $data;
 
@@ -4177,7 +4192,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
  * @param string $txt
  * @return string
  */
-function lng($txt) {
+function lng($txt)
+{
     global $lang;
 
     // English Language
