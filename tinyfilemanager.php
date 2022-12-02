@@ -1141,7 +1141,7 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
         } elseif ($ext == "tar") {
             try {
                 $gzipper = new PharData($zip_path);
-                if (@$gzipper->extractTo($path,null, true)) {
+                if (@$gzipper->extractTo($path, null, true)) {
                     $res = true;
                 } else {
                     $res = false;
@@ -1240,7 +1240,7 @@ $parent = fm_get_parent_path(FM_PATH);
 $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
-$current_path = array_slice(explode("/",$path), -1)[0];
+$current_path = array_slice(explode("/", $path), -1)[0];
 if (is_array($objects) && fm_is_exclude_items($current_path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
