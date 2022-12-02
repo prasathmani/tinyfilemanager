@@ -186,33 +186,32 @@ if ($report_errors == true) {
 if (defined('FM_EMBED')) {
     $use_auth = false;
     $sticky_navbar = false;
-} else {
-    @set_time_limit(600);
-
-    date_default_timezone_set($default_timezone);
-
-    ini_set('default_charset', 'UTF-8');
-    if (version_compare(PHP_VERSION, '5.6.0', '<') && function_exists('mb_internal_encoding')) {
-        mb_internal_encoding('UTF-8');
-    }
-    if (function_exists('mb_regex_encoding')) {
-        mb_regex_encoding('UTF-8');
-    }
-
-    session_cache_limiter('');
-    session_name(FM_SESSION_ID );
-    function session_error_handling_function($code, $msg, $file, $line) {
-        // Permission denied for default session, try to create a new one
-        if ($code == 2) {
-            session_abort();
-            session_id(session_create_id());
-            @session_start();
-        }
-    }
-    set_error_handler('session_error_handling_function');
-    session_start();
-    restore_error_handler();
 }
+@set_time_limit(600);
+
+date_default_timezone_set($default_timezone);
+
+ini_set('default_charset', 'UTF-8');
+if (version_compare(PHP_VERSION, '5.6.0', '<') && function_exists('mb_internal_encoding')) {
+    mb_internal_encoding('UTF-8');
+}
+if (function_exists('mb_regex_encoding')) {
+    mb_regex_encoding('UTF-8');
+}
+
+session_cache_limiter('');
+session_name(FM_SESSION_ID );
+function session_error_handling_function($code, $msg, $file, $line) {
+    // Permission denied for default session, try to create a new one
+    if ($code == 2) {
+        session_abort();
+        session_id(session_create_id());
+        @session_start();
+    }
+}
+set_error_handler('session_error_handling_function');
+session_start();
+restore_error_handler();
 
 //Genrating CSRF Token
 if (empty($_SESSION['token'])) {
@@ -3884,7 +3883,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         while(match=re.exec(html)){add(html.slice(cursor,match.index))(match[1],!0);cursor=match.index+match[0].length}
         add(html.substr(cursor,html.length-cursor));code+='return r.join("");';return new Function(code.replace(/[\r\t\n]/g,'')).apply(options)
     }
-    function rename(e, t) { if(e && t) { $("#js-rename-from").val(t);$("#js-rename-to").val(t); $("#renameDailog").modal('show'); } }
+    function rename(e, t) { if(t) { $("#js-rename-from").val(t);$("#js-rename-to").val(t); $("#renameDailog").modal('show'); } }
     function change_checkboxes(e, t) { for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked }
     function get_checkboxes() { for (var e = document.getElementsByName("file[]"), t = [], n = e.length - 1; n >= 0; n--) (e[n].type = "checkbox") && t.push(e[n]); return t }
     function select_all() { change_checkboxes(get_checkboxes(), !0) }
@@ -4006,6 +4005,12 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         let tpl = $("#js-tpl-confirm").html();
         $('#wrapper').append(template(tpl,tplObj));
         $("#confirmDailog-"+tplObj.id).modal('show');
+        $("#confirmDailog-"+tplObj.id).on('hidden.bs.modal',function(){
+            var md = $(this)
+            setTimeout(function() {
+                md.remove()
+            }, 10);
+        })
         return false;
     }
     
