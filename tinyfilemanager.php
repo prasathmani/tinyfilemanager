@@ -407,7 +407,7 @@ $p = fm_clean_path($p);
 
 // for ajax request - save
 $input = file_get_contents('php://input');
-$_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? json_decode($input, true) : $_POST;
+$_POST = (strpos($input, 'ajax') != false && strpos($input, 'save') != false) ? json_decode($input, true) : $_POST;
 
 // instead globals vars
 define('FM_PATH', $p);
@@ -748,7 +748,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
                $fn_duplicate = $fn_parts['dirname'].'/'.$fn_parts['filename'].'-copy'.$extension_suffix;
                $loop_count++;
             }
-            if (fm_rcopy($from, $fn_duplicate, False)) {
+            if (fm_rcopy($from, $fn_duplicate, false)) {
                 fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
             } else {
                 fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
@@ -2496,8 +2496,8 @@ function fm_is_exclude_items($file) {
 function fm_get_translations($tr) {
     try {
         $content = @file_get_contents('translation.json');
-        if($content !== FALSE) {
-            $lng = json_decode($content, TRUE);
+        if($content !== false) {
+            $lng = json_decode($content, true);
             global $lang_list;
             foreach ($lng["language"] as $key => $value)
             {
@@ -2663,7 +2663,7 @@ function fm_enc($text)
  * @return string
  */
 function fm_isvalid_filename($text) {
-    return (strpbrk($text, '/?%*:|"<>') === FALSE) ? true : false;
+    return (strpbrk($text, '/?%*:|"<>') === false) ? true : false;
 }
 
 /**
