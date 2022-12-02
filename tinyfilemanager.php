@@ -241,7 +241,7 @@ defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') .
 // logout
 if (isset($_GET['logout'])) {
     unset($_SESSION[FM_SESSION_ID]['logged']);
-    unset($_SESSION['token']); 
+    unset($_SESSION['token']);
     fm_redirect(FM_SELF_URL);
 }
 
@@ -2178,9 +2178,9 @@ fm_show_footer();
  * @param string $token
  * @return bool
  */
-function verifyToken($token) 
+function verifyToken($token)
 {
-    if (hash_equals($_SESSION['token'], $token)) { 
+    if (hash_equals($_SESSION['token'], $token)) {
         return true;
     }
     return false;
@@ -4133,11 +4133,11 @@ function lng($txt) {
     $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
     $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
-    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';        
+    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
     $tr['en']['Help']           = 'Help';                   $tr['en']['Created']            = 'Created';
     $tr['en']['Help Documents'] = 'Help Documents';         $tr['en']['Report Issue']       = 'Report Issue';
-    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';              
+    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';
     $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in';
     $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
     $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
