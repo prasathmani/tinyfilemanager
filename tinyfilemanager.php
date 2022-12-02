@@ -257,6 +257,7 @@ if ($ip_ruleset != 'OFF') {
         }elseif (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
             return $_SERVER['HTTP_CLIENT_IP'];
         }
+
         return '';
     }
 
@@ -479,6 +480,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
         $date = date("dMy-His");
         $newFileName = "{$fileName}-{$date}.bak";
         $fullyQualifiedFileName = $fullPath . $fileName;
+
         try {
             if (!file_exists($fullyQualifiedFileName)) {
                 throw new Exception("File {$fileName} not found");
@@ -555,6 +557,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_I
 
         function get_file_path() {
             global $path, $fileinfo, $temp_file;
+
             return $path."/".basename($fileinfo->name);
         }
 
@@ -1274,8 +1277,10 @@ if (isset($_GET['upload']) && !FM_READONLY) {
         $extArr = explode(',', FM_UPLOAD_EXTENSION);
         if(FM_UPLOAD_EXTENSION && $extArr) {
             array_walk($extArr, function (&$x) {$x = ".$x";});
+
             return implode(',', $extArr);
         }
+
         return '';
     }
     ?>
@@ -1470,6 +1475,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                                 <?php
                                 function getSelected($l) {
                                     global $lang;
+
                                     return ($lang == $l) ? 'selected' : '';
                                 }
                                 foreach ($lang_list as $k => $v) {
@@ -2183,6 +2189,7 @@ function verifyToken($token)
     if (hash_equals($_SESSION['token'], $token)) {
         return true;
     }
+
     return false;
 }
 
@@ -2207,10 +2214,12 @@ function fm_rdelete($path)
                 }
             }
         }
+
         return ($ok) ? rmdir($path) : false;
     } elseif (is_file($path)) {
         return unlink($path);
     }
+
     return false;
 }
 
@@ -2238,12 +2247,14 @@ function fm_rchmod($path, $filemode, $dirmode)
                 }
             }
         }
+
         return true;
     } elseif (is_link($path)) {
         return true;
     } elseif (is_file($path)) {
         return chmod($path, $filemode);
     }
+
     return false;
 }
 
@@ -2304,10 +2315,12 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
                 }
             }
         }
+
         return $ok;
     } elseif (is_file($path)) {
         return fm_copy($path, $dest, $upd);
     }
+
     return false;
 }
 
@@ -2327,6 +2340,7 @@ function fm_mkdir($dir, $force)
         }
         unlink($dir);
     }
+
     return mkdir($dir, 0777, true);
 }
 
@@ -2350,6 +2364,7 @@ function fm_copy($f1, $f2, $upd)
     if ($ok) {
         touch($f2, $time1);
     }
+
     return $ok;
 }
 
@@ -2364,12 +2379,14 @@ function fm_get_mime_type($file_path)
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file_path);
         finfo_close($finfo);
+
         return $mime;
     } elseif (function_exists('mime_content_type')) {
         return mime_content_type($file_path);
     } elseif (!stristr(ini_get('disable_functions'), 'shell_exec')) {
         $file = escapeshellarg($file_path);
         $mime = shell_exec('file -bi ' . $file);
+
         return $mime;
     } else {
         return '--';
@@ -2405,6 +2422,7 @@ function get_absolute_path($path) {
             $absolutes[] = $part;
         }
     }
+
     return implode(DIRECTORY_SEPARATOR, $absolutes);
 }
 
@@ -2422,6 +2440,7 @@ function fm_clean_path($path, $trim = true)
     if ($path == '..') {
         $path = '';
     }
+
     return str_replace('\\', '/', $path);
 }
 
@@ -2437,10 +2456,13 @@ function fm_get_parent_path($path)
         $array = explode('/', $path);
         if (count($array) > 1) {
             $array = array_slice($array, 0, -1);
+
             return implode('/', $array);
         }
+
         return '';
     }
+
     return false;
 }
 
@@ -2462,6 +2484,7 @@ function fm_is_exclude_items($file) {
     if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
         return true;
     }
+
     return false;
 }
 
@@ -2483,6 +2506,7 @@ function fm_get_translations($tr) {
                 if ($tr)
                     $tr[$code] = $value["translation"];
             }
+
             return $tr;
         }
 
@@ -2553,6 +2577,7 @@ function fm_get_filesize($size)
     $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $power = ($size > 0) ? floor(log($size, 1024)) : 0;
     $power = ($power > (count($units) - 1)) ? (count($units) - 1) : $power;
+
     return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
 }
 
@@ -2570,6 +2595,7 @@ function fm_get_directorysize($directory) {
             $bytes += $file->getSize();
         }
     }
+
     return $bytes;
 }
 
@@ -2595,6 +2621,7 @@ function fm_get_zif_info($path, $ext) {
                 );
             }
             @zip_close($arch);
+
             return $filenames;
         }
     } elseif($ext == 'tar' && class_exists('PharData')) {
@@ -2613,8 +2640,10 @@ function fm_get_zif_info($path, $ext) {
                 'folder' => $zip_folder
             );
         }
+
         return $filenames;
     }
+
     return false;
 }
 
@@ -2668,6 +2697,7 @@ function fm_convert_win($filename)
     if (FM_IS_WIN && function_exists('iconv')) {
         $filename = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $filename);
     }
+
     return $filename;
 }
 
@@ -2683,6 +2713,7 @@ function fm_object_to_array($obj)
     if (is_object($obj)) {
         $obj = get_object_vars($obj);
     }
+
     return array_map('fm_object_to_array', $obj);
 }
 
@@ -2714,6 +2745,7 @@ function fm_get_file_icon_class($path)
         case 'avif':
         case 'svg':
             $img = 'fa fa-picture-o';
+
             break;
         case 'passwd':
         case 'ftpquota':
@@ -2739,6 +2771,7 @@ function fm_get_file_icon_class($path)
         case 'lock':
         case 'dtd':
             $img = 'fa fa-file-code-o';
+
             break;
         case 'txt':
         case 'ini':
@@ -2749,12 +2782,14 @@ function fm_get_file_icon_class($path)
         case 'yml':
         case 'toml':
             $img = 'fa fa-file-text-o';
+
             break;
         case 'css':
         case 'less':
         case 'sass':
         case 'scss':
             $img = 'fa fa-css3';
+
             break;
         case 'bz2':
         case 'zip':
@@ -2764,6 +2799,7 @@ function fm_get_file_icon_class($path)
         case '7z':
         case 'xz':
             $img = 'fa fa-file-archive-o';
+
             break;
         case 'php':
         case 'php4':
@@ -2771,16 +2807,19 @@ function fm_get_file_icon_class($path)
         case 'phps':
         case 'phtml':
             $img = 'fa fa-code';
+
             break;
         case 'htm':
         case 'html':
         case 'shtml':
         case 'xhtml':
             $img = 'fa fa-html5';
+
             break;
         case 'xml':
         case 'xsl':
             $img = 'fa fa-file-excel-o';
+
             break;
         case 'wav':
         case 'mp3':
@@ -2795,6 +2834,7 @@ function fm_get_file_icon_class($path)
         case 'ac3':
         case 'tds':
             $img = 'fa fa-music';
+
             break;
         case 'm3u':
         case 'm3u8':
@@ -2802,6 +2842,7 @@ function fm_get_file_icon_class($path)
         case 'cue':
         case 'xspf':
             $img = 'fa fa-headphones';
+
             break;
         case 'avi':
         case 'mpg':
@@ -2819,31 +2860,38 @@ function fm_get_file_icon_class($path)
         case 'wmv':
         case 'webm':
             $img = 'fa fa-file-video-o';
+
             break;
         case 'eml':
         case 'msg':
             $img = 'fa fa-envelope-o';
+
             break;
         case 'xls':
         case 'xlsx':
         case 'ods':
             $img = 'fa fa-file-excel-o';
+
             break;
         case 'csv':
             $img = 'fa fa-file-text-o';
+
             break;
         case 'bak':
         case 'swp':
             $img = 'fa fa-clipboard';
+
             break;
         case 'doc':
         case 'docx':
         case 'odt':
             $img = 'fa fa-file-word-o';
+
             break;
         case 'ppt':
         case 'pptx':
             $img = 'fa fa-file-powerpoint-o';
+
             break;
         case 'ttf':
         case 'ttc':
@@ -2853,9 +2901,11 @@ function fm_get_file_icon_class($path)
         case 'eot':
         case 'fon':
             $img = 'fa fa-font';
+
             break;
         case 'pdf':
             $img = 'fa fa-file-pdf-o';
+
             break;
         case 'psd':
         case 'ai':
@@ -2863,13 +2913,16 @@ function fm_get_file_icon_class($path)
         case 'fla':
         case 'swf':
             $img = 'fa fa-file-image-o';
+
             break;
         case 'exe':
         case 'msi':
             $img = 'fa fa-file-o';
+
             break;
         case 'bat':
             $img = 'fa fa-terminal';
+
             break;
         default:
             $img = 'fa fa-info-circle';
@@ -3012,6 +3065,7 @@ function fm_get_file_mimes($extension)
     if(empty($fileTypes[$extension])) {
       $fileTypes[$extension] = ['application/octet-stream'];
     }
+
     return $fileTypes[$extension];
 }
 
@@ -3039,6 +3093,7 @@ function fm_get_file_mimes($extension)
                  );
              }
          }
+
          return $files;
      }
 }
@@ -3077,6 +3132,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize = 1024)
     if ($fp === false) {
         fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
         $FM_PATH = FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+
         return false;
     }
 
@@ -3131,6 +3187,7 @@ function fm_get_theme() {
     if(FM_THEME == "dark") {
         $result = "text-white bg-dark";
     }
+
     return $result;
 }
 
@@ -3163,16 +3220,20 @@ class FM_Zipper
                 $f = fm_clean_path($f);
                 if (!$this->addFileOrDir($f)) {
                     $this->zip->close();
+
                     return false;
                 }
             }
             $this->zip->close();
+
             return true;
         } else {
             if ($this->addFileOrDir($files)) {
                 $this->zip->close();
+
                 return true;
             }
+
             return false;
         }
     }
@@ -3191,8 +3252,10 @@ class FM_Zipper
         }
         if ($this->zip->extractTo($path)) {
             $this->zip->close();
+
             return true;
         }
+
         return false;
     }
 
@@ -3208,6 +3271,7 @@ class FM_Zipper
         } elseif (is_dir($filename)) {
             return $this->addDir($filename);
         }
+
         return false;
     }
 
@@ -3236,8 +3300,10 @@ class FM_Zipper
                     }
                 }
             }
+
             return true;
         }
+
         return false;
     }
 }
@@ -3270,11 +3336,13 @@ class FM_Zipper_Tar
                     return false;
                 }
             }
+
             return true;
         } else {
             if ($this->addFileOrDir($files)) {
                 return true;
             }
+
             return false;
         }
     }
@@ -3294,6 +3362,7 @@ class FM_Zipper_Tar
         if ($this->tar->extractTo($path)) {
             return true;
         }
+
         return false;
     }
 
@@ -3307,6 +3376,7 @@ class FM_Zipper_Tar
         if (is_file($filename)) {
             try {
                 $this->tar->addFile($filename);
+
                 return true;
             } catch (Exception $e) {
                 return false;
@@ -3314,6 +3384,7 @@ class FM_Zipper_Tar
         } elseif (is_dir($filename)) {
             return $this->addDir($filename);
         }
+
         return false;
     }
 
@@ -3341,8 +3412,10 @@ class FM_Zipper_Tar
                     }
                 }
             }
+
             return true;
         }
+
         return false;
     }
 }
