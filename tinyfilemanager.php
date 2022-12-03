@@ -1688,7 +1688,10 @@ if (isset($_GET['view'])) {
                 ?>
             </p>
             <div class="d-flex align-items-center mb-3">
-                <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
+                <form method="post" class="d-inline ms-2" action="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>">
+                    <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+                    <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></button> &nbsp;
+                </form>
                 <b class="ms-2"><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 <?php
                 // ZIP actions
