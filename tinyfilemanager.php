@@ -2137,6 +2137,7 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <tr>
                         <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' :'7') : (FM_READONLY ? '4' : '5') ?>">
                             <?php echo lng('FullSize').': <span class="badge text-bg-light border-radius-0">'.fm_get_filesize($all_files_size).'</span>' ?>
+							<?php echo lng('DiskFree').': <span class="badge text-bg-light border-radius-0">'.fm_get_diskfree().'</span>' ?>
                             <?php echo lng('File').': <span class="badge text-bg-light border-radius-0">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge text-bg-light border-radius-0">'.$num_folders.'</span>' ?>
                         </td>
@@ -2559,6 +2560,20 @@ function fm_get_filesize($size)
     $power = ($power > (count($units) - 1)) ? (count($units) - 1) : $power;
     return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
 }
+
+/**
+ * Get nice disk free
+ * @return string
+ */
+function fm_get_diskfree()
+{
+    $size = (float) disk_free_space(".");
+    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $power = ($size > 0) ? floor(log($size, 1024)) : 0;
+    $power = ($power > (count($units) - 1)) ? (count($units) - 1) : $power;
+    return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
+}
+
 
 /**
  * Get total size of directory tree.
@@ -4170,6 +4185,7 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
+	$tr['en']['DiskFree']          								= 'Disk Free';    
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
