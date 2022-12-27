@@ -3530,6 +3530,7 @@ global $lang, $root_url, $favicon_path;
     <meta name="description" content="Web based File Manager in PHP, Manage your files efficiently and easily with Tiny File Manager">
     <meta name="author" content="CCP Programmers">
     <meta name="robots" content="noindex, nofollow">
+    <meta name="darkreader-lock"/>
     <meta name="googlebot" content="noindex">
     <?php if($favicon_path) { echo '<link rel="icon" href="'.fm_enc($favicon_path).'" type="image/png">'; } ?>
     <title><?php echo fm_enc(APP_TITLE) ?></title>
