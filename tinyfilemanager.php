@@ -847,7 +847,7 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
     // rename
     if (fm_isvalid_filename($new) && $old != '' && $new != '') {
         if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
-            fm_set_msg(sprintf(lng('Renamed from').' <b>%s</b> '. lng('to').' <b>%s</b>', fm_enc($old), fm_enc($new)));
+            fm_set_msg(sprintf(lng('Renamed from').' <b>%s</b> '. lng('to').' <b><a href="%s">%s</a></b>',fm_enc($old),'?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($new), fm_enc($new) ));
         } else {
             fm_set_msg(sprintf(lng('Error while renaming from').' <b>%s</b> '. lng('to').' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');
         }
