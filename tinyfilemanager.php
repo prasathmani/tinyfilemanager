@@ -3626,7 +3626,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         .path { margin-bottom:10px  }
         form.dropzone { min-height:200px;border:2px dashed #007bff;line-height:6rem; }
         .right { text-align:right  }
-        .center, .close, .login-form, .preview-img-container { text-align:center  }
+        .center, .close, .login-form, .preview-img-container { text-align:center;max-width:100; }
         .message { padding:4px 7px;border:1px solid #ddd;background-color:#fff  }
         .message.ok { border-color:green;color:green  }
         .message.error { border-color:red;color:red  }
