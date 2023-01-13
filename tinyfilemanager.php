@@ -1,7 +1,4 @@
 <?php
-//Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
-
 /**
  * H3K | Tiny File Manager V2.5.2
  * @author Prasath Mani | CCP Programmers
@@ -3356,49 +3353,31 @@ class FM_Zipper_Tar
  */
  class FM_Config
 {
-     var $data;
+    var $data;
 
     function __construct()
     {
-        global $root_path, $root_url, $CONFIG;
+        global $root_path, $root_url;
         $fm_url = $root_url.$_SERVER["PHP_SELF"];
-        $this->data = array(
-            'lang' => 'en',
-            'error_reporting' => true,
-            'show_hidden' => true
-        );
-        $data = false;
-        if (strlen($CONFIG)) {
-            $data = fm_object_to_array(json_decode($CONFIG));
-        } else {
+        $this->data = json_decode(@file_get_contents('config.json'), true);
+        if($this->data == "") {
             $msg = 'Tiny File Manager<br>Error: Cannot load configuration';
-            if (substr($fm_url, -1) == '/') {
+            if ($fm_url == '/' || $fm_url == "/index.php") {
                 $fm_url = rtrim($fm_url, '/');
                 $msg .= '<br>';
-                $msg .= '<br>Seems like you have a trailing slash on the URL.';
-                $msg .= '<br>Try this link: <a href="' . $fm_url . '">' . $fm_url . '</a>';
+                $msg .= '<br>Seems <i>config.json</i> does not exists or has no content.';
+                $msg .= '<br>Try create <i>config.json</i> with content: {"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
             }
             die($msg);
         }
-        if (is_array($data) && count($data)) $this->data = $data;
-        else $this->save();
     }
 
     function save()
     {
-        $fm_file = __FILE__;
-        $var_name = '$CONFIG';
-        $var_value = var_export(json_encode($this->data), true);
-        $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration".chr(13) . chr(10)."$var_name = $var_value;" . chr(13) . chr(10);
-        if (is_writable($fm_file)) {
-            $lines = file($fm_file);
-            if ($fh = @fopen($fm_file, "w")) {
-                @fputs($fh, $config_string, strlen($config_string));
-                for ($x = 3; $x < count($lines); $x++) {
-                    @fputs($fh, $lines[$x], strlen($lines[$x]));
-                }
-                @fclose($fh);
-            }
+        $var_value = json_encode($this->data, JSON_PRETTY_PRINT);
+        $config_file = "config.json";
+        if (is_writable($config_file)) {
+            file_put_contents($config_file, $var_value);
         }
     }
 }
