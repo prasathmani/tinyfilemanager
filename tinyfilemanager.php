@@ -186,33 +186,32 @@ if ($report_errors == true) {
 if (defined('FM_EMBED')) {
     $use_auth = false;
     $sticky_navbar = false;
-} else {
-    @set_time_limit(600);
-
-    date_default_timezone_set($default_timezone);
-
-    ini_set('default_charset', 'UTF-8');
-    if (version_compare(PHP_VERSION, '5.6.0', '<') && function_exists('mb_internal_encoding')) {
-        mb_internal_encoding('UTF-8');
-    }
-    if (function_exists('mb_regex_encoding')) {
-        mb_regex_encoding('UTF-8');
-    }
-
-    session_cache_limiter('');
-    session_name(FM_SESSION_ID );
-    function session_error_handling_function($code, $msg, $file, $line) {
-        // Permission denied for default session, try to create a new one
-        if ($code == 2) {
-            session_abort();
-            session_id(session_create_id());
-            @session_start();
-        }
-    }
-    set_error_handler('session_error_handling_function');
-    session_start();
-    restore_error_handler();
 }
+@set_time_limit(600);
+
+date_default_timezone_set($default_timezone);
+
+ini_set('default_charset', 'UTF-8');
+if (version_compare(PHP_VERSION, '5.6.0', '<') && function_exists('mb_internal_encoding')) {
+    mb_internal_encoding('UTF-8');
+}
+if (function_exists('mb_regex_encoding')) {
+    mb_regex_encoding('UTF-8');
+}
+
+session_cache_limiter('');
+session_name(FM_SESSION_ID );
+function session_error_handling_function($code, $msg, $file, $line) {
+    // Permission denied for default session, try to create a new one
+    if ($code == 2) {
+        session_abort();
+        session_id(session_create_id());
+        @session_start();
+    }
+}
+set_error_handler('session_error_handling_function');
+session_start();
+restore_error_handler();
 
 //Genrating CSRF Token
 if (empty($_SESSION['token'])) {
@@ -1417,10 +1416,10 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
     ?>
     <div class="path">
-        <p><b>Copying</b></p>
+        <p><b><?php echo lng('Copying') ?></b></p>
         <p class="break-word">
-            <strong>Source path:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
-            <strong>Destination folder:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
+            <strong><?php echo lng('Source path') ?>:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
+            <strong><?php echo lng('Destination folder') ?>:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
         </p>
         <p>
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
@@ -1647,9 +1646,9 @@ if (isset($_GET['view'])) {
         <div class="col-12">
             <p class="break-word"><b><?php echo lng($view_title) ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
             <p class="break-word">
-                <strong>Full path:</strong> <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
-                <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
-                <strong>MIME-type:</strong> <?php echo $mime_type ?><br>
+                <strong><?php echo lng('Full path') ?>:</strong> <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
+                <strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
+                <strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?><br>
                 <?php
                 // ZIP info
                 if (($is_zip || $is_gzip) && $filenames !== false) {
@@ -4009,6 +4008,12 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         $(".modal.confirmDailog").remove();
         $('#wrapper').append(template(tpl,tplObj));
         $("#confirmDailog-"+tplObj.id).modal('show');
+        $("#confirmDailog-"+tplObj.id).on('hidden.bs.modal',function(){
+            var md = $(this)
+            setTimeout(function() {
+                md.remove()
+            }, 10);
+        })
         return false;
     }
     

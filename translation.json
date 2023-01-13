@@ -1169,7 +1169,9 @@
         "Select Mode": "选择模式",
         "Select Theme": "选择主题",
         "Select Font Size": "选择字体大小",
-        "Are you sure want to rename?": "是否确实要重命名?"
+        "Are you sure want to rename?": "是否确实要重命名?",
+        "Source path": "源路径",
+        "Destination folder": "目标文件夹"
       }
     },
     {
