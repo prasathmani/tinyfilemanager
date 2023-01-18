@@ -2464,6 +2464,12 @@ function fm_is_exclude_items($file) {
         $exclude_items = unserialize($exclude_items);
     }
     if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
+
+        //check .min.
+        if( false !== strpos( $file, '.min.') && in_array("*.min.$ext", FM_EXCLUDE_ITEMS) ){
+            return false;
+        }
+
         return true;
     }
     return false;
