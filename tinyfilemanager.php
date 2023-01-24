@@ -4009,7 +4009,6 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         $(".modal.confirmDailog").remove();
         $('#wrapper').append(template(tpl,tplObj));
         const $confirmDailog = $("#confirmDailog-"+tplObj.id);
-        $confirmDailog.on('hidden.bs.modal', function() { $confirmDailog.remove(); });
         $confirmDailog.modal('show');
         return false;
     }
