@@ -1065,6 +1065,15 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     }
 
     $files = $_POST['file'];
+    $sanitized_files = array();
+
+    // clean path
+    foreach($files as $file){
+        array_push($sanitized_files, fm_clean_path($file));
+    }
+    
+    $files = $sanitized_files;
+    
     if (!empty($files)) {
         chdir($path);
 
