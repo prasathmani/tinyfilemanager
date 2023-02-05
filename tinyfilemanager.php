@@ -1623,6 +1623,7 @@ if (isset($_GET['view'])) {
     $is_audio = false;
     $is_video = false;
     $is_text = false;
+    $is_csv = false;
     $is_onlineViewer = false;
 
     $view_title = 'File';
@@ -1646,6 +1647,9 @@ if (isset($_GET['view'])) {
     } elseif (in_array($ext, fm_get_video_exts())) {
         $is_video = true;
         $view_title = 'Video';
+    } elseif ($ext == 'csv') {
+        $is_csv = true;
+        $view_title = "CSV File";
     } elseif (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
         $is_text = true;
         $content = file_get_contents($file_path);
@@ -1720,7 +1724,7 @@ if (isset($_GET['view'])) {
                     </form>&nbsp;
                     <?php
                 }
-                if ($is_text && !FM_READONLY) {
+                if (!FM_READONLY && ($is_text || $is_csv)) {
                     ?>
                     <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
                         </a></b> &nbsp;
@@ -1763,6 +1767,15 @@ if (isset($_GET['view'])) {
             } elseif ($is_video) {
                 // Video content
                 echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
+            } elseif ($is_csv) {
+				$tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white";
+                echo '<table class="table table-hover table-sm ' . $tableTheme .'">';
+                $csvFilePointer = fopen($file_path, 'r');
+                while ( ($csvRow = fgetcsv($csvFilePointer) ) !== FALSE ) {
+                    echo '<tr><td>'. implode('</td><td>', $csvRow). '</td></tr>';
+                }
+                fclose($csvFilePointer);
+                echo '</table>';
             } elseif ($is_text) {
                 if (FM_USE_HIGHLIGHTJS) {
                     // highlight
