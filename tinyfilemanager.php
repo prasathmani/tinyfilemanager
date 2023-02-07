@@ -102,7 +102,7 @@ $exclude_items = array();
 $online_viewer = 'google';
 
 // Display CSV files as HTML table
-$display_csv_as_table = false;
+$display_csv_as_table = true;
 
 // Sticky Nav bar
 // true => enable sticky header
