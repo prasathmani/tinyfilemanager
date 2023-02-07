@@ -101,6 +101,9 @@ $exclude_items = array();
 // false => disable online doc viewer
 $online_viewer = 'google';
 
+// Display CSV files as HTML table
+$display_csv_as_table = false;
+
 // Sticky Nav bar
 // true => enable sticky header
 // false => disable sticky header
@@ -1647,7 +1650,7 @@ if (isset($_GET['view'])) {
     } elseif (in_array($ext, fm_get_video_exts())) {
         $is_video = true;
         $view_title = 'Video';
-    } elseif ($ext == 'csv') {
+    } elseif ($display_csv_as_table && $ext == 'csv') {
         $is_csv = true;
         $view_title = "CSV File";
     } elseif (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
