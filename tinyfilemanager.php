@@ -111,6 +111,10 @@ $sticky_navbar = true;
 // memory_limit, upload_max_filesize, post_max_size
 $max_upload_size_bytes = 5000000000; // size 5,000,000,000 bytes (~5GB)
 
+// chunk size used for upload
+// eg. decrease to 1MB if nginx reports problem 413 entity too large
+$upload_chunk_size_bytes = 2000000; // chunk size 2,000,000 bytes (~2MB)
+
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
 // AND => Connection must be on the whitelist, and not on the blacklist
@@ -143,6 +147,9 @@ if (is_readable($config_file)) {
 
 // max upload file size
 define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
+
+// upload chunk size
+define('UPLOAD_CHUNK_SIZE', $upload_chunk_size_bytes);
 
 // private key and session name to store to the session
 if ( !defined( 'FM_SESSION_ID')) {
@@ -1335,7 +1342,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     <script>
         Dropzone.options.fileUploader = {
             chunking: true,
-            chunkSize: 2000000, // chunk size 2,000,000 bytes (~2MB)
+            chunkSize: <?php echo UPLOAD_CHUNK_SIZE; ?>,
             forceChunking: true,
             retryChunks: true,
             retryChunksLimit: 3,
