@@ -138,18 +138,16 @@ $ip_blacklist = array(
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
-    'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">',
-    'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
-    'css-font-awesome' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">',
-    'css-highlightjs' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/' . $highlightjs_style . '.min.css">',
-    'js-ace' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>',
-    'js-bootstrap' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>',
-    'js-dropzone' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>',
-    'js-jquery' => '<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>',
-    'js-jquery-datatables' => '<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js" crossorigin="anonymous" defer></script>',
-    'js-highlightjs' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>',
-    'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
-    'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
+    'css-bootstrap' => '<link href="assets/css/bootstrap.min.css" rel="stylesheet">',
+    'css-dropzone' => '<link href="assets/css/dropzone.min.css" rel="stylesheet">',
+    'css-font-awesome' => '<link rel="stylesheet" href="assets/css/font-awesome.min.css" crossorigin="anonymous">',
+    'css-highlightjs' => '<link rel="stylesheet" href="assets/css/' . $highlightjs_style . '.min.css">',
+    'js-ace' => '<script src="assets/js/ace.js"></script>',
+    'js-bootstrap' => '<script src="assets/js/bootstrap.bundle.min.js"></script>',
+    'js-dropzone' => '<script src="assets/js/dropzone.min.js"></script>',
+    'js-jquery' => '<script src="assets/js/jquery-3.6.1.min.js"></script>',
+    'js-jquery-datatables' => '<script src="assets/js/dataTables.min.js"></script>',
+    'js-highlightjs' => '<script src="assets/js/highlight.min.js"></script>',
 );
 
 // if User has the external config file, try to use it to override the default config above [config.php]
