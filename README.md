@@ -39,7 +39,8 @@ Default username/password: **admin/admin@123** and **user/12345**.
 To enable/disable authentication set `$use_auth` to true or false.
 
 :information_source: Add your own configuration file [config.php](https://tinyfilemanager.github.io/config-sample.txt) in the same folder to use as additional configuration file.
-:information_source: To work offline without CDN resources, use [https://github.com/prasathmani/tinyfilemanager/tree/offline](offline) branch
+
+:information_source: To work offline without CDN resources, use [offline](https://github.com/prasathmani/tinyfilemanager/tree/offline) branch
 
 ### :loudspeaker: Features
 
