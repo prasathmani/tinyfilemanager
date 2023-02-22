@@ -3,7 +3,7 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.5.2
+ * H3K | Tiny File Manager V2.5.3
  * @author Prasath Mani | CCP Programmers
  * @email ccpprogrammers@gmail.com
  * @github https://github.com/prasathmani/tinyfilemanager
@@ -11,7 +11,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.5.2');
+define('VERSION', '2.5.3');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -136,7 +136,7 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
-// External scripts (replace for GDPR compliance)
+// External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">',
     'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
@@ -146,7 +146,7 @@ $external = array(
     'js-bootstrap' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>',
     'js-dropzone' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>',
     'js-jquery' => '<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>',
-    'js-jquery-datables' => '<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js" crossorigin="anonymous" defer></script>',
+    'js-jquery-datatables' => '<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js" crossorigin="anonymous" defer></script>',
     'js-highlightjs' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>',
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
@@ -160,18 +160,6 @@ if (is_readable($config_file)) {
 }
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
-
-function print_external($key) {
-    global $external;
-
-    if(!array_key_exists($key, $external)) {
-        // throw new Exception('Key missing in external: ' . key);
-        echo "<!-- EXTERNAL: MISSING KEY $key -->";
-        return;
-    }
-
-    echo "$external[$key]";
-}
 
 // max upload file size
 define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
@@ -2220,6 +2208,23 @@ fm_show_footer();
 // --- END HTML ---
 
 // Functions
+
+/**
+ * It prints the css/js files into html
+ * @param key The key of the external file to print.
+ * @return The value of the key in the  array.
+ */
+function print_external($key) {
+    global $external;
+
+    if(!array_key_exists($key, $external)) {
+        // throw new Exception('Key missing in external: ' . key);
+        echo "<!-- EXTERNAL: MISSING KEY $key -->";
+        return;
+    }
+
+    echo "$external[$key]";
+}
 
 /**
  * Verify CSRF TOKEN and remove after cerify
