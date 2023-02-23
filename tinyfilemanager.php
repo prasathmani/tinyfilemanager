@@ -142,7 +142,7 @@ $external = array(
     'css-dropzone' => '<link href="assets/css/dropzone.min.css" rel="stylesheet">',
     'css-font-awesome' => '<link rel="stylesheet" href="assets/css/font-awesome.min.css" crossorigin="anonymous">',
     'css-highlightjs' => '<link rel="stylesheet" href="assets/css/' . $highlightjs_style . '.min.css">',
-    'js-ace' => '<script src="assets/js/ace.js"></script>',
+    'js-ace' => '<script src="assets/js/ace/ace.js"></script>',
     'js-bootstrap' => '<script src="assets/js/bootstrap.bundle.min.js"></script>',
     'js-dropzone' => '<script src="assets/js/dropzone.min.js"></script>',
     'js-jquery' => '<script src="assets/js/jquery-3.6.1.min.js"></script>',
