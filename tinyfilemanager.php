@@ -732,7 +732,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     $copy = urldecode($_GET['copy']);
     $copy = fm_clean_path($copy);
     // empty path
-    if ($copy == '') {
+    if ($copy == '' || in_array($copy, FM_EXCLUDE_ITEMS)) {
         fm_set_msg(lng('Source path not defined'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
@@ -785,7 +785,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
                $loop_count++;
             }
             if (fm_rcopy($from, $fn_duplicate, False)) {
-                fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
+                fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
             } else {
                 fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
             }
@@ -2283,7 +2283,10 @@ function fm_rdelete($path)
         $ok = true;
         if (is_array($objects)) {
             foreach ($objects as $file) {
-                if ($file != '.' && $file != '..') {
+                if ($file != '.' && $file != '..' 
+                    && !in_array($file, FM_EXCLUDE_ITEMS) 
+                    && !in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+                ) {
                     if (!fm_rdelete($path . '/' . $file)) {
                         $ok = false;
                     }
@@ -2314,7 +2317,10 @@ function fm_rchmod($path, $filemode, $dirmode)
         $objects = scandir($path);
         if (is_array($objects)) {
             foreach ($objects as $file) {
-                if ($file != '.' && $file != '..') {
+                if ($file != '.' && $file != '..' 
+                    && !in_array($file, FM_EXCLUDE_ITEMS) 
+                    && !in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+                ) {
                     if (!fm_rchmod($path . '/' . $file, $filemode, $dirmode)) {
                         return false;
                     }
@@ -2382,7 +2388,10 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
         $ok = true;
         if (is_array($objects)) {
             foreach ($objects as $file) {
-                if ($file != '.' && $file != '..') {
+                if ($file != '.' && $file != '..' 
+                    && !in_array($file, FM_EXCLUDE_ITEMS) 
+                    && !in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+                ) {
                     if (!fm_rcopy($path . '/' . $file, $dest . '/' . $file)) {
                         $ok = false;
                     }
