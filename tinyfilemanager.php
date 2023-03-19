@@ -2854,6 +2854,7 @@ function fm_get_file_icon_class($path)
         case 'flac':
         case 'ac3':
         case 'tds':
+        case 'opus':
             $img = 'fa fa-music';
             break;
         case 'm3u':
@@ -2962,7 +2963,7 @@ function fm_get_video_exts()
  */
 function fm_get_audio_exts()
 {
-    return array('wav', 'mp3', 'ogg', 'm4a');
+    return array('wav', 'mp3', 'ogg', 'opus', 'm4a', 'flac', 'aac');
 }
 
 /**
