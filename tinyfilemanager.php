@@ -81,9 +81,17 @@ $datetime_format = 'm/d/Y g:i A';
 // e.g. 'txt,html,css,js'
 $allowed_file_extensions = '';
 
+// Not allowed file extensions for create and rename files
+// e.g. 'php,sh'
+$not_allowed_file_extensions = '';
+
 // Allowed file extensions for upload files
 // e.g. 'gif,png,jpg,html,txt'
 $allowed_upload_extensions = '';
+
+// Not allowed file extensions for upload files
+// e.g. 'php,sh'
+$not_allowed_upload_extensions = '';
 
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
@@ -411,7 +419,9 @@ defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
+defined('FM_NOT_FILE_EXTENSION') || define('FM_NOT_FILE_EXTENSION', $not_allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
+defined('FM_NOT_UPLOAD_EXTENSION') || define('FM_NOT_UPLOAD_EXTENSION', $not_allowed_upload_extensions);
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items) : $exclude_items));
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
 define('FM_READONLY', $global_readonly || ($use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users)));
@@ -601,12 +611,14 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $fileinfo->name = trim(basename($url), ".\x00..\x20");
 
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
+        $notAllowed = (FM_NOT_UPLOAD_EXTENSION) ? explode(',', FM_NOT_UPLOAD_EXTENSION) : false;
         $ext = strtolower(pathinfo($fileinfo->name, PATHINFO_EXTENSION));
         $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+        $isFileNotAllowed = ($notAllowed) ? in_array($ext, $notAllowed) : false;
 
         $err = false;
 
-        if(!$isFileAllowed) {
+        if(!$isFileAllowed || $isFileNotAllowed) {
             $err = array("message" => "File extension is not allowed");
             event_callback(array("fail" => $err));
             exit();
@@ -657,7 +669,10 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 // Delete file / folder
 if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
     $del = str_replace( '/', '', fm_clean_path( $_GET['del'] ) );
-    if ($del != '' && $del != '..' && $del != '.' && verifyToken($_POST['token'])) {
+    if ($del != '' && $del != '..' && $del != '.' && verifyToken($_POST['token']) 
+        && !in_array($del, FM_EXCLUDE_ITEMS) 
+        && !in_array(strtolower(pathinfo($del, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+    ) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
             $path .= '/' . FM_PATH;
@@ -815,7 +830,10 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
     // copy/move
     $errors = 0;
     $files = $_POST['file'];
-    if (is_array($files) && count($files)) {
+    if (is_array($files) && count($files) 
+        && !count(array_intersect(FM_EXCLUDE_ITEMS, $files)) > 0 
+        && !count(array_intersect(getExcludedExtensions(FM_EXCLUDE_ITEMS), parseFilesExtensions($files))) > 0
+    ) {
         foreach ($files as $f) {
             if ($f != '') {
                 $f = fm_clean_path($f);
@@ -893,7 +911,10 @@ if (isset($_GET['dl'], $_POST['token'])) {
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
-    if ($dl != '' && is_file($path . '/' . $dl)) {
+    if ($dl != '' && is_file($path . '/' . $dl) 
+        && !in_array($dl, FM_EXCLUDE_ITEMS) 
+        && !in_array(strtolower(pathinfo($dl, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+    ) {
         fm_download_file($path . '/' . $dl, $dl, 1024);
         exit;
     } else {
@@ -1045,7 +1066,10 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
 
     $errors = 0;
     $files = $_POST['file'];
-    if (is_array($files) && count($files)) {
+    if (is_array($files) && count($files) 
+        && !count(array_intersect(FM_EXCLUDE_ITEMS, $files)) > 0 
+        && !count(array_intersect(getExcludedExtensions(FM_EXCLUDE_ITEMS), parseFilesExtensions($files))) > 0
+    ) {
         foreach ($files as $f) {
             if ($f != '') {
                 $new_path = $path . '/' . $f;
@@ -1096,8 +1120,11 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     }
     
     $files = $sanitized_files;
-    
-    if (!empty($files)) {
+
+    if (!empty($files) 
+        && !count(array_intersect(FM_EXCLUDE_ITEMS, $files)) > 0 
+	    && !count(array_intersect(getExcludedExtensions(FM_EXCLUDE_ITEMS), parseFilesExtensions($files))) > 0
+    ) {
         chdir($path);
 
         if (count($files) == 1) {
@@ -1369,6 +1396,9 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             acceptedFiles : "<?php echo getUploadExt() ?>",
             init: function () {
                 this.on("sending", function (file, xhr, formData) {
+                    const notAllowedExtensions = "<?php echo $not_allowed_upload_extensions; ?>".split(",");
+                    let file_ext = file.name.split('.').pop();
+                    if (notAllowedExtensions.includes(file_ext)) {this.cancelUpload(file);file=null;toast(this.options.dictInvalidFileType);throw new Error(this.options.dictInvalidFileType);}
                     let _path = (file.fullPath) ? file.fullPath : file.name;
                     document.getElementById("fullpath").value = _path;
                     xhr.ontimeout = (function() {
@@ -2308,11 +2338,13 @@ function fm_rchmod($path, $filemode, $dirmode)
 function fm_is_valid_ext($filename)
 {
     $allowed = (FM_FILE_EXTENSION) ? explode(',', FM_FILE_EXTENSION) : false;
+    $notAllowed = (FM_NOT_FILE_EXTENSION) ? explode(',', FM_NOT_FILE_EXTENSION) : false;
 
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+    $isFileNotAllowed = ($notAllowed) ? in_array($ext, $notAllowed) : false;
 
-    return ($isFileAllowed) ? true : false;
+    return ($isFileAllowed && !$isFileNotAllowed) ? true : false;
 }
 
 /**
@@ -2516,6 +2548,36 @@ function fm_is_exclude_items($file) {
         return true;
     }
     return false;
+}
+
+/**
+ * Get excluded extensions in exclude list
+ * @param array $exclude_items
+ * @return array with extensions
+ */
+function getExcludedExtensions($exclude_items) {
+    $excluded_extensions = array();
+    foreach($exclude_items as $item) {
+        if (str_contains($item, '*.')) {
+            array_push($excluded_extensions, strtolower(explode('*.', $item)[1]));
+        }
+    }
+    return $excluded_extensions;
+}
+
+/**
+ * Get extensions in file array
+ * @param array $files
+ * @return array with extensions
+ */
+function parseFilesExtensions($files) {
+    $files_extensions = array();
+    foreach($files as $file) {
+        if (str_contains($file, '.')) {
+            array_push($files_extensions, strtolower(pathinfo($file, PATHINFO_EXTENSION)));
+        }
+    }
+    return $files_extensions;
 }
 
 /**
@@ -3285,7 +3347,10 @@ class FM_Zipper
         $objects = scandir($path);
         if (is_array($objects)) {
             foreach ($objects as $file) {
-                if ($file != '.' && $file != '..') {
+                if ($file != '.' && $file != '..' 
+                    && !in_array($file, FM_EXCLUDE_ITEMS) 
+                    && !in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+                ) {
                     if (is_dir($path . '/' . $file)) {
                         if (!$this->addDir($path . '/' . $file)) {
                             return false;
@@ -3388,7 +3453,10 @@ class FM_Zipper_Tar
         $objects = scandir($path);
         if (is_array($objects)) {
             foreach ($objects as $file) {
-                if ($file != '.' && $file != '..') {
+                if ($file != '.' && $file != '..' 
+                    && !in_array($file, FM_EXCLUDE_ITEMS) 
+                    && !in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), getExcludedExtensions(FM_EXCLUDE_ITEMS))
+                ) {
                     if (is_dir($path . '/' . $file)) {
                         if (!$this->addDir($path . '/' . $file)) {
                             return false;
