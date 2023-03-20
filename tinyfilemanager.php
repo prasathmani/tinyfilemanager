@@ -26,23 +26,23 @@ $use_auth = true;
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
-$auth_users = array(
+$auth_users = [
     'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
     'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
-);
+];
 
 // Readonly users
 // e.g. array('users', 'guest', ...)
-$readonly_users = array(
+$readonly_users = [
     'user'
-);
+];
 
 // Global readonly, including when auth is not being used
 $global_readonly = false;
 
 // user specific directories
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
-$directories_users = array();
+$directories_users = [];
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
@@ -125,19 +125,19 @@ $ip_ruleset = 'OFF';
 $ip_silent = true;
 
 // IP-addresses, both ipv4 and ipv6
-$ip_whitelist = array(
+$ip_whitelist = [
     '127.0.0.1',    // local ipv4
     '::1'           // local ipv6
-);
+];
 
 // IP-addresses, both ipv4 and ipv6
-$ip_blacklist = array(
+$ip_blacklist = [
     '0.0.0.0',      // non-routable meta ipv4
     '::'            // non-routable meta ipv6
-);
+];
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
-$external = array(
+$external = [
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">',
     'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
     'css-font-awesome' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">',
@@ -150,7 +150,7 @@ $external = array(
     'js-highlightjs' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>',
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
-);
+];
 
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
@@ -193,9 +193,9 @@ $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
 define('FM_THEME', $theme);
 
 //available languages
-$lang_list = array(
+$lang_list = [
     'en' => 'English'
-);
+];
 
 if ($report_errors == true) {
     @ini_set('error_reporting', E_ALL);
@@ -607,8 +607,8 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $err = false;
 
         if(!$isFileAllowed) {
-            $err = array("message" => "File extension is not allowed");
-            event_callback(array("fail" => $err));
+            $err = ["message" => "File extension is not allowed"];
+            event_callback(["fail" => $err]);
             exit();
         }
 
@@ -642,13 +642,13 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         }
 
         if ($success) {
-            event_callback(array("done" => $fileinfo));
+            event_callback(["done" => $fileinfo]);
         } else {
             unlink($temp_file);
             if (!$err) {
-                $err = array("message" => "Invalid url parameter");
+                $err = ["message" => "Invalid url parameter"];
             }
-            event_callback(array("fail" => $err));
+            event_callback(["fail" => $err]);
         }
     }
     exit();
@@ -970,30 +970,30 @@ if (!empty($_FILES) && !FM_READONLY) {
                     $in = @fopen($tmp_name, "rb");
                     if ($in) {
                         while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
-                        $response = array (
+                        $response = [
                             'status'    => 'success',
                             'info' => "file upload successful"
-                        );
+                        ];
                     } else {
-                        $response = array (
+                        $response = [
                         'status'    => 'error',
                         'info' => "failed to open output stream",
                         'errorDetails' => error_get_last()
-                        );
+                        ];
                     }
                     @fclose($in);
                     @fclose($out);
                     @unlink($tmp_name);
 
-                    $response = array (
+                    $response = [
                         'status'    => 'success',
                         'info' => "file upload successful"
-                    );
+                    ];
                 } else {
-                    $response = array (
+                    $response = [
                         'status'    => 'error',
                         'info' => "failed to open output stream"
-                        );
+                        ];
                 }
 
                 if ($chunkIndex == $chunkTotal - 1) {
@@ -1003,28 +1003,28 @@ if (!empty($_FILES) && !FM_READONLY) {
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
                 if ( file_exists($fullPath) ) {
-                    $response = array (
+                    $response = [
                         'status'    => 'success',
                         'info' => "file upload successful"
-                    );
+                    ];
                 } else {
-                    $response = array (
+                    $response = [
                         'status' => 'error',
                         'info'   => 'Couldn\'t upload the requested file.'
-                    );
+                    ];
                 }
             } else {
-                $response = array (
+                $response = [
                     'status'    => 'error',
                     'info'      => "Error while uploading files. Uploaded files $uploads",
-                );
+                ];
             }
         }
     } else {
-        $response = array (
+        $response = [
             'status' => 'error',
             'info'   => 'The specified folder for upload isn\'t writeable.'
-        );
+        ];
     }
     // Return the response
     echo json_encode($response);
@@ -1088,7 +1088,7 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     }
 
     $files = $_POST['file'];
-    $sanitized_files = array();
+    $sanitized_files = [];
 
     // clean path
     foreach($files as $file){
@@ -1801,7 +1801,7 @@ if (isset($_GET['view'])) {
                         $hljs_class = 'nohighlight';
                     }
                     $content = '<pre class="with-hljs"><code class="' . $hljs_class . '">' . fm_enc($content) . '</code></pre>';
-                } elseif (in_array($ext, array('php', 'php4', 'php5', 'phtml', 'phps'))) {
+                } elseif (in_array($ext, ['php', 'php4', 'php5', 'phtml', 'phps'])) {
                     // php highlight
                     $content = highlight_string($content, true);
                 } else {
@@ -2105,8 +2105,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     $owner = posix_getpwuid(fileowner($path . '/' . $f));
                     $group = posix_getgrgid(filegroup($path . '/' . $f));
                 } else {
-                    $owner = array('name' => '?');
-                    $group = array('name' => '?');
+                    $owner = ['name' => '?'];
+                    $group = ['name' => '?'];
                 }
                 ?>
                 <tr>
@@ -2447,9 +2447,9 @@ function fm_redirect($url, $code = 302)
  * @return string
  */
 function get_absolute_path($path) {
-    $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+    $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
     $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
-    $absolutes = array();
+    $absolutes = [];
     foreach ($parts as $part) {
         if ('.' == $part) continue;
         if ('..' == $part) {
@@ -2470,7 +2470,7 @@ function fm_clean_path($path, $trim = true)
 {
     $path = $trim ? trim($path) : $path;
     $path = trim($path, '\\/');
-    $path = str_replace(array('../', '..\\'), '', $path);
+    $path = str_replace(['../', '..\\'], '', $path);
     $path =  get_absolute_path($path);
     if ($path == '..') {
         $path = '';
@@ -2603,7 +2603,7 @@ function fm_get_size($file)
 function fm_get_filesize($size)
 {
     $size = (float) $size;
-    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     $power = ($size > 0) ? floor(log($size, 1024)) : 0;
     $power = ($power > (count($units) - 1)) ? (count($units) - 1) : $power;
     return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
@@ -2635,36 +2635,36 @@ function fm_get_zif_info($path, $ext) {
     if ($ext == 'zip' && function_exists('zip_open')) {
         $arch = @zip_open($path);
         if ($arch) {
-            $filenames = array();
+            $filenames = [];
             while ($zip_entry = @zip_read($arch)) {
                 $zip_name = @zip_entry_name($zip_entry);
                 $zip_folder = substr($zip_name, -1) == '/';
-                $filenames[] = array(
+                $filenames[] = [
                     'name' => $zip_name,
                     'filesize' => @zip_entry_filesize($zip_entry),
                     'compressed_size' => @zip_entry_compressedsize($zip_entry),
                     'folder' => $zip_folder
                     //'compression_method' => zip_entry_compressionmethod($zip_entry),
-                );
+                ];
             }
             @zip_close($arch);
             return $filenames;
         }
     } elseif($ext == 'tar' && class_exists('PharData')) {
         $archive = new PharData($path);
-        $filenames = array();
+        $filenames = [];
         foreach(new RecursiveIteratorIterator($archive) as $file) {
             $parent_info = $file->getPathInfo();
             $zip_name = str_replace("phar://".$path, '', $file->getPathName());
             $zip_name = substr($zip_name, ($pos = strpos($zip_name, '/')) !== false ? $pos + 1 : 0);
             $zip_folder = $parent_info->getFileName();
             $zip_info = new SplFileInfo($file);
-            $filenames[] = array(
+            $filenames[] = [
                 'name' => $zip_name,
                 'filesize' => $zip_info->getSize(),
                 'compressed_size' => $file->getCompressedSize(),
                 'folder' => $zip_folder
-            );
+            ];
         }
         return $filenames;
     }
@@ -2944,7 +2944,7 @@ function fm_get_file_icon_class($path)
  */
 function fm_get_image_exts()
 {
-    return array('ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
+    return ['ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif'];
 }
 
 /**
@@ -2953,7 +2953,7 @@ function fm_get_image_exts()
  */
 function fm_get_video_exts()
 {
-    return array('avi', 'webm', 'wmv', 'mp4', 'm4v', 'ogm', 'ogv', 'mov', 'mkv');
+    return ['avi', 'webm', 'wmv', 'mp4', 'm4v', 'ogm', 'ogv', 'mov', 'mkv'];
 }
 
 /**
@@ -2962,7 +2962,7 @@ function fm_get_video_exts()
  */
 function fm_get_audio_exts()
 {
-    return array('wav', 'mp3', 'ogg', 'm4a');
+    return ['wav', 'mp3', 'ogg', 'm4a'];
 }
 
 /**
@@ -2971,14 +2971,14 @@ function fm_get_audio_exts()
  */
 function fm_get_text_exts()
 {
-    return array(
+    return [
         'txt', 'css', 'ini', 'conf', 'log', 'htaccess', 'passwd', 'ftpquota', 'sql', 'js', 'ts', 'jsx', 'tsx', 'mjs', 'json', 'sh', 'config',
         'php', 'php4', 'php5', 'phps', 'phtml', 'htm', 'html', 'shtml', 'xhtml', 'xml', 'xsl', 'm3u', 'm3u8', 'pls', 'cue', 'bash', 'vue',
         'eml', 'msg', 'csv', 'bat', 'twig', 'tpl', 'md', 'gitignore', 'less', 'sass', 'scss', 'c', 'cpp', 'cs', 'py', 'go', 'zsh', 'swift',
         'map', 'lock', 'dtd', 'svg', 'asp', 'aspx', 'asx', 'asmx', 'ashx', 'jsp', 'jspx', 'cgi', 'dockerfile', 'ruby', 'yml', 'yaml', 'toml',
         'vhost', 'scpt', 'applescript', 'csx', 'cshtml', 'c++', 'coffee', 'cfm', 'rb', 'graphql', 'mustache', 'jinja', 'http', 'handlebars',
         'java', 'es', 'es6', 'markdown', 'wiki', 'tmp', 'top', 'bot', 'dat', 'bak', 'htpasswd', 'pl'
-    );
+    ];
 }
 
 /**
@@ -2987,14 +2987,14 @@ function fm_get_text_exts()
  */
 function fm_get_text_mimes()
 {
-    return array(
+    return [
         'application/xml',
         'application/javascript',
         'application/x-javascript',
         'image/svg+xml',
         'message/rfc822',
         'application/json',
-    );
+    ];
 }
 
 /**
@@ -3003,13 +3003,13 @@ function fm_get_text_mimes()
  */
 function fm_get_text_names()
 {
-    return array(
+    return [
         'license',
         'readme',
         'authors',
         'contributors',
         'changelog',
-    );
+    ];
 }
 
 /**
@@ -3018,7 +3018,7 @@ function fm_get_text_names()
  */
 function fm_get_onlineViewer_exts()
 {
-    return array('doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar', 'odt', 'ods');
+    return ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'ai', 'psd', 'dxf', 'xps', 'rar', 'odt', 'ods'];
 }
 
 /**
@@ -3087,16 +3087,16 @@ function fm_get_file_mimes($extension)
          $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
          $rii = new RegexIterator($ite, "/(" . $filter . ")/i");
 
-         $files = array();
+         $files = [];
          foreach ($rii as $file) {
              if (!$file->isDir()) {
                  $fileName = $file->getFilename();
                  $location = str_replace(FM_ROOT_PATH, '', $file->getPath());
-                 $files[] = array(
+                 $files[] = [
                      "name" => $fileName,
                      "type" => "file",
                      "path" => $location,
-                 );
+                 ];
              }
          }
          return $files;
@@ -3418,11 +3418,11 @@ class FM_Zipper_Tar
     {
         global $root_path, $root_url, $CONFIG;
         $fm_url = $root_url.$_SERVER["PHP_SELF"];
-        $this->data = array(
+        $this->data = [
             'lang' => 'en',
             'error_reporting' => true,
             'show_hidden' => true
-        );
+        ];
         $data = false;
         if (strlen($CONFIG)) {
             $data = fm_object_to_array(json_decode($CONFIG));
@@ -3491,7 +3491,7 @@ function fm_show_nav_path($path)
             if ($path != '') {
                 $exploded = explode('/', $path);
                 $count = count($exploded);
-                $array = array();
+                $array = [];
                 $parent = '';
                 for ($i = 0; $i < $count; $i++) {
                     $parent = trim($parent . '/' . $exploded[$i], '/');
