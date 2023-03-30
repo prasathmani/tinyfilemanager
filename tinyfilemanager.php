@@ -222,7 +222,7 @@ if (defined('FM_EMBED')) {
         mb_regex_encoding('UTF-8');
     }
 
-    session_cache_limiter('');
+    session_cache_limiter('nocache'); // Prevent logout issue after page was cached
     session_name(FM_SESSION_ID );
     function session_error_handling_function($code, $msg, $file, $line) {
         // Permission denied for default session, try to create a new one
