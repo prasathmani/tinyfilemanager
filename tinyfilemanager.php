@@ -2525,7 +2525,7 @@ function fm_is_exclude_items($file) {
  */
 function fm_get_translations($tr) {
     try {
-        $content = @file_get_contents('translation.json');
+        $content = @file_get_contents('https://raw.githubusercontent.com/prasathmani/tinyfilemanager/master/translation.json');
         if($content !== FALSE) {
             $lng = json_decode($content, TRUE);
             global $lang_list;
