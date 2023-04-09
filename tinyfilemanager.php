@@ -969,7 +969,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                 if ($out) {
                     $in = @fopen($tmp_name, "rb");
                     if ($in) {
-                        while ($buff = fread($in, 4096)) { fwrite($out, $buff); }
+                        stream_copy_to_stream($in, $out);
                         $response = array (
                             'status'    => 'success',
                             'info' => "file upload successful"
