@@ -971,7 +971,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                     if ($in) {
                         if (PHP_VERSION_ID < 80009) {
                             // workaround https://bugs.php.net/bug.php?id=81145
-                            while (!in_array($buff = fread($in, 4096), array("", false), true)) { fwrite($out, $buff); }
+                            while (!feof($in)) { fwrite($out, fread($in, 4096)); }
                         } else {
                             stream_copy_to_stream($in, $out);
                         }
