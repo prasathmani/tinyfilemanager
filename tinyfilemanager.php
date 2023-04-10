@@ -969,7 +969,12 @@ if (!empty($_FILES) && !FM_READONLY) {
                 if ($out) {
                     $in = @fopen($tmp_name, "rb");
                     if ($in) {
-                        stream_copy_to_stream($in, $out);
+                        if (PHP_VERSION_ID < 80009) {
+                            // workaround https://bugs.php.net/bug.php?id=81145
+                            while (!in_array($buff = fread($in, 4096), array("", false), true)) { fwrite($out, $buff); }
+                        } else {
+                            stream_copy_to_stream($in, $out);
+                        }
                         $response = array (
                             'status'    => 'success',
                             'info' => "file upload successful"
