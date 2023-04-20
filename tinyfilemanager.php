@@ -146,7 +146,7 @@ $external = array(
     'js-bootstrap' => '<script src="assets/js/bootstrap.bundle.min.js"></script>',
     'js-dropzone' => '<script src="assets/js/dropzone.min.js"></script>',
     'js-jquery' => '<script src="assets/js/jquery-3.6.1.min.js"></script>',
-    'js-jquery-datatables' => '<script src="assets/js/dataTables.min.js"></script>',
+    'js-jquery-datatables' => '<script src="assets/js/datatables.min.js"></script>',
     'js-highlightjs' => '<script src="assets/js/highlight.min.js"></script>',
 );
 
