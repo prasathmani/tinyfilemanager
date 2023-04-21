@@ -2049,6 +2049,12 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     $owner = posix_getpwuid(fileowner($path . '/' . $f));
                     $group = posix_getgrgid(filegroup($path . '/' . $f));
+                    if ($owner === false) {
+                        $owner = array('name' => '?');
+                    }
+                    if ($group === false) {
+                        $group = array('name' => '?');
+                    }
                 } else {
                     $owner = array('name' => '?');
                     $group = array('name' => '?');
@@ -2102,6 +2108,12 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     $owner = posix_getpwuid(fileowner($path . '/' . $f));
                     $group = posix_getgrgid(filegroup($path . '/' . $f));
+                    if ($owner === false) {
+                        $owner = array('name' => '?');
+                    }
+                    if ($group === false) {
+                        $group = array('name' => '?');
+                    }
                 } else {
                     $owner = array('name' => '?');
                     $group = array('name' => '?');
