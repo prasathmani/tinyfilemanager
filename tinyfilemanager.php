@@ -914,7 +914,6 @@ if (!empty($_FILES) && !FM_READONLY) {
         echo json_encode($response); exit();
     }
 
-    $override_file_name = false;
     $chunkIndex = $_POST['dzchunkindex'];
     $chunkTotal = $_POST['dztotalchunkcount'];
     $fullPathInput = fm_clean_path($_REQUEST['fullpath']);
@@ -951,11 +950,6 @@ if (!empty($_FILES) && !FM_READONLY) {
     if ( is_writable($targetPath) ) {
         $fullPath = $path . '/' . basename($fullPathInput);
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
-
-        if(file_exists ($fullPath) && !$override_file_name && !$chunks) {
-            $ext_1 = $ext ? '.'.$ext : '';
-            $fullPath = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
-        }
 
         if (!is_dir($folder)) {
             $old = umask(0);
@@ -1002,7 +996,13 @@ if (!empty($_FILES) && !FM_READONLY) {
                 }
 
                 if ($chunkIndex == $chunkTotal - 1) {
-                    rename("{$fullPath}.part", $fullPath);
+                    if (file_exists ($fullPath)) {
+                        $ext_1 = $ext ? '.'.$ext : '';
+                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
+                    } else {
+                        $fullPathTarget = $fullPath;
+                    }
+                    rename("{$fullPath}.part", $fullPathTarget);
                 }
 
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
