@@ -237,7 +237,7 @@ if (defined('FM_EMBED')) {
     restore_error_handler();
 }
 
-//Genrating CSRF Token
+//Generating CSRF Token
 if (empty($_SESSION['token'])) {
     $_SESSION['token'] = bin2hex(random_bytes(32));
 }
