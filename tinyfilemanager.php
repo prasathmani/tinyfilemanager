@@ -776,7 +776,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
                $loop_count++;
             }
             if (fm_rcopy($from, $fn_duplicate, False)) {
-                fm_set_msg(sprintf('Copyied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
+                fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
             } else {
                 fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
             }
