@@ -142,6 +142,13 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// if User has the external config file, try to use it to override the default config above [config.php]
+// sample config - https://tinyfilemanager.github.io/config-sample.txt
+$config_file = __DIR__.'/config.php';
+if (is_readable($config_file)) {
+    @include($config_file);
+}
+
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">',
@@ -157,13 +164,6 @@ $external = array(
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
 );
-
-// if User has the external config file, try to use it to override the default config above [config.php]
-// sample config - https://tinyfilemanager.github.io/config-sample.txt
-$config_file = __DIR__.'/config.php';
-if (is_readable($config_file)) {
-    @include($config_file);
-}
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 
