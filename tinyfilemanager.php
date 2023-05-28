@@ -1650,7 +1650,10 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items'])) {
+    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items']) || (
+        isset($exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]) &&
+        in_array($file, $exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]))
+    ){
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
@@ -1849,7 +1852,10 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items'])) {
+    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items']) || (
+        isset($exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]) &&
+        in_array($file, $exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]))
+    ){
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
