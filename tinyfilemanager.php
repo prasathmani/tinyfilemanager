@@ -344,7 +344,7 @@ if ($use_auth) {
                     if (!isset($otp_secrets[$_POST['fm_usr']])) {
                         $QR_onlineAPI = 0;
                         $random_Base32_InitKey = Google2FA::generate_secret_key(56);
-                        $otp_uri = urlencode("otpauth://totp/TFM:$_POST[fm_usr]@$_SERVER[SERVER_NAME]?secret=$random_Base32_InitKey&issuer=TFM&algorithm=SHA1&digits=6&period=30");
+                        $otp_uri = "otpauth://totp/TFM:$_POST[fm_usr]@$_SERVER[SERVER_NAME]?secret=$random_Base32_InitKey&issuer=TFM&algorithm=SHA1&digits=6&period=30";
                         //$qr_gen_api = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=L&data=";
                         $qr_gen_api = "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chld=L|0&chl=";
                         echo '<h1>New OTP secret generated!</h1>Add the secret below to the <code>$otp_secrets</code> array and scan the QR code to add it to your personal 2FA vault.<br><br>';
