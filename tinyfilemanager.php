@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"use_2FA":false,"theme":"light"}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -30,6 +30,10 @@ $auth_users = array(
     'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
     'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
+
+// Login 2FA / OTP secrets (login with random code to generate)
+$otp_secrets = array();
+$tfa_lib = '2fa.lib.php';
 
 // Readonly users
 // e.g. array('users', 'guest', ...)
@@ -193,6 +197,8 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 // Hide Permissions and Owner cols in file-listing
 $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 
+// Use 2FA authentication for all users
+$use_2FA = isset($cfg->data['use_2FA']) ? $cfg->data['use_2FA'] : true;
 // Theme
 $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
 
@@ -326,6 +332,58 @@ if ($use_auth) {
         sleep(1);
         if(function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
+                // Login with 2FA TOTP
+                if ($use_2FA) {
+                    if (!file_exists($tfa_lib)) {
+                        unset($_SESSION[FM_SESSION_ID]['logged']);
+                        die("<b>Fatal error:</b> Missing 2FA Authentication library: $tfa_lib");
+                    }
+                    require_once($tfa_lib);
+
+                    // Generate random OTP secret, manually add entry inside '$otp_secrets' array
+                    if (!isset($otp_secrets[$_POST['fm_usr']])) {
+                        $QR_onlineAPI = 0;
+                        $random_Base32_InitKey = Google2FA::generate_secret_key(56);
+                        $otp_uri = urlencode("otpauth://totp/TFM:$_POST[fm_usr]@$_SERVER[SERVER_NAME]?secret=$random_Base32_InitKey&issuer=TFM&algorithm=SHA1&digits=6&period=30");
+                        //$qr_gen_api = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=L&data=";
+                        $qr_gen_api = "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chld=L|0&chl=";
+                        echo '<h1>New OTP secret generated!</h1>Add the secret below to the <code>$otp_secrets</code> array and scan the QR code to add it to your personal 2FA vault.<br><br>';
+                        echo "<code>'$_POST[fm_usr]' => '$random_Base32_InitKey'</code><br><br><br>";
+                        if ($QR_onlineAPI != 0) echo '<img src="'.$qr_gen_api.urlencode($otp_uri).'" alt="QR Code" width="200px" height="200px" style="box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.4);background-color:rgba(0, 0, 0, 0.1);">';
+                        if ($QR_onlineAPI == 0) {
+                            echo '<script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js" integrity="sha256-xUHvBjJ4hahBW8qN9gceFBibSFUzbe9PNttUvehITzY=" crossorigin="anonymous"></script>';
+                            echo '<div id="qrcode" style="width:180px;padding:10px;box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.4);"></div>';
+                            echo '<script type="text/javascript">
+                                var qrcode = new QRCode(document.getElementById("qrcode"), {
+                                    text: "'.$otp_uri.'",
+                                    width: 180,
+                                    height: 180,
+                                    colorDark : "#000000",
+                                    colorLight : "#ffffff",
+                                    correctLevel : QRCode.CorrectLevel.L
+                                });
+                            </script>';
+                        }
+                        unset($_SESSION[FM_SESSION_ID]['logged']);
+                        exit;
+                    }
+
+                    // Retrieve secret for user that successfully logged in
+                    $InitalizationKey = $otp_secrets[$_POST['fm_usr']];
+
+                    // Validate OTP
+                    if (isset($_POST['otp'])) {
+                        if (!Google2FA::verify_key($InitalizationKey, $_POST['otp'])) {
+                            unset($_SESSION[FM_SESSION_ID]['logged']);
+                            fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
+                            fm_redirect(FM_SELF_URL);
+                        }
+                    } else {
+                        unset($_SESSION[FM_SESSION_ID]['logged']);
+                        fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
+                        fm_redirect(FM_SELF_URL);
+                    }
+                }
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
@@ -372,6 +430,13 @@ if ($use_auth) {
                                         <label for="fm_pwd" class="pb-2"><?php echo lng('Password'); ?></label>
                                         <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
                                     </div>
+
+                                    <?php if ($use_2FA) { ?>
+                                    <div class="mb-3">
+                                        <label for="otp" class="pb-2"><?php echo lng('2FA'); ?></label>
+                                        <input type="text" class="form-control" id="otp" name="otp" inputmode="numeric" maxlength="6" pattern="\d{6}" autocomplete="off">
+                                    </div>
+                                    <?php } ?>
 
                                     <div class="mb-3">
                                         <?php fm_show_message(); ?>
@@ -525,7 +590,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
+        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $use_2FA, $theme;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
         if (!array_key_exists($newLng, $lang_list)) {
@@ -535,6 +600,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == "true" ? true : false;
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
+        $tfa = isset($_POST['js-use-2FA']) && $_POST['js-use-2FA'] == "true" ? true : false;
         $te3 = $_POST['js-theme-3'];
 
         if ($cfg->data['lang'] != $newLng) {
@@ -556,6 +622,10 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         if ($cfg->data['hide_Cols'] != $hco) {
             $cfg->data['hide_Cols'] = $hco;
             $hide_Cols = $hco;
+        }
+        if ($cfg->data['use_2FA'] != $tfa) {
+            $cfg->data['use_2FA'] = $tfa;
+            $use_2FA = $tfa;
         }
         if ($cfg->data['theme'] != $te3) {
             $cfg->data['theme'] = $te3;
@@ -1557,6 +1627,17 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             </div>
                         </div>
                     </div>
+
+                    <?php if (file_exists($tfa_lib)) { ?>
+                    <div class="mb-3 row">
+                        <label for="js-hide-cols" class="col-sm-3 col-form-label"><?php echo lng('Use 2FA authentication') ?></label>
+                        <div class="col-sm-9">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input" type="checkbox" role="switch" id="js-use-2FA" name="js-use-2FA" value="true" <?php echo $use_2FA ? 'checked' : ''; ?> />
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
 
                     <div class="mb-3 row">
                         <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('Theme') ?></label>
