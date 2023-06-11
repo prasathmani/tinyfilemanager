@@ -197,7 +197,7 @@ $report_errors = isset($cfg->data['error_reporting']) ? $cfg->data['error_report
 // Hide Permissions and Owner cols in file-listing
 $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 
-// Use 2FA authentication for all users
+// Use 2FA Authentication for all users
 $use_2FA = isset($cfg->data['use_2FA']) ? $cfg->data['use_2FA'] : true;
 // Theme
 $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
@@ -342,27 +342,20 @@ if ($use_auth) {
 
                     // Generate random OTP secret, manually add entry inside '$otp_secrets' array
                     if (!isset($otp_secrets[$_POST['fm_usr']])) {
-                        $QR_onlineAPI = 0;
+                        $QR_onlineAPI = false;
                         $random_Base32_InitKey = Google2FA::generate_secret_key(56);
                         $otp_uri = "otpauth://totp/TFM:$_POST[fm_usr]@$_SERVER[SERVER_NAME]?secret=$random_Base32_InitKey&issuer=TFM&algorithm=SHA1&digits=6&period=30";
-                        //$qr_gen_api = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=L&data=";
-                        $qr_gen_api = "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chld=L|0&chl=";
+                        echo '<script type="text/javascript">function copyCodeToClipboard() { var range = document.createRange(); range.selectNode(document.getElementById("arrayEntry")); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); document.execCommand("copy"); }</script>';
                         echo '<h1>New OTP secret generated!</h1>Add the secret below to the <code>$otp_secrets</code> array and scan the QR code to add it to your personal 2FA vault.<br><br>';
-                        echo "<code>'$_POST[fm_usr]' => '$random_Base32_InitKey'</code><br><br><br>";
-                        if ($QR_onlineAPI != 0) echo '<img src="'.$qr_gen_api.urlencode($otp_uri).'" alt="QR Code" width="200px" height="200px" style="box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.4);background-color:rgba(0, 0, 0, 0.1);">';
-                        if ($QR_onlineAPI == 0) {
+                        echo "<code id=\"arrayEntry\" onclick=\"copyCodeToClipboard()\">'$_POST[fm_usr]' => '$random_Base32_InitKey'</code><br><br><br>";
+                        if ($QR_onlineAPI) {
+                            $qr_gen_api = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=L&data=";
+                            $qr_gen_api = "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chld=L|0&chl=";
+                            echo '<img src="'.$qr_gen_api.urlencode($otp_uri).'" alt="QR Code" width="200px" height="200px" style="box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.4);background-color:rgba(0, 0, 0, 0.1);">';
+                        } else {
                             echo '<script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js" integrity="sha256-xUHvBjJ4hahBW8qN9gceFBibSFUzbe9PNttUvehITzY=" crossorigin="anonymous"></script>';
                             echo '<div id="qrcode" style="width:180px;padding:10px;box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.4);"></div>';
-                            echo '<script type="text/javascript">
-                                var qrcode = new QRCode(document.getElementById("qrcode"), {
-                                    text: "'.$otp_uri.'",
-                                    width: 180,
-                                    height: 180,
-                                    colorDark : "#000000",
-                                    colorLight : "#ffffff",
-                                    correctLevel : QRCode.CorrectLevel.L
-                                });
-                            </script>';
+                            echo '<script type="text/javascript">var qrcode = new QRCode(document.getElementById("qrcode"), { text: "'.$otp_uri.'", width: 180, height: 180, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });</script>';
                         }
                         unset($_SESSION[FM_SESSION_ID]['logged']);
                         exit;
@@ -1630,7 +1623,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
 
                     <?php if (file_exists($tfa_lib)) { ?>
                     <div class="mb-3 row">
-                        <label for="js-hide-cols" class="col-sm-3 col-form-label"><?php echo lng('Use 2FA authentication') ?></label>
+                        <label for="js-hide-cols" class="col-sm-3 col-form-label"><?php echo lng('Use 2FA Authentication') ?></label>
                         <div class="col-sm-9">
                             <div class="form-check form-switch">
                               <input class="form-check-input" type="checkbox" role="switch" id="js-use-2FA" name="js-use-2FA" value="true" <?php echo $use_2FA ? 'checked' : ''; ?> />
