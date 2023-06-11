@@ -365,13 +365,7 @@ if ($use_auth) {
                     $InitalizationKey = $otp_secrets[$_POST['fm_usr']];
 
                     // Validate OTP
-                    if (isset($_POST['otp'])) {
-                        if (!Google2FA::verify_key($InitalizationKey, $_POST['otp'])) {
-                            unset($_SESSION[FM_SESSION_ID]['logged']);
-                            fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
-                            fm_redirect(FM_SELF_URL);
-                        }
-                    } else {
+                    if (!isset($_POST['otp']) || !Google2FA::verify_key($InitalizationKey, $_POST['otp'])) {
                         unset($_SESSION[FM_SESSION_ID]['logged']);
                         fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
                         fm_redirect(FM_SELF_URL);
