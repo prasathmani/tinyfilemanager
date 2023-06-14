@@ -954,7 +954,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $targetPath = $path . $ds;
     if ( is_writable($targetPath) ) {
-        $fullPath = $path . '/' . basename($fullPathInput);
+        $fullPath = $path . '/' . $fullPathInput;
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
         if (!is_dir($folder)) {
