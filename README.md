@@ -5,8 +5,9 @@
 [![GitHub Release](https://img.shields.io/github/release/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/releases)
 [![GitHub License](https://img.shields.io/github/license/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
 [![Paypal](https://img.shields.io/badge/Donate-Paypal-lightgrey.svg?style=flat-square)](https://www.paypal.me/prasathmani)
+![GitHub Sponsors](https://img.shields.io/github/sponsors/prasathmani)
 
-> TinyFileManager is web based file manager and it is a simple, fast and small file manager with a single file, multi-language ready web application for storing, uploading, editing and managing files and folders online via web browser. The Application runs on PHP 5.5+, It allows the creation of multiple users and each user can have its own directory and a build-in support for managing text files with cloud9 IDE and it supports syntax highlighting for over 150+ languages and over 35+ themes.
+> TinyFileManager is web based PHP file manager and it is a simple, fast and small size in single-file PHP file that can be dropped into any folder on your server, multi-language ready web application for storing, uploading, editing and managing files and folders online via web browser. The Application runs on PHP 5.5+, It allows the creation of multiple users and each user can have its own directory and a build-in support for managing text files with cloud9 IDE and it supports syntax highlighting for over 150+ languages and over 35+ themes.
 
 ## Demo
 
@@ -37,13 +38,15 @@ Default username/password: **admin/admin@123** and **user/12345**.
 
 To enable/disable authentication set `$use_auth` to true or false.
 
-:information_source: Rename the `config-sample.php` file into `config.php` to use configuration, it is an additional configuration file, Feel free to remove completely this file and configure "tinyfilemanager.php" as a single file application.
+:information_source: Add your own configuration file [config.php](https://tinyfilemanager.github.io/config-sample.txt) in the same folder to use as additional configuration file.
+
+:information_source: To work offline without CDN resources, use [offline](https://github.com/prasathmani/tinyfilemanager/tree/offline) branch
 
 ### :loudspeaker: Features
 
 - :cd: Open Source, light and extremely simple
 - :iphone: Mobile friendly view for touch devices
-- :information_source: Basic features likes Create, Delete, Modify, View, Quick Preview, Download, Copy and Move files
+- :information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files
 - :arrow_double_up: Ajax Upload, Ability to drag & drop, upload from URL, multiple files upload with file extensions filter
 - :file_folder: Ability to create folders and files
 - :gift: Ability to compress, extract files (`zip`, `tar`)
@@ -54,7 +57,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :zap: Backup files and IP blacklist and whitelist
 - :mag_right: Search - Search and filter files using `datatable js`
 - :file_folder: Exclude folders and files from listing
-- :globe_with_meridians: Multi-language(20+) support and for translations `translation.json` is file required
+- :globe_with_meridians: Multi-language(32+) support and for translations `translation.json` is file required
 - :bangbang: lots more...
 
 ## Deploy by Docker
@@ -78,8 +81,6 @@ Access `http://127.0.0.1/` and enter default username and password, then enjoy i
 DockerHub: [https://hub.docker.com/r/tinyfilemanager/tinyfilemanager](https://hub.docker.com/r/tinyfilemanager/tinyfilemanager)
 
 #### How to change config within docker
-
-**Important!!!** First, you can copy `config-sample.php` to `config.php`, and must modify this following config
 
 Origin:
 
@@ -105,10 +106,10 @@ $root_path = $_SERVER['DOCUMENT_ROOT'].'/data';
 $root_url = 'data/';
 ```
 
-Then, change another config what you want, and add a new volume `-v /absolute/path/config.php:/var/www/html/config.php` in `docker run` command, like this:
+Then, change another config what you want, and add a new volume `-v /absolute/path/index.php:/var/www/html/index.php` in `docker run` command, like this:
 
 ```shell
-$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/config.php:/var/www/html/config.php -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
+$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/index.php:/var/www/html/index.php -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
 ```
 
 #### Stop running
@@ -123,6 +124,6 @@ $ docker rm -f tinyfilemanager
 
 - Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
 - Original concept and development by github.com/alexantr/filemanager
-- CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, ekko-lightbox js, and DataTable js_
+- CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, and DataTable js_
 - To report a bug or request a feature, please file an [issue](https://github.com/prasathmani/tinyfilemanager/issues)
 - [Contributors](https://github.com/prasathmani/tinyfilemanager/wiki/Authors-and-Contributors)
