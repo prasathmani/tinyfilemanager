@@ -2556,7 +2556,9 @@
         "Select Theme": "Kies thema",
         "Select Font Size": "Kies fontgrootte",  
         "Are you sure want to rename?": "Weet u zeker dat u de naam wilt wijzigen?",  
-        "Are you sure want to": "Verder gaan met"
+        "Are you sure want to": "Verder gaan met",
+        "dark": "donker",
+        "light": "licht"
       }
     },
     {
