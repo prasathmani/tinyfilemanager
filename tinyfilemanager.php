@@ -2317,7 +2317,6 @@ fm_show_footer();
 /**
  * It prints the css/js files into html
  * @param key The key of the external file to print.
- * @return The value of the key in the  array.
  */
 function print_external($key) {
     global $external;
