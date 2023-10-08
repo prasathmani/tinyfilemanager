@@ -100,6 +100,12 @@ $favicon_path = '';
 // e.g. array('myfile.html', 'personal-folder', '*.php', ...)
 $exclude_items = array();
 
+// Users excluded from listing excluded files and folders
+// e.g. 'username' => array('myfile.html', 'personal-folder', '*.php', ...)
+$exclude_items_users = array(
+    'username' => array(),
+);
+
 // Online office Docs Viewer
 // Availabe rules are 'google', 'microsoft' or false
 // Google => View documents using Google Docs Viewer
@@ -423,6 +429,7 @@ defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items) : $exclude_items));
+defined('FM_EXCLUDE_ITEMS_USERS') || define('FM_EXCLUDE_ITEMS_USERS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items_users) : $exclude_items_users));
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
 define('FM_READONLY', $global_readonly || ($use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users)));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
@@ -1647,7 +1654,10 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items'])) {
+    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items']) || (
+        isset($exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]) &&
+        in_array($file, $exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]))
+    ){
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
@@ -1846,7 +1856,10 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items'])) {
+    if ($file == '' || !is_file($path . '/' . $file) || in_array($file, $GLOBALS['exclude_items']) || (
+        isset($exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]) &&
+        in_array($file, $exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]))
+    ){
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
@@ -2569,13 +2582,19 @@ function fm_is_exclude_items($file) {
     }
 
     $exclude_items = FM_EXCLUDE_ITEMS;
+    $exclude_items_users = FM_EXCLUDE_ITEMS_USERS;
     if (version_compare(PHP_VERSION, '7.0.0', '<')) {
         $exclude_items = unserialize($exclude_items);
+        $exclude_items_users = unserialize($exclude_items_users);
     }
-    if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
-        return true;
+    if (in_array($file, $exclude_items) || in_array("*.$ext", $exclude_items) || (
+        isset($exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]) && (
+        in_array($file, $exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']]) ||
+        in_array("*.$ext", $exclude_items_users[$_SESSION[FM_SESSION_ID]['logged']])))
+    ){
+        return false;
     }
-    return false;
+    return true;
 }
 
 /**
