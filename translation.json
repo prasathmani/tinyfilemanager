@@ -82,7 +82,9 @@
         "password_hash not supported, Upgrade PHP version": "Generare hash parolă nesuportată, actualizați versiunea de PHP",
         "Theme": "Tematică",
         "dark": "Întunecată",
-        "light": "Luminoasă"
+        "light": "Luminoasă",
+        "Remaining Space": "Spațiu rămas",
+        "Used Space": "Spațiu utilizat"
       }
     },
     {
@@ -162,7 +164,9 @@
         "Generate new password hash": "Új jelszó hash létrehozása",
         "You are logged in": "Ön sikeresen bejelentkezett",
         "Login failed. Invalid username or password": "Sikertelen bejelentkezés. Hibás felhasználói név vagy jelszó.",
-        "password_hash not supported, Upgrade PHP version": "password_hash ebben a PHP verzióban nem támogatott"
+        "password_hash not supported, Upgrade PHP version": "password_hash ebben a PHP verzióban nem támogatott",
+        "Remaining Space": "Hátralévő hely",
+        "Used Space": "Használt hely"
       }
     },
     {
@@ -242,7 +246,9 @@
         "Generate new password hash": "Generer en ny passord hash",
         "You are logged in": "Du er innlogget",
         "Login failed. Invalid username or password": "Innlogging feilet. Feil brukernavn eller passord",
-        "password_hash not supported, Upgrade PHP version": "password_hash er ikke støttet, venligst oppdater PHP versjonen"
+        "password_hash not supported, Upgrade PHP version": "password_hash er ikke støttet, venligst oppdater PHP versjonen",
+        "Remaining Space": "Gjenstående plass",
+        "Used Space": "Brukt plass"
       }
     },
     {
@@ -316,7 +322,9 @@
         "Calculate folder size": "محاسبه حجم پوشه",
         "Check Latest Version": "بررسی آخرین نسخه",
         "Generate new password hash": "ایجاد گذرواژه جدید",
-        "Hide Perms/Owner columns": "مخفی کردن ستون های دسترسی و مالک"
+        "Hide Perms/Owner columns": "مخفی کردن ستون های دسترسی و مالک",
+        "Remaining Space": "فضای باقی مانده",
+        "Used Space": "فضای استفاده شده"
       }
     },
     {
@@ -438,7 +446,9 @@
         "UploadingFiles": "Загрузка файлов",
         "Username": "Пользователь",
         "Write": "Запись",
-        "You are logged in": "Вы вошли в систему"
+        "You are logged in": "Вы вошли в систему",
+        "Remaining Space": "Осталось места",
+        "Used Space": "Использовано места"
       }
     },
     {
@@ -563,7 +573,9 @@
         "Write": "Scrivi",
         "You are logged in": "Accesso effettuato",
         "Zero byte file! Aborting download": "File con zero byte! Download annullato",
-        "Zip": "Zip"
+        "Zip": "Zip",
+        "Remaining Space": "Spazio rimanente",
+        "Used Space": "Spazio utilizzato"
       }
     },
     {
@@ -638,7 +650,9 @@
         "Username": "Utilisateur",
         "UnZip": "Décompresser",
         "UnZipToFolder": "Décompresser dans un dossier",
-        "You are logged in": "Vous êtes authentifié(e)"
+        "You are logged in": "Vous êtes authentifié(e)",
+        "Remaining Space": "Espace restant",
+        "Used Space": "Espace utilisé"
       }
     },
     {
@@ -695,7 +709,9 @@
         "Files": "Archivos",
         "Change": "Cambiar",
         "Settings": "Preferencias",
-        "Language": "Lenguaje"
+        "Language": "Lenguaje",
+        "Remaining Space": "Espacio restante",
+        "Used Space": "Espacio Usado"
       }
     },
     {
@@ -752,7 +768,9 @@
         "Files": "Arquivos",
         "Change": "Cambiar",
         "Settings": "Preferencias",
-        "Language": "Linguaxe"
+        "Language": "Linguaxe",
+        "Remaining Space": "Espazo Restante",
+        "Used Space": "Espazo Usado"
       }
     },
     {
@@ -832,7 +850,9 @@
         "Generate new password hash": "Crear una nou hash de contrasenya",
         "You are logged in": "Estàs autenticat",
         "Login failed. Invalid username or password": "Error d'inici de sessió. El nom d'usuari o contrasenya són incorrectes",
-        "password_hash not supported, Upgrade PHP version": "no és compatible password_hash. Actualitza la versió de PHP"
+        "password_hash not supported, Upgrade PHP version": "no és compatible password_hash. Actualitza la versió de PHP",
+        "Remaining Space": "Espai restant",
+        "Used Space": "Espai utilitzat"
       }
     },
     {
@@ -950,7 +970,9 @@
         "Invalid characters in file or folder name": "Unzulässige Zeichen im Datei- oder Ordnernamen",
         "Operations with archives are not available": "Archiv-Funktionen nicht verfägbar",
         "File or folder with this path already exists": "Datei oder Ordner mit diesem Pfad existiert bereits",
-        "Moved from": "Verschoben aus"
+        "Moved from": "Verschoben aus",
+        "Remaining Space": "Verfügbarer Speicherplatz",
+        "Used Space": "Belegter Speicherplatz"
       }
     },
     {
@@ -1007,7 +1029,9 @@
         "Files": "ไฟล์",
         "Change": "เปลี่ยน",
         "Settings": "การตั้งค่า",
-        "Language": "ภาษา"
+        "Language": "ภาษา",
+        "Remaining Space": "พื้นที่ว่าง",
+        "Used Space": "พื้นที่ดิสก์ที่ใช้"
       }
     },
     {
@@ -1169,7 +1193,9 @@
         "Select Mode": "选择模式",
         "Select Theme": "选择主题",
         "Select Font Size": "选择字体大小",
-        "Are you sure want to rename?": "是否确实要重命名?"
+        "Are you sure want to rename?": "是否确实要重命名?",
+        "Remaining Space": "剩余空间",
+        "Used Space": "已用空间"
       }
     },
     {
@@ -1247,7 +1273,9 @@
         "FullSize": "所有檔案容量",
         "MemoryUsed": "使用的記憶體大小",
         "PartitionSize": "剩餘可用空間",
-        "FreeOf": "硬碟容量:"
+        "FreeOf": "硬碟容量:",
+        "Remaining Space": "剩餘空間",
+        "Used Space": "已用空間"
       }
     },
     {
@@ -1330,7 +1358,9 @@
         "password_hash not supported, Upgrade PHP version": "Tidak mendukung password_hash, Perbarui versi PHP",
         "Theme": "Tema",
         "dark": "Gelap",
-        "light": "Terang"
+        "light": "Terang",
+        "Remaining Space": "Sisa ruang",
+        "Used Space": "Ruang yang digunakan"
       }
     },
     {
@@ -1389,7 +1419,9 @@
         "Settings": "Ρυθμίσεις",
         "Language": "Γλώσσα",
         "MemoryUsed": "Η μνήμη χρησιμοποιείται",
-        "PartitionSize": "Μέγεθος partition"
+        "PartitionSize": "Μέγεθος partition",
+        "Remaining Space": "Ελεύθερος χώρος",
+        "Used Space": "Χώρος που χρησιμοποιείται"
       }
     },
     {
@@ -1512,7 +1544,9 @@
         "Moved from": "Movido de",
         "Created": "Criado",
         "You are logged in": "Você está logado",
-        "Login failed. Invalid username or password": "Falha na autenticação. nome de usuário ou senha inválidos"
+        "Login failed. Invalid username or password": "Falha na autenticação. nome de usuário ou senha inválidos",
+        "Remaining Space": "Espaço restante",
+        "Used Space": "Espaço usado"
       }
     },
     {
@@ -1569,7 +1603,9 @@
         "Files": "Pliki",
         "Change": "Zmień",
         "Settings": "Ustawienia",
-        "Language": "Język"
+        "Language": "Język",
+        "Remaining Space": "Pozostała przestrzeń",
+        "Used Space": "Wykorzystana przestrzeń"
       }
     },
     {
@@ -1694,7 +1730,9 @@
         "Moved from": "Chuyển từ",
         "Created": "đã tạo",
         "Login failed. Invalid username or password": "Không tìm thấy người dùng",
-        "Theme": "Chủ đề"
+        "Theme": "Chủ đề",
+        "Remaining Space": "Không gian còn lại",
+        "Used Space": "Không gian được sử dụng"
       }
     },
     {
@@ -1753,7 +1791,9 @@
         "Settings": "הגדרות",
         "Language": "שפה",
         "MemoryUsed": "זיכרון בשימוש",
-        "PartitionSize": "גודל מחיצה"
+        "PartitionSize": "גודל מחיצה",
+        "Remaining Space": "שטח פנוי",
+        "Used Space": "שטח בשימוש"
       }
     },
     {
@@ -1823,7 +1863,9 @@
         "Report Issue": "التبليغ بمشكلة",
         "Generate new password hash": "توليد هاش لكلمة المرور",
         "Help Documents": "وثائق المساعدة",
-        "Check Latest Version": "تفقد آخر الاصدارات"
+        "Check Latest Version": "تفقد آخر الاصدارات",
+        "Remaining Space": "المساحة المتبقية",
+        "Used Space": "المساحة المستخدمة"
       }
     },
     {
@@ -1901,7 +1943,9 @@
         "Generate new password hash": "Vygenerovat nový hash hesla",
         "You are logged in": "Jste přihlášen(a)",
         "Login failed. Invalid username or password": "Chyba přihlášení: špatně zadané heslo nebo uživatelské jméno",
-        "password_hash not supported, Upgrade PHP version": "Funkce password_hash není dostupná, aktualizujte PHP na novější verzi"
+        "password_hash not supported, Upgrade PHP version": "Funkce password_hash není dostupná, aktualizujte PHP na novější verzi",
+        "Remaining Space": "Zbývající místo",
+        "Used Space": "Využité místo"
       }
     },
     {
@@ -1975,7 +2019,9 @@
         "Calculate folder size": "Klasör Boyutlarını Hesapla",
         "Check Latest Version": "Güncel Sürümü Kontrol Et",
         "Generate new password hash": "Parola için Hash Üret",
-        "Hide Perms/Owner columns": "Yetki / Sahip Sütununu Gizle"
+        "Hide Perms/Owner columns": "Yetki / Sahip Sütununu Gizle",
+        "Remaining Space": "Kalan Alan",
+        "Used Space": "Kullanılan Alan"
       }
     },
     {
@@ -2040,7 +2086,9 @@
         "Preview": "Náhľad",
         "Help": "Pomoc",
         "FullSize": "Celková veľkosť",
-        "FreeOf": "voľné z"
+        "FreeOf": "voľné z",
+        "Remaining Space": "Zostávajúci priestor",
+        "Used Space": "Využitý priestor"
       }
     },
     {
@@ -2100,7 +2148,9 @@
         "Language": "Jezik",
         "You are logged in": "Ste uspešno prijavljeni",
         "Login failed. Invalid username or password": "Prijava je spodletela. Napačno uporabniško ime ali geslo.",
-        "password_hash not supported, Upgrade PHP version": "password_hash ni podprt, nadgradite različico PHP"
+        "password_hash not supported, Upgrade PHP version": "password_hash ni podprt, nadgradite različico PHP",
+        "Remaining Space": "Preostali prostor",
+        "Used Space": "Porabljen prostor"
       }
     },
     {
@@ -2169,7 +2219,9 @@
         "CalculateFolderSize": "Laske kansion koko",
         "CheckLatestVersion": "Tarkista päivitykset",
         "Generate new password hash": "Luo uusi salasana-hash",
-        "HideColumns": "Piilota oikeudet-/omistaja-sarakkeet"
+        "HideColumns": "Piilota oikeudet-/omistaja-sarakkeet",
+        "Remaining Space": "Vapaata tilaa",
+        "Used Space": "Käytetty tila"
       }
     },
     {
@@ -2243,7 +2295,9 @@
         "Calculate folder size": "폴더 용량 표시",
         "Check Latest Version": "최신 버전 체크",
         "Generate new password hash": "새 비밀번호 해시 생성",
-        "Hide Perms/Owner columns": "권한/소유자 숨기기"
+        "Hide Perms/Owner columns": "권한/소유자 숨기기",
+        "Remaining Space": "남은 공간",
+        "Used Space": "사용된 공간"
       }
     },
     {
@@ -2328,7 +2382,9 @@
         "Other": "その他",
         "Read": "読み込み",
         "Write": "書き込み",
-        "Execute": "実行"
+        "Execute": "実行",
+        "Remaining Space": "残りのスペース",
+        "Used Space": "使用済みスペース"
       }
     },
     {
@@ -2413,7 +2469,9 @@
         "Other": "Бусад",
         "Read": "Унших",
         "Write": "Бичих",
-        "Execute": "Ажиллуулах"
+        "Execute": "Ажиллуулах",
+        "Remaining Space": "Үлдсэн зай",
+        "Used Space": "Ашигласан зай"
       }
     },
     {
@@ -2558,7 +2616,9 @@
         "Are you sure want to rename?": "Weet u zeker dat u de naam wilt wijzigen?",  
         "Are you sure want to": "Verder gaan met",
         "dark": "donker",
-        "light": "licht"
+        "light": "licht",
+        "Remaining Space": "Resterende ruimte",
+        "Used Space": "Gebruikte ruimte"
       }
     },
     {
@@ -2682,7 +2742,9 @@
         "not deleted": "ikke slettet",
         "not found!": "ikke fundet!",
         "password_hash not supported, Upgrade PHP version": "password_hash er ikke understøttet, opgrader PHP-versionen",
-        "to": "til"
+        "to": "til",
+        "Remaining Space": "Resterende plads",
+        "Used Space": "Brugt plads"
       }
     },
     {
@@ -2806,7 +2868,9 @@
         "not deleted": "মুছে ফেলা হয়নি",
         "not found!": "পাওয়া যায় নি!",
         "password_hash not supported, Upgrade PHP version": "পাসওয়ার্ড_হ্যাশ সমর্থিত নয়, পিএইচপি ভার্সন আপগ্রেড করুন",
-        "to": "to"
+        "to": "to",
+        "Remaining Space": "অবশিষ্ট স্থান",
+        "Used Space": "ব্যবহৃত স্থান"
       }
     }
   ]
