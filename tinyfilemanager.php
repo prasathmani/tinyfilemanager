@@ -2202,10 +2202,25 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 </tfoot>
                 <?php
             } else { ?>
+            <?php 
+            // Get total and free space
+            $total = disk_total_space(FM_ROOT_PATH.'/'.FM_PATH);
+            $free = disk_free_space(FM_ROOT_PATH.'/'.FM_PATH);
+
+            // Format sizes
+            $total_size = fm_get_filesize($total);
+            $free_size = fm_get_filesize($free);
+            $total_used_size = fm_get_filesize($total - $free);
+            ?>
+
+
+
                 <tfoot>
                     <tr>
                         <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' :'7') : (FM_READONLY ? '4' : '5') ?>">
                             <?php echo lng('FullSize').': <span class="badge text-bg-light border-radius-0">'.fm_get_filesize($all_files_size).'</span>' ?>
+                            <?php echo lng('UsedSpace').': <span class="badge text-bg-light border-radius-0">' .$total_used_size.'</span>'; ?>
+                            <?php echo lng('RemainingSpace').': <span class="badge text-bg-light border-radius-0">' .$free_size.'</span>'; ?>
                             <?php echo lng('File').': <span class="badge text-bg-light border-radius-0">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge text-bg-light border-radius-0">'.$num_folders.'</span>' ?>
                         </td>
@@ -4287,6 +4302,8 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
+    $tr['en']['RemainingSpace']                                 = 'Remaining Space';
+    $tr['en']['UsedSpace']                                      = 'Used Space';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
