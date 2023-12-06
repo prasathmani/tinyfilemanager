@@ -10,4 +10,8 @@ services:
             - ADMIN_USER=admin
             - ADMIN_PASS=pass
             - ROOT_FS=/opt
-        image: jpralvesatdocker/tinyfilemanager:2.4.4-root
+            - SYSLOG_SERVER=192.168.1.131
+            - SYSLOG_PORT=11514
+            - SYSLOG_PROTO=udp
+            - SYSLOG_JSON=1
+        image: jpralvesatdocker/tinyfilemanager:2.5.2.1

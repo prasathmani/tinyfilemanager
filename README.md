@@ -27,6 +27,8 @@ I give credit to the original author but added the following enhancements:
 
 Setup of features (LDAP, syslog) is explained in the config.php file or the [Docker README](README-docker.md).
 
+The latest release was updated with the features of 2.5.2 version
+
 Remainder of original document:
 
 [![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.github.io/demo/)

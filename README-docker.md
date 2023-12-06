@@ -7,6 +7,8 @@ There are two versions of the images:
 - tinyfilemanager:VERSION - With the chown capability (php is run with root)
 - tinyfilemanager:VERSION-user - php is run under a non-privileged user
 
+There are two additional images, not published, tinyfilemanager:debug and tinyfilemanager:debug-user for debugging purposes.
+
 ## Options
 - ADMIN_USER - (optional) The username of the admin user
 - ADMIN_PASS - (optional) The password (This can be in clear-text or in the encrypted format)
@@ -43,7 +45,8 @@ If LDAP_USER_GROUPS is defined all authenticated users must belong to one of the
 
 With docker:
 ```
-docker run -it -p 8111:8080 -v /opt:/opt -e ADMIN_USER=admin -e ADMIN_PASS=password -e ROOT_FS=/opt/ jpralvesatdocker/tinyfilemanager:2.4.6.1
+docker run -it -p 8111:8080 -v /opt:/opt -e ADMIN_USER=admin -e ADMIN_PASS=password -e ROOT_FS=/opt/ \
+               -e SYSLOG_SERVER=192.168.1.131 -e SYSLOG_PORT=1514 -e SYSLOG_PROTO=udp -e SYSLOG_JSON=1 jpralvesatdocker/tinyfilemanager:2.5.2.1
 ```
 
 With docker-compose:
@@ -60,7 +63,11 @@ services:
             - ADMIN_USER=admin
             - ADMIN_PASS=pass
             - ROOT_FS=/opt
-        image: jpralvesatdocker/tinyfilemanager:2.4.6.1
+            - SYSLOG_SERVER=192.168.1.131
+            - SYSLOG_PORT=1514
+            - SYSLOG_PROTO=udp
+            - SYSLOG_JSON=1
+        image: jpralvesatdocker/tinyfilemanager:2.5.2.1
 ```
 
 ## Building images
@@ -71,3 +78,24 @@ docker build . -t jpralvesatdocker/tinyfilemanager:latest
 docker build --build-arg RUNUSER=tinyuser . -t jpralvesatdocker/tinyfilemanager:latest-user
 ```
 
+## Adding custom CA certificate to image
+
+The trusted CA file is the one provided by alpine distro and it is located in `/etc/ssl/certs/ca-certificates.crt`.
+Replacing this file with a copy of it with the self-signed certificate of the custom CA appended at the end works.
+
+```
+version: '3.3'
+
+services:
+    tinyfilemanager:
+        ports:
+            - '8111:8080'
+        volumes:
+            - '/opt:/opt'
+            - './new-ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
+        environment:
+            - ADMIN_USER=admin
+            - ADMIN_PASS=pass
+            - ROOT_FS=/opt
+        image: jpralvesatdocker/tinyfilemanager:2.5.2.1
+```

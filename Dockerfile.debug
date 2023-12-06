@@ -1,0 +1,34 @@
+FROM php:8.2.2-zts-alpine3.17
+
+STOPSIGNAL SIGINT
+
+WORKDIR /var/www/html
+
+RUN apk add --no-cache zip libzip openssl bzip2 \
+&&  apk add --no-cache --virtual .build-deps libzip-dev openssl-dev bzip2-dev oniguruma-dev openldap-dev build-base autoconf linux-headers \
+&&  pecl install xattr-1.4.0 xdebug-3.2.0 \
+&&      docker-php-ext-enable xattr \
+&&      docker-php-ext-enable xdebug \
+&&  rm -rf /tmp/pear \
+&&  docker-php-ext-install zip bz2 ldap sockets \
+&&  runDeps="$( \
+    scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
+      | tr ',' '\n' \
+      | sort -u \
+      | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
+  )" \
+&&  apk add --virtual .phpexts-rundeps $runDeps \
+&&  apk del .build-deps \
+&&  rm -rf /var/cache/apk/*
+
+COPY *.php /var/www/html/
+COPY *.json /var/www/html/
+COPY *.ini /usr/local/etc/php/conf.d/
+COPY debug/*.ini /usr/local/etc/php/conf.d/
+COPY debug-files/* /var/www/html/
+
+RUN ln -sf tinyfilemanager.php index.php
+
+CMD [ "php", "-S", "[::]:8080", "-t", "/var/www/html" ]
+
+EXPOSE 8080

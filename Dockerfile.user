@@ -1,0 +1,10 @@
+ARG IMG_BASE=jpralvesatdocker/tinyfilemanager:latest
+FROM ${IMG_BASE}
+
+ARG RUNUSER=tinyfilemanager
+
+RUN addgroup -S $RUNUSER \
+&& adduser -S -G $RUNUSER -H -h /var/www/html $RUNUSER \
+&& chown -R $RUNUSER:$RUNUSER /var/www/html
+
+USER $RUNUSER
