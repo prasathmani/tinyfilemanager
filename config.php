@@ -39,6 +39,19 @@ function encode_password_if_not_encoded($password) {
   }
 }
 
+function getenv_file($envvar) {
+  $envfile = getenv($envvar . '_FILENAME');
+  if ($envfile !== false && file_exists($envfile)) {
+    $file = fopen($envfile, "r");
+    $readed = fread($file, filesize($envfile));
+    fclose($file);
+    return $readed;
+  } elseif (getenv($envvar) !== false) {
+    return getenv($envvar);
+  } else {
+    return false;
+  }
+}
 
 $use_ldap = false;
 
@@ -55,33 +68,33 @@ $ldap_audit_field = 'samaccountname';
 */
 
 // LDAP With envrionment variables:
-if (getenv('LDAP_URL') !== false) {
+if (getenv_file('LDAP_URL') !== false) {
   if (!function_exists("ldap_connect")) {
          die ("get_ldap_auth(): php-ldap is not installed. Search aborted.");
   }
   $use_ldap = true;
-  $ldap_server = getenv('LDAP_URL');
-  $ldap_searchfilter = getenv('LDAP_BASE_SEARCH');
-  $ldap_domain = (getenv('LDAP_DOMAIN') !== false) ? getenv('LDAP_DOMAIN') : '';
-  $ldap_filter = (getenv('LDAP_FILTER') !== false) ? getenv('LDAP_FILTER') : '(|(sAMAccountName=%s)(UserPrincipalName=%s))';
-  if (getenv('LDAP_ADMIN_GROUPS') !== false) {
-    $ldap_admin_groups = explode(';', getenv('LDAP_ADMIN_GROUPS'));
+  $ldap_server = getenv_file('LDAP_URL');
+  $ldap_searchfilter = getenv_file('LDAP_BASE_SEARCH');
+  $ldap_domain = (getenv_file('LDAP_DOMAIN') !== false) ? getenv_file('LDAP_DOMAIN') : '';
+  $ldap_filter = (getenv_file('LDAP_FILTER') !== false) ? getenv_file('LDAP_FILTER') : '(|(sAMAccountName=%s)(UserPrincipalName=%s))';
+  if (getenv_file('LDAP_ADMIN_GROUPS') !== false) {
+    $ldap_admin_groups = explode(';', getenv_file('LDAP_ADMIN_GROUPS'));
   }
-  if (getenv('LDAP_USER_GROUPS') !== false) {
-    $ldap_user_groups = explode(';', getenv('LDAP_USER_GROUPS'));
+  if (getenv_file('LDAP_USER_GROUPS') !== false) {
+    $ldap_user_groups = explode(';', getenv_file('LDAP_USER_GROUPS'));
   }
   $ldap_audit_field = 'samaccountname';
 }
 
 // Local Users/Admins:
 
-if ( getenv('ADMIN_USER') !== false && getenv('ADMIN_PASS') !== false)  {
-    $auth_users[getenv('ADMIN_USER')] = encode_password_if_not_encoded(getenv('ADMIN_PASS'));
+if ( getenv_file('ADMIN_USER') !== false && getenv_file('ADMIN_PASS') !== false)  {
+    $auth_users[getenv_file('ADMIN_USER')] = encode_password_if_not_encoded(getenv_file('ADMIN_PASS'));
 }
 
-if ( getenv('RO_USER') !== false && getenv('RO_PASS') !== false)  {
-    $auth_users[getenv('RO_USER')] = encode_password_if_not_encoded(getenv('RO_PASS'));
-    array_push($readonly_users, getenv('RO_USER'));
+if ( getenv_file('RO_USER') !== false && getenv_file('RO_PASS') !== false)  {
+    $auth_users[getenv_file('RO_USER')] = encode_password_if_not_encoded(getenv_file('RO_PASS'));
+    array_push($readonly_users, getenv_file('RO_USER'));
 }
 
 // Set to false to disable auditing:
@@ -99,13 +112,13 @@ $syslog_facility = 13;
 $syslog_hostname = gethostname();
 */
 
-if (getenv('SYSLOG_SERVER') !== false) {
+if (getenv_file('SYSLOG_SERVER') !== false) {
   $use_syslog = true;
-  $syslog_server = getenv('SYSLOG_SERVER');
-  $syslog_port = (getenv('SYSLOG_PORT') !== false) ? intval(getenv('SYSLOG_PORT')) : 514;
-  $syslog_proto = (getenv('SYSLOG_PROTO') !== false) ? strtolower(getenv('SYSLOG_PROTO')) : 'udp';
-  $syslog_json = (getenv('SYSLOG_JSON') !== false) ? true : false;
-  $syslog_facility = (getenv('SYSLOG_FACILITY') !== false) ? intval(getenv('SYSLOG_FACILITY')) : 13; // LogAudit
+  $syslog_server = getenv_file('SYSLOG_SERVER');
+  $syslog_port = (getenv_file('SYSLOG_PORT') !== false) ? intval(getenv_file('SYSLOG_PORT')) : 514;
+  $syslog_proto = (getenv_file('SYSLOG_PROTO') !== false) ? strtolower(getenv_file('SYSLOG_PROTO')) : 'udp';
+  $syslog_json = (getenv_file('SYSLOG_JSON') !== false) ? true : false;
+  $syslog_facility = (getenv_file('SYSLOG_FACILITY') !== false) ? intval(getenv_file('SYSLOG_FACILITY')) : 13; // LogAudit
   if ($syslog_facility < 0 || $syslog_facility > 23 ) { // Value must be between 0 and 23
     $syslog_facility = 13;
   }
@@ -115,8 +128,8 @@ if (getenv('SYSLOG_SERVER') !== false) {
 //set application theme
 $theme = 'light';
 //options - 'light' and 'dark'
-if ( getenv('THEME') !== false) {
-  $theme = getenv('THEME');
+if ( getenv_file('THEME') !== false) {
+  $theme = getenv_file('THEME');
 }
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
@@ -139,7 +152,7 @@ $default_timezone = 'Etc/UTC'; // UTC
 
 // Root path for file manager
 // use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
-$root_path = getenv('ROOT_FS') !== false ? getenv('ROOT_FS') : $_SERVER['DOCUMENT_ROOT'];
+$root_path = getenv_file('ROOT_FS') !== false ? getenv_file('ROOT_FS') : $_SERVER['DOCUMENT_ROOT'];
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
 // Will not working if $root_path will be outside of server document root

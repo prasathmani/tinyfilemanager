@@ -41,6 +41,15 @@ If you want to have admin users please define group or groups to match separated
 If LDAP_ADMIN_GROUPS or LDAP_USER_GROUPS are not defined all authenticated users will be accepted as users.
 If LDAP_USER_GROUPS is defined all authenticated users must belong to one of the groups in this list.
 
+## Secrets/File support
+
+Additionally the values used can be read from files appending _FILENAME to the environment variable.
+Example:
+```
+ADMIN_PASS_FILENAME=/run/secrets/tinyfilemanager.admin_pass
+```
+Then the secret will be read from `filemanager.admin_pass` secret.
+
 ## Sample execution
 
 With docker:

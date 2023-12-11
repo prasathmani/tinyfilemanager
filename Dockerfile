@@ -1,4 +1,4 @@
-FROM php:8.2.2-zts-alpine3.17
+FROM php:8.2.13-zts-alpine3.18
 
 STOPSIGNAL SIGINT
 
