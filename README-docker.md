@@ -55,7 +55,7 @@ Then the secret will be read from `filemanager.admin_pass` secret.
 With docker:
 ```
 docker run -it -p 8111:8080 -v /opt:/opt -e ADMIN_USER=admin -e ADMIN_PASS=password -e ROOT_FS=/opt/ \
-               -e SYSLOG_SERVER=192.168.1.131 -e SYSLOG_PORT=1514 -e SYSLOG_PROTO=udp -e SYSLOG_JSON=1 jpralvesatdocker/tinyfilemanager:2.5.2.1
+               -e SYSLOG_SERVER=192.168.1.131 -e SYSLOG_PORT=1514 -e SYSLOG_PROTO=udp -e SYSLOG_JSON=1 jpralvesatdocker/tinyfilemanager:2.5.2.3
 ```
 
 With docker-compose:
@@ -76,7 +76,7 @@ services:
             - SYSLOG_PORT=1514
             - SYSLOG_PROTO=udp
             - SYSLOG_JSON=1
-        image: jpralvesatdocker/tinyfilemanager:2.5.2.1
+        image: jpralvesatdocker/tinyfilemanager:2.5.2.3
 ```
 
 ## Building images
@@ -87,7 +87,7 @@ docker build . -t jpralvesatdocker/tinyfilemanager:latest
 docker build --build-arg RUNUSER=tinyuser . -t jpralvesatdocker/tinyfilemanager:latest-user
 ```
 
-## Adding custom CA certificate to image
+## Adding custom CA certificate to image (Option 1)
 
 The trusted CA file is the one provided by alpine distro and it is located in `/etc/ssl/certs/ca-certificates.crt`.
 Replacing this file with a copy of it with the self-signed certificate of the custom CA appended at the end works.
@@ -106,5 +106,27 @@ services:
             - ADMIN_USER=admin
             - ADMIN_PASS=pass
             - ROOT_FS=/opt
-        image: jpralvesatdocker/tinyfilemanager:2.5.2.1
+        image: jpralvesatdocker/tinyfilemanager:2.5.2.3
+```
+
+## Importing custom CA certs (Option 2)
+
+With the base image (running with root) it is possible to import custom CAs to the trusted store.
+The files with extension .pem or .crt are imported when container starts.
+
+```
+version: '3.3'
+
+services:
+    tinyfilemanager:
+        ports:
+            - '8111:8080'
+        volumes:
+            - '/opt:/opt'
+            - './certs/my-custom-cert.crt:/certs/my-custom-cert.crt'
+        environment:
+            - ADMIN_USER=admin
+            - ADMIN_PASS=pass
+            - ROOT_FS=/opt
+        image: jpralvesatdocker/tinyfilemanager:2.5.2.3
 ```

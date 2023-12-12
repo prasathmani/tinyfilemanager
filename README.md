@@ -5,7 +5,7 @@ I give credit to the original author but added the following enhancements:
 
 - Docker images ready to be used. More instructions on this [document](README-docker.md).
 - Ability to change owner of files and folders (Root run image)
-- Added dynamic user variables to be used in docker images
+- Added dynamic user variables to be used in docker images (with file contents)
 - Updated external JS/CSS libraries to latest versions
 - Show binary files in HEX dump format
 - Support for webp images

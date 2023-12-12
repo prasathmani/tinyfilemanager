@@ -25,7 +25,10 @@ COPY *.ini /usr/local/etc/php/conf.d/
 
 RUN ln -sf tinyfilemanager.php index.php
 
-CMD [ "php", "-S", "[::]:8080", "-t", "/var/www/html" ]
+RUN mkdir /certs
+COPY startup.sh /
+
+CMD [ "sh", "/startup.sh" ]
 
 EXPOSE 8080
 

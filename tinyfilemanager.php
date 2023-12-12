@@ -16,7 +16,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.5.2.2');
+define('VERSION', '2.5.2.3');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
