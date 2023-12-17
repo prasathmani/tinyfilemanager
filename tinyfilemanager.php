@@ -2205,10 +2205,10 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <tfoot>
                     <tr>
                         <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' :'7') : (FM_READONLY ? '4' : '5') ?>">
-                            <?php echo lng('FullSize').': <span class="badge text-bg-light border-radius-0">'.fm_get_filesize($all_files_size).'</span>' ?>
-                            <?php echo lng('File').': <span class="badge text-bg-light border-radius-0">'.$num_files.'</span>' ?>
-                            <?php echo lng('Folder').': <span class="badge text-bg-light border-radius-0">'.$num_folders.'</span>' ?>
-                        </td>
+                            <?php echo lng('FullSize').((FM_THEME == "dark") ? ': <span class="badge text-bg-dark border-radius-0">':': <span class="badge text-bg-light border-radius-0">').fm_get_filesize($all_files_size).'</span>' ?>
+                            <?php echo lng('File').((FM_THEME == "dark") ? ': <span class="badge text-bg-dark border-radius-0">':': <span class="badge text-bg-light border-radius-0">').$num_files.'</span>' ?>
+                            <?php echo lng('Folder').((FM_THEME == "dark") ? ': <span class="badge text-bg-dark border-radius-0">':': <span class="badge text-bg-light border-radius-0">').$num_folders.'</span>' ?>
+                        </td> 
                     </tr>
                 </tfoot>
                 <?php } ?>
@@ -3481,7 +3481,8 @@ class FM_Zipper_Tar
         $this->data = array(
             'lang' => 'en',
             'error_reporting' => true,
-            'show_hidden' => true
+            'show_hidden' => true,
+            'theme' => "dark"
         );
         $data = false;
         if (strlen($CONFIG)) {
