@@ -927,6 +927,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $chunkIndex = $_POST['dzchunkindex'];
     $chunkTotal = $_POST['dztotalchunkcount'];
     $fullPathInput = fm_clean_path($_REQUEST['fullpath']);
+	$overwrite_files = ($_REQUEST['overwrite_files'] ?? 'N');
 
     $f = $_FILES;
     $path = FM_ROOT_PATH;
@@ -1016,7 +1017,12 @@ if (!empty($_FILES) && !FM_READONLY) {
                 if ($chunkIndex == $chunkTotal - 1) {
                     if (file_exists ($fullPath)) {
                         $ext_1 = $ext ? '.'.$ext : '';
-                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
+
+                        if ($overwrite_files == 'Y') {
+                            $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . $ext_1;
+                        } else {
+                            $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
+                        }
                     } else {
                         $fullPathTarget = $fullPath;
                     }
@@ -1354,11 +1360,13 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back')?></a>
                     <strong><?php echo lng('DestinationFolder') ?></strong>: <?php echo fm_enc(fm_convert_win(FM_PATH)) ?>
                 </p>
+                <p><label><input type="checkbox" name="overwrite_files" value="Y" onChange="document.getElementById('fileUploader').overwrite_files.value = (this.checked) ? this.value : '';">&nbsp;Overwrite existing files?</label></p>
 
                 <form action="<?php echo htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
                     <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
                     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+                    <input type="hidden" name="overwrite_files" value="">
                     <div class="fallback">
                         <input name="file" type="file" multiple/>
                     </div>
