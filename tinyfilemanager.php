@@ -1018,13 +1018,10 @@ if (!empty($_FILES) && !FM_READONLY) {
                     if (file_exists ($fullPath)) {
                         $ext_1 = $ext ? '.'.$ext : '';
 
-                        if($overwrite_files == 'Y')
-                        {
-                          $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . $ext_1;
-                        }
-                        else
-                        {
-                          $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
+                        if ($overwrite_files == 'Y') {
+                            $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . $ext_1;
+                        } else {
+                            $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) .'_'. date('ymdHis'). $ext_1;
                         }
                     } else {
                         $fullPathTarget = $fullPath;
