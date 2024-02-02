@@ -1703,7 +1703,7 @@ if (isset($_GET['view'])) {
             <p class="break-word"><b><?php echo lng($view_title) ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
             <p class="break-word">
                 <?php $display_path = fm_get_display_path($file_path); ?>
-                <strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?><br>
+                <strong><?php echo $display_path['label']; ?>:</strong> <span onclick="if(window.getSelection) { var selection = window.getSelection(); var range = document.createRange(); range.selectNodeContents(this); selection.removeAllRanges(); selection.addRange(range); }"><?php echo $display_path['path']; ?></span><br>
                 <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
                 <strong>MIME-type:</strong> <?php echo $mime_type ?><br>
                 <?php
