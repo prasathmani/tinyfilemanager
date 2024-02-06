@@ -3502,7 +3502,8 @@ class FM_Zipper_Tar
 
     function save()
     {
-        $fm_file = __FILE__;
+        global $config_file;
+        $fm_file = is_readable($config_file) ? $config_file : __FILE__;
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
         $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration".chr(13) . chr(10)."$var_name = $var_value;" . chr(13) . chr(10);
