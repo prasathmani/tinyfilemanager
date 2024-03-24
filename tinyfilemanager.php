@@ -3,7 +3,7 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.5.3
+ * H3K — Tiny File Manager V2.5.4-Unofficial
  * @author CCP Programmers
  * @email ccpprogrammers@gmail.com
  * @github https://github.com/prasathmani/tinyfilemanager
@@ -11,7 +11,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.5.3');
+define('VERSION', '2.5.4-Unofficial');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -20,10 +20,10 @@ define('APP_TITLE', 'Tiny File Manager');
 
 // Auth with login/password
 // set true/false to enable/disable it
-// Is independent from IP white- and blacklisting
+// Is independent of IP white- and blacklisting
 $use_auth = true;
 
-// Login user name and password
+// Login username and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
@@ -101,7 +101,7 @@ $favicon_path = '';
 $exclude_items = array();
 
 // Online office Docs Viewer
-// Availabe rules are 'google', 'microsoft' or false
+// Available rules are 'google', 'microsoft' or false
 // Google => View documents using Google Docs Viewer
 // Microsoft => View documents using Microsoft Web Apps Viewer
 // false => disable online doc viewer
