@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
+$CONFIG = '{"lang":"fr","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -27,14 +27,13 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'HubFonctionnement' => '$2y$10$cmuylHc.mH7.ycVxC1SrjOAu/FCTZZGHA.JTgMFr50Z95pE8PbGiG'
 );
 
 // Readonly users
 // e.g. array('users', 'guest', ...)
 $readonly_users = array(
-    'user'
+    // 'user'
 );
 
 // Global readonly, including when auth is not being used
@@ -1703,9 +1702,9 @@ if (isset($_GET['view'])) {
             <p class="break-word"><b><?php echo lng($view_title) ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
             <p class="break-word">
                 <?php $display_path = fm_get_display_path($file_path); ?>
-                <strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?><br>
-                <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
-                <strong>MIME-type:</strong> <?php echo $mime_type ?><br>
+                <strong><?php echo lng($display_path['label']); ?>:</strong> <?php echo $display_path['path']; ?><br>
+                <strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
+                <strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?><br>
                 <?php
                 // ZIP info
                 if (($is_zip || $is_gzip) && $filenames !== false) {
@@ -1963,7 +1962,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
             <div class="card-body">
                 <p class="card-text">
                     <?php $display_path = fm_get_display_path($file_path); ?>
-                    <?php echo $display_path['label']; ?>: <?php echo $display_path['path']; ?><br>
+                    <?php echo lng($display_path['label']); ?>: <?php echo $display_path['path']; ?><br>
                 </p>
                 <form action="" method="post">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
