@@ -66,7 +66,10 @@ Make sure you have **already installed docker**, [Install reference](https://doc
 
 > **Notice:** Your need an absolute path, and it will be served by tinyfilemanager.
 > 
-> If you want to serve this project at **raspberry pi or another special platform**, you can download project and **build image by yourself**.
+> If you want to run this image on any other architecture than one of the following, you can clone this repository and build the image yourself:
+* `linux/amd64`
+* `linux/arm64`
+* `linux/arm/v7`
 
 You can execute this following commands:
 
