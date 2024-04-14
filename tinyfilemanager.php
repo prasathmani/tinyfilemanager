@@ -4029,8 +4029,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     url: window.location,
                     data: JSON.stringify(data),
                     contentType: "application/json; charset=utf-8",
-                    success: function(mes){toast("Saved Successfully"); window.onbeforeunload = function() {return}},
-                    failure: function(mes) {toast("Error: try again");},
+                    success: function(mes){toast("<?php echo lng("Saved Successfully"); ?>"); window.onbeforeunload = function() {return}},
+                    failure: function(mes) {toast("<?php echo lng("Error: try again"); ?>");},
                     error: function(mes) {toast(`<p style="background-color:red">${mes.responseText}</p>`);}
                 });
             } else {
