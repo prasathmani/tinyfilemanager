@@ -3170,15 +3170,14 @@ function fm_get_file_mimes($extension)
 * instead of download prompt
 * https://stackoverflow.com/a/13821992/1164642
 */
-function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
+function fm_download_file($fileLocation, $fileName, $chunkSize = 1024)
 {
     if (connection_status() != 0)
-        return (false);
+        return false;
+
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
-
     $contentType = fm_get_file_mimes($extension);
-
-    if(is_array($contentType)) {
+    if (is_array($contentType)) {
         $contentType = implode(' ', $contentType);
     }
 
@@ -3186,18 +3185,17 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     if ($size == 0) {
         fm_set_msg(lng('Zero byte file! Aborting download'), 'error');
-        $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-
-        return (false);
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        return false;
     }
 
-    @ini_set('magic_quotes_runtime', 0);
-    $fp = fopen("$fileLocation", "rb");
-
+    $fp = fopen($fileLocation, "rb");
     if ($fp === false) {
         fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
-        $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-        return (false);
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        return false;
     }
 
     // headers
@@ -3207,9 +3205,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
     header('Pragma: public');
     header("Content-Transfer-Encoding: binary");
     header("Content-Type: $contentType");
-
     $contentDisposition = 'attachment';
-
     if (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
         $fileName = preg_replace('/\./', '%2e', $fileName, substr_count($fileName, '.') - 1);
         header("Content-Disposition: $contentDisposition;filename=\"$fileName\"");
@@ -3219,7 +3215,6 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     header("Accept-Ranges: bytes");
     $range = 0;
-
     if (isset($_SERVER['HTTP_RANGE'])) {
         list($a, $range) = explode("=", $_SERVER['HTTP_RANGE']);
         str_replace($range, "-", $range);
@@ -3233,14 +3228,18 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         header("Content-Range: bytes 0-$size2/$size");
         header("Content-Length: " . $size);
     }
-    $fileLocation = realpath($fileLocation);
-    while (ob_get_level()) ob_end_clean();
-    readfile($fileLocation);
+
+    while (!feof($fp) && !connection_aborted() && ($chunk = fread($fp, $chunkSize)) !== false) {
+        echo $chunk;
+        ob_flush();
+        flush();
+    }
 
     fclose($fp);
 
-    return ((connection_status() == 0) and !connection_aborted());
+    return (connection_status() == 0 && !connection_aborted());
 }
+
 
 /**
  * If the theme is dark, return the text-white and bg-dark classes.
