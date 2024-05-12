@@ -3186,18 +3186,17 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     if ($size == 0) {
         fm_set_msg(lng('Zero byte file! Aborting download'), 'error');
-        $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-
-        return (false);
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        return false;
     }
 
-    @ini_set('magic_quotes_runtime', 0);
-    $fp = fopen("$fileLocation", "rb");
-
+    $fp = fopen($fileLocation, "rb");
     if ($fp === false) {
         fm_set_msg(lng('Cannot open file! Aborting download'), 'error');
-        $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-        return (false);
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        return false;
     }
 
     // headers
@@ -3233,13 +3232,16 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         header("Content-Range: bytes 0-$size2/$size");
         header("Content-Length: " . $size);
     }
-    $fileLocation = realpath($fileLocation);
-    while (ob_get_level()) ob_end_clean();
-    readfile($fileLocation);
+
+    while (!feof($fp) && !connection_aborted() && ($chunk = fread($fp, $chunkSize)) !== false) {
+        echo $chunk;
+        ob_flush();
+        flush();
+    }
 
     fclose($fp);
 
-    return ((connection_status() == 0) and !connection_aborted());
+    return (connection_status() == 0 && !connection_aborted());
 }
 
 /**
