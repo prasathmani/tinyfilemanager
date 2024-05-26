@@ -2877,12 +2877,18 @@ function fm_get_file_icon_class($path)
             $img = 'fa fa-css3';
             break;
         case 'bz2':
+        case 'tbz2';
+        case 'tbz';
         case 'zip':
         case 'rar':
         case 'gz':
+        case 'tgz';
         case 'tar':
         case '7z':
         case 'xz':
+        case 'txz';
+        case 'zst';
+        case 'tzst';
             $img = 'fa fa-file-archive-o';
             break;
         case 'php':
