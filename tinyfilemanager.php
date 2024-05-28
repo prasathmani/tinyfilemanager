@@ -3766,6 +3766,16 @@ global $lang, $root_url, $favicon_path;
 </div>
 <?php print_external('js-jquery'); ?>
 <?php print_external('js-bootstrap'); ?>
+<script>
+// Auto-submit 2FA when typed length is >= 6
+if ($("#otp").length) {
+    $("#otp").keyup(function() {
+        if($("#otp").val().length >= 6) {
+            $(".form-signin").submit();
+        }
+    });
+}
+</script>
 </body>
 </html>
 <?php
