@@ -2878,7 +2878,7 @@ function fm_get_file_icon_class($path)
             break;
         case 'bz2':
         case 'tbz2':
-        case 'tbz';
+        case 'tbz':
         case 'zip':
         case 'rar':
         case 'gz':
