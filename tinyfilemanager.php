@@ -1398,11 +1398,11 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                         toast('Error: Server Timeout');
                     });
                 }).on("success", function (res) {
-					try {
-						let _response = JSON.parse(res.xhr.response);
-					} catch (e) {
-						toast("Error: Invalid JSON response");
-					}
+                    try {
+                        let _response = JSON.parse(res.xhr.response);
+                    } catch (e) {
+                        toast("Error: Invalid JSON response");
+                    }
 
                     if(_response.status == "error") {
                         toast(_response.info);
