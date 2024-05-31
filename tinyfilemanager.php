@@ -1400,12 +1400,12 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                 }).on("success", function (res) {
                     try {
                         let _response = JSON.parse(res.xhr.response);
+
+                        if(_response.status == "error") {
+                            toast(_response.info);
+                        }
                     } catch (e) {
                         toast("Error: Invalid JSON response");
-                    }
-
-                    if(_response.status == "error") {
-                        toast(_response.info);
                     }
                 }).on("error", function(file, response) {
                     toast(response);
