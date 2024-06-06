@@ -5,7 +5,6 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
 /**
  * H3K | Tiny File Manager V2.5.3
  * @author CCP Programmers
- * @email ccpprogrammers@gmail.com
  * @github https://github.com/prasathmani/tinyfilemanager
  * @link https://tinyfilemanager.github.io
  */
