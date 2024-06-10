@@ -4038,8 +4038,8 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                     url: window.location,
                     data: JSON.stringify(data),
                     contentType: "application/json; charset=utf-8",
-                    success: function(mes){toast("Saved Successfully"); window.onbeforeunload = function() {return}},
-                    failure: function(mes) {toast("Error: try again");},
+                    success: function(mes){toast("<?php echo lng("Saved Successfully"); ?>"); window.onbeforeunload = function() {return}},
+                    failure: function(mes) {toast("<?php echo lng("Error: try again"); ?>");},
                     error: function(mes) {toast(`<p style="background-color:red">${mes.responseText}</p>`);}
                 });
             } else {
@@ -4238,7 +4238,7 @@ function lng($txt) {
     global $lang;
 
     // English Language
-    $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
+    $tr['en']['AppTitle']           = 'File Manager';       $tr['en']['Change']             = 'Change';
     $tr['en']['Login']          = 'Sign in';                $tr['en']['Username']           = 'Username';
     $tr['en']['Password']       = 'Password';               $tr['en']['Logout']             = 'Sign Out';
     $tr['en']['Move']           = 'Move';                   $tr['en']['Copy']               = 'Copy';
@@ -4262,7 +4262,6 @@ function lng($txt) {
     $tr['en']['UnZipToFolder']  = 'UnZip to folder';        $tr['en']['Edit']               = 'Edit';
     $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
     $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
-    $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
     $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';        
     $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
     $tr['en']['Help']           = 'Help';                   $tr['en']['Created']            = 'Created';
