@@ -141,9 +141,30 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+
+if (getenv('TFM_USE_AUTH') !== false) {
+    $use_auth = filter_var(getenv('TFM_USE_AUTH'), FILTER_VALIDATE_BOOLEAN);
+}
+
+if (getenv('TFM_AUTH_USERS') !== false) {
+    $auth_users = array();
+    foreach(explode(',', getenv('TFM_AUTH_USERS')) as $u) {
+        $u = explode('=', $u);
+        $auth_users[$u[0]] = $u[1];
+    }
+}
+
+if (getenv('TFM_READONLY_USERS') !== false) {
+    $readonly_users = explode(',', getenv('TFM_READONLY_USERS'));
+}
+
+if (getenv('TFM_ROOT_PATH') !== false) {
+    $root_path = getenv('TFM_ROOT_PATH');
+}
+
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
-$config_file = __DIR__.'/config.php';
+$config_file = getenv('TFM_CONFIG_FILE') !== false ? getenv('TFM_CONFIG_FILE') : __DIR__.'/config.php';
 if (is_readable($config_file)) {
     @include($config_file);
 }
