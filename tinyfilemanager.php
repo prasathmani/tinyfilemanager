@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light","show_disk_usage":true}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -194,6 +194,8 @@ $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 
 // Theme
 $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
+
+$show_disk_usage = isset($cfg->data['show_disk_usage']) ? $cfg->data['show_disk_usage'] : true;
 
 define('FM_THEME', $theme);
 
@@ -538,6 +540,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == "true" ? true : false;
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
+        $sdu = isset($_POST['js-show-usage']) && $_POST['js-show-usage'] == "true" ? true : false;
         $te3 = $_POST['js-theme-3'];
 
         if ($cfg->data['lang'] != $newLng) {
@@ -555,6 +558,10 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         if ($cfg->data['show_hidden'] != $shf) {
             $cfg->data['show_hidden'] = $shf;
             $show_hidden_files = $shf;
+        }
+        if ($cfg->data['show_disk_usage'] != $sdu) {
+            $cfg->data['show_disk_usage'] = $sdu;
+            $show_disk_usage = $sdu;
         }
         if ($cfg->data['hide_Cols'] != $hco) {
             $cfg->data['hide_Cols'] = $hco;
@@ -1557,6 +1564,16 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     </div>
 
                     <div class="mb-3 row">
+                        <label for="js-show-hidden" class="col-sm-3 col-form-label"><?php echo lng('ShowDiskUsage') ?></label>
+                        <div class="col-sm-9">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input" type="checkbox" role="switch" id="js-show-usage" name="js-show-usage" value="true" <?php echo $show_disk_usage ? 'checked' : ''; ?> />
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3 row">
                         <label for="js-hide-cols" class="col-sm-3 col-form-label"><?php echo lng('HideColumns') ?></label>
                         <div class="col-sm-9">
                             <div class="form-check form-switch">
@@ -2205,10 +2222,31 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 </tfoot>
                 <?php
             } else { ?>
+
+            <?php
+            // Check if show_disk_usage is true before getting disk size
+                if ($show_disk_usage) {
+                // Get total and free space
+                $total = disk_total_space(FM_ROOT_PATH.'/'.FM_PATH);
+                $free = disk_free_space(FM_ROOT_PATH.'/'.FM_PATH);
+
+                // Format sizes
+                $total_size = fm_get_filesize($total);
+                $free_size = fm_get_filesize($free);
+                $total_used_size = fm_get_filesize($total - $free);
+                }
+            ?>
                 <tfoot>
                     <tr>
                         <td class="gray" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' :'7') : (FM_READONLY ? '4' : '5') ?>">
                             <?php echo lng('FullSize').': <span class="badge text-bg-light border-radius-0">'.fm_get_filesize($all_files_size).'</span>' ?>
+                            <?php
+                                // Check if show_disk_usage is true before displaying disk usage
+                                if ($show_disk_usage) {
+                                echo lng('UsedSpace').': <span class="badge text-bg-light border-radius-0">' .$total_used_size.'</span>';
+                                echo lng('RemainingSpace').': <span class="badge text-bg-light border-radius-0">' .$free_size.'</span>';
+                                } 
+                            ?>
                             <?php echo lng('File').': <span class="badge text-bg-light border-radius-0">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge text-bg-light border-radius-0">'.$num_folders.'</span>' ?>
                         </td>
@@ -4296,6 +4334,9 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
+    $tr['en']['RemainingSpace']                                 = 'Remaining Space';
+    $tr['en']['UsedSpace']                                      = 'Used Space';
+    $tr['en']['ShowDiskUsage']                                  = 'Show Disk Usage';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
