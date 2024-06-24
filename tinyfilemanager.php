@@ -96,7 +96,7 @@ $allowed_upload_extensions = '';
 $favicon_path = '';
 
 // Files and folders to excluded from listing
-// e.g. array('myfile.html', 'personal-folder', '*.php', ...)
+// e.g. array('myfile.html', 'personal-folder', '*.php', '/path/to/folder', ...)
 $exclude_items = array();
 
 // Online office Docs Viewer
@@ -1296,7 +1296,7 @@ $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
 $current_path = array_slice(explode("/",$path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path)) {
+if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
             continue;
@@ -1305,9 +1305,9 @@ if (is_array($objects) && fm_is_exclude_items($current_path)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file)) {
+        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
             $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file)) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
             $folders[] = $file;
         }
     }
@@ -2562,20 +2562,17 @@ function fm_get_display_path($file_path)
 
 /**
  * Check file is in exclude list
- * @param string $file
+ * @param string $name The name of the file/folder
+ * @param string $path The full path of the file/folder
  * @return bool
  */
-function fm_is_exclude_items($file) {
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (isset($exclude_items) and sizeof($exclude_items)) {
-        unset($exclude_items);
-    }
-
+function fm_is_exclude_items($name, $path) {
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
     $exclude_items = FM_EXCLUDE_ITEMS;
     if (version_compare(PHP_VERSION, '7.0.0', '<')) {
         $exclude_items = unserialize($exclude_items);
     }
-    if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
+    if (!in_array($name, $exclude_items) && !in_array("*.$ext", $exclude_items) && !in_array($path, $exclude_items)) {
         return true;
     }
     return false;
