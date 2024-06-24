@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
+$CONFIG = '{"lang":"zh","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -27,7 +27,7 @@ $use_auth = true;
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
     'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'humin' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
 );
 
 // Readonly users
@@ -74,7 +74,7 @@ $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 // Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'm/d/Y g:i A';
+$datetime_format = 'Y/m/d g:i A';
 
 // Path display mode when viewing file information
 // 'full' => show full path
@@ -199,7 +199,8 @@ define('FM_THEME', $theme);
 
 //available languages
 $lang_list = array(
-    'en' => 'English'
+    'en' => 'English',
+    'zh' => '简体中文'
 );
 
 if ($report_errors == true) {
@@ -4238,54 +4239,101 @@ function lng($txt) {
     global $lang;
 
     // English Language
-    $tr['en']['AppName']        = 'Tiny File Manager';      $tr['en']['AppTitle']           = 'File Manager';
-    $tr['en']['Login']          = 'Sign in';                $tr['en']['Username']           = 'Username';
-    $tr['en']['Password']       = 'Password';               $tr['en']['Logout']             = 'Sign Out';
-    $tr['en']['Move']           = 'Move';                   $tr['en']['Copy']               = 'Copy';
-    $tr['en']['Save']           = 'Save';                   $tr['en']['SelectAll']          = 'Select all';
-    $tr['en']['UnSelectAll']    = 'Unselect all';           $tr['en']['File']               = 'File';
-    $tr['en']['Back']           = 'Back';                   $tr['en']['Size']               = 'Size';
-    $tr['en']['Perms']          = 'Perms';                  $tr['en']['Modified']           = 'Modified';
-    $tr['en']['Owner']          = 'Owner';                  $tr['en']['Search']             = 'Search';
-    $tr['en']['NewItem']        = 'New Item';               $tr['en']['Folder']             = 'Folder';
-    $tr['en']['Delete']         = 'Delete';                 $tr['en']['Rename']             = 'Rename';
-    $tr['en']['CopyTo']         = 'Copy to';                $tr['en']['DirectLink']         = 'Direct link';
-    $tr['en']['UploadingFiles'] = 'Upload Files';           $tr['en']['ChangePermissions']  = 'Change Permissions';
-    $tr['en']['Copying']        = 'Copying';                $tr['en']['CreateNewItem']      = 'Create New Item';
-    $tr['en']['Name']           = 'Name';                   $tr['en']['AdvancedEditor']     = 'Advanced Editor';
-    $tr['en']['Actions']        = 'Actions';                $tr['en']['Folder is empty']    = 'Folder is empty';
-    $tr['en']['Upload']         = 'Upload';                 $tr['en']['Cancel']             = 'Cancel';
-    $tr['en']['InvertSelection']= 'Invert Selection';       $tr['en']['DestinationFolder']  = 'Destination Folder';
-    $tr['en']['ItemType']       = 'Item Type';              $tr['en']['ItemName']           = 'Item Name';
-    $tr['en']['CreateNow']      = 'Create Now';             $tr['en']['Download']           = 'Download';
-    $tr['en']['Open']           = 'Open';                   $tr['en']['UnZip']              = 'UnZip';
-    $tr['en']['UnZipToFolder']  = 'UnZip to folder';        $tr['en']['Edit']               = 'Edit';
-    $tr['en']['NormalEditor']   = 'Normal Editor';          $tr['en']['BackUp']             = 'Back Up';
-    $tr['en']['SourceFolder']   = 'Source Folder';          $tr['en']['Files']              = 'Files';
-    $tr['en']['Move']           = 'Move';                   $tr['en']['Change']             = 'Change';
-    $tr['en']['Settings']       = 'Settings';               $tr['en']['Language']           = 'Language';        
-    $tr['en']['ErrorReporting'] = 'Error Reporting';        $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
-    $tr['en']['Help']           = 'Help';                   $tr['en']['Created']            = 'Created';
-    $tr['en']['Help Documents'] = 'Help Documents';         $tr['en']['Report Issue']       = 'Report Issue';
-    $tr['en']['Generate']       = 'Generate';               $tr['en']['FullSize']           = 'Full Size';              
-    $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';$tr['en']['You are logged in'] = 'You are logged in';
-    $tr['en']['Nothing selected']   = 'Nothing selected';   $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
-    $tr['en']['Renamed from']       = 'Renamed from';       $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
-    $tr['en']['Deleted']            = 'Deleted';            $tr['en']['Archive not created']        = 'Archive not created';
-    $tr['en']['Copied from']        = 'Copied from';        $tr['en']['Permissions changed']        = 'Permissions changed';
-    $tr['en']['to']                 = 'to';                 $tr['en']['Saved Successfully']         = 'Saved Successfully';
-    $tr['en']['not found!']         = 'not found!';         $tr['en']['File Saved Successfully']    = 'File Saved Successfully';
-    $tr['en']['Archive']            = 'Archive';            $tr['en']['Permissions not changed']    = 'Permissions not changed';
-    $tr['en']['Select folder']      = 'Select folder';      $tr['en']['Source path not defined']    = 'Source path not defined';
-    $tr['en']['already exists']     = 'already exists';     $tr['en']['Error while moving from']    = 'Error while moving from';
-    $tr['en']['Create archive?']    = 'Create archive?';    $tr['en']['Invalid file or folder name']    = 'Invalid file or folder name';
-    $tr['en']['Archive unpacked']   = 'Archive unpacked';   $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
-    $tr['en']['Root path']          = 'Root path';          $tr['en']['Error while renaming from']  = 'Error while renaming from';
-    $tr['en']['File not found']     = 'File not found';     $tr['en']['Error while deleting items'] = 'Error while deleting items';
-    $tr['en']['Moved from']         = 'Moved from';         $tr['en']['Generate new password hash'] = 'Generate new password hash';
+    $tr['en']['AppName']        = 'Tiny File Manager';
+    $tr['en']['AppTitle']           = 'File Manager';
+    $tr['en']['Login']          = 'Sign in';
+    $tr['en']['Username']           = 'Username';
+    $tr['en']['Password']       = 'Password';
+    $tr['en']['Logout']             = 'Sign Out';
+    $tr['en']['Move']           = 'Move';
+    $tr['en']['Copy']               = 'Copy';
+    $tr['en']['Save']           = 'Save';
+    $tr['en']['SelectAll']          = 'Select all';
+    $tr['en']['UnSelectAll']    = 'Unselect all';
+    $tr['en']['File']               = 'File';
+    $tr['en']['Back']           = 'Back';
+    $tr['en']['Size']               = 'Size';
+    $tr['en']['Perms']          = 'Perms';
+    $tr['en']['Modified']           = 'Modified';
+    $tr['en']['Owner']          = 'Owner';
+    $tr['en']['Search']             = 'Search';
+    $tr['en']['NewItem']        = 'New Item';
+    $tr['en']['Folder']             = 'Folder';
+    $tr['en']['Delete']         = 'Delete';
+    $tr['en']['Rename']             = 'Rename';
+    $tr['en']['CopyTo']         = 'Copy to';
+    $tr['en']['DirectLink']         = 'Direct link';
+    $tr['en']['UploadingFiles'] = 'Upload Files';
+    $tr['en']['ChangePermissions']  = 'Change Permissions';
+    $tr['en']['Copying']        = 'Copying';
+    $tr['en']['CreateNewItem']      = 'Create New Item';
+    $tr['en']['Name']           = 'Name';
+    $tr['en']['AdvancedEditor']     = 'Advanced Editor';
+    $tr['en']['Actions']        = 'Actions';
+    $tr['en']['Folder is empty']    = 'Folder is empty';
+    $tr['en']['Upload']         = 'Upload';
+    $tr['en']['Cancel']             = 'Cancel';
+    $tr['en']['InvertSelection']= 'Invert Selection';
+    $tr['en']['DestinationFolder']  = 'Destination Folder';
+    $tr['en']['ItemType']       = 'Item Type';
+    $tr['en']['ItemName']           = 'Item Name';
+    $tr['en']['CreateNow']      = 'Create Now';
+    $tr['en']['Download']           = 'Download';
+    $tr['en']['Open']           = 'Open';
+    $tr['en']['UnZip']              = 'UnZip';
+    $tr['en']['UnZipToFolder']  = 'UnZip to folder';
+    $tr['en']['Edit']               = 'Edit';
+    $tr['en']['NormalEditor']   = 'Normal Editor';
+    $tr['en']['BackUp']             = 'Back Up';
+    $tr['en']['SourceFolder']   = 'Source Folder';
+    $tr['en']['Files']              = 'Files';
+    $tr['en']['Move']           = 'Move';
+    $tr['en']['Change']             = 'Change';
+    $tr['en']['Settings']       = 'Settings';
+    $tr['en']['Language']           = 'Language';        
+    $tr['en']['ErrorReporting'] = 'Error Reporting';
+    $tr['en']['ShowHiddenFiles']    = 'Show Hidden Files';
+    $tr['en']['Help']           = 'Help';
+    $tr['en']['Created']            = 'Created';
+    $tr['en']['Help Documents'] = 'Help Documents';
+    $tr['en']['Report Issue']       = 'Report Issue';
+    $tr['en']['Generate']       = 'Generate';
+    $tr['en']['FullSize']           = 'Full Size';              
+    $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';
+    $tr['en']['Theme']		='Theme';
+    $tr['en']['You are logged in'] = 'You are logged in';
+    $tr['en']['Nothing selected']   = 'Nothing selected';
+    $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
+    $tr['en']['Renamed from']       = 'Renamed from';
+    $tr['en']['Archive not unpacked']       = 'Archive not unpacked';
+    $tr['en']['Deleted']            = 'Deleted';
+    $tr['en']['Archive not created']        = 'Archive not created';
+    $tr['en']['Copied from']        = 'Copied from';
+    $tr['en']['Permissions changed']        = 'Permissions changed';
+    $tr['en']['to']                 = 'to';
+    $tr['en']['Saved Successfully']         = 'Saved Successfully';
+    $tr['en']['not found!']         = 'not found!';
+    $tr['en']['File Saved Successfully']    = 'File Saved Successfully';
+    $tr['en']['Archive']            = 'Archive'; 
+    $tr['en']['Permissions not changed']    = 'Permissions not changed';
+    $tr['en']['Select folder']      = 'Select folder';
+    $tr['en']['Source path not defined']    = 'Source path not defined';
+    $tr['en']['already exists']     = 'already exists'; 
+    $tr['en']['Error while moving from']    = 'Error while moving from';
+    $tr['en']['Create archive?']    = 'Create archive?';
+    $tr['en']['Invalid file or folder name']    = 'Invalid file or folder name';
+    $tr['en']['Archive unpacked']   = 'Archive unpacked';
+    $tr['en']['File extension is not allowed']  = 'File extension is not allowed';
+    $tr['en']['Root path']          = 'Root path'; 
+    $tr['en']['Error while renaming from']  = 'Error while renaming from';
+    $tr['en']['File not found']     = 'File not found';
+    $tr['en']['Error while deleting items'] = 'Error while deleting items';
+    $tr['en']['Moved from']         = 'Moved from';
+    $tr['en']['Generate new password hash'] = 'Generate new password hash';
     $tr['en']['Login failed. Invalid username or password'] = 'Login failed. Invalid username or password';
     $tr['en']['password_hash not supported, Upgrade PHP version'] = 'password_hash not supported, Upgrade PHP version';
-    $tr['en']['Advanced Search']    = 'Advanced Search';    $tr['en']['Error while copying from']    = 'Error while copying from';
+    $tr['en']['Advanced Search']    = 'Advanced Search';
+    $tr['en']['Error while copying from']    = 'Error while copying from';
     $tr['en']['Invalid characters in file name']                = 'Invalid characters in file name';
     $tr['en']['FILE EXTENSION HAS NOT SUPPORTED']               = 'FILE EXTENSION HAS NOT SUPPORTED';
     $tr['en']['Selected files and folder deleted']              = 'Selected files and folder deleted';
@@ -4296,6 +4344,122 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
+    // 中文语言
+    $tr['zh']['AppName']        = '微型文件管理器';
+    $tr['zh']['AppTitle']           = '文件管理器';
+    $tr['zh']['Login']          = '登录';
+    $tr['zh']['Username']           = '用户名';
+    $tr['zh']['Password']       = '密码';
+    $tr['zh']['Logout']             = '退出';
+    $tr['zh']['Move']           = '移动';
+    $tr['zh']['Copy']               = '复制';
+    $tr['zh']['Save']           = '保存';
+    $tr['zh']['SelectAll']          = '全选';
+    $tr['zh']['UnSelectAll']    = '取消全选';
+    $tr['zh']['File']               = '文件';
+    $tr['zh']['Back']           = '返回';
+    $tr['zh']['Size']               = '大小';
+    $tr['zh']['Perms']          = '权限';
+    $tr['zh']['Modified']           = '修改时间';
+    $tr['zh']['Owner']          = '所有者';
+    $tr['zh']['Search']             = '搜索';
+    $tr['zh']['NewItem']        = '新建项目';
+    $tr['zh']['Folder']             = '文件夹';
+    $tr['zh']['Delete']         = '删除';
+    $tr['zh']['Rename']             = '重命名';
+    $tr['zh']['CopyTo']         = '复制到';
+    $tr['zh']['DirectLink']         = '直链';
+    $tr['zh']['UploadingFiles'] = '上传文件';
+    $tr['zh']['ChangePermissions']  = '更改权限';
+    $tr['zh']['Copying']        = '复制中';
+    $tr['zh']['CreateNewItem']      = '创建新项目';
+    $tr['zh']['Name']           = '名称';
+    $tr['zh']['AdvancedEditor']     = '高级编辑器';
+    $tr['zh']['Actions']        = '操作';
+    $tr['zh']['Folder is empty']    = '文件夹为空';
+    $tr['zh']['Upload']         = '上传';
+    $tr['zh']['Cancel']             = '取消';
+    $tr['zh']['InvertSelection']= '反选';
+    $tr['zh']['DestinationFolder']  = '目标文件夹';
+    $tr['zh']['ItemType']       = '项目类型';
+    $tr['zh']['ItemName']           = '项目名称';
+    $tr['zh']['CreateNow']      = '立即创建';
+    $tr['zh']['Download']           = '下载';
+    $tr['zh']['Open']           = '打开';
+    $tr['zh']['UnZip']              = '解压';
+    $tr['zh']['UnZipToFolder']  = '解压到文件夹';
+    $tr['zh']['Edit']               = '编辑';
+    $tr['zh']['NormalEditor']   = '普通编辑器';
+    $tr['zh']['BackUp']             = '备份';
+    $tr['zh']['SourceFolder']   = '源文件夹';
+    $tr['zh']['Files']              = '文件';
+    $tr['zh']['Move']           = '移动';
+    $tr['zh']['Change']             = '更改';
+    $tr['zh']['Settings']       = '设置';
+    $tr['zh']['Language']           = '语言';        
+    $tr['zh']['ErrorReporting'] = '错误报告';
+    $tr['zh']['ShowHiddenFiles']    = '显示隐藏文件';
+    $tr['zh']['Help']           = '帮助';
+    $tr['zh']['Created']            = '创建时间';
+    $tr['zh']['Help Documents'] = '帮助文档';
+    $tr['zh']['Report Issue']       = '报告问题';
+    $tr['zh']['Generate']       = '生成';
+    $tr['zh']['FullSize']           = '原始尺寸';              
+    $tr['zh']['HideColumns']    = '隐藏权限/所有者列';
+    $tr['zh']['You are logged in'] = '您已登录';
+    $tr['zh']['Nothing selected']   = '未选择任何项目';
+    $tr['zh']['Paths must be not equal']    = '路径不能相同';
+    $tr['zh']['Renamed from']       = '重命名自';
+    $tr['zh']['Archive not unpacked']       = '尚未解压存档';
+    $tr['zh']['Deleted']            = '已删除';
+    $tr['zh']['Archive not created']        = '尚未创建存档';
+    $tr['zh']['Copied from']        = '复制自';
+    $tr['zh']['Permissions changed']        = '权限已更改';
+    $tr['zh']['to']                 = '至';
+    $tr['zh']['Saved Successfully']         = '保存成功';
+    $tr['zh']['not found!']         = '未找到！';
+    $tr['zh']['File Saved Successfully']    = '文件保存成功';
+    $tr['zh']['Archive']            = '存档'; 
+    $tr['zh']['Permissions not changed']    = '权限未更改';
+    $tr['zh']['Select folder']      = '选择文件夹';
+    $tr['zh']['Source path not defined']    = '未定义源路径';
+    $tr['zh']['already exists']     = '已存在'; 
+    $tr['zh']['Error while moving from']    = '移动时出错，从';
+    $tr['zh']['Create archive?']    = '创建存档？';
+    $tr['zh']['Invalid file or folder name']    = '文件或文件夹名称无效';
+    $tr['zh']['Archive unpacked']   = '存档已解压';
+    $tr['zh']['File extension is not allowed']  = '不允许的文件扩展名';
+    $tr['zh']['Root path']          = '根路径'; 
+    $tr['zh']['Error while renaming from']  = '重命名时出错，从';
+    $tr['zh']['File not found']     = '文件未找到';
+    $tr['zh']['Error while deleting items'] = '删除项目时出错';
+    $tr['zh']['Moved from']         = '移动自';
+    $tr['zh']['Generate new password hash'] = '生成新的密码哈希';
+    $tr['zh']['Login failed. Invalid username or password'] = '登录失败。用户名或密码无效';
+    $tr['zh']['password_hash not supported, Upgrade PHP version'] = '不支持 password_hash，请升级 PHP 版本';
+    $tr['zh']['Advanced Search']    = '高级搜索';
+    $tr['zh']['Error while copying from']    = '复制时出错，从';
+    $tr['zh']['Invalid characters in file name']                = '文件名中包含无效字符';
+    $tr['zh']['FILE EXTENSION HAS NOT SUPPORTED']               = '不支持的文件扩展名';
+    $tr['zh']['Selected files and folder deleted']              = '已删除所选文件和文件夹';
+    $tr['zh']['Error while fetching archive info']              = '获取存档信息时出错';
+    $tr['zh']['Delete selected files and folders?']             = '删除所选文件和文件夹？';
+    $tr['zh']['Search file in folder and subfolders...']        = '在文件夹和子文件夹中搜索文件...';
+    $tr['zh']['Access denied. IP restriction applicable']       = '访问被拒绝。适用 IP 限制';
+    $tr['zh']['Invalid characters in file or folder name']      = '文件名或文件夹名中包含无效字符';
+    $tr['zh']['Operations with archives are not available']     = '不支持存档相关操作';
+    $tr['zh']['File or folder with this path already exists']   = '已存在相同路径的文件或文件夹';
+    $tr['zh']['Theme']		='主题';
+    $tr['zh']['Upload from URL']		='从URL上传';
+    $tr['zh']['Are you sure want to']		='确定删除';
+    $tr['zh']['Okay']		='确定';
+    $tr['zh']['Are you sure want to rename?']		='确定重命名？';
+    $tr['zh']['Source path']		='源路径';
+    $tr['zh']['Destination folder']		='目标文件夹';
+    $tr['zh']['Copy']		='复制';
+    $tr['zh']['Move']		='移动';
+    $tr['zh']['Cancel']		='取消';
+    $tr['zh']['Full Path']		='完整路径';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
