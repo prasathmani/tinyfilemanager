@@ -3718,8 +3718,7 @@ header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-ch
 header("Pragma: no-cache");
 
 global $lang, $root_url, $sticky_navbar, $favicon_path;
-$isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
- $title = isset($_GET['edit']) ? $_GET['edit'] : fm_enc(APP_TITLE);   
+$isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal'; 
 ?>
 <!DOCTYPE html>
 <html>
@@ -3731,7 +3730,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
     <?php if($favicon_path) { echo '<link rel="icon" href="'.fm_enc($favicon_path).'" type="image/png">'; } ?>
-    <title><?php echo $title; ?></title>
+    <title><?php echo isset($_GET['edit']) ? $_GET['edit'] : fm_enc(APP_TITLE); ?></title>
     <?php print_external('pre-jsdelivr'); ?>
     <?php print_external('pre-cloudflare'); ?>
     <?php print_external('css-bootstrap'); ?>
