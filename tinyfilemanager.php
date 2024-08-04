@@ -100,7 +100,7 @@ $favicon_path = '';
 $exclude_items = array();
 
 // Online office Docs Viewer
-// Availabe rules are 'google', 'microsoft' or false
+// Available rules are 'google', 'microsoft' or false
 // Google => View documents using Google Docs Viewer
 // Microsoft => View documents using Microsoft Web Apps Viewer
 // false => disable online doc viewer
@@ -2266,7 +2266,7 @@ function print_external($key) {
 }
 
 /**
- * Verify CSRF TOKEN and remove after cerify
+ * Verify CSRF TOKEN and remove after certified
  * @param string $token
  * @return bool
  */
