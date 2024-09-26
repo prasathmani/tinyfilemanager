@@ -2233,6 +2233,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                     <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a></li>
+                <li class="list-inline-item">
+                                    <span onclick="downloadSelected()" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-download"></i> Download </span></li>
             </ul>
         </div>
         <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
@@ -4222,6 +4224,34 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
                 }
             });
         });
+      
+        //download selectedFiles
+        function downloadSelected() {
+            parent=$( "input:checked" ).closest("tr");
+            child=parent.find("a[title=Download]");
+
+
+            var a = child;
+            for (var i=0, iLen=a.length; i<iLen; i++) {
+
+
+                url = a[i].getAttribute("href");
+                akhir = url.substring(url.lastIndexOf('/')+1);
+                nama=akhir.substring(akhir.lastIndexOf('=')+1);
+
+
+                if ('download' in a[i]) {
+                  a[i].download = nama;
+                }
+
+                if (a[i].click) {
+                  a[i].click();
+                } else {
+                  $(a[i]).click();
+                }
+          }
+        }
+
     </script>
 <?php endif; ?>
 <div id="snackbar"></div>
