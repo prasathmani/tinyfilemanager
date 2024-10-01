@@ -3718,7 +3718,7 @@ header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-ch
 header("Pragma: no-cache");
 
 global $lang, $root_url, $sticky_navbar, $favicon_path;
-$isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal'; 
+$isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 ?>
 <!DOCTYPE html>
 <html>
