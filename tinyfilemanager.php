@@ -3954,7 +3954,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
       <div class="modal-dialog" role="document">
         <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off">
           <div class="modal-body p-4 text-center">
-            <h5 class="mb-3"><?php echo lng('Are you sure want to rename?') ?></h5>
+            <h5 class="mb-3"><?php echo lng('Are you sure you want to rename?') ?></h5>
             <p class="mb-1">
                 <input type="text" name="rename_to" id="js-rename-to" class="form-control" placeholder="<?php echo lng('Enter new file name') ?>" required>
                 <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
@@ -3975,7 +3975,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
           <div class="modal-dialog" role="document">
             <form class="modal-content rounded-3 shadow <?php echo fm_get_theme(); ?>" method="post" autocomplete="off" action="<%this.action%>">
               <div class="modal-body p-4 text-center">
-                <h5 class="mb-2"><?php echo lng('Are you sure want to') ?> <%this.title%> ?</h5>
+                <h5 class="mb-2"><?php echo lng('Are you sure you want to') ?> <%this.title%> ?</h5>
                 <p class="mb-1"><%this.content%></p>
               </div>
               <div class="modal-footer flex-nowrap p-0">
@@ -4297,8 +4297,8 @@ function lng($txt) {
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
     $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
-    $tr['en']['Are you sure want to rename?']                   = 'Are you sure want to rename?';
-    $tr['en']['Are you sure want to']                           = 'Are you sure want to';
+    $tr['en']['Are you sure you want to rename?']                   = 'Are you sure you want to rename?';
+    $tr['en']['Are you sure you want to']                           = 'Are you sure you want to';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
