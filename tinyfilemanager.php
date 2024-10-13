@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark"}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -891,23 +891,38 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
 
 // Download
 if (isset($_GET['dl'], $_POST['token'])) {
-    if(!verifyToken($_POST['token'])) {
+    // Verify the token to ensure it's valid
+    if (!verifyToken($_POST['token'])) {
         fm_set_msg("Invalid Token.", 'error');
+        exit;
     }
 
+    // Clean the download file path
     $dl = urldecode($_GET['dl']);
-    $dl = fm_clean_path($dl);
-    $dl = str_replace('/', '', $dl);
+    $dl = fm_clean_path($dl); 
+    $dl = str_replace('/', '', $dl); // Prevent directory traversal attacks
+
+    // Define the file path
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
+
+    // Check if the file exists and is valid
     if ($dl != '' && is_file($path . '/' . $dl)) {
-        fm_download_file($path . '/' . $dl, $dl, 1024);
+        // Close the session to prevent session locking
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        // Call the download function
+        fm_download_file($path . '/' . $dl, $dl, 1024); // Download with a buffer size of 1024 bytes
         exit;
     } else {
+        // Handle the case where the file is not found
         fm_set_msg(lng('File not found'), 'error');
-        $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
 }
 
@@ -1051,6 +1066,75 @@ if (!empty($_FILES) && !FM_READONLY) {
     // Return the response
     echo json_encode($response);
     exit();
+}
+
+// Mass downloading
+if (isset($_POST['group'], $_POST['download'], $_POST['token']) && !FM_READONLY) {
+
+    // Verify token to ensure it's valid
+    if (!verifyToken($_POST['token'])) {
+        fm_set_msg(lng("Invalid Token."), 'error');
+        exit;
+    }
+
+    $path = FM_ROOT_PATH;
+    if (FM_PATH != '') {
+        $path .= '/' . FM_PATH;
+    }
+
+    $errors = 0;
+    $files = $_POST['file']; // List of selected files
+    if (is_array($files) && count($files)) {
+
+        // Create a new ZIP archive
+        $zip = new ZipArchive();
+        $zip_filename = 'download_' . date('Y-m-d_H-i-s') . '.zip';
+        $zip_filepath = sys_get_temp_dir() . '/' . $zip_filename;
+
+        if ($zip->open($zip_filepath, ZipArchive::CREATE) !== TRUE) {
+            fm_set_msg(lng('Cannot create ZIP file'), 'error');
+            $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        }
+
+        foreach ($files as $f) {
+            if ($f != '') {
+                $new_path = $path . '/' . fm_clean_path($f); // Sanitize the file path
+
+                if (is_file($new_path)) {
+                    // Add the file to the ZIP archive
+                    $zip->addFile($new_path, basename($new_path));
+                } else {
+                    $errors++;
+                }
+            }
+        }
+
+        // Close the ZIP archive
+        $zip->close();
+
+        // Check for errors
+        if ($errors == 0) {
+            // Serve the ZIP file for download
+            if (file_exists($zip_filepath)) {
+                header('Content-Type: application/zip');
+                header('Content-Disposition: attachment; filename="' . $zip_filename . '"');
+                header('Content-Length: ' . filesize($zip_filepath));
+                readfile($zip_filepath);
+                // Remove the ZIP file from the temporary directory after download
+                unlink($zip_filepath);
+                exit;
+            } else {
+                fm_set_msg(lng('Error creating ZIP file'), 'error');
+            }
+        } else {
+            fm_set_msg(lng('Error while adding items to ZIP'), 'error');
+        }
+    } else {
+        fm_set_msg(lng('Nothing selected'), 'alert');
+    }
+
+    $FM_PATH = FM_PATH; 
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
 // Mass deleting
@@ -2225,6 +2309,8 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                 <li class="list-inline-item"> <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a></li>
                 <li class="list-inline-item"><a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a></li>
                 <li class="list-inline-item"><a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a></li>
+                <li class="list-inline-item"><input type="submit" class="hidden" name="download" id="a-download" value="Download" onclick="return confirm('<?php echo lng('Download selected files and folders?'); ?>')">
+                    <a href="javascript:document.getElementById('a-download').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-download"></i> <?php echo lng('Download') ?> </a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('<?php echo lng('Delete selected files and folders?'); ?>')">
                     <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> <?php echo lng('Delete') ?> </a></li>
                 <li class="list-inline-item"><input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
