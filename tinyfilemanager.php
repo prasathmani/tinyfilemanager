@@ -2784,22 +2784,23 @@ function fm_get_directorysize($directory) {
  * @return array|bool
  */
 function fm_get_zif_info($path, $ext) {
-    if ($ext == 'zip' && function_exists('zip_open')) {
-        $arch = @zip_open($path);
-        if ($arch) {
+    if ($ext == 'zip' && class_exists('ZipArchive')) {
+        $arch = new ZipArchive;
+        if ($arch->open($path)) {
             $filenames = array();
-            while ($zip_entry = @zip_read($arch)) {
-                $zip_name = @zip_entry_name($zip_entry);
-                $zip_folder = substr($zip_name, -1) == '/';
-                $filenames[] = array(
-                    'name' => $zip_name,
-                    'filesize' => @zip_entry_filesize($zip_entry),
-                    'compressed_size' => @zip_entry_compressedsize($zip_entry),
+
+	    for($i = 0; $i < $arch->numFiles; $i++ ){ 
+    		$stat = $arch->statIndex($i); 
+    		$zip_folder = substr($stat['name'], -1) == '/';
+    		$filenames[] = array(
+                    'name' => $stat['name'],
+                    'filesize' => $stat['size'],
+                    'compressed_size' => $stat['comp_size'],
                     'folder' => $zip_folder
-                    //'compression_method' => zip_entry_compressionmethod($zip_entry),
+                    //'compression_method' => $stat['comp_method'],
                 );
-            }
-            @zip_close($arch);
+				}            
+            $arch->close();
             return $filenames;
         }
     } elseif($ext == 'tar' && class_exists('PharData')) {
