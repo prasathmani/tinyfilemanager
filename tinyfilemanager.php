@@ -1790,9 +1790,9 @@ if (isset($_GET['view'])) {
             <p class="break-word"><b><?php echo lng($view_title) ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
             <p class="break-word">
                 <?php $display_path = fm_get_display_path($file_path); ?>
-                <strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?><br>
-                <strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
-                <strong>MIME-type:</strong> <?php echo $mime_type ?><br>
+                <strong><?php echo lng($display_path['label']); ?>:</strong> <?php echo $display_path['path']; ?><br>
+                <strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
+                <strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?><br>
                 <?php
                 // ZIP info
                 if (($is_zip || $is_gzip) && $filenames !== false) {
@@ -2053,7 +2053,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
             <div class="card-body">
                 <p class="card-text">
                     <?php $display_path = fm_get_display_path($file_path); ?>
-                    <?php echo $display_path['label']; ?>: <?php echo $display_path['path']; ?><br>
+                    <?php echo lng($display_path['label']); ?>: <?php echo $display_path['path']; ?><br>
                 </p>
                 <form action="" method="post">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
