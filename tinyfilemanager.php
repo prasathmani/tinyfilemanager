@@ -1083,7 +1083,7 @@ if (isset($_POST['group'], $_POST['download'], $_POST['token']) && !FM_READONLY)
     }
 
     $errors = 0;
-    $files = $_POST['file']; // List of selected files
+    $files = $_POST['file']; // List of selected files and folders
     if (is_array($files) && count($files)) {
 
         // Create a new ZIP archive
@@ -1093,7 +1093,28 @@ if (isset($_POST['group'], $_POST['download'], $_POST['token']) && !FM_READONLY)
 
         if ($zip->open($zip_filepath, ZipArchive::CREATE) !== TRUE) {
             fm_set_msg(lng('Cannot create ZIP file'), 'error');
-            $FM_PATH=FM_PATH; fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+            $FM_PATH = FM_PATH; 
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        }
+
+        // Function to recursively add folders and files to the ZIP archive, including empty folders
+        function addFolderToZip($folderPath, $zipArchive, $zipPath) {
+            $files = scandir($folderPath);
+
+            // Ensure the folder itself is added to the ZIP (even if empty)
+            $zipArchive->addEmptyDir($zipPath);
+
+            foreach ($files as $file) {
+                if ($file == '.' || $file == '..') continue;
+                $fullPath = $folderPath . '/' . $file;
+                if (is_file($fullPath)) {
+                    // Add the file to the ZIP archive
+                    $zipArchive->addFile($fullPath, $zipPath . '/' . $file);
+                } elseif (is_dir($fullPath)) {
+                    // Recursively add folders (including empty folders)
+                    addFolderToZip($fullPath, $zipArchive, $zipPath . '/' . $file);
+                }
+            }
         }
 
         foreach ($files as $f) {
@@ -1103,6 +1124,9 @@ if (isset($_POST['group'], $_POST['download'], $_POST['token']) && !FM_READONLY)
                 if (is_file($new_path)) {
                     // Add the file to the ZIP archive
                     $zip->addFile($new_path, basename($new_path));
+                } elseif (is_dir($new_path)) {
+                    // Add the folder and its contents to the ZIP archive (including empty folders)
+                    addFolderToZip($new_path, $zip, basename($new_path));
                 } else {
                     $errors++;
                 }
