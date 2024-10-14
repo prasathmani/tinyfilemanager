@@ -3,14 +3,14 @@
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 /**
- * H3K | Tiny File Manager V2.5.3
+ * H3K - Tiny File Manager V2.5.5
  * @author CCP Programmers
  * @github https://github.com/prasathmani/tinyfilemanager
  * @link https://tinyfilemanager.github.io
  */
 
 //TFM version
-define('VERSION', '2.5.3');
+define('VERSION', '2.5.5');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
@@ -247,7 +247,7 @@ if (empty($_SESSION['token'])) {
     if (function_exists('random_bytes')) {
         $_SESSION['token'] = bin2hex(random_bytes(32));
     } else {
-    	$_SESSION['token'] = bin2hex(openssl_random_pseudo_bytes(32));
+        $_SESSION['token'] = bin2hex(openssl_random_pseudo_bytes(32));
     }
 }
 
@@ -1835,7 +1835,10 @@ if (isset($_GET['view'])) {
                     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                     <button type="submit" class="btn btn-link text-decoration-none fw-bold p-0"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></button> &nbsp;
                 </form>
-                <b class="ms-2"><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                <?php if (!FM_READONLY): ?>
+                <a class="fw-bold" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete').' '.lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
+                <?php endif; ?>
+                <a class="fw-bold ms-2" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 <?php
                 // ZIP actions
                 if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
@@ -1856,13 +1859,13 @@ if (isset($_GET['view'])) {
                 }
                 if ($is_text && !FM_READONLY) {
                     ?>
-                    <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
-                        </a></b> &nbsp;
-                    <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
-                            class="edit-file"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?>
-                        </a></b> &nbsp;
+                    <a class="fw-bold ms-2" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
+                        </a>
+                    <a class="fw-bold ms-2" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
+                            class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('AdvancedEditor') ?>
+                    </a>
                 <?php } ?>
-                <b class="ms-2"><a href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a></b>
+                <a class="fw-bold ms-2" href="?p=<?php echo urlencode(FM_PATH) ?>"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a>
             </div>
             <?php
             if($is_onlineViewer) {
@@ -3598,7 +3601,8 @@ class FM_Zipper_Tar
 
     function save()
     {
-        $fm_file = __FILE__;
+        global $config_file;
+        $fm_file = is_readable($config_file) ? $config_file : __FILE__;
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
         $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration".chr(13) . chr(10)."$var_name = $var_value;" . chr(13) . chr(10);
@@ -3817,7 +3821,7 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex">
     <?php if($favicon_path) { echo '<link rel="icon" href="'.fm_enc($favicon_path).'" type="image/png">'; } ?>
-    <title><?php echo fm_enc(APP_TITLE) ?></title>
+    <title><?php echo isset($_GET['edit']) ? $_GET['edit'] : fm_enc(APP_TITLE); ?></title>
     <?php print_external('pre-jsdelivr'); ?>
     <?php print_external('pre-cloudflare'); ?>
     <?php print_external('css-bootstrap'); ?>
