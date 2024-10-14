@@ -247,7 +247,7 @@ if (empty($_SESSION['token'])) {
     if (function_exists('random_bytes')) {
         $_SESSION['token'] = bin2hex(random_bytes(32));
     } else {
-    	$_SESSION['token'] = bin2hex(openssl_random_pseudo_bytes(32));
+        $_SESSION['token'] = bin2hex(openssl_random_pseudo_bytes(32));
     }
 }
 
