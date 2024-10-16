@@ -69,6 +69,9 @@ $root_url = '';
 // $_SERVER['HTTP_HOST'].'/folder'
 $http_host = $_SERVER['HTTP_HOST'];
 
+// Home URL. Link for Home Button.
+$home_url = '?p=';
+
 // input encoding for iconv
 $iconv_input_encoding = 'UTF-8';
 
@@ -3627,7 +3630,7 @@ class FM_Zipper_Tar
  */
 function fm_show_nav_path($path)
 {
-    global $lang, $sticky_navbar, $editFile;
+    global $lang, $sticky_navbar, $editFile, $home_url;
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
     $getTheme = fm_get_theme();
     $getTheme .= " navbar-light";
@@ -3646,7 +3649,7 @@ function fm_show_nav_path($path)
 
             <?php
             $path = fm_clean_path($path);
-            $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
+            $root_url = "<a href='".$home_url."'><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
             $sep = '<i class="bread-crumb"> / </i>';
             if ($path != '') {
                 $exploded = explode('/', $path);
