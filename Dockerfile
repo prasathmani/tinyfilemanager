@@ -12,7 +12,7 @@ FROM php:7.4-cli-alpine
 # if run in China
 # RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-RUN apk add \
+RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev
 
