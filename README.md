@@ -7,9 +7,11 @@
 [![Paypal](https://img.shields.io/badge/Donate-Paypal-lightgrey.svg?style=flat-square)](https://www.paypal.me/prasathmani)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/prasathmani)
 
-> TinyFileManager is web based PHP file manager and it is a simple, fast and small size in single-file PHP file that can be dropped into any folder on your server, multi-language ready web application for storing, uploading, editing and managing files and folders online via web browser. The Application runs on PHP 5.5+, It allows the creation of multiple users and each user can have its own directory and a build-in support for managing text files with cloud9 IDE and it supports syntax highlighting for over 150+ languages and over 35+ themes.
+> TinyFileManager is a versatile web-based PHP file manager designed for simplicity and efficiency. This lightweight single-file PHP application can be effortlessly integrated into any server directory, allowing users to store, upload, edit, and manage files and folders directly through their web browser.
+With multi-language support and compatibility with PHP 5.5+, TinyFileManager enables the creation of individual user accounts, each with its dedicated directory. The platform also includes built-in functionality for handling text files using the Cloud9 IDE.
+Featuring syntax highlighting for over 150 languages and more than 35 themes, TinyFileManager offers a comprehensive solution for file management in an online environment.
 
-**Caution!** _Avoid utilizing this script as a standard file manager in public spaces. It is imperative to remove this script from the server after completing any tasks._
+<sub>**Caution!** _Avoid utilizing this script as a standard file manager in public spaces. It is imperative to remove this script from the server after completing any tasks._</sub>
 
 ## Demo
 
@@ -46,81 +48,23 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 ### :loudspeaker: Features
 
-- :cd: Open Source, light and extremely simple
-- :iphone: Mobile friendly view for touch devices
-- :information_source: Basic features likes Create, Delete, Modify, View, Download, Copy and Move files
-- :arrow_double_up: Ajax Upload, Ability to drag & drop, upload from URL, multiple files upload with file extensions filter
-- :file_folder: Ability to create folders and files
-- :gift: Ability to compress, extract files (`zip`, `tar`)
-- :sunglasses: Support user permissions - based on session and each user root folder mapping
-- :floppy_disk: Copy direct file URL
-- :pencil2: Cloud9 IDE - Syntax highlighting for over `150+` languages, Over `35+` themes with your favorite programming style
-- :page_facing_up: Google/Microsoft doc viewer helps you preview `PDF/DOC/XLS/PPT/etc`. 25 MB can be previewed with the Google Drive viewer
-- :zap: Backup files and IP blacklist and whitelist
-- :mag_right: Search - Search and filter files using `datatable js`
-- :file_folder: Exclude folders and files from listing
-- :globe_with_meridians: Multi-language(32+) support and for translations `translation.json` is file required
-- :bangbang: lots more...
+- :cd: **Open Source:** Lightweight, minimalist, and extremely simple to set up.
+- :iphone: **Mobile Friendly:** Optimized for touch devices and mobile viewing.
+- :information_source: **Core Features:** Easily create, delete, modify, view, download, copy, and move files.
+- :arrow_double_up: **Advanced Upload Options:** Ajax-powered uploads with drag-and-drop support, URL imports, and multi-file uploads with extension filtering.
+- :file_folder: **Folder & File Management:** Create and organize folders and files effortlessly.
+- :gift: **Compression Tools:** Compress and extract files in `zip` and `tar` formats.
+- :sunglasses: **User Permissions:** User-specific root folder mapping and session-based access control.
+- :floppy_disk: **Direct URLs:** Easily copy direct URLs for files.
+- :pencil2: **Code Editor:** Includes Cloud9 IDE with syntax highlighting for 150+ languages and 35+ themes.
+- :page_facing_up: **Document Preview:** Google/Microsoft document viewer for PDF/DOC/XLS/PPT, supporting previews up to 25 MB.
+- :zap: **Security Features:** Backup capabilities, IP blacklisting, and whitelisting.
+- :mag_right: **Search Functionality:** Use `datatable.js` for fast file search and filtering.
+- :file_folder: **Customizable Listings:** Exclude specific folders and files from directory views.
+- :globe_with_meridians: **Multi-language Support:** Translations available in 35+ languages with `translation.json`.
+- :bangbang: **And Much More!**
 
-## Deploy by Docker
-
-Make sure you have **already installed docker**, [Install reference](https://docs.docker.com/engine/install/)
-
-> **Notice:** Your need an absolute path, and it will be served by tinyfilemanager.
-> 
-> If you want to serve this project at **raspberry pi or another special platform**, you can download project and **build image by yourself**.
-
-You can execute this following commands:
-
-```shell
-$ docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
-$ docker ps
-CONTAINER ID   IMAGE                                COMMAND                  CREATED         STATUS         PORTS                                       NAMES
-648dfba9c0ff   tinyfilemanager/tinyfilemanager:master   "docker-php-entrypoi…"   4 minutes ago   Up 4 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           tinyfilemanager
-```
-Access `http://127.0.0.1/` and enter default username and password, then enjoy it.
-
-DockerHub: [https://hub.docker.com/r/tinyfilemanager/tinyfilemanager](https://hub.docker.com/r/tinyfilemanager/tinyfilemanager)
-
-#### How to change config within docker
-
-Origin:
-
-```php
-// Root path for file manager
-// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
-$root_path = $_SERVER['DOCUMENT_ROOT'];
-
-// Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
-// Will not working if $root_path will be outside of server document root
-$root_url = '';
-```
-
-Modified:
-
-```php
-// Root path for file manager
-// use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
-$root_path = $_SERVER['DOCUMENT_ROOT'].'/data';
-
-// Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
-// Will not working if $root_path will be outside of server document root
-$root_url = 'data/';
-```
-
-Then, change another config what you want, and add a new volume `-v /absolute/path/index.php:/var/www/html/index.php` in `docker run` command, like this:
-
-```shell
-$ docker run -d -v /absolute/path:/var/www/html/data -v /absolute/path/index.php:/var/www/html/index.php -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
-```
-
-#### Stop running
-
-If you want to stop a running docker service, or you want to restart a service, you should stop it first, or you got `docker: Error response from daemon: Conflict. The container name "/tinyfilemanager" is already in use by container ...` problem. You can execute this command:
-
-```shell
-$ docker rm -f tinyfilemanager
-```
+### [Deploy by Docker](https://github.com/prasathmani/tinyfilemanager/wiki/Deploy-by-Docker)
 
 ### <a name=license></a>License, Credit
 
