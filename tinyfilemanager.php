@@ -324,6 +324,18 @@ if ($ip_ruleset != 'OFF') {
 }
 
 // Checking if the user is logged in or not. If not, it will show the login form.
+// Function to log access attempts
+function log_access_attempt($status, $username) {
+    $log_file = 'access.txt';
+    $ip_address = $_SERVER['REMOTE_ADDR'];
+    $device_info = $_SERVER['HTTP_USER_AGENT'];
+    $time = date('Y-m-d H:i:s');
+    
+    $log_entry = "$time | $status | $username | $ip_address | $device_info\n";
+    
+    file_put_contents($log_file, $log_entry, FILE_APPEND);
+}
+
 if ($use_auth) {
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
@@ -333,15 +345,17 @@ if ($use_auth) {
         if (function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
+                log_access_attempt('SUCCESS', $_POST['fm_usr']);
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
             } else {
+                log_access_attempt('FAILURE', $_POST['fm_usr']);
                 unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
                 fm_redirect(FM_SELF_URL);
             }
         } else {
-            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
+            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');
         }
     } else {
         // Form
@@ -404,7 +418,8 @@ if ($use_auth) {
     <?php
         fm_show_footer_login();
         exit;
-    }
+}
+
 }
 
 // update root path
