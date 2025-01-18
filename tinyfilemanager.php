@@ -1871,7 +1871,7 @@ if (isset($_GET['view'])) {
                     }
                 } elseif ($is_image) {
                     // Image content
-                    if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
+                    if (in_array($ext, array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
                         echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($file_url) . '" alt="image" class="preview-img"></label></p>';
                     }
                 } elseif ($is_audio) {
@@ -2263,7 +2263,7 @@ $all_files_size = 0;
                     <td data-sort=<?php echo fm_enc($f) ?>>
                         <div class="filename">
                             <?php
-                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
+                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
                                 <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
                                 <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
                                 <?php else: ?>
@@ -2907,6 +2907,7 @@ function fm_get_file_icon_class($path)
         case 'gif':
         case 'jpg':
         case 'jpeg':
+		case 'jfif':
         case 'jpc':
         case 'jp2':
         case 'jpx':
@@ -3104,7 +3105,7 @@ function fm_get_file_icon_class($path)
  */
 function fm_get_image_exts()
 {
-    return array('ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
+    return array('ico', 'gif', 'jpg', 'jpeg','jfif', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
 }
 
 /**
@@ -3288,6 +3289,7 @@ function fm_get_file_mimes($extension)
     $fileTypes['gif'] = 'image/gif';
     $fileTypes['png'] = 'image/png';
     $fileTypes['jpeg'] = 'image/jpg';
+    $fileTypes['jfif'] = 'image/jpg';
     $fileTypes['jpg'] = 'image/jpg';
     $fileTypes['webp'] = 'image/webp';
     $fileTypes['avif'] = 'image/avif';
