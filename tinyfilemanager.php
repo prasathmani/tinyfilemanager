@@ -2156,26 +2156,23 @@ $all_files_size = 0;
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    try{
+                    try {
                         $owner_id = fileowner($path . '/' . $f);
-                        if($owner_id != 0) {
+                        if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
-                           if ($owner_info) {
-                                  $owner =  $owner_info;
-                           }
-                       }
-                      
+                            if ($owner_info) {
+                                $owner =  $owner_info;
+                            }
+                        }
                         $group_id = filegroup($path . '/' . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
-                             $group =  $group_info;
-                         }
-
-                    } catch(Exception $e){
-                       error_log("exception:" . $e->getMessage());
+                            $group =  $group_info;
+                        }
+                    } catch (Exception $e) {
+                        error_log("exception:" . $e->getMessage());
                     }
                 }
-
             ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
@@ -2231,26 +2228,23 @@ $all_files_size = 0;
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    try{
+                    try {
                         $owner_id = fileowner($path . '/' . $f);
-                        if($owner_id != 0) {
+                        if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
-                           if ($owner_info) {
-                                  $owner =  $owner_info;
-                           }
-                       }
-                      
+                            if ($owner_info) {
+                                $owner =  $owner_info;
+                            }
+                        }
                         $group_id = filegroup($path . '/' . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
-                             $group =  $group_info;
-                         }
-
-                    } catch(Exception $e){
-                       error_log("exception:" . $e->getMessage());
+                            $group =  $group_info;
+                        }
+                    } catch (Exception $e) {
+                        error_log("exception:" . $e->getMessage());
                     }
                 }
-
             ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
