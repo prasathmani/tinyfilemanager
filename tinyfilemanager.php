@@ -1796,6 +1796,7 @@ if (isset($_GET['view'])) {
 
     $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
     $file_path = $path . '/' . $file;
+    $file_url = ($_SERVER['DOCUMENT_ROOT'] === $root_path) ? $file_url : ('?p=&proxy_file=1&path=' . urlencode($file_path));
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $mime_type = fm_get_mime_type($file_path);
@@ -1889,14 +1890,8 @@ if (isset($_GET['view'])) {
                 <?php if (!FM_READONLY): ?>
                     <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
                 <?php endif; ?>
-                <a class="fw-bold btn btn-outline-primary" href="<?php 
-		                                                   if($_SERVER['DOCUMENT_ROOT'] === $root_path){
-						                        echo fm_enc($file_url);}
-						                   else{
-						                         echo '?p=&proxy_file=1&path=' . urlencode($file_path); 
-								       }						
-								?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
-		<?php
+                <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                <?php
                 // ZIP actions
                 if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
                     $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
@@ -1951,14 +1946,7 @@ if (isset($_GET['view'])) {
                 } elseif ($is_image) {
                     // Image content
                     if (in_array($ext, array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
-						if($_SERVER['DOCUMENT_ROOT'] === $root_path){
-						   echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' .fm_enc($file_url). '" alt="image" 
-						class="preview-img"></label></p>';
-						}
-						else{
-						   echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . '?p=&proxy_file=1&path=' . urlencode($file_path) . '" alt="image" 
-						class="preview-img"></label></p>';							
-						}
+                        echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($file_url) . '" alt="image" class="preview-img"></label></p>';
                     }
                 } elseif ($is_audio) {
                     // Audio content
@@ -2295,16 +2283,10 @@ $all_files_size = 0;
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
-                    <?php                    
-                        $foldDirectLink ='';
-                        if( $_SERVER['DOCUMENT_ROOT']   === $root_path ){
-                              $foldDirectLink = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') ; 
-                            }
-                        else{
-                             $foldDirectLink = '?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH .$f. '/');
-                        }
-	            ?>			
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo  $foldDirectLink; ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                    <?php
+                        $foldDirectLink =  ($_SERVER['DOCUMENT_ROOT'] === $root_path ) ? (FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') : ('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH .$f. '/'));
+	                ?>			
+                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo  fm_enc($foldDirectLink); ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                     </td>
                 </tr>
             <?php
@@ -2359,7 +2341,7 @@ $all_files_size = 0;
                         <div class="filename">
                             <?php
                             if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
-                                 <?php $imagePreview = '?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f);  ?>
+                                 <?php $imagePreview = fm_enc('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f));  ?>
                                 <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
                                 <?php else: ?>
                                     <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
@@ -2385,14 +2367,7 @@ $all_files_size = 0;
                             <a title="<?php echo lng('CopyTo') ?>..."
                                 href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="
-			<?php 
-			    if($_SERVER['DOCUMENT_ROOT'] === $root_path){
-			         echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f);}
-			    else{
-				 echo '?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f); 
-				}
-			?>" target="_blank"><i class="fa fa-link"></i></a>
+			            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f)) ?>" target="_blank"><i class="fa fa-link"></i></a>
                         <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
                     </td>
                 </tr>
