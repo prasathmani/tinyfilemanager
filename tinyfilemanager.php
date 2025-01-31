@@ -97,7 +97,7 @@ $allowed_upload_extensions = '';
 $favicon_path = '';
 
 // Files and folders to excluded from listing
-// e.g. array('myfile.html', 'personal-folder', '*.php', ...)
+// e.g. array('myfile.html', 'personal-folder', '*.php', '/path/to/folder', ...)
 $exclude_items = array();
 
 // Online office Docs Viewer
@@ -1334,7 +1334,7 @@ $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
 $current_path = array_slice(explode("/", $path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path)) {
+if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
             continue;
@@ -1343,9 +1343,9 @@ if (is_array($objects) && fm_is_exclude_items($current_path)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file)) {
+        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
             $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file)) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
             $folders[] = $file;
         }
     }
@@ -1712,7 +1712,7 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1918,7 +1918,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2157,26 +2157,23 @@ $all_files_size = 0;
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    try{
+                    try {
                         $owner_id = fileowner($path . '/' . $f);
-                        if($owner_id != 0) {
+                        if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
-                           if ($owner_info) {
-                                  $owner =  $owner_info;
-                           }
-                       }
-                      
+                            if ($owner_info) {
+                                $owner =  $owner_info;
+                            }
+                        }
                         $group_id = filegroup($path . '/' . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
-                             $group =  $group_info;
-                         }
-
-                    } catch(Exception $e){
-                       error_log("exception:" . $e->getMessage());
+                            $group =  $group_info;
+                        }
+                    } catch (Exception $e) {
+                        error_log("exception:" . $e->getMessage());
                     }
                 }
-
             ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
@@ -2232,26 +2229,23 @@ $all_files_size = 0;
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    try{
+                    try {
                         $owner_id = fileowner($path . '/' . $f);
-                        if($owner_id != 0) {
+                        if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
-                           if ($owner_info) {
-                                  $owner =  $owner_info;
-                           }
-                       }
-                      
+                            if ($owner_info) {
+                                $owner =  $owner_info;
+                            }
+                        }
                         $group_id = filegroup($path . '/' . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
-                             $group =  $group_info;
-                         }
-
-                    } catch(Exception $e){
-                       error_log("exception:" . $e->getMessage());
+                            $group =  $group_info;
+                        }
+                    } catch (Exception $e) {
+                        error_log("exception:" . $e->getMessage());
                     }
                 }
-
             ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
@@ -2671,12 +2665,13 @@ function fm_get_display_path($file_path)
 
 /**
  * Check file is in exclude list
- * @param string $file
+ * @param string $name The name of the file/folder
+ * @param string $path The full path of the file/folder
  * @return bool
  */
-function fm_is_exclude_items($file)
+function fm_is_exclude_items($name, $path)
 {
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
     if (isset($exclude_items) and sizeof($exclude_items)) {
         unset($exclude_items);
     }
@@ -2685,7 +2680,7 @@ function fm_is_exclude_items($file)
     if (version_compare(PHP_VERSION, '7.0.0', '<')) {
         $exclude_items = unserialize($exclude_items);
     }
-    if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
+    if (!in_array($name, $exclude_items) && !in_array("*.$ext", $exclude_items) && !in_array($path, $exclude_items)) {
         return true;
     }
     return false;
