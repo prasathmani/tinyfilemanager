@@ -1769,8 +1769,9 @@ if (isset($_GET['view'])) {
                 <li class="list-group-item active" aria-current="true"><strong><?php echo lng($view_title) ?>:</strong> <?php echo fm_enc(fm_convert_win($file)) ?></li>
                 <?php $display_path = fm_get_display_path($file_path); ?>
                 <li class="list-group-item"><strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?></li>
-                <li class="list-group-item"><strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
-                <li class="list-group-item"><strong>MIME-type:</strong> <?php echo $mime_type ?></li>
+                <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, filemtime($file_path)); ?></li>
+                <li class="list-group-item"><strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
+                <li class="list-group-item"><strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?></li>
                 <?php
                 // ZIP info
                 if (($is_zip || $is_gzip) && $filenames !== false) {
@@ -5585,6 +5586,9 @@ function fm_show_header_login()
         $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
         $tr['en']['Are you sure want to rename?']                   = 'Are you sure want to rename?';
         $tr['en']['Are you sure want to']                           = 'Are you sure want to';
+        $tr['en']['Date Modified']                                  = 'Date Modified';
+        $tr['en']['File size']                                      = 'File size';
+        $tr['en']['MIME-type']                                      = 'MIME-type';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
