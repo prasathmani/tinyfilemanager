@@ -97,7 +97,7 @@ $allowed_upload_extensions = '';
 $favicon_path = '';
 
 // Files and folders to excluded from listing
-// e.g. array('myfile.html', 'personal-folder', '*.php', ...)
+// e.g. array('myfile.html', 'personal-folder', '*.php', '/path/to/folder', ...)
 $exclude_items = array();
 
 // Online office Docs Viewer
@@ -151,6 +151,9 @@ if (is_readable($config_file)) {
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
+    'css-photoswipe' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.5/photoswipe.min.css" crossorigin="anonymous" />',
+    'js-photoswipe-lightbox' => 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.3/dist/photoswipe-lightbox.esm.js',
+    'js-photoswipe-module' => 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.3/dist/photoswipe.esm.js',
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">',
     'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
     'css-font-awesome' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">',
@@ -459,7 +462,7 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 /*************************** ACTIONS ***************************/
 
 // file proxy
-if (isset($_GET['proxy_file'])) {    
+if (isset($_GET['proxy_file'])) {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET');
 
@@ -467,14 +470,14 @@ if (isset($_GET['proxy_file'])) {
         if (substr($path, 0, 1) !== '/') {
             die('Invalid file path.');
         }
-         if ($path === '/')
-           return '/';
+        if ($path === '/') {
+            return '/';
+        }
         return realpath($path);
     }
 
-   // get file path 
-    $filePath = isset($_GET['path'])?$_GET['path']:"/";
-
+    // get file path
+    $filePath = isset($_GET['path']) ? $_GET['path'] : "/";
     $filePath = sanitizePath($filePath);
 
     if ($filePath === false || !file_exists($filePath)) {
@@ -488,16 +491,45 @@ if (isset($_GET['proxy_file'])) {
         echo generateDirectoryListing($filePath, $fileList);
         exit;
     } else {
-       // if it is image or vedio file ,return  the immage file content
         if (!is_readable($filePath)) {
           http_response_code(403);
           die("File is not readable.");
         }
         $mimeType = mime_content_type($filePath);
         header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . filesize($filePath));
-        readfile($filePath);
-        exit;
+        $fileSize = filesize($filePath);
+        header("Accept-Ranges: bytes");
+        if (isset($_SERVER['HTTP_RANGE'])) {
+            list(, $range) = explode("=", $_SERVER['HTTP_RANGE'], 2);
+            list($start, $end) = explode("-", $range);
+            $start = intval($start);
+            $end = ($end === '') ? $fileSize - 1 : intval($end);
+
+            if ($start > $end || $start >= $fileSize || $end >= $fileSize) {
+                header("HTTP/1.1 416 Range Not Satisfiable");
+                header("Content-Range: bytes */$fileSize");
+                exit;
+            }
+
+            $length = $end - $start + 1;
+            $file = fopen($filePath, 'rb');
+            fseek($file, $start);
+
+            header("HTTP/1.1 206 Partial Content");
+            header("Content-Length: $length");
+            header("Content-Range: bytes $start-$end/$fileSize");
+
+            while (!feof($file) && ($p = ftell($file)) <= $end) {
+                echo fread($file, min(1024 * 16, $end - $p + 1));
+                flush();
+            }
+            fclose($file);
+            exit;
+        } else {
+            header("Content-Length: $fileSize");
+            readfile($filePath);
+            exit;
+        }
     }
 }
 
@@ -1407,7 +1439,7 @@ $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
 $current_path = array_slice(explode("/", $path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path)) {
+if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
             continue;
@@ -1416,9 +1448,9 @@ if (is_array($objects) && fm_is_exclude_items($current_path)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file)) {
+        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
             $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file)) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
             $folders[] = $file;
         }
     }
@@ -1530,6 +1562,212 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             }
         }
     </script>
+<?php
+    fm_show_footer();
+    exit;
+}
+
+//album form
+if (isset($_GET['photoalbum']) && !FM_READONLY) {
+   fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
+    //get the allowed file extensions
+
+/**
+ * create Thumbnail
+ *
+ * @param string $filePath Original image path
+ * @param string $thumbnailPath Thumbnail save path
+ * @param array $size Original image size
+ */
+function createThumbnail($filePath, $thumbnailPath, $size) {
+    // Check if thumbnail already exists
+    if (file_exists($thumbnailPath)) {
+        return;
+    }
+
+    // Determine which imagecreatefrom function to use
+    $createFunc = null;
+    switch (strtolower(pathinfo($filePath, PATHINFO_EXTENSION))) {
+        case 'jpg':
+        case 'jpeg':
+        case 'jfif':
+            $createFunc = 'imagecreatefromjpeg';
+            break;
+        case 'png':
+            $createFunc = 'imagecreatefrompng';
+            break;
+        case 'gif':
+            $createFunc = 'imagecreatefromgif';
+            break;
+        case 'webp':
+            $createFunc = 'imagecreatefromwebp';
+            break;
+        case 'bmp':
+            $createFunc = 'imagecreatefrombmp';
+            break;
+    }
+
+    if ($createFunc && function_exists($createFunc)) {
+        $sourceImage = @$createFunc($filePath);
+        if ($sourceImage === false) {
+            return; // Skip if image cannot be loaded
+        }
+
+        // Create thumbnail
+        $thumbWidth = 110;
+        $thumbHeight = 90;
+        $thumbImage = imagecreatetruecolor($thumbWidth, $thumbHeight);
+
+        // Handle transparent background
+        imagealphablending($thumbImage, false);
+        imagesavealpha($thumbImage, true);
+        $transparent = imagecolorallocatealpha($thumbImage, 255, 255, 255, 127);
+        imagefilledrectangle($thumbImage, 0, 0, $thumbWidth, $thumbHeight, $transparent);
+
+        // Scale the image
+        if (!imagecopyresampled($thumbImage, $sourceImage, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $size[0], $size[1])) {
+            imagedestroy($sourceImage);
+            imagedestroy($thumbImage);
+            return;
+        }
+
+        // Save the thumbnail
+        $saveFunc = null;
+        switch (strtolower(pathinfo($filePath, PATHINFO_EXTENSION))) {
+            case 'jpg':
+            case 'jpeg':
+            case 'jfif':
+                $saveFunc = 'imagejpeg';
+                break;
+            case 'png':
+                $saveFunc = 'imagepng';
+                break;
+            case 'gif':
+                $saveFunc = 'imagegif';
+                break;
+            case 'webp':
+                $saveFunc = 'imagewebp';
+                break;
+            case 'bmp':
+                $saveFunc = 'imagebmp';
+                break;
+        }
+
+        if ($saveFunc && function_exists($saveFunc)) {
+            $saveFunc($thumbImage, $thumbnailPath);
+        }
+
+        // Clean up resources
+        imagedestroy($sourceImage);
+        imagedestroy($thumbImage);
+    }
+}
+
+function generateThumbnails($dir) {
+    $images = [];
+
+    // Check if the directory is "thumbnails", skip unnecessary processing
+    $isThumbnailsDir = (basename($dir) === 'thumbnails');
+
+    // Get all files in the directory
+    $files = scandir($dir);
+    if ($files === false) {
+        return $images;
+    }
+
+    // If not "thumbnails", create a thumbnails directory
+    if (!$isThumbnailsDir) {
+        $thumbnailsDir = $dir . '/thumbnails';
+        if (!is_dir($thumbnailsDir) && !mkdir($thumbnailsDir, 0755, true)) {
+            echo "Error: Unable to create thumbnails directory '$thumbnailsDir'<br>";
+            return false;
+        }
+    }
+
+    // Iterate over the files in the directory
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..') {
+            continue; // Ignore current and parent directories
+        }
+
+        $filePath = $dir . '/' . $file;
+
+        // Check if it's a supported image file
+        if (is_file($filePath) && preg_match('/\.(jpg|jpeg|png|gif|jfif|bmp|webp)$/i', $file)) {
+            $size = @getimagesize($filePath);
+            if ($size === false) {
+                continue; // Skip if image info cannot be obtained
+            }
+
+            // Add image info to the results array
+            $fileName = basename($filePath);
+            $images[] = ['src' => $fileName, 'width' => $size[0], 'height' => $size[1]];
+
+            // If not "thumbnails" directory, create thumbnails
+            if (!$isThumbnailsDir) {
+                $thumbnailPath = $thumbnailsDir . '/' . $fileName;
+                createThumbnail($filePath, $thumbnailPath, $size);
+            }
+        }
+    }
+
+    return $images;
+}
+
+
+    ?>
+    
+    <?php print_external('css-photoswipe'); ?>
+                <p class="card-text">
+                    <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a>
+                    <?php echo ' ' ?>
+                </p>  
+<style>
+    img {
+        float: left; /* or float: right; */
+    }
+    .clearfix::after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+</style>
+    <div id="gallery">
+        <?php
+            $dir =  fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH));
+            $images = generateThumbnails($dir);
+            $index =0;
+            foreach ($images as $image) {
+                $filePath =  fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH . '/' .  $image['src']);
+                $thumbnailPath = fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH . '/thumbnails/' .  $image['src']);
+        ?> 
+        <a href="<?php  echo  fm_enc('?p=&proxy_file=1&path=' . urlencode($filePath)) ?>" data-pswp-width=" <?php echo $image['width'] ?>"  data-pswp-height="<?php echo $image['height']  ?>" data-index="<?php echo  $index ?>  ">
+           <img src="<?php echo  fm_enc('?p=&proxy_file=1&path=' . urlencode((file_exists($thumbnailPath)) ? $thumbnailPath : $filePath)) ?>" width="110"  height="90" >
+        </a>  
+        <?php
+                 $index++;
+            }
+           ?>
+    </div>
+
+    <script type="module">
+        import PhotoSwipeLightbox from "<?php print_external('js-photoswipe-lightbox'); ?>";
+        const gallery = document.getElementById('gallery');
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '#gallery',
+            bgOpacity: 0.9,
+            children: 'a',
+            pswpModule: () => import( "<?php print_external('js-photoswipe-module'); ?>"),
+        });
+        
+        lightbox.on('close', () => {
+        });
+        
+        lightbox.init();
+  
+    </script> 
+    
 <?php
     fm_show_footer();
     exit;
@@ -1785,7 +2023,7 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1843,8 +2081,9 @@ if (isset($_GET['view'])) {
                 <li class="list-group-item active" aria-current="true"><strong><?php echo lng($view_title) ?>:</strong> <?php echo fm_enc(fm_convert_win($file)) ?></li>
                 <?php $display_path = fm_get_display_path($file_path); ?>
                 <li class="list-group-item"><strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?></li>
-                <li class="list-group-item"><strong>File size:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
-                <li class="list-group-item"><strong>MIME-type:</strong> <?php echo $mime_type ?></li>
+                <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, filemtime($file_path)); ?></li>
+                <li class="list-group-item"><strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
+                <li class="list-group-item"><strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?></li>
                 <?php
                 // ZIP info
                 if (($is_zip || $is_gzip) && $filenames !== false) {
@@ -1991,7 +2230,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2230,26 +2469,23 @@ $all_files_size = 0;
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    try{
+                    try {
                         $owner_id = fileowner($path . '/' . $f);
-                        if($owner_id != 0) {
+                        if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
-                           if ($owner_info) {
-                                  $owner =  $owner_info;
-                           }
-                       }
-                      
+                            if ($owner_info) {
+                                $owner =  $owner_info;
+                            }
+                        }
                         $group_id = filegroup($path . '/' . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
-                             $group =  $group_info;
-                         }
-
-                    } catch(Exception $e){
-                       error_log("exception:" . $e->getMessage());
+                            $group =  $group_info;
+                        }
+                    } catch (Exception $e) {
+                        error_log("exception:" . $e->getMessage());
                     }
                 }
-
             ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
@@ -2284,7 +2520,7 @@ $all_files_size = 0;
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
                     <?php
-                        $foldDirectLink =  ($_SERVER['DOCUMENT_ROOT'] === $root_path ) ? (FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') : ('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH .$f. '/'));
+                        $foldDirectLink =  ($_SERVER['DOCUMENT_ROOT'] === $root_path ) ? (FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') : ('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH. '/' .$f. '/'));
 	                ?>			
                         <a title="<?php echo lng('DirectLink') ?>" href="<?php echo  fm_enc($foldDirectLink); ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                     </td>
@@ -2308,26 +2544,23 @@ $all_files_size = 0;
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
-                    try{
+                    try {
                         $owner_id = fileowner($path . '/' . $f);
-                        if($owner_id != 0) {
+                        if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
-                           if ($owner_info) {
-                                  $owner =  $owner_info;
-                           }
-                       }
-                      
+                            if ($owner_info) {
+                                $owner =  $owner_info;
+                            }
+                        }
                         $group_id = filegroup($path . '/' . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
-                             $group =  $group_info;
-                         }
-
-                    } catch(Exception $e){
-                       error_log("exception:" . $e->getMessage());
+                            $group =  $group_info;
+                        }
+                    } catch (Exception $e) {
+                        error_log("exception:" . $e->getMessage());
                     }
                 }
-
             ?>
                 <tr>
                     <?php if (!FM_READONLY): ?>
@@ -2747,12 +2980,13 @@ function fm_get_display_path($file_path)
 
 /**
  * Check file is in exclude list
- * @param string $file
+ * @param string $name The name of the file/folder
+ * @param string $path The full path of the file/folder
  * @return bool
  */
-function fm_is_exclude_items($file)
+function fm_is_exclude_items($name, $path)
 {
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
     if (isset($exclude_items) and sizeof($exclude_items)) {
         unset($exclude_items);
     }
@@ -2761,7 +2995,7 @@ function fm_is_exclude_items($file)
     if (version_compare(PHP_VERSION, '7.0.0', '<')) {
         $exclude_items = unserialize($exclude_items);
     }
-    if (!in_array($file, $exclude_items) && !in_array("*.$ext", $exclude_items)) {
+    if (!in_array($name, $exclude_items) && !in_array("*.$ext", $exclude_items) && !in_array($path, $exclude_items)) {
         return true;
     }
     return false;
@@ -3839,6 +4073,9 @@ function fm_show_nav_path($path)
                         </li>
                         <li class="nav-item">
                             <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-bs-toggle="modal" data-bs-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
+                        </li>
+                        <li class="nav-item">
+                            <a title="<?php echo lng('Album') ?>" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;photoalbum"><i class="fa fa-picture-o" aria-hidden="true"></i> <?php echo lng('Album') ?></a>
                         </li>
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH): ?>
@@ -5669,6 +5906,10 @@ function fm_show_header_login()
         $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
         $tr['en']['Are you sure want to rename?']                   = 'Are you sure want to rename?';
         $tr['en']['Are you sure want to']                           = 'Are you sure want to';
+        $tr['en']['Date Modified']                                  = 'Date Modified';
+        $tr['en']['File size']                                      = 'File size';
+        $tr['en']['MIME-type']                                      = 'MIME-type';
+	$tr['en']['Album']                                          = 'Album';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
