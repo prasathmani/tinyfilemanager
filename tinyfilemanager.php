@@ -325,13 +325,49 @@ if ($ip_ruleset != 'OFF') {
 
 // Checking if the user is logged in or not. If not, it will show the login form.
 if ($use_auth) {
+    function tfm_password_verify(
+        #[\SensitiveParameter]
+        string $password,
+        string $hash
+    ): bool {
+        $str_starts_with = function (string $haystack, string $needle): bool {
+            if (PHP_MAJOR_VERSION >= 8) {
+                return str_starts_with($haystack, $needle);
+            }
+            return strlen($needle) <= strlen($haystack) && 0 === substr_compare($haystack, $needle, 0);
+        };
+        $needles = array(
+            '$1$', // CRYPT_MD5,
+            '$2a$', // CRYPT_BLOWFISH
+            '$2x$', // CRYPT_BLOWFISH
+            '$2y$', // CRYPT_BLOWFISH
+            '$5$', // CRYPT_SHA256
+            '$6$', // CRYPT_SHA512
+        );
+        if (strlen($hash) >= 26) { // CRYPT_MD5, the weakest supported algo, yield length 26 hash. (DES is not supported.)
+            foreach ($needles as $needle) {
+                if ($str_starts_with($hash, $needle)) {
+                    // it's a crypt() hash.
+                    return password_verify($password, $hash);
+                }
+            }
+        }
+        // plaintext password.
+        // We still hash both inputs and use hash_equals() to protect against timing-attack-password-extraction.
+        // hash_equals() is only constant-time when both inputs have the same length.
+        // md5 is used as a compression function.
+        $h1 = hash("md5", $password, true);
+        $h2 = hash("md5", $hash, true);
+        return hash_equals($h1, $h2);
+    }
+
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'], $_POST['token'])) {
         // Logging In
         sleep(1);
         if (function_exists('password_verify')) {
-            if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
+            if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && tfm_password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
