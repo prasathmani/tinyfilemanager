@@ -570,6 +570,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $theme = $te3;
         }
         $cfg->save();
+        session_write_close();
         echo true;
     }
 
