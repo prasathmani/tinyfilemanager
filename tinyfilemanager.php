@@ -334,7 +334,7 @@ if ($use_auth) {
             if (PHP_MAJOR_VERSION >= 8) {
                 return str_starts_with($haystack, $needle);
             }
-            return strlen($needle) <= strlen($haystack) && 0 === substr_compare($haystack, $needle, 0);
+            return 0 === substr_compare($haystack, $needle, 0, strlen($needle));
         };
         $needles = array(
             '$1$', // CRYPT_MD5,
