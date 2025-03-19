@@ -330,27 +330,20 @@ if ($use_auth) {
         string $password,
         string $hash
     ): bool {
-        $str_starts_with = function (string $haystack, string $needle): bool {
-            if (PHP_MAJOR_VERSION >= 8) {
-                return str_starts_with($haystack, $needle);
-            }
-            return 0 === substr_compare($haystack, $needle, 0, strlen($needle));
-        };
-        $needles = array(
-            '$1$', // CRYPT_MD5,
-            '$2a$', // CRYPT_BLOWFISH
-            '$2x$', // CRYPT_BLOWFISH
-            '$2y$', // CRYPT_BLOWFISH
-            '$5$', // CRYPT_SHA256
-            '$6$', // CRYPT_SHA512
-        );
-        if (strlen($hash) >= 26) { // CRYPT_MD5, the weakest supported algo, yield length 26 hash. (DES is not supported.)
-            foreach ($needles as $needle) {
-                if ($str_starts_with($hash, $needle)) {
-                    // it's a crypt() hash.
-                    return password_verify($password, $hash);
-                }
-            }
+        // CRYPT_MD5: $1$
+        // CRYPT_BLOWFISH: $2a$, $2x$, $2y$
+        // CRYPT_SHA256: $5$
+        // CRYPT_SHA512: $6$
+        if (
+            strlen($hash) >= 26 // CRYPT_MD5, the weakest known algo, yield length 26 hash.
+            // CRYPT_STD_DES and CRYPT_EXT_DES is not supported: They're insecure 1970's algos that nobody sane has used for decades, and they're difficult to detect.
+            && $hash[0] === '$'
+            && (1 === strspn($hash[1], '0123456789'))
+            && ($hash[2] === '$' || $hash[3] === '$')
+            && !($hash[2] === '$' && $hash[3] === '$')
+        ) {
+            // it's a crypt() hash.
+            return password_verify($password, $hash);
         }
         // plaintext password.
         // We still hash both inputs and use hash_equals() to protect against timing-attack-password-extraction.
@@ -360,6 +353,7 @@ if ($use_auth) {
         $h2 = hash("md5", $hash, true);
         return hash_equals($h1, $h2);
     }
+    
 
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
