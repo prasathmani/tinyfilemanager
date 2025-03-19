@@ -328,6 +328,7 @@ if ($use_auth) {
     function tfm_password_verify(
         #[\SensitiveParameter]
         string $password,
+        #[\SensitiveParameter]
         string $hash
     ): bool {
         // CRYPT_MD5: $1$
