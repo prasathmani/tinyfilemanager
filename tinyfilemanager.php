@@ -4608,6 +4608,23 @@ function fm_show_header_login()
             .fs-7 {
                 font-size: 14px;
             }
+            .dropdown-menu {
+                right: 0;
+                left: auto !important;
+                margin-top: 2px;
+            }
+
+            @media (max-width: 768px) {
+                .dropdown-menu {
+                    position: static !important;
+                    float: none;
+                    width: auto;
+                    margin-top: 0;
+                    background-color: transparent;
+                    border: 0;
+                    box-shadow: none;
+                }
+            }
         </style>
         <?php
         if (FM_THEME == "dark"): ?>
