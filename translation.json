@@ -383,7 +383,7 @@
         "Invalid characters in file name": "Недопустимые символы в имени файла",
         "Invalid characters in file or folder name": "Недопустимые символы в имени файла или папки",
         "Invalid file or folder name": "Некорректное имя папки или файла",
-        "InvertSelection": "Обратная выборка",
+        "InvertSelection": "Инвертировать выбор",
         "ItemName": "Имя элемента",
         "ItemType": "Тип элемента",
         "Language": "Язык",
