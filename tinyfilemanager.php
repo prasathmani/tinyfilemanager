@@ -1055,19 +1055,23 @@ if (!empty($_FILES) && !FM_READONLY) {
                     if (file_exists($fullPath)) {
                         $ext_1 = $ext ? '.' . $ext : '';
                         $datedPath = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
-                        switch($upload_name_conflict_handling)
-                        {
-                            case 'OLD':
-                                rename($fullPath,$datedPath);
-                                break;
-                            case 'REPLACE':
-                                if( fm_rdelete($fullPath) ) break;
-                            case 'NEW':
-                            default:
-                                $fullPathTarget = $datedPath;
+                        if(fm_is_exclude_items($fullPath)){
+                            $fullPathTarget = $datedPath; // excluded items should not be replaced or renamed
+                        }else{
+                            switch($upload_name_conflict_handling)
+                            {
+                                case 'OLD':
+                                    fm_rename($fullPath,$datedPath);
+                                    break;
+                                case 'REPLACE':
+                                    if(fm_rdelete($fullPath)) break;
+                                case 'NEW':
+                                default:
+                                    $fullPathTarget = $datedPath;
+                            }
                         }
                     }
-                    rename("{$fullPath}.part", $fullPathTarget);
+                    fm_rename("{$fullPath}.part", $fullPathTarget);
                 }
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
