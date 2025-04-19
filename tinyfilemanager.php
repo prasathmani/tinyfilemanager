@@ -121,6 +121,12 @@ $max_upload_size_bytes = 5000000000; // size 5,000,000,000 bytes (~5GB)
 // eg. decrease to 1MB if nginx reports problem 413 entity too large
 $upload_chunk_size_bytes = 2000000; // chunk size 2,000,000 bytes (~2MB)
 
+// Handle file uploads where the file exists
+// NEW => newly uploaded file is renamed with a timestamp appended
+// OLD => old file will be renamed with a timestamp appended
+// REPLACE => old file will be deleted
+$upload_name_conflict_handling = 'OLD';
+
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
 // AND => Connection must be on the whitelist, and not on the blacklist
@@ -1045,11 +1051,21 @@ if (!empty($_FILES) && !FM_READONLY) {
                 }
 
                 if ($chunkIndex == $chunkTotal - 1) {
+                    $fullPathTarget = $fullPath;  
                     if (file_exists($fullPath)) {
                         $ext_1 = $ext ? '.' . $ext : '';
-                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
-                    } else {
-                        $fullPathTarget = $fullPath;
+                        $datedPath = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                        switch($upload_name_conflict_handling)
+                        {
+                            case 'OLD':
+                                rename($fullPath,$datedPath);
+                                break;
+                            case 'REPLACE':
+                                if( fm_rdelete($fullPath) ) break;
+                            case 'NEW':
+                            default:
+                                $fullPathTarget = $datedPath;
+                        }
                     }
                     rename("{$fullPath}.part", $fullPathTarget);
                 }
