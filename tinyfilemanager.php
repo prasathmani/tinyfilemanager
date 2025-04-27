@@ -1354,7 +1354,7 @@ $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
 $current_path = array_slice(explode("/", $path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
+if (is_array($objects) && !fm_is_excluded($current_path, $path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
             continue;
@@ -1363,9 +1363,9 @@ if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
+        if (@is_file($new_path) && !fm_is_excluded($file, $new_path)) {
             $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && !fm_is_excluded($file, $new_path)) {
             $folders[] = $file;
         }
     }
@@ -1732,7 +1732,7 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || fm_is_excluded($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1938,7 +1938,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || fm_is_excluded($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2684,26 +2684,23 @@ function fm_get_display_path($file_path)
 }
 
 /**
- * Check file is in exclude list
+ * Check if the file, extension, or path is an excluded item
  * @param string $name The name of the file/folder
  * @param string $path The full path of the file/folder
  * @return bool
  */
-function fm_is_exclude_items($name, $path)
+function fm_is_excluded($name, $path)
 {
     $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-    if (isset($exclude_items) and sizeof($exclude_items)) {
-        unset($exclude_items);
+    $excluded_items = FM_EXCLUDE_ITEMS; // set by above config or environment
+    if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+        $excluded_items = unserialize($excluded_items); // constants cant hold arrays before PHP 7
     }
 
-    $exclude_items = FM_EXCLUDE_ITEMS;
-    if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-        $exclude_items = unserialize($exclude_items);
+    if (in_array($name, $excluded_items) || in_array("*.$ext", $excluded_items) || in_array($path, $excluded_items)) {
+        return true; // item is in exclude_items
     }
-    if (!in_array($name, $exclude_items) && !in_array("*.$ext", $exclude_items) && !in_array($path, $exclude_items)) {
-        return true;
-    }
-    return false;
+    return false; // item is safe
 }
 
 /**
