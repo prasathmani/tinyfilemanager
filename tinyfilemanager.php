@@ -4953,7 +4953,7 @@ function fm_show_header_login()
                 if (remaining_count > 0) {
                     $('.conflict-checkbox-container').show();
                     $('#conflict_checkbox').prop('checked', false);
-                    $('.conflict-checkbox-container label').html('<?php echo lng('Apply choice to remaining ') ?> <b>' + remaining_count + '</b>');
+                    $('.conflict-checkbox-container label').html('<?php echo lng('Apply choice to remaining') ?> <b>' + remaining_count + '</b>');
                 } else {
                     $('.conflict-checkbox-container').hide();
                     $('#conflict_checkbox').prop('checked', false);
@@ -5708,6 +5708,12 @@ function fm_show_header_login()
         $tr['en']['Actions']        = 'Actions';
         $tr['en']['Folder is empty'] = 'Folder is empty';
         $tr['en']['Upload']         = 'Upload';
+        $tr['en']['File conflict detected'] = 'File conflict detected';
+        $tr['en']['Conflict detected for'] = 'Conflict detected for';
+        $tr['en']['New Filename'] = 'New Filename';
+        $tr['en']['Rename Old'] = 'Rename Old';
+        $tr['en']['Apply choice to remaining'] = 'Apply choice to remaining';
+        $tr['en']['Replace'] = 'Replace';
         $tr['en']['Cancel']         = 'Cancel';
         $tr['en']['InvertSelection'] = 'Invert Selection';
         $tr['en']['DestinationFolder']  = 'Destination Folder';
