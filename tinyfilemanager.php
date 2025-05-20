@@ -456,6 +456,24 @@ defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
 unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
 
+$password_algo_names = array('argon2i' => 'Argon2i', 'argon2id' => 'Argon2id', '2y' => 'bcrypt');
+$password_algos = array();
+if (function_exists('password_algos')) {
+    // PHP 7.4+
+    $password_algos = password_algos();
+} elseif (function_exists('password_hash')) {
+    // PHP 5.5+
+    $password_algos = array(PASSWORD_DEFAULT);
+    if (defined('PASSWORD_ARGON2I')) {
+        // PHP 7.2+
+        $password_algos[] = PASSWORD_ARGON2I;
+    }
+    if (defined('PASSWORD_ARGON2ID')) {
+        // PHP 7.3+
+        $password_algos[] = PASSWORD_ARGON2ID;
+    }
+}
+
 /*************************** ACTIONS ***************************/
 
 // Handle all AJAX Request
@@ -574,8 +592,9 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
     }
 
     // new password hash
-    if (isset($_POST['type']) && $_POST['type'] == "pwdhash") {
-        $res = isset($_POST['inputPassword2']) && !empty($_POST['inputPassword2']) ? password_hash($_POST['inputPassword2'], PASSWORD_DEFAULT) : '';
+    if (isset($_POST['type']) && $_POST['type'] == "pwdhash" && !empty($password_algos)) {
+        $algo = isset($_POST['inputPassword2Algo']) && in_array($_POST['inputPassword2Algo'], $password_algos) ? $_POST['inputPassword2Algo'] : PASSWORD_DEFAULT;
+        $res = isset($_POST['inputPassword2']) && !empty($_POST['inputPassword2']) ? password_hash($_POST['inputPassword2'], $algo) : '';
         echo $res;
     }
 
@@ -1693,6 +1712,16 @@ if (isset($_GET['help'])) {
                             <div class="form-group mx-sm-3 mb-2">
                                 <label for="inputPassword2" class="sr-only"><?php echo lng('Password') ?></label>
                                 <input type="text" class="form-control btn-sm" id="inputPassword2" name="inputPassword2" placeholder="<?php echo lng('Password') ?>" required>
+                            </div>
+                            <div class="form-group mx-sm-3 mb-2">
+                                <label for="inputPassword2Algo" class="sr-only"><?php echo lng('PasswordAlgo') ?></label>
+                                <select class="form-control" id="inputPassword2Algo" name="inputPassword2Algo" placeholder="<?php echo lng('PasswordAlgo') ?>" required>
+                                    <?php
+                                    foreach ($password_algos as $idx => $password_algo) {
+                                        echo '<option value="' . $password_algo . '"' . ($idx ? '' : ' selected') . '>' . $password_algo_names[$password_algo] . '</option>';
+                                    }
+                                    ?>
+                                </select>
                             </div>
                             <button type="submit" class="btn btn-success btn-sm mb-2"><?php echo lng('Generate') ?></button>
                         </form>
@@ -5486,6 +5515,7 @@ function fm_show_header_login()
         $tr['en']['Login']          = 'Sign in';
         $tr['en']['Username']       = 'Username';
         $tr['en']['Password']       = 'Password';
+        $tr['en']['PasswordAlgo']   = 'Password Algorithm';
         $tr['en']['Logout']         = 'Sign Out';
         $tr['en']['Move']           = 'Move';
         $tr['en']['Copy']           = 'Copy';
