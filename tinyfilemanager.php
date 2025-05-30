@@ -932,6 +932,22 @@ if (isset($_GET['dl'], $_POST['token'])) {
         // Call the download function
         fm_download_file($path . '/' . $dl, $dl, 1024); // Download with a buffer size of 1024 bytes
         exit;
+    } else if ($dl != '' && is_dir($path . '/' . $dl)) {
+        chdir($path);
+
+        // zip the directory
+        $zipname = sys_get_temp_dir() .'/'. $dl;
+        $zipper = new FM_Zipper();
+        $res = $zipper->create($zipname, $dl);
+
+        if ($res) {
+            // download the zip file and delete it afterwards
+            fm_download_file($zipname, $dl . '.zip', 1024);
+            unlink($zipname);
+        } else {
+            fm_set_msg(lng('Error while creating Archive'), 'error');
+        }
+        exit;
     } else {
         // Handle the case where the file is not found
         fm_set_msg(lng('File not found'), 'error');
@@ -2208,6 +2224,7 @@ $all_files_size = 0;
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
                         <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
                     </td>
                 </tr>
             <?php
