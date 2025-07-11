@@ -155,7 +155,7 @@ $external = array(
     'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
     'css-font-awesome' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">',
     'css-highlightjs' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/' . $highlightjs_style . '.min.css">',
-    'js-ace' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>',
+    'js-monaco' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.min.js"></script>',
     'js-bootstrap' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>',
     'js-dropzone' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>',
     'js-jquery' => '<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>',
@@ -1841,7 +1841,7 @@ if (isset($_GET['view'])) {
                     <a class="fw-bold btn btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file">
                         <i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
                     </a>
-                    <a class="fw-bold btn btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
+                    <a class="fw-bold btn btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=monaco"
                         class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('AdvancedEditor') ?>
                     </a>
                 <?php } ?>
@@ -1934,7 +1934,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     // normal editer
     $isNormalEditor = true;
     if (isset($_GET['env'])) {
-        if ($_GET['env'] == "ace") {
+        if ($_GET['env'] == "monaco") {
             $isNormalEditor = false;
         }
     }
@@ -1965,19 +1965,19 @@ if (isset($_GET['edit']) && !FM_READONLY) {
             <div class="col-xs-12 col-sm-5 col-lg-6 pt-1">
                 <div class="btn-toolbar" role="toolbar">
                     <?php if (!$isNormalEditor) { ?>
-                        <div class="btn-group js-ace-toolbar">
-                            <button data-cmd="none" data-option="fullscreen" class="btn btn-sm btn-outline-secondary" id="js-ace-fullscreen" title="<?php echo lng('Fullscreen') ?>"><i class="fa fa-expand" title="<?php echo lng('Fullscreen') ?>"></i></button>
-                            <button data-cmd="find" class="btn btn-sm btn-outline-secondary" id="js-ace-search" title="<?php echo lng('Search') ?>"><i class="fa fa-search" title="<?php echo lng('Search') ?>"></i></button>
-                            <button data-cmd="undo" class="btn btn-sm btn-outline-secondary" id="js-ace-undo" title="<?php echo lng('Undo') ?>"><i class="fa fa-undo" title="<?php echo lng('Undo') ?>"></i></button>
-                            <button data-cmd="redo" class="btn btn-sm btn-outline-secondary" id="js-ace-redo" title="<?php echo lng('Redo') ?>"><i class="fa fa-repeat" title="<?php echo lng('Redo') ?>"></i></button>
-                            <button data-cmd="none" data-option="wrap" class="btn btn-sm btn-outline-secondary" id="js-ace-wordWrap" title="<?php echo lng('Word Wrap') ?>"><i class="fa fa-text-width" title="<?php echo lng('Word Wrap') ?>"></i></button>
-                            <select id="js-ace-mode" data-type="mode" title="<?php echo lng('Select Document Type') ?>" class="btn-outline-secondary border-start-0 d-none d-md-block">
-                                <option>-- <?php echo lng('Select Mode') ?> --</option>
+                        <div class="btn-group js-monaco-toolbar">
+                            <button data-cmd="none" data-option="fullscreen" class="btn btn-sm btn-outline-secondary" id="js-monaco-fullscreen" title="<?php echo lng('Fullscreen') ?>"><i class="fa fa-expand" title="<?php echo lng('Fullscreen') ?>"></i></button>
+                            <button data-cmd="find" class="btn btn-sm btn-outline-secondary" id="js-monaco-search" title="<?php echo lng('Search') ?>"><i class="fa fa-search" title="<?php echo lng('Search') ?>"></i></button>
+                            <button data-cmd="undo" class="btn btn-sm btn-outline-secondary" id="js-monaco-undo" title="<?php echo lng('Undo') ?>"><i class="fa fa-undo" title="<?php echo lng('Undo') ?>"></i></button>
+                            <button data-cmd="redo" class="btn btn-sm btn-outline-secondary" id="js-monaco-redo" title="<?php echo lng('Redo') ?>"><i class="fa fa-repeat" title="<?php echo lng('Redo') ?>"></i></button>
+                            <button data-cmd="none" data-option="wrap" class="btn btn-sm btn-outline-secondary" id="js-monaco-wordWrap" title="<?php echo lng('Word Wrap') ?>"><i class="fa fa-text-width" title="<?php echo lng('Word Wrap') ?>"></i></button>
+                            <select id="js-monaco-language" data-type="language" title="<?php echo lng('Select Document Type') ?>" class="btn-outline-secondary border-start-0 d-none d-md-block">
+                                <option>-- <?php echo lng('Select Language') ?> --</option>
                             </select>
-                            <select id="js-ace-theme" data-type="theme" title="<?php echo lng('Select Theme') ?>" class="btn-outline-secondary border-start-0 d-none d-lg-block">
+                            <select id="js-monaco-theme" data-type="theme" title="<?php echo lng('Select Theme') ?>" class="btn-outline-secondary border-start-0 d-none d-lg-block">
                                 <option>-- <?php echo lng('Select Theme') ?> --</option>
                             </select>
-                            <select id="js-ace-fontSize" data-type="fontSize" title="<?php echo lng('Select Font Size') ?>" class="btn-outline-secondary border-start-0 d-none d-lg-block">
+                            <select id="js-monaco-fontSize" data-type="fontSize" title="<?php echo lng('Select Font Size') ?>" class="btn-outline-secondary border-start-0 d-none d-lg-block">
                                 <option>-- <?php echo lng('Select Font Size') ?> --</option>
                             </select>
                         </div>
@@ -2004,12 +2004,12 @@ if (isset($_GET['edit']) && !FM_READONLY) {
 
                     <?php if ($is_text) { ?>
                         <?php if ($isNormalEditor) { ?>
-                            <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
+                            <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=monaco"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
                             <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
                             </button>
                         <?php } else { ?>
                             <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
-                            <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
+                            <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'monaco')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
                             </button>
                         <?php } ?>
                     <?php } ?>
@@ -2021,7 +2021,8 @@ if (isset($_GET['edit']) && !FM_READONLY) {
             echo '<textarea class="mt-2" id="normal-editor" rows="33" cols="120" style="width: 99.5%;">' . htmlspecialchars($content) . '</textarea>';
             echo '<script>document.addEventListener("keydown", function(e) {if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) { e.preventDefault();edit_save(this,"nrl");}}, false);</script>';
         } elseif ($is_text) {
-            echo '<div id="editor" contenteditable="true">' . htmlspecialchars($content) . '</div>';
+            echo '<div id="editor" style="height: 600px; border: 1px solid grey;"></div>';
+            echo '<input type="hidden" id="editor-content" value="' . htmlspecialchars($content) . '">';
         } else {
             fm_set_msg(lng('FILE EXTENSION HAS NOT SUPPORTED'), 'error');
         }
@@ -4830,6 +4831,7 @@ function fm_show_header_login()
                 var isHighlightingEnabled = true;
             </script>
         <?php endif; ?>
+        <?php print_external('js-monaco'); ?>
         <script>
             function template(html, options) {
                 var re = /<\%([^\%>]+)?\%>/g,
@@ -4905,7 +4907,7 @@ function fm_show_header_login()
 
             // Save file
             function edit_save(e, t) {
-                var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
+                var n = "monaco" == t ? monacoEditor.getValue() : document.getElementById("normal-editor").value;
                 if (typeof n !== 'undefined' && n !== null) {
                     if (true) {
                         var data = {
@@ -5169,311 +5171,114 @@ function fm_show_header_login()
             });
         </script>
 
-        <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
+        <?php if (isset($_GET['edit']) && isset($_GET['env']) && $_GET['env'] == 'monaco' && FM_EDIT_FILE && !FM_READONLY):
             $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
-            $ext =  $ext == "js" ? "javascript" :  $ext;
+            $language = $ext;
+            // Map some extensions to Monaco languages
+            $langMap = [
+                'js' => 'javascript',
+                'ts' => 'typescript',
+                'py' => 'python',
+                'css' => 'css',
+                'html' => 'html',
+                'json' => 'json',
+                'md' => 'markdown',
+                'xml' => 'xml',
+                'php' => 'php',
+                'java' => 'java',
+                'c' => 'c',
+                'cpp' => 'cpp',
+                'cs' => 'csharp',
+                'rb' => 'ruby',
+                'go' => 'go',
+                'sh' => 'shell',
+                'sql' => 'sql',
+            ];
+            if (array_key_exists($ext, $langMap)) {
+                $language = $langMap[$ext];
+            }
         ?>
-            <?php print_external('js-ace'); ?>
             <script>
-                var editor = ace.edit("editor");
-                editor.getSession().setMode({
-                    path: "ace/mode/<?php echo $ext; ?>",
-                    inline: true
-                });
-                //editor.setTheme("ace/theme/twilight"); // Dark Theme
-                editor.setShowPrintMargin(false); // Hide the vertical ruler
-                function ace_commend(cmd) {
-                    editor.commands.exec(cmd, editor);
-                }
-                editor.commands.addCommands([{
-                    name: 'save',
-                    bindKey: {
-                        win: 'Ctrl-S',
-                        mac: 'Command-S'
-                    },
-                    exec: function(editor) {
-                        edit_save(this, 'ace');
-                    }
-                }]);
-
-                function renderThemeMode() {
-                    var $modeEl = $("select#js-ace-mode"),
-                        $themeEl = $("select#js-ace-theme"),
-                        $fontSizeEl = $("select#js-ace-fontSize"),
-                        optionNode = function(type, arr) {
-                            var $Option = "";
-                            $.each(arr, function(i, val) {
-                                $Option += "<option value='" + type + i + "'>" + val + "</option>";
-                            });
-                            return $Option;
-                        },
-                        _data = {
-                            "aceTheme": {
-                                "bright": {
-                                    "chrome": "Chrome",
-                                    "clouds": "Clouds",
-                                    "crimson_editor": "Crimson Editor",
-                                    "dawn": "Dawn",
-                                    "dreamweaver": "Dreamweaver",
-                                    "eclipse": "Eclipse",
-                                    "github": "GitHub",
-                                    "iplastic": "IPlastic",
-                                    "solarized_light": "Solarized Light",
-                                    "textmate": "TextMate",
-                                    "tomorrow": "Tomorrow",
-                                    "xcode": "XCode",
-                                    "kuroir": "Kuroir",
-                                    "katzenmilch": "KatzenMilch",
-                                    "sqlserver": "SQL Server"
-                                },
-                                "dark": {
-                                    "ambiance": "Ambiance",
-                                    "chaos": "Chaos",
-                                    "clouds_midnight": "Clouds Midnight",
-                                    "dracula": "Dracula",
-                                    "cobalt": "Cobalt",
-                                    "gruvbox": "Gruvbox",
-                                    "gob": "Green on Black",
-                                    "idle_fingers": "idle Fingers",
-                                    "kr_theme": "krTheme",
-                                    "merbivore": "Merbivore",
-                                    "merbivore_soft": "Merbivore Soft",
-                                    "mono_industrial": "Mono Industrial",
-                                    "monokai": "Monokai",
-                                    "pastel_on_dark": "Pastel on dark",
-                                    "solarized_dark": "Solarized Dark",
-                                    "terminal": "Terminal",
-                                    "tomorrow_night": "Tomorrow Night",
-                                    "tomorrow_night_blue": "Tomorrow Night Blue",
-                                    "tomorrow_night_bright": "Tomorrow Night Bright",
-                                    "tomorrow_night_eighties": "Tomorrow Night 80s",
-                                    "twilight": "Twilight",
-                                    "vibrant_ink": "Vibrant Ink"
-                                }
-                            },
-                            "aceMode": {
-                                "javascript": "JavaScript",
-                                "abap": "ABAP",
-                                "abc": "ABC",
-                                "actionscript": "ActionScript",
-                                "ada": "ADA",
-                                "apache_conf": "Apache Conf",
-                                "asciidoc": "AsciiDoc",
-                                "asl": "ASL",
-                                "assembly_x86": "Assembly x86",
-                                "autohotkey": "AutoHotKey",
-                                "apex": "Apex",
-                                "batchfile": "BatchFile",
-                                "bro": "Bro",
-                                "c_cpp": "C and C++",
-                                "c9search": "C9Search",
-                                "cirru": "Cirru",
-                                "clojure": "Clojure",
-                                "cobol": "Cobol",
-                                "coffee": "CoffeeScript",
-                                "coldfusion": "ColdFusion",
-                                "csharp": "C#",
-                                "csound_document": "Csound Document",
-                                "csound_orchestra": "Csound",
-                                "csound_score": "Csound Score",
-                                "css": "CSS",
-                                "curly": "Curly",
-                                "d": "D",
-                                "dart": "Dart",
-                                "diff": "Diff",
-                                "dockerfile": "Dockerfile",
-                                "dot": "Dot",
-                                "drools": "Drools",
-                                "edifact": "Edifact",
-                                "eiffel": "Eiffel",
-                                "ejs": "EJS",
-                                "elixir": "Elixir",
-                                "elm": "Elm",
-                                "erlang": "Erlang",
-                                "forth": "Forth",
-                                "fortran": "Fortran",
-                                "fsharp": "FSharp",
-                                "fsl": "FSL",
-                                "ftl": "FreeMarker",
-                                "gcode": "Gcode",
-                                "gherkin": "Gherkin",
-                                "gitignore": "Gitignore",
-                                "glsl": "Glsl",
-                                "gobstones": "Gobstones",
-                                "golang": "Go",
-                                "graphqlschema": "GraphQLSchema",
-                                "groovy": "Groovy",
-                                "haml": "HAML",
-                                "handlebars": "Handlebars",
-                                "haskell": "Haskell",
-                                "haskell_cabal": "Haskell Cabal",
-                                "haxe": "haXe",
-                                "hjson": "Hjson",
-                                "html": "HTML",
-                                "html_elixir": "HTML (Elixir)",
-                                "html_ruby": "HTML (Ruby)",
-                                "ini": "INI",
-                                "io": "Io",
-                                "jack": "Jack",
-                                "jade": "Jade",
-                                "java": "Java",
-                                "json": "JSON",
-                                "jsoniq": "JSONiq",
-                                "jsp": "JSP",
-                                "jssm": "JSSM",
-                                "jsx": "JSX",
-                                "julia": "Julia",
-                                "kotlin": "Kotlin",
-                                "latex": "LaTeX",
-                                "less": "LESS",
-                                "liquid": "Liquid",
-                                "lisp": "Lisp",
-                                "livescript": "LiveScript",
-                                "logiql": "LogiQL",
-                                "lsl": "LSL",
-                                "lua": "Lua",
-                                "luapage": "LuaPage",
-                                "lucene": "Lucene",
-                                "makefile": "Makefile",
-                                "markdown": "Markdown",
-                                "mask": "Mask",
-                                "matlab": "MATLAB",
-                                "maze": "Maze",
-                                "mel": "MEL",
-                                "mixal": "MIXAL",
-                                "mushcode": "MUSHCode",
-                                "mysql": "MySQL",
-                                "nix": "Nix",
-                                "nsis": "NSIS",
-                                "objectivec": "Objective-C",
-                                "ocaml": "OCaml",
-                                "pascal": "Pascal",
-                                "perl": "Perl",
-                                "perl6": "Perl 6",
-                                "pgsql": "pgSQL",
-                                "php_laravel_blade": "PHP (Blade Template)",
-                                "php": "PHP",
-                                "puppet": "Puppet",
-                                "pig": "Pig",
-                                "powershell": "Powershell",
-                                "praat": "Praat",
-                                "prolog": "Prolog",
-                                "properties": "Properties",
-                                "protobuf": "Protobuf",
-                                "python": "Python",
-                                "r": "R",
-                                "razor": "Razor",
-                                "rdoc": "RDoc",
-                                "red": "Red",
-                                "rhtml": "RHTML",
-                                "rst": "RST",
-                                "ruby": "Ruby",
-                                "rust": "Rust",
-                                "sass": "SASS",
-                                "scad": "SCAD",
-                                "scala": "Scala",
-                                "scheme": "Scheme",
-                                "scss": "SCSS",
-                                "sh": "SH",
-                                "sjs": "SJS",
-                                "slim": "Slim",
-                                "smarty": "Smarty",
-                                "snippets": "snippets",
-                                "soy_template": "Soy Template",
-                                "space": "Space",
-                                "sql": "SQL",
-                                "sqlserver": "SQLServer",
-                                "stylus": "Stylus",
-                                "svg": "SVG",
-                                "swift": "Swift",
-                                "tcl": "Tcl",
-                                "terraform": "Terraform",
-                                "tex": "Tex",
-                                "text": "Text",
-                                "textile": "Textile",
-                                "toml": "Toml",
-                                "tsx": "TSX",
-                                "twig": "Twig",
-                                "typescript": "Typescript",
-                                "vala": "Vala",
-                                "vbscript": "VBScript",
-                                "velocity": "Velocity",
-                                "verilog": "Verilog",
-                                "vhdl": "VHDL",
-                                "visualforce": "Visualforce",
-                                "wollok": "Wollok",
-                                "xml": "XML",
-                                "xquery": "XQuery",
-                                "yaml": "YAML",
-                                "django": "Django"
-                            },
-                            "fontSize": {
-                                8: 8,
-                                10: 10,
-                                11: 11,
-                                12: 12,
-                                13: 13,
-                                14: 14,
-                                15: 15,
-                                16: 16,
-                                17: 17,
-                                18: 18,
-                                20: 20,
-                                22: 22,
-                                24: 24,
-                                26: 26,
-                                30: 30
-                            }
-                        };
-                    if (_data && _data.aceMode) {
-                        $modeEl.html(optionNode("ace/mode/", _data.aceMode));
-                    }
-                    if (_data && _data.aceTheme) {
-                        var lightTheme = optionNode("ace/theme/", _data.aceTheme.bright),
-                            darkTheme = optionNode("ace/theme/", _data.aceTheme.dark);
-                        $themeEl.html("<optgroup label=\"Bright\">" + lightTheme + "</optgroup><optgroup label=\"Dark\">" + darkTheme + "</optgroup>");
-                    }
-                    if (_data && _data.fontSize) {
-                        $fontSizeEl.html(optionNode("", _data.fontSize));
-                    }
-                    $modeEl.val(editor.getSession().$modeId);
-                    $themeEl.val(editor.getTheme());
-                    $(function() {
-                        //set default font size in drop down
-                        $fontSizeEl.val(12).change();
-                    });
-                }
-
-                $(function() {
-                    renderThemeMode();
-                    $(".js-ace-toolbar").on("click", 'button', function(e) {
-                        e.preventDefault();
-                        let cmdValue = $(this).attr("data-cmd"),
-                            editorOption = $(this).attr("data-option");
-                        if (cmdValue && cmdValue != "none") {
-                            ace_commend(cmdValue);
-                        } else if (editorOption) {
-                            if (editorOption == "fullscreen") {
-                                (void 0 !== document.fullScreenElement && null === document.fullScreenElement || void 0 !== document.msFullscreenElement && null === document.msFullscreenElement || void 0 !== document.mozFullScreen && !document.mozFullScreen || void 0 !== document.webkitIsFullScreen && !document.webkitIsFullScreen) &&
-                                (editor.container.requestFullScreen ? editor.container.requestFullScreen() : editor.container.mozRequestFullScreen ? editor.container.mozRequestFullScreen() : editor.container.webkitRequestFullScreen ? editor.container.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT) : editor.container.msRequestFullscreen && editor.container.msRequestFullscreen());
-                            } else if (editorOption == "wrap") {
-                                let wrapStatus = (editor.getSession().getUseWrapMode()) ? false : true;
-                                editor.getSession().setUseWrapMode(wrapStatus);
-                            }
-                        }
+                var monacoEditor;
+                require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' }});
+                require(['vs/editor/editor.main'], function() {
+                    var editorContent = document.getElementById('editor-content').value;
+                    monacoEditor = monaco.editor.create(document.getElementById('editor'), {
+                        value: editorContent,
+                        language: '<?php echo $language; ?>',
+                        theme: 'vs-dark', // Default theme
+                        automaticLayout: true,
+                        wordWrap: 'on' // Default word wrap
                     });
 
-                    $("select#js-ace-mode, select#js-ace-theme, select#js-ace-fontSize").on("change", function(e) {
-                        e.preventDefault();
-                        let selectedValue = $(this).val(),
-                            selectionType = $(this).attr("data-type");
-                        if (selectedValue && selectionType == "mode") {
-                            editor.getSession().setMode(selectedValue);
-                        } else if (selectedValue && selectionType == "theme") {
-                            editor.setTheme(selectedValue);
-                        } else if (selectedValue && selectionType == "fontSize") {
-                            editor.setFontSize(parseInt(selectedValue));
-                        }
+                    // Save command
+                    monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, function() {
+                        edit_save(this, 'monaco');
+                    });
+
+                    // Toolbar button actions
+                    $('#js-monaco-fullscreen').on('click', function() {
+                        monacoEditor.getAction('editor.action.toggleFullScreen').run();
+                    });
+                    $('#js-monaco-search').on('click', function() {
+                        monacoEditor.getAction('actions.find').run();
+                    });
+                    $('#js-monaco-undo').on('click', function() {
+                        monacoEditor.trigger('toolbar', 'undo', null);
+                    });
+                    $('#js-monaco-redo').on('click', function() {
+                        monacoEditor.trigger('toolbar', 'redo', null);
+                    });
+                    $('#js-monaco-wordWrap').on('click', function() {
+                        var currentWordWrap = monacoEditor.getOption(monaco.editor.EditorOption.wordWrap);
+                        monacoEditor.updateOptions({ wordWrap: currentWordWrap === 'on' ? 'off' : 'on' });
+                    });
+
+                    // Language selection
+                    var languages = monaco.languages.getLanguages();
+                    var $languageSelect = $('#js-monaco-language');
+                    languages.forEach(function(lang) {
+                        $languageSelect.append($('<option>', {
+                            value: lang.id,
+                            text: lang.aliases ? lang.aliases[0] : lang.id
+                        }));
+                    });
+                    $languageSelect.val('<?php echo $language; ?>'); // Set initial language
+                    $languageSelect.on('change', function() {
+                        monaco.editor.setModelLanguage(monacoEditor.getModel(), $(this).val());
+                    });
+
+                    // Theme selection
+                    var $themeSelect = $('#js-monaco-theme');
+                    var themes = {
+                        'vs': 'Visual Studio',
+                        'vs-dark': 'Visual Studio Dark',
+                        'hc-black': 'High Contrast Black'
+                    };
+                    for (var themeId in themes) {
+                        $themeSelect.append($('<option>', {
+                            value: themeId,
+                            text: themes[themeId]
+                        }));
+                    }
+                    $themeSelect.val('vs-dark'); // Set initial theme
+                    $themeSelect.on('change', function() {
+                        monaco.editor.setTheme($(this).val());
+                    });
+
+                    // Font size selection
+                    var $fontSizeSelect = $('#js-monaco-fontSize');
+                    var fontSizes = [8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 30];
+                    fontSizes.forEach(function(size) {
+                        $fontSizeSelect.append($('<option>', {
+                            value: size,
+                            text: size + 'px'
+                        }));
+                    });
+                    $fontSizeSelect.val(14); // Set initial font size
+                     monacoEditor.updateOptions({ fontSize: 14 });
+                    $fontSizeSelect.on('change', function() {
+                        monacoEditor.updateOptions({ fontSize: parseInt($(this).val()) });
                     });
                 });
             </script>
