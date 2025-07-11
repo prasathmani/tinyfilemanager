@@ -5212,8 +5212,11 @@ function fm_show_header_login()
                     });
 
                     // Save command
-                    monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, function() {
-                        edit_save(this, 'monaco');
+                    monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, function(e) {
+                        if (e && typeof e.preventDefault === 'function') {
+                            e.preventDefault();
+                        }
+                        edit_save(null, 'monaco'); // Pass null as the first arg, or a dummy element if needed by edit_save
                     });
 
                     // Toolbar button actions
