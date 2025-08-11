@@ -3300,7 +3300,7 @@ function fm_get_file_mimes($extension)
     $fileTypes['divx'] = 'video/x-msvideo';
 
     $fileTypes['mp3'] = 'audio/mpeg';
-    $fileTypes['mp4'] = 'audio/mpeg';
+    $fileTypes['mp4'] = 'video/mp4';
     $fileTypes['mpeg'] = 'video/mpeg';
     $fileTypes['mpg'] = 'video/mpeg';
     $fileTypes['mpe'] = 'video/mpeg';
