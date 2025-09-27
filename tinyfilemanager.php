@@ -570,6 +570,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $theme = $te3;
         }
         $cfg->save();
+        session_write_close();
         echo true;
     }
 
@@ -1639,8 +1640,6 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?></button>
                         </div>
                     </div>
-
-                    <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</span>
                 </form>
             </div>
         </div>
@@ -3691,7 +3690,11 @@ class FM_Config
                 for ($x = 3; $x < count($lines); $x++) {
                     @fputs($fh, $lines[$x], strlen($lines[$x]));
                 }
+                @fflush($fh);
                 @fclose($fh);
+                if (is_callable("opcache_invalidate")) {
+                    @opcache_invalidate($fm_file, true);
+                }
             }
         }
     }
