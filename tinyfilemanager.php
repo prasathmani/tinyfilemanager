@@ -121,6 +121,13 @@ $max_upload_size_bytes = 5000000000; // size 5,000,000,000 bytes (~5GB)
 // eg. decrease to 1MB if nginx reports problem 413 entity too large
 $upload_chunk_size_bytes = 2000000; // chunk size 2,000,000 bytes (~2MB)
 
+// Handle file uploads where the file exists
+// PROMPT => ask the user to resolve specific conflicts, or leave the temporary file
+// NEW => newly uploaded file is renamed with a timestamp appended
+// OLD => old file will be renamed with a timestamp appended
+// REPLACE => old file will be deleted
+$upload_name_conflict_handling = 'PROMPT';
+
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
 // AND => Connection must be on the whitelist, and not on the blacklist
@@ -667,6 +674,46 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             event_callback(array("fail" => $err));
         }
     }
+
+    // Upload Conflict Resolution
+    if (isset($_POST['type']) && $_POST['type'] == 'conflict') {
+        $path = $_POST['path'];
+        $filename = $_POST['filename'];
+        $resolution = $_POST['resoultion'];
+
+
+        $fullPath = $path . '/' . $filename;
+        $tempPath = "{$fullPath}.part";
+
+        if (!file_exists($tempPath)) {
+            echo json_encode(['status' => 'error', 'info' => "Temporary file not found. $tempPath"]);
+            exit;
+        }
+
+        $ext = pathinfo($filename, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($filename, PATHINFO_EXTENSION)) : '';
+        $fullPathTarget = $fullPath;
+        $ext_1 = $ext ? '.' . $ext : '';
+        $datedPath = $path . '/' . basename($filename, $ext_1) . '_' . date('ymdHis') . $ext_1;
+
+        if (fm_is_excluded($filename, $path)) {
+            $fullPathTarget = $datedPath;
+        } else switch ($_POST['resolution']) {
+            case 'OLD':
+                fm_rename($fullPath, $datedPath);
+                break;
+            case 'REPLACE':
+                if (fm_rdelete($fullPath)) break;
+            case 'NEW':
+            default:
+                $fullPathTarget = $datedPath;
+        }
+        fm_rename($tempPath, $fullPathTarget);
+
+        echo json_encode(['status' => 'resolved',
+            'info' => "RESOLVED WITH: $path , $filename, $resolution"]);
+        exit;
+    }
+
     exit();
 }
 
@@ -1045,13 +1092,33 @@ if (!empty($_FILES) && !FM_READONLY) {
                 }
 
                 if ($chunkIndex == $chunkTotal - 1) {
+                    $fullPathTarget = $fullPath;
+                    $ext_1 = $ext ? '.' . $ext : '';
+                    $datedPath = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
                     if (file_exists($fullPath)) {
-                        $ext_1 = $ext ? '.' . $ext : '';
-                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
-                    } else {
-                        $fullPathTarget = $fullPath;
+                        if (fm_is_excluded($fullPathInput, $path)) {
+                            $fullPathTarget = $datedPath; // excluded items should not be replaced, renamed, or prompted
+                        } else switch ($upload_name_conflict_handling) {
+                            case 'PROMPT':
+                                $response = array(
+                                    'status' => 'conflict',
+                                    'info' => "file upload successful with conflict",
+                                    'filename' => $fullPathInput,
+                                    'path' => $path
+                                );
+                                echo json_encode($response);
+                                exit();
+                            case 'OLD':
+                                fm_rename($fullPath,$datedPath);
+                                break;
+                            case 'REPLACE':
+                                if (fm_rdelete($fullPath)) break;
+                            case 'NEW':
+                            default:
+                                $fullPathTarget = $datedPath;
+                        }
                     }
-                    rename("{$fullPath}.part", $fullPathTarget);
+                    fm_rename("{$fullPath}.part", $fullPathTarget);
                 }
             } else if (move_uploaded_file($tmp_name, $fullPath)) {
                 // Be sure that the file has been uploaded
@@ -1334,7 +1401,7 @@ $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
 $current_path = array_slice(explode("/", $path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
+if (is_array($objects) && !fm_is_excluded($current_path, $path)) {
     foreach ($objects as $file) {
         if ($file == '.' || $file == '..') {
             continue;
@@ -1343,9 +1410,9 @@ if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
+        if (@is_file($new_path) && !fm_is_excluded($file, $new_path)) {
             $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && !fm_is_excluded($file, $new_path)) {
             $folders[] = $file;
         }
     }
@@ -1421,6 +1488,36 @@ if (isset($_GET['upload']) && !FM_READONLY) {
             </div>
         </div>
     </div>
+    <!-- Upload Conflict Modal -->
+    <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog"
+         id="conflict_modal" data-bs-theme="<?php echo FM_THEME; ?>">
+        <div class="modal-dialog" role="document">
+            <form class="modal-content rounded-3 shadow" method="post" autocomplete="off" onsubmit="return false;">
+                <div class="modal-body p-4 text-center">
+                    <h5 class="mb-3"><?php echo lng('File conflict detected') ?></h5>
+                    <p class="mb-1 conflict-filename"></p>
+                    <div class="form-check text-start mt-3 mb-1 px-4 conflict-checkbox-container"
+                         style="display: none;">
+                        <input class="form-check-input" type="checkbox" value="" id="conflict_checkbox">
+                        <label class="form-check-label small" for="conflict_checkbox"></label>
+                    </div>
+                </div>
+                <div class="modal-footer flex-nowrap p-0">
+                    <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end"
+                            data-resolution="NEW" onclick="resolve_conflict_from_modal()"><?php echo lng('New Filename') ?></button>
+
+                    <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end"
+                            data-resolution="OLD" onclick="resolve_conflict_from_modal()"><?php echo lng('Rename Old') ?></button>
+                </div>
+                <div class="modal-footer flex-nowrap p-0">
+                    <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0 border-end"
+                            data-resolution="REPLACE" onclick="resolve_conflict_from_modal()"><?php echo lng('Replace') ?></button>
+                    <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 m-0 rounded-0"
+                            onclick="cancel_conflict()"><?php echo lng('Cancel') ?></button>
+                </div>
+            </form>
+        </div>
+    </div>
     <?php print_external('js-dropzone'); ?>
     <script>
         Dropzone.options.fileUploader = {
@@ -1444,7 +1541,10 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                 }).on("success", function(res) {
                     try {
                         let _response = JSON.parse(res.xhr.response);
-
+                        if (_response.status == "conflict") {
+                            enqueue_conflict(_response.filename, _response.path);
+                            toast(_response.info);
+                        }
                         if (_response.status == "error") {
                             toast(_response.info);
                         }
@@ -1640,7 +1740,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         </div>
                     </div>
 
-                    <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</span>
+                    <span class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</span>
                 </form>
             </div>
         </div>
@@ -1712,7 +1812,7 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || fm_is_excluded($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1918,7 +2018,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    if ($file == '' || !is_file($path . '/' . $file) || fm_is_excluded($file, $path . '/' . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2664,26 +2764,23 @@ function fm_get_display_path($file_path)
 }
 
 /**
- * Check file is in exclude list
+ * Check if the file, extension, or path is an excluded item
  * @param string $name The name of the file/folder
  * @param string $path The full path of the file/folder
  * @return bool
  */
-function fm_is_exclude_items($name, $path)
+function fm_is_excluded($name, $path)
 {
     $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-    if (isset($exclude_items) and sizeof($exclude_items)) {
-        unset($exclude_items);
+    $excluded_items = FM_EXCLUDE_ITEMS; // set by above config or environment
+    if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+        $excluded_items = unserialize($excluded_items); // constants cant hold arrays before PHP 7
     }
 
-    $exclude_items = FM_EXCLUDE_ITEMS;
-    if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-        $exclude_items = unserialize($exclude_items);
+    if (in_array($name, $excluded_items) || in_array("*.$ext", $excluded_items) || in_array($path, $excluded_items)) {
+        return true; // item is in exclude_items
     }
-    if (!in_array($name, $exclude_items) && !in_array("*.$ext", $exclude_items) && !in_array($path, $exclude_items)) {
-        return true;
-    }
-    return false;
+    return false; // item is safe
 }
 
 /**
@@ -4844,6 +4941,103 @@ function fm_show_header_login()
                 }
             }
 
+            // File Upload Conflict Prompt
+            let conflict_queue = [];
+            let conflict_current = null;
+            let conflict_processing = false;
+            let apply_choice_to_all = false;
+            let selected_resolution = null;
+
+            function update_conflict_checkbox() {
+                let remaining_count = conflict_queue.length;
+                if (remaining_count > 0) {
+                    $('.conflict-checkbox-container').show();
+                    $('#conflict_checkbox').prop('checked', false);
+                    $('.conflict-checkbox-container label').html('<?php echo lng('Apply choice to remaining') ?> <b>' + remaining_count + '</b>');
+                } else {
+                    $('.conflict-checkbox-container').hide();
+                    $('#conflict_checkbox').prop('checked', false);
+                }
+            }
+
+            function enqueue_conflict(filename, path) {
+                conflict_queue.push({filename, path});
+                if (conflict_processing && document.getElementById('conflict_modal')) {
+                    update_conflict_checkbox(); // show
+                }
+                if (!conflict_processing) {
+                    apply_choice_to_all = false; // reset for new batch
+                    selected_resolution = null;
+                    show_next_conflict_dialog();
+                }
+            }
+
+            function show_next_conflict_dialog() {
+                if (conflict_queue.length === 0) {
+                    conflict_processing = false;
+
+                    $('#conflict_modal').modal('hide');
+                    return;
+                }
+
+                conflict_processing = true;
+                conflict_current = conflict_queue.shift();
+                const {filename, path} = conflict_current;
+
+                if (apply_choice_to_all && selected_resolution) {
+                    resolve_conflict(filename, selected_resolution, path, true);
+                    return;
+                }
+                $('#conflict_modal').find('.conflict-filename').html('<?php echo lng('Conflict detected for') ?> <b>' + filename + '</b>.');
+                $('#conflict_modal').modal('show');
+            }
+
+            function resolve_conflict_from_modal() {
+                let button = event.currentTarget;
+                let resolution = button.getAttribute('data-resolution');
+                if (conflict_current) {
+                    resolve_conflict(conflict_current.filename, resolution, conflict_current.path);
+                }
+            }
+
+            function resolve_conflict(filename, resolution, path, auto = false) {
+                if (!auto) {
+                    // Check if user selected "apply to all"
+                    apply_choice_to_all = $('#conflict_checkbox').is(':checked');
+                    if (apply_choice_to_all) {
+                        selected_resolution = resolution;
+                    }
+                }
+                $.ajax({
+                    type: 'POST',
+                    url: window.location,
+                    data: {
+                        ajax: true,
+                        type: 'conflict',
+                        filename: filename,
+                        resolution: resolution,
+                        path: path,
+                        token: window.csrf
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status === 'resolved') {
+                            show_next_conflict_dialog();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('AJAX Error: ' + error);
+                    }
+                });
+            }
+
+            function cancel_conflict() {
+                $('#conflict_modal').modal('hide');
+                show_next_conflict_dialog();
+            }
+
             function change_checkboxes(e, t) {
                 for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked
             }
@@ -5514,6 +5708,12 @@ function fm_show_header_login()
         $tr['en']['Actions']        = 'Actions';
         $tr['en']['Folder is empty'] = 'Folder is empty';
         $tr['en']['Upload']         = 'Upload';
+        $tr['en']['File conflict detected'] = 'File conflict detected';
+        $tr['en']['Conflict detected for'] = 'Conflict detected for';
+        $tr['en']['New Filename'] = 'New Filename';
+        $tr['en']['Rename Old'] = 'Rename Old';
+        $tr['en']['Apply choice to remaining'] = 'Apply choice to remaining';
+        $tr['en']['Replace'] = 'Replace';
         $tr['en']['Cancel']         = 'Cancel';
         $tr['en']['InvertSelection'] = 'Invert Selection';
         $tr['en']['DestinationFolder']  = 'Destination Folder';
