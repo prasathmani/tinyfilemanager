@@ -806,6 +806,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
 
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng('Invalid Token.'), 'error');
+        die("Invalid Token.");
     }
 
     // from
@@ -875,6 +876,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
 if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_READONLY) {
     if (!verifyToken($_POST['token'])) {
         fm_set_msg("Invalid Token.", 'error');
+        die("Invalid Token.");
     }
     // old name
     $old = urldecode($_POST['rename_from']);
@@ -1089,6 +1091,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
 
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
+        die("Invalid Token.");
     }
 
     $path = FM_ROOT_PATH;
@@ -1125,6 +1128,7 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
 
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
+        die("Invalid Token.");
     }
 
     $path = FM_ROOT_PATH;
@@ -1189,6 +1193,7 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
+        die("Invalid Token.");
     }
 
     $unzip = urldecode($_POST['unzip']);
@@ -1259,6 +1264,7 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
 
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
+        die("Invalid Token.");
     }
 
     $path = FM_ROOT_PATH;
@@ -1640,7 +1646,7 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                         </div>
                     </div>
 
-                    <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</span>
+                    <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</small>
                 </form>
             </div>
         </div>
