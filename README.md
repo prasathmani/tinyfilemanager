@@ -1,28 +1,5 @@
-# Tiny File Manager
+# Nvcaria: a fork of the tinyfilemanager repository 
 
-[![Live demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=flat-square)](https://tinyfilemanager.github.io/demo/)
-[![Live demo](https://img.shields.io/badge/Help-Docs-lightgrey.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/wiki)
-[![GitHub Release](https://img.shields.io/github/release/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/releases)
-[![GitHub License](https://img.shields.io/github/license/prasathmani/tinyfilemanager.svg?style=flat-square)](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
-[![Paypal](https://img.shields.io/badge/Donate-Paypal-lightgrey.svg?style=flat-square)](https://www.paypal.me/prasathmani)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/prasathmani)
-
-> TinyFileManager is a versatile web-based PHP file manager designed for simplicity and efficiency. This lightweight single-file PHP application can be effortlessly integrated into any server directory, allowing users to store, upload, edit, and manage files and folders directly through their web browser.
-With multi-language support and compatibility with PHP 5.5+, TinyFileManager enables the creation of individual user accounts, each with its dedicated directory. The platform also includes built-in functionality for handling text files using the Cloud9 IDE.
-Featuring syntax highlighting for over 150 languages and more than 35 themes, TinyFileManager offers a comprehensive solution for file management in an online environment.
-
-<sub>**Caution!** _Avoid utilizing this script as a standard file manager in public spaces. It is imperative to remove this script from the server after completing any tasks._</sub>
-
-## Demo
-
-[Demo](https://tinyfilemanager.github.io/demo/)
-
-
-## Documentation
-
-Tinyfilemanager is highly documented on the [wiki pages](https://github.com/prasathmani/tinyfilemanager/wiki).
-
-[![Tiny File Manager](screenshot.gif)](screenshot.gif)
 
 ## Requirements
 
@@ -33,12 +10,11 @@ Tinyfilemanager is highly documented on the [wiki pages](https://github.com/pras
 
 Download ZIP with latest version from master branch.
 
-Just copy the tinyfilemanager.php to your webspace - thats all :)
-You can also change the file name from "tinyfilemanager.php" to something else, you know what i meant for.
+Copy the Nvcaria.php to your webspace    
 
 Default username/password: **admin/admin@123** and **user/12345**.
 
-:warning: Warning: Please set your own username and password in `$auth_users` before use. password is encrypted with <code>password_hash()</code>. to generate new password hash [here](https://tinyfilemanager.github.io/docs/pwd.html)
+:warning: Warning: Please set your own username and password in `$auth_users` before use. password is encrypted with <code>password_hash()</code>.
 
 To enable/disable authentication set `$use_auth` to true or false.
 
@@ -68,8 +44,7 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 ### <a name=license></a>License, Credit
 
-- Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
+- Available under the [GNU license](https://github.com/KevinN2025/nvcaria/blob/forking/LICENSE)
 - Original concept and development by github.com/alexantr/filemanager
 - CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, and DataTable js_
-- To report a bug or request a feature, please file an [issue](https://github.com/prasathmani/tinyfilemanager/issues)
 - [Contributors](https://github.com/prasathmani/tinyfilemanager/wiki/Authors-and-Contributors)
