@@ -18,9 +18,7 @@ Default username/password: **admin/admin@123** and **user/12345**.
 
 To enable/disable authentication set `$use_auth` to true or false.
 
-:information_source: Add your own configuration file [config.php](https://tinyfilemanager.github.io/config-sample.txt) in the same folder to use as additional configuration file.
 
-:information_source: To work offline without CDN resources, use [offline](https://github.com/prasathmani/tinyfilemanager/tree/offline) branch
 
 ### :loudspeaker: Features
 
@@ -40,11 +38,9 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :globe_with_meridians: **Multi-language Support:** Translations available in 35+ languages with `translation.json`.
 - :bangbang: **And Much More!**
 
-### [Deploy by Docker](https://github.com/prasathmani/tinyfilemanager/wiki/Deploy-by-Docker)
 
 ### <a name=license></a>License, Credit
 
 - Available under the [GNU license](https://github.com/KevinN2025/nvcaria/blob/forking/LICENSE)
 - Original concept and development by github.com/alexantr/filemanager
 - CDN Used - _jQuery, Bootstrap, Font Awesome, Highlight js, ace js, DropZone js, and DataTable js_
-- [Contributors](https://github.com/prasathmani/tinyfilemanager/wiki/Authors-and-Contributors)
