@@ -1,0 +1,15 @@
+# System
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+composer.lock
+
+# Logs
+*.log
+tmp/
+cache/
+
+# Docker
+*.pid

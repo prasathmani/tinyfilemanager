@@ -1,5 +1,5 @@
 {
-  "appName": "Tiny File Manager",
+  "appName": "Nvcaria",
   "version": "2.6",
   "language": [
     {
@@ -89,7 +89,7 @@
       "name": "Hungarian",
       "code": "hu",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Fájl kezelő",
         "Login": "Bejelentkezés",
         "Username": "Felhasználói név",
@@ -169,7 +169,7 @@
       "name": "Norsk",
       "code": "no",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Fil behandler",
         "Login": "Logg inn",
         "Username": "Brukernavn",
@@ -328,7 +328,7 @@
         "AdvancedEditor": "Улучшенный редактор",
         "Advanced Search": "Расширенный поиск",
         "already exists": "уже существует",
-        "AppName": "Файловый менеджер",
+        "AppName": "Nvcaria",
         "AppTitle": "Файловый менеджер",
         "Archive": "Архив",
         "Archive not created": "Архив не создан",
@@ -450,7 +450,7 @@
         "Advanced Search": "Ricerca avanzata",
         "AdvancedEditor": "Editor avanzato",
         "already exists": "già esistente",
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "File Manager",
         "Archive not created": "Archivio non creato",
         "Archive not unpacked": "Archivio non decompresso",
@@ -573,7 +573,7 @@
         "Actions": "Actions",
         "AdvancedEditor": "Editeur avancé",
         "Advanced Search": "Recherche avancée",
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Gestionnaire de fichiers",
         "Back": "Retour",
         "BackUp": "Sauvegarder",
@@ -645,7 +645,7 @@
       "name": "Español",
       "code": "es",
       "translation": {
-        "AppName": "Pequeño Administrador de Archivos",
+        "AppName": "Nvcaria",
         "AppTitle": "Administrador de Archivos",
         "Login": "Iniciar Sesión",
         "Username": "Nombre de Usuario",
@@ -702,7 +702,7 @@
       "name": "Galego",
       "code": "gl",
       "translation": {
-        "AppName": "Pequeno Administrador de Arquivos",
+        "AppName": "Nvcaria",
         "AppTitle": "Administrador de Arquivos",
         "Login": "Iniciar Sesión",
         "Username": "Nome de Usuario",
@@ -759,7 +759,7 @@
       "name": "Català",
       "code": "ca",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Administrador d'Arxius",
         "Login": "Iniciar Sessió",
         "Username": "Nom d'Usuari",
@@ -839,7 +839,7 @@
       "name": "Deutsch",
       "code": "de",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Dateimanager",
         "Login": "Einloggen",
         "Username": "Benutzername",
@@ -957,7 +957,7 @@
       "name": "ภาษาไทย",
       "code": "th",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "ตัวจัดการไฟล์",
         "Login": "เข้าสู่ระบบ",
         "Username": "ชื่อผู้ใช้งาน",
@@ -1014,7 +1014,7 @@
       "name": "简体中文",
       "code": "zh-CN",
       "translation": {
-        "AppName": "文件管理器",
+        "AppName": "Nvcaria",
         "AppTitle": "文件管理器",
         "Login": "登录",
         "Username": "账号",
@@ -1176,7 +1176,7 @@
       "name": "中文(繁體)",
       "code": "zh-TW",
       "translation": {
-        "AppName": "檔案管理器",
+        "AppName": "Nvcaria",
         "AppTitle": "檔案管理器",
         "Login": "登入",
         "Username": "帳號",
@@ -1254,7 +1254,7 @@
       "name": "Bahasa Indonesia",
       "code": "id",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Pengelola Berkas",
         "Login": "Masuk",
         "Username": "Nama pengguna",
@@ -1337,7 +1337,7 @@
       "name": "Ελληνικά",
       "code": "gr",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "File Manager",
         "Login": "Είσοδος",
         "Username": "Username",
@@ -1396,7 +1396,7 @@
       "name": "Português Brasileiro",
       "code": "pt_BR",
       "translation": {
-        "AppName": "Gerenciador de arquivos Tiny",
+        "AppName": "Nvcaria",
         "AppTitle": "Gerenciador de arquivos",
         "Login": "Iniciar Sessão",
         "Username": "Nome de usuário",
@@ -1521,7 +1521,7 @@
       "name": "Português Europeu",
       "code": "pt_PT",
       "translation": {
-        "AppName": "Gestor de Ficheiros",
+        "AppName": "Nvcaria",
         "AppTitle": "Gestor de Ficheiros",
         "Login": "Iniciar sessão",
         "Username": "Nome de utilizador",
@@ -1635,7 +1635,7 @@
       "name": "Polski",
       "code": "pl",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Menedżer plików",
         "Login": "Login",
         "Username": "Nazwa Użytkownika",
@@ -1692,7 +1692,7 @@
       "name": "Tiếng Việt",
       "code": "vi",
       "translation": {
-        "AppName": "Trình quản lí tệp Tiny",
+        "AppName": "Nvcaria",
         "AppTitle": "Quản lý tệp",
         "Login": "Đăng nhập",
         "Username": "Tên đăng nhập",
@@ -1817,7 +1817,7 @@
       "name": "Hebrew",
       "code": "he",
       "translation": {
-        "AppName": "סייר קבצים - טיני",
+        "AppName": "Nvcaria",
         "AppTitle": "סייר קבצים",
         "Login": "התחבר",
         "Username": "שם משתמש",
@@ -1876,7 +1876,7 @@
       "name": "العربية",
       "code": "Ar",
       "translation": {
-        "AppName": "مدير الملفات الصغير",
+        "AppName": "Nvcaria",
         "AppTitle": "مدير الملفات",
         "Login": "دخول",
         "Username": "اسم المستخدم",
@@ -1946,7 +1946,7 @@
       "name": "Česky",
       "code": "cz",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "File Manager",
         "Login": "Přihlásit",
         "Username": "Přihlašovací jméno",
@@ -2098,7 +2098,7 @@
       "name": "Slovensky",
       "code": "sk",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "File Manager",
         "Login": "Prihlásiť sa",
         "Username": "Prihlasovacie meno",
@@ -2163,7 +2163,7 @@
       "name": "Slovensko",
       "code": "sl",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Raziskovalec",
         "Login": "Prijava",
         "Username": "Uporabniško ime",
@@ -2223,7 +2223,7 @@
       "name": "Suomi",
       "code": "fi",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "File Manager",
         "Login": "Kirjautuminen",
         "Username": "Käyttäjänimi",
@@ -2366,7 +2366,7 @@
       "name": "日本語",
       "code": "ja",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "File Manager",
         "Login": "ログイン",
         "Username": "Username",
@@ -2451,7 +2451,7 @@
       "name": "Монгол",
       "code": "mn_MN",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Файл зохицуулагчr",
         "Login": "Нэвтрэх",
         "Username": "Хэрэглэгчийн нэр",
@@ -2536,7 +2536,7 @@
       "name": "Dutch",
       "code": "nl",
       "translation": {
-        "AppName": "Tiny File Manager",
+        "AppName": "Nvcaria",
         "AppTitle": "Bestandsbeheer ",
         "Login": "Inloggen",
         "Username": "Gebruikersnaam",
