@@ -1,4 +1,40 @@
 <?php
+/**
+ * 强制弹出 JavaScript 警告框（alert）进行调试
+ * * @param mixed $data 要显示的数据（可以是任何类型）
+ * @param bool $terminate_script 是否在弹窗后终止脚本运行 (默认为 true)
+ */
+function debug_alert($data, $terminate_script = true) {
+    // 1. 准备要显示的消息
+    if (is_array($data) || is_object($data)) {
+        // 对于数组或对象，使用 JSON 格式化，使其可读
+        $message = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    } else {
+        // 对于简单类型，直接转为字符串
+        $message = strval($data);
+    }
+
+    // 2. 对消息进行 JavaScript 字符串转义
+    // 主要是为了处理引号和换行符 (\n)
+    $safe_message = str_replace(
+        array("\\", "\n", "\r", "'"),
+        array("\\\\", "\\n", "", "\'"),
+        $message
+    );
+    
+    // 3. 输出 JavaScript 弹窗代码
+    echo "<script>";
+    // 在弹窗中显示消息，\n 是换行符
+    echo "alert('--- 调试信息 ---\\n" . $safe_message . "');";
+    echo "</script>";
+
+    // 4. 根据参数决定是否终止脚本
+    if ($terminate_script) {
+        // 强制终止后续 PHP 代码的执行
+        die("脚本已终止，用于调试。");
+    }
+}
+
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
@@ -268,6 +304,7 @@ if (isset($_SESSION[FM_SESSION_ID]['logged']) && !empty($directories_users[$_SES
     $wd = fm_clean_path(dirname($_SERVER['PHP_SELF']));
     $root_url =  $root_url . $wd . DIRECTORY_SEPARATOR . $directories_users[$_SESSION[FM_SESSION_ID]['logged']];
 }
+
 // clean $root_url
 $root_url = fm_clean_path($root_url);
 
@@ -414,17 +451,21 @@ if ($use_auth) {
 if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
     $root_path = isset($directories_users[$_SESSION[FM_SESSION_ID]['logged']]) ? $directories_users[$_SESSION[FM_SESSION_ID]['logged']] : $root_path;
 }
-
 // clean and check $root_path
-$root_path = rtrim($root_path, '\\/');
+$root_path = trim($root_path);
+//$root_path = rtrim($root_path, '\\/');
+$root_path = ($root_path === '/' )? $root_path : rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
+
 if (!@is_dir($root_path)) {
     echo "<h1>" . lng('Root path') . " \"{$root_path}\" " . lng('not found!') . " </h1>";
     exit;
 }
 
+
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
+              // fm_set_msg(sprintf('%s  **0',$root_path), 'alert');
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
@@ -460,12 +501,6 @@ defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
 
 /*************************** ACTIONS ***************************/
-
-// file proxy
-if (isset($_GET['proxy_file'])) {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET');
-
     function sanitizePath($path) {
         if (substr($path, 0, 1) !== '/') {
             die('Invalid file path.');
@@ -476,6 +511,72 @@ if (isset($_GET['proxy_file'])) {
         return realpath($path);
     }
 
+// 忽略用户断开连接，确保脚本完成输出
+ignore_user_abort(true);
+
+// 设置脚本执行时间无限制，关闭输出缓冲（重要）
+set_time_limit(0);
+if (ob_get_level()) {
+    ob_end_clean();
+}
+
+// 定义一个调试文件路径（请确保 PHP 有写入权限）
+define('DEBUG_LOG_FILE', '/tmp/proxy_debug.log'); 
+
+/**
+ * 记录调试信息到文件
+ */
+function logDebug(string $message): void {
+    file_put_contents(DEBUG_LOG_FILE, "[" . date('Y-m-d H:i:s') . "] " . $message . "\n", FILE_APPEND);
+}
+
+/**
+ * 增强 MIME 类型识别（用于替换老代码中的 finfo 逻辑）
+ * 增强 MIME 类型识别（已添加 AVI 和其他常见格式）
+ */
+function getMimeTypeEnhanced(string $filePath, string $defaultMime): string {
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+    // Fallback/优先级: 增强对常见图片和视频的识别
+    $mimes = [
+        // 图片
+        'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+        'gif' => 'image/gif', 'webp' => 'image/webp',
+        
+        // 视频 (已添加 avi)
+        'mp4' => 'video/mp4', 'webm' => 'video/webm', 'ogg' => 'video/ogg',
+        'avi' => 'video/x-msvideo', // <-- 关键修正
+        'mov' => 'video/quicktime', // <-- 针对您之前成功的 .mov 视频
+        'mkv' => 'video/x-matroska', 
+        
+        // 文档/其他
+        'pdf' => 'application/pdf',
+        'txt' => 'text/plain',
+    ];
+    
+    if (isset($mimes[$ext])) {
+        return $mimes[$ext]; // 优先返回我们手动定义的准确 MIME
+    }
+    
+    // 如果 finfo_file 可用，使用它
+    if (extension_loaded('fileinfo')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $result = $finfo ? finfo_file($finfo, $filePath) : $defaultMime;
+        if ($finfo) finfo_close($finfo);
+        
+        // 如果 finfo 返回的值不准确（例如 'application/octet-stream'），我们保持其值，
+        // 但由于有上面的优先检查，这里主要是作为更复杂的格式的补充。
+        return $result;
+    }
+
+    return $defaultMime;
+}
+
+// file proxy
+if (isset($_GET['proxy_file'])) {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET');
+
     // get file path
     $filePath = isset($_GET['path']) ? $_GET['path'] : "/";
     $filePath = sanitizePath($filePath);
@@ -483,9 +584,9 @@ if (isset($_GET['proxy_file'])) {
     if ($filePath === false || !file_exists($filePath)) {
         http_response_code(404);
         die('File not found or inaccessible.');
-    }
+    } 
     
-    if (is_dir($filePath)) {
+    if (is_dir($filePath)) {    
         // if it is dir,list the content
         $fileList = getFileList($filePath);
         echo generateDirectoryListing($filePath, $fileList);
@@ -495,42 +596,111 @@ if (isset($_GET['proxy_file'])) {
           http_response_code(403);
           die("File is not readable.");
         }
-        $mimeType = mime_content_type($filePath);
+               
+       // --- 增强 MIME 类型获取 (替换老代码中的 finfo 逻辑) ---
+        // 清空日志文件，开始新的记录
+        file_put_contents(DEBUG_LOG_FILE, "--- NEW REQUEST START ---\n");
+        logDebug("INFO: Processing file: " . $filePath);
+
+        $defaultMime = 'application/octet-stream';
+        $mimeType = getMimeTypeEnhanced($filePath, $defaultMime);
+        
         header('Content-Type: ' . $mimeType);
         $fileSize = filesize($filePath);
-        header("Accept-Ranges: bytes");
+        header("Accept-Ranges: bytes");  // 关键：宣布支持分段下载
+        
+        logDebug("INFO: File Size: $fileSize | MIME: $mimeType");
+        logDebug("Requested Headers (Range): " . ($_SERVER['HTTP_RANGE'] ?? 'NONE'));
+                
+        // --- 5. 增强的 HTTP Range Requests (206) 分支 ---
         if (isset($_SERVER['HTTP_RANGE'])) {
-            list(, $range) = explode("=", $_SERVER['HTTP_RANGE'], 2);
-            list($start, $end) = explode("-", $range);
-            $start = intval($start);
-            $end = ($end === '') ? $fileSize - 1 : intval($end);
+            
+            logDebug("PATH: Entering 206 (Range) logic.");
+            $range = $_SERVER['HTTP_RANGE'];
+            
+            // 使用更健壮的正则解析 Range 头部 (仅支持单段请求)
+            if (!preg_match('/bytes=(\d*)-(\d*)/', $range, $matches)) {
+                logDebug("ERROR: Invalid Range format: $range");
+                header('HTTP/1.1 416 Requested Range Not Satisfiable');
+                header("Content-Range: bytes */$fileSize");
+                exit;
+            }
+
+            $start = $matches[1] === '' ? null : (int)$matches[1];
+            $end = $matches[2] === '' ? null : (int)$matches[2];
+            
+            // 处理缺失的起始或结束字节
+            $start = $start ?? 0;
+            $end = $end ?? $fileSize - 1;
 
             if ($start > $end || $start >= $fileSize || $end >= $fileSize) {
-                header("HTTP/1.1 416 Range Not Satisfiable");
+                logDebug("ERROR: Range boundary invalid. Start: $start, End: $end");
+                header('HTTP/1.1 416 Requested Range Not Satisfiable');
                 header("Content-Range: bytes */$fileSize");
                 exit;
             }
 
             $length = $end - $start + 1;
-            $file = fopen($filePath, 'rb');
-            fseek($file, $start);
-
+            
+            // 设置 206 响应头
             header("HTTP/1.1 206 Partial Content");
             header("Content-Length: $length");
             header("Content-Range: bytes $start-$end/$fileSize");
+            logDebug("RESPONSE: 206 Partial Content | Range: $start-$end/$fileSize | Length: $length");
 
+            // 流式输出分段内容
+            $file = fopen($filePath, 'rb');
+            fseek($file, $start);
+            
+            $buffer = 1024 * 16;
+            $bytesSent = 0;
             while (!feof($file) && ($p = ftell($file)) <= $end) {
-                echo fread($file, min(1024 * 16, $end - $p + 1));
+                $bytesToRead = min($buffer, $end - $p + 1);
+                $chunk = fread($file, $bytesToRead);
+                echo $chunk;
+                $bytesSent += strlen($chunk);
                 flush();
             }
+
             fclose($file);
+            logDebug("SUCCESS: Sent $bytesSent bytes (Range).");
             exit;
-        } else {
+        } 
+        // --- 6. 强制流式传输 (200 OK) 分支 (用于解决大文件超时问题) ---
+        else {
+            logDebug("PATH: Entering 200 (Full Content) logic. FORCING STREAMING for large file stability.");
+            
+            http_response_code(200); 
             header("Content-Length: $fileSize");
-            readfile($filePath);
+            logDebug("RESPONSE: 200 OK | Content-Length: $fileSize");
+            
+            $file = fopen($filePath, 'rb');
+            $buffer = 1024 * 256; // 128KB 缓冲区
+            $bytesSent = 0;
+            $logInterval = 50 * 1024 * 1024; // 每 50MB 记录一次日志
+            $nextLogPoint = $logInterval;
+
+            while (!feof($file)) {
+                $chunk = fread($file, $buffer);
+                echo $chunk;
+                $bytesSent += strlen($chunk);
+                
+                // 检查是否达到日志记录点
+                if ($bytesSent >= $nextLogPoint) {
+                    logDebug("STREAM: Sent " . round($bytesSent / 1024 / 1024, 2) . " MB.");
+                    $nextLogPoint += $logInterval;
+                }
+                
+                flush(); 
+            }
+
+            fclose($file);
+            logDebug("SUCCESS: Sent $bytesSent bytes (Full) via forced streaming.");
             exit;
         }
-    }
+                
+    } 
+// 结束 if (isset($_GET['proxy_file'])) 块
 }
 
 // get file lists
@@ -583,7 +753,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         // get current path
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
-            $path .= '/' . FM_PATH;
+            $path .= ($path === '/' ? '' : '/')  . FM_PATH;
         }
         // check path
         if (!is_dir($path)) {
@@ -592,13 +762,13 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $file = $_GET['edit'];
         $file = fm_clean_path($file);
         $file = str_replace('/', '', $file);
-        if ($file == '' || !is_file($path . '/' . $file)) {
+        if ($file == '' || !is_file($path . ($path === '/' ? '' : '/')  . $file)) {
             fm_set_msg(lng('File not found'), 'error');
             $FM_PATH = FM_PATH;
             fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
         }
         header('X-XSS-Protection:0');
-        $file_path = $path . '/' . $file;
+        $file_path = $path . ($path === '/' ? '' : '/')  . $file;
 
         $writedata = $_POST['content'];
         $fd = fopen($file_path, "w");
@@ -615,6 +785,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
     if (isset($_POST['type']) && $_POST['type'] == "backup" && !empty($_POST['file'])) {
         $fileName = fm_clean_path($_POST['file']);
         $fullPath = FM_ROOT_PATH . '/';
+        $fullPath = FM_ROOT_PATH ==='/'?  FM_ROOT_PATH : FM_ROOT_PATH . '/';
         if (!empty($_POST['path'])) {
             $relativeDirPath = fm_clean_path($_POST['path']);
             $fullPath .= "{$relativeDirPath}/";
@@ -688,7 +859,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
     if (isset($_POST['type']) && $_POST['type'] == "upload" && !empty($_REQUEST["uploadurl"])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
-            $path .= '/' . FM_PATH;
+            $path .= ($path === '/' ? '' : '/')  . FM_PATH;
         }
 
         function event_callback($message)
@@ -781,10 +952,10 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
     if ($del != '' && $del != '..' && $del != '.' && verifyToken($_POST['token'])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
-            $path .= '/' . FM_PATH;
+            $path .= ($path === '/' ? '' : '/')  . FM_PATH;
         }
-        $is_dir = is_dir($path . '/' . $del);
-        if (fm_rdelete($path . '/' . $del)) {
+        $is_dir = is_dir($path . ($path === '/' ? '' : '/')  . $del);
+        if (fm_rdelete($path . ($path === '/' ? '' : '/')  . $del)) {
             $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
             fm_set_msg(sprintf($msg, fm_enc($del)));
         } else {
@@ -801,16 +972,16 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
 // Create a new file/folder
 if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READONLY) {
     $type = urldecode($_POST['newfile']);
-    $new = str_replace('/', '', fm_clean_path(strip_tags($_POST['newfilename'])));
+    $new = str_replace(($path === '/' ? '' : '/') , '', fm_clean_path(strip_tags($_POST['newfilename'])));
     if (fm_isvalid_filename($new) && $new != '' && $new != '..' && $new != '.' && verifyToken($_POST['token'])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
-            $path .= '/' . FM_PATH;
+            $path .= ($path === '/' ? '' : '/')  . FM_PATH;
         }
         if ($type == "file") {
-            if (!file_exists($path . '/' . $new)) {
+            if (!file_exists($path . ($path === '/' ? '' : '/')  . $new)) {
                 if (fm_is_valid_ext($new)) {
-                    @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
+                    @fopen($path . ($path === '/' ? '' : '/')  . $new, 'w') or die('Cannot open file:  ' . $new);
                     fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
                 } else {
                     fm_set_msg(lng('File extension is not allowed'), 'error');
@@ -819,9 +990,9 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
                 fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
             }
         } else {
-            if (fm_mkdir($path . '/' . $new, false) === true) {
+            if (fm_mkdir($path . ($path === '/' ? '' : '/')  . $new, false) === true) {
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
-            } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
+            } elseif (fm_mkdir($path . ($path === '/' ? '' : '/')  . $new, false) === $path . ($path === '/' ? '' : '/')  . $new) {
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
             } else {
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('not created'), fm_enc($new)), 'error');
@@ -846,13 +1017,13 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
     // abs path from
-    $from = FM_ROOT_PATH . '/' . $copy;
+    $from = FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/')  . $copy;
     // abs path to
     $dest = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $dest .= '/' . FM_PATH;
+        $dest .= ($dest === '/' ? '' : '/')  . FM_PATH;
     }
-    $dest .= '/' . basename($from);
+    $dest .= ($dest === '/' ? '' : '/')  . basename($from);
     // move?
     $move = isset($_GET['move']);
     $move = fm_clean_path(urldecode($move));
@@ -916,13 +1087,13 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
     // from
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
     // to
     $copy_to_path = FM_ROOT_PATH;
     $copy_to = fm_clean_path($_POST['copy_to']);
     if ($copy_to != '') {
-        $copy_to_path .= '/' . $copy_to;
+        $copy_to_path .= ($path === '/' ? '' : '/')  . $copy_to;
     }
     if ($path == $copy_to_path) {
         fm_set_msg(lng('Paths must be not equal'), 'alert');
@@ -946,9 +1117,9 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
             if ($f != '') {
                 $f = fm_clean_path($f);
                 // abs path from
-                $from = $path . '/' . $f;
+                $from = $path . ($path === '/' ? '' : '/')  . $f;
                 // abs path to
-                $dest = $copy_to_path . '/' . $f;
+                $dest = $copy_to_path . ($path === '/' ? '' : '/')  . $f;
                 // do
                 if ($move) {
                     $rename = fm_rename($from, $dest);
@@ -992,11 +1163,11 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
     // path
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
     // rename
     if (fm_isvalid_filename($new) && $old != '' && $new != '') {
-        if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
+        if (fm_rename($path . ($path === '/' ? '' : '/')  . $old, $path . ($path === '/' ? '' : '/')  . $new)) {
             fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
         } else {
             fm_set_msg(sprintf(lng('Error while renaming from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');
@@ -1024,18 +1195,18 @@ if (isset($_GET['dl'], $_POST['token'])) {
     // Define the file path
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
 
     // Check if the file exists and is valid
-    if ($dl != '' && is_file($path . '/' . $dl)) {
+    if ($dl != '' && is_file($path . ($path === '/' ? '' : '/')  . $dl)) {
         // Close the session to prevent session locking
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
         }
 
         // Call the download function
-        fm_download_file($path . '/' . $dl, $dl, 1024); // Download with a buffer size of 1024 bytes
+        fm_download_file($path . ($path === '/' ? '' : '/')  . $dl, $dl, 1024); // Download with a buffer size of 1024 bytes
         exit;
     } else {
         // Handle the case where the file is not found
@@ -1067,7 +1238,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $path = FM_ROOT_PATH;
     $ds = DIRECTORY_SEPARATOR;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
 
     $errors = 0;
@@ -1094,7 +1265,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $targetPath = $path . $ds;
     if (is_writable($targetPath)) {
-        $fullPath = $path . '/' . $fullPathInput;
+        $fullPath = $path . ($path === '/' ? '' : '/')  . $fullPathInput;
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
         if (!is_dir($folder)) {
@@ -1152,7 +1323,7 @@ if (!empty($_FILES) && !FM_READONLY) {
                 if ($chunkIndex == $chunkTotal - 1) {
                     if (file_exists($fullPath)) {
                         $ext_1 = $ext ? '.' . $ext : '';
-                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                        $fullPathTarget = $path . ($path === '/' ? '' : '/')  . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
                     } else {
                         $fullPathTarget = $fullPath;
                     }
@@ -1198,7 +1369,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
 
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
 
     $errors = 0;
@@ -1206,7 +1377,7 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
     if (is_array($files) && count($files)) {
         foreach ($files as $f) {
             if ($f != '') {
-                $new_path = $path . '/' . $f;
+                $new_path = $path . ($path === '/' ? '' : '/')  . $f;
                 if (!fm_rdelete($new_path)) {
                     $errors++;
                 }
@@ -1235,7 +1406,7 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     $path = FM_ROOT_PATH;
     $ext = 'zip';
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
 
     //set pack type
@@ -1303,11 +1474,11 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
 
-    if ($unzip != '' && is_file($path . '/' . $unzip)) {
-        $zip_path = $path . '/' . $unzip;
+    if ($unzip != '' && is_file($path . ($path === '/' ? '' : '/')  . $unzip)) {
+        $zip_path = $path . ($path === '/' ? '' : '/')  . $unzip;
         $ext = pathinfo($zip_path, PATHINFO_EXTENSION);
         $isValid = true;
     } else {
@@ -1325,8 +1496,8 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
         $tofolder = '';
         if (isset($_POST['tofolder'])) {
             $tofolder = pathinfo($zip_path, PATHINFO_FILENAME);
-            if (fm_mkdir($path . '/' . $tofolder, true)) {
-                $path .= '/' . $tofolder;
+            if (fm_mkdir($path . ($path === '/' ? '' : '/')  . $tofolder, true)) {
+                $path .= ($path === '/' ? '' : '/')  . $tofolder;
             }
         }
 
@@ -1368,13 +1539,13 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
 
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
+        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
 
     $file = $_POST['chmod'];
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
-    if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
+    if ($file == '' || (!is_file($path . ($path === '/' ? '' : '/')  . $file) && !is_dir($path . ($path === '/' ? '' : '/')  . $file))) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1409,7 +1580,7 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
         $mode |= 0001;
     }
 
-    if (@chmod($path . '/' . $file, $mode)) {
+    if (@chmod($path . ($path === '/' ? '' : '/')  . $file, $mode)) {
         fm_set_msg(lng('Permissions changed'));
     } else {
         fm_set_msg(lng('Permissions not changed'), 'error');
@@ -1424,7 +1595,8 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
 // get current path
 $path = FM_ROOT_PATH;
 if (FM_PATH != '') {
-    $path .= '/' . FM_PATH;
+    //$path .= '/' . FM_PATH;
+    $path .= ($path === '/' ? '' : '/') . FM_PATH;
 }
 
 // check path
@@ -1435,25 +1607,45 @@ if (!is_dir($path)) {
 // get parent folder
 $parent = fm_get_parent_path(FM_PATH);
 
+  //fm_set_msg(sprintf('  %s  , %s **1', $path, FM_PATH ), 'alert');
 $objects = is_readable($path) ? scandir($path) : array();
 $folders = array();
 $files = array();
 $current_path = array_slice(explode("/", $path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
+
+//  mnt # /mnt 
+//$current_path ='';
+              // fm_set_msg(sprintf('%s  #  %s   **1', $current_path,$path ), 'alert');
+         
+
+               
+if (is_array($objects) ) {
+//if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
+    $n =0;
     foreach ($objects as $file) {
+    
+        $n = $n +1;
         if ($file == '.' || $file == '..') {
             continue;
         }
+        
         if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
             continue;
         }
-        $new_path = $path . '/' . $file;
+        
+        //$new_path = $path . '/' . $file;
+        $new_path = $path . ($path === '/' ? '' : '/')  . $file;
         if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
             $files[] = $file;
         } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
             $folders[] = $file;
         }
     }
+              // fm_set_msg(sprintf('%s  #  %s  ---%s **2', $current_path,$path , $n), 'alert');
+    
+}else{
+    
+              fm_set_msg(sprintf('%s  #  %s   **3', $current_path,$path ), 'alert');
 }
 
 if (!empty($files)) {
@@ -1566,154 +1758,248 @@ if (isset($_GET['upload']) && !FM_READONLY) {
     fm_show_footer();
     exit;
 }
+const THUMB_TARGET_SIZE = 120;
 
-//album form
-if (isset($_GET['photoalbum']) && !FM_READONLY) {
-   fm_show_header(); // HEADER
-    fm_show_nav_path(FM_PATH); // current path
-    //get the allowed file extensions
-
+// -------------------------------------------------------------
+// 【新常量】定义统一的目标缩略图尺寸
+// -------------------------------------------------------------
 /**
  * create Thumbnail
- *
- * @param string $filePath Original image path
- * @param string $thumbnailPath Thumbnail save path
- * @param array $size Original image size
+ * * @param string $filePath Original image path
+ * @return string|false 成功时返回缩略图的完整路径，失败时返回 false。
  */
-function createThumbnail($filePath, $thumbnailPath, $size) {
-    // Check if thumbnail already exists
+function createThumbnail($filePath) {
+$dirName = dirname($filePath);
+    $fileName = basename($filePath);
+    $thumbnailsDir = $dirName . '/thumbnails';
+    $thumbnailPath = $thumbnailsDir . '/' . $fileName; // 缩略图完整路径
+    
+    //echo "DEBUG: 尝试生成缩略图: $fileName, 目标路径: $thumbnailPath<br>";
+
+    // 1. 判断同名缩略图文件是否存在
     if (file_exists($thumbnailPath)) {
-        return;
+        //echo "DEBUG: 缩略图已存在，跳过。<br>";
+        return $thumbnailPath; 
+    }
+    
+    // 2. 判断子目录 thumbnails 是否存在，如果不存在则创建
+    if (!is_dir($thumbnailsDir)) {
+        // 尝试创建目录，使用 0775 权限（Web用户可能在组内）
+        if (!@mkdir($thumbnailsDir, 0775, true)) {
+            //echo "DEBUG ERROR: 无法创建目录！请手动检查或设置权限： chmod 775 $thumbnailsDir<br>";
+            return false;
+        } else {
+            // 尝试设置权限，防止目录创建成功但权限不足
+            @chmod($thumbnailsDir, 0775);
+            //echo "DEBUG: 目录 $thumbnailsDir 创建成功。<br>";
+        }
+    }
+    
+    // 3. 获取图片尺寸信息
+    $size = @getimagesize($filePath);
+    if ($size === false) {
+        //echo "DEBUG ERROR: 无法获取图片尺寸: $filePath<br>";
+        return false;
     }
 
-    // Determine which imagecreatefrom function to use
+    $sourceWidth = $size[0];
+    $sourceHeight = $size[1];
+    
+    
+    // 4. 确定图片创建函数和扩展名
     $createFunc = null;
-    switch (strtolower(pathinfo($filePath, PATHINFO_EXTENSION))) {
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $isJpeg = false;
+    switch ($ext) {
         case 'jpg':
         case 'jpeg':
         case 'jfif':
             $createFunc = 'imagecreatefromjpeg';
+            $isJpeg = true;
             break;
-        case 'png':
-            $createFunc = 'imagecreatefrompng';
-            break;
-        case 'gif':
-            $createFunc = 'imagecreatefromgif';
-            break;
-        case 'webp':
-            $createFunc = 'imagecreatefromwebp';
-            break;
-        case 'bmp':
-            $createFunc = 'imagecreatefrombmp';
-            break;
+        case 'png': $createFunc = 'imagecreatefrompng'; break;
+        case 'gif': $createFunc = 'imagecreatefromgif'; break;
+        case 'webp': $createFunc = 'imagecreatefromwebp'; break;
+        case 'bmp': $createFunc = 'imagecreatefrombmp'; break;
     }
 
     if ($createFunc && function_exists($createFunc)) {
         $sourceImage = @$createFunc($filePath);
         if ($sourceImage === false) {
-            return; // Skip if image cannot be loaded
+            //echo "DEBUG ERROR: 无法从文件创建 GD 资源: $filePath<br>";
+            return false;
         }
 
-        // Create thumbnail
-        $thumbWidth = 110;
-        $thumbHeight = 90;
-        $thumbImage = imagecreatetruecolor($thumbWidth, $thumbHeight);
+        // ------------------------------------------------------------------
+        // EXIF 旋转校正逻辑 需要安装php8-mod-exif
+        // ------------------------------------------------------------------
+        //echo "DEBUG: 初始尺寸: ${sourceWidth}x${sourceHeight}。<br>"; 
 
-        // Handle transparent background
-        imagealphablending($thumbImage, false);
-        imagesavealpha($thumbImage, true);
-        $transparent = imagecolorallocatealpha($thumbImage, 255, 255, 255, 127);
-        imagefilledrectangle($thumbImage, 0, 0, $thumbWidth, $thumbHeight, $transparent);
+        if ($isJpeg && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($filePath);
+            
+            if (!empty($exif['Orientation'])) {
+                $orientation = $exif['Orientation'];
+                $rotate_angle = 0;
+                
+                //echo "DEBUG: 发现 EXIF Orientation 标签: $orientation。<br>";
+                
+                switch ($orientation) {
+                    case 3: $rotate_angle = 180; break; 
+                    case 6: $rotate_angle = -90; break; // 对应您的竖拍问题
+                    case 8: $rotate_angle = 90; break; 
+                }
+                
+                if ($rotate_angle != 0) {
+                    // 使用 imagerotate 时，确保背景色为透明 (0)
+                    $sourceImage = imagerotate($sourceImage, $rotate_angle, 0); 
+                    //echo "DEBUG: 应用旋转 $rotate_angle 度。<br>";
 
-        // Scale the image
-        if (!imagecopyresampled($thumbImage, $sourceImage, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $size[0], $size[1])) {
-            imagedestroy($sourceImage);
-            imagedestroy($thumbImage);
-            return;
+                    // 旋转后更新尺寸
+                    $sourceWidth = imagesx($sourceImage);
+                    $sourceHeight = imagesy($sourceImage);
+                    //echo "DEBUG: 旋转后新尺寸: ${sourceWidth}x${sourceHeight}。<br>"; 
+                }
+            } else {
+                //echo "DEBUG: 未发现 EXIF Orientation 标签或值为 1 (正常)。<br>";
+            }
+        } else {
+            //echo "DEBUG: 非 JPEG 或缺少 Exif 扩展。<br>";
+        }
+        // ------------------------------------------------------------------
+
+        // ------------------------------------------------------------------
+        // '裁剪并覆盖' (Object-fit: cover) 逻辑
+        // ------------------------------------------------------------------
+        $thumbSize = THUMB_TARGET_SIZE;
+        $ratio = max($thumbSize / $sourceWidth, $thumbSize / $sourceHeight);
+        $tempWidth = (int)($sourceWidth * $ratio);
+        $tempHeight = (int)($sourceHeight * $ratio);
+        $x_offset = (int)(($tempWidth - $thumbSize) / 2);
+        $y_offset = (int)(($tempHeight - $thumbSize) / 2);
+        
+        $thumbImage = imagecreatetruecolor($thumbSize, $thumbSize);
+
+        // 处理透明背景
+        if ($ext === 'png' || $ext === 'gif') {
+            imagealphablending($thumbImage, false);
+            imagesavealpha($thumbImage, true);
+            $transparent = imagecolorallocatealpha($thumbImage, 255, 255, 255, 127);
+            imagefilledrectangle($thumbImage, 0, 0, $thumbSize, $thumbSize, $transparent);
         }
 
-        // Save the thumbnail
+        // 缩放并裁剪
+        $success = imagecopyresampled($thumbImage, $sourceImage, 
+            -$x_offset, -$y_offset,
+            0, 0,
+            $tempWidth, $tempHeight,
+            $sourceWidth, $sourceHeight 
+        );
+        // ------------------------------------------------------------------
+
+        // 5. 保存缩略图（移除 @ 符号，以便在失败时获得 PHP 警告）
         $saveFunc = null;
-        switch (strtolower(pathinfo($filePath, PATHINFO_EXTENSION))) {
+        switch ($ext) {
             case 'jpg':
             case 'jpeg':
             case 'jfif':
                 $saveFunc = 'imagejpeg';
+                $quality = 80;
                 break;
-            case 'png':
-                $saveFunc = 'imagepng';
-                break;
-            case 'gif':
-                $saveFunc = 'imagegif';
-                break;
-            case 'webp':
-                $saveFunc = 'imagewebp';
-                break;
-            case 'bmp':
-                $saveFunc = 'imagebmp';
-                break;
+            case 'png': $saveFunc = 'imagepng'; $quality = 9; break;
+            case 'gif': $saveFunc = 'imagegif'; $quality = null; break;
+            case 'webp': $saveFunc = 'imagewebp'; $quality = 80; break;
+            case 'bmp': $saveFunc = 'imagebmp'; $quality = null; break;
+            default: $saveFunc = null;
         }
 
-        if ($saveFunc && function_exists($saveFunc)) {
-            $saveFunc($thumbImage, $thumbnailPath);
+        $save_success = false;
+        if ($success && $saveFunc && function_exists($saveFunc)) {
+             // 明确调用保存函数，并在保存失败时输出调试信息
+            if ($quality !== null) {
+                $save_success = $saveFunc($thumbImage, $thumbnailPath, $quality);
+            } else {
+                $save_success = $saveFunc($thumbImage, $thumbnailPath);
+            }
+            
+            if (!$save_success) {
+                //echo "DEBUG ERROR: 保存文件失败，可能是**写入权限不足**。请检查目录权限：<br> \$ chmod 775 $thumbnailsDir <br>";
+            }
         }
-
-        // Clean up resources
+        
+        // 清理资源
         imagedestroy($sourceImage);
         imagedestroy($thumbImage);
+
+        // 6. 返回结果
+        if ($save_success && file_exists($thumbnailPath)) {
+            //echo "DEBUG: 缩略图生成成功: $thumbnailPath<br>";
+            return $thumbnailPath;
+        }
     }
+    
+    //echo "DEBUG: 缩略图生成失败: $filePath<br>";
+    return false;
 }
+
+// -------------------------------------------------------------
+// 【次要修改】 generateThumbnails 函数 (仅确保它调用了 createThumbnail)
+// -------------------------------------------------------------
 
 function generateThumbnails($dir) {
     $images = [];
 
-    // Check if the directory is "thumbnails", skip unnecessary processing
+    // 检查是否是 "thumbnails" 目录，跳过不必要的处理 (保留)
     $isThumbnailsDir = (basename($dir) === 'thumbnails');
+    
+    // 【注意】这里不再需要手动创建 thumbnails 目录
 
-    // Get all files in the directory
     $files = scandir($dir);
     if ($files === false) {
         return $images;
     }
 
-    // If not "thumbnails", create a thumbnails directory
-    if (!$isThumbnailsDir) {
-        $thumbnailsDir = $dir . '/thumbnails';
-        if (!is_dir($thumbnailsDir) && !mkdir($thumbnailsDir, 0755, true)) {
-            echo "Error: Unable to create thumbnails directory '$thumbnailsDir'<br>";
-            return false;
-        }
-    }
-
-    // Iterate over the files in the directory
+    // 迭代文件
     foreach ($files as $file) {
-        if ($file === '.' || $file === '..') {
-            continue; // Ignore current and parent directories
+        if ($file === '.' || $file === '..' || $file === 'thumbnails') {
+            continue; // 忽略 '.' '..' 和 'thumbnails' 文件夹本身
         }
 
         $filePath = $dir . '/' . $file;
 
-        // Check if it's a supported image file
+        // 检查是否是支持的图片文件
         if (is_file($filePath) && preg_match('/\.(jpg|jpeg|png|gif|jfif|bmp|webp)$/i', $file)) {
+            
+            // 获取原始尺寸用于 PhotoSwipe
             $size = @getimagesize($filePath);
             if ($size === false) {
-                continue; // Skip if image info cannot be obtained
+                continue; 
             }
 
-            // Add image info to the results array
+            // 添加图片信息到结果数组
             $fileName = basename($filePath);
             $images[] = ['src' => $fileName, 'width' => $size[0], 'height' => $size[1]];
 
-            // If not "thumbnails" directory, create thumbnails
+            // 如果不是 "thumbnails" 目录，生成缩略图
             if (!$isThumbnailsDir) {
-                $thumbnailPath = $thumbnailsDir . '/' . $fileName;
-                createThumbnail($filePath, $thumbnailPath, $size);
+                // 【修改点 4】不再手动拼接 $thumbnailPath，直接调用 createThumbnail
+                // 此时 createThumbnail 会在后台进行目录检查和文件生成
+                createThumbnail($filePath);
             }
         }
     }
 
     return $images;
 }
+    
+    
+
+
+//album form
+if (isset($_GET['photoalbum']) && !FM_READONLY) {
+   fm_show_header(); // HEADER
+    fm_show_nav_path(FM_PATH); // current path
+    //get the allowed file extensions
 
 
     ?>
@@ -1724,31 +2010,124 @@ function generateThumbnails($dir) {
                     <?php echo ' ' ?>
                 </p>  
 <style>
-    img {
-        float: left; /* or float: right; */
-    }
-    .clearfix::after {
-      content: "";
-      display: table;
-      clear: both;
-    }
+/* =================================================== */
+/* 核心 CSS 样式：实现自适应和网格布局 */
+/* =================================================== */
+
+#gallery {
+    /* 使用 Flexbox 布局实现缩略图网格 */
+    display: flex;
+    flex-wrap: wrap; /* 允许缩略图换行 */
+    gap: 10px;       /* 缩略图之间的间距 */
+    padding: 10px 0; /* 增加一些垂直间距 */
+}
+
+/* 目标：包裹 A 标签，作为缩略图的固定尺寸容器 */
+#gallery a {
+    /* 设定缩略图的固定尺寸 (例如 120x120 像素) */
+    width: 120px;
+    height: 120px;
+    
+    /* 关键：隐藏超出容器的图片内容 (即裁剪) */
+    overflow: hidden; 
+    
+    /* 让链接表现得像一个块级元素 */
+    display: block; 
+    
+    /* 移除默认下划线 */
+    text-decoration: none;
+}
+
+/* 目标：<img> 标签 */
+#gallery a img {
+    /* 让图片占满其父容器 (A 标签) 的空间 */
+    width: 100%;
+    height: 100%;
+    
+    /* 核心代码：保持图片比例，放大以覆盖容器，多余部分裁剪 */
+    /* 这样横拍和竖拍图片都不会被压扁 */
+    object-fit: cover; 
+    
+    /* 可选：添加悬停时的过渡效果 */
+    transition: transform 0.3s ease;
+    
+    /* 保留您原有的边框样式，但已移到 CSS 中 */
+    border: 2px solid pink;
+}
+
+/* 悬停效果 (可选) */
+#gallery a:hover img {
+    /* 悬停时略微放大，提升用户体验 */
+    transform: scale(1.05); 
+}
+
+/* 移除您原来代码中不再需要的 CSS */
+/* img { float: left; } 
+.clearfix::after { ... }
+*/
+
+/* =================================================== */
+/* PhotoSwipe 全屏视图 自适应调整 */
+/* 目标: 确保全屏图片保持比例且不会被压扁或拉伸 */
+/* =================================================== */
+
+/* 1. 确保 PhotoSwipe 图片容器的尺寸和定位正确 */
+/* PhotoSwipe 默认情况下做得不错，但可以加强确保 img 标签内部的图片规则 */
+
+.pswp__img {
+    /* PhotoSwipe 默认的类名，确保它能填充其父容器 */
+    width: 100%;
+    height: 100%;
+    
+    /* 确保图片以最大尺寸适配容器，同时保持宽高比 */
+    /* PhotoSwipe 默认会处理这个，但如果它被覆盖，这可以修复问题 */
+    object-fit: contain !important; 
+    
+    /* 确保图片居中显示 */
+    object-position: center !important;
+}
+
+/* 2. (可选/高级) 如果您发现图片被拉伸，这可以帮助 PhotoSwipe 内部的图片元素 */
+/* 如果 PhotoSwipe 使用了 <picture> 或其他结构，可能需要更精确的定位 */
+/* 但是对于 PhotoSwipe 6 (或更高) 的标准设置，上面的规则通常足够。*/
+
+
+
+
 </style>
     <div id="gallery">
         <?php
-            $dir =  fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH));
+            // ----------------------------------------------------------------------
+            // PHP 核心逻辑：获取图片列表
+            // ----------------------------------------------------------------------
+            $dir = fm_enc(fm_convert_win(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/') . FM_PATH));
             $images = generateThumbnails($dir);
-            $index =0;
+            $index = 0;
+            
             foreach ($images as $image) {
-                $filePath =  fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH . '/' .  $image['src']);
-                $thumbnailPath = fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH . '/thumbnails/' .  $image['src']);
+                $filePath = fm_convert_win(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/') . FM_PATH . '/' . $image['src']);
+                $thumbnailPath = fm_convert_win(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/') . FM_PATH . '/thumbnails/' . $image['src']);
+                
+                // ----------------------------------------------------------------------
+                // 【重点修改】移除了计算 $width 和 $height 的代码
+                // ----------------------------------------------------------------------
+                // $size = getimagesize($filePath);
+                // $width = $size[0] > $size[1]? 110: 90 ;
+                // $height = $size[0] > $size[1]? 90: 110 ;
+                // ----------------------------------------------------------------------
         ?> 
-        <a href="<?php  echo  fm_enc('?p=&proxy_file=1&path=' . urlencode($filePath)) ?>" data-pswp-width=" <?php echo $image['width'] ?>"  data-pswp-height="<?php echo $image['height']  ?>" data-index="<?php echo  $index ?>  ">
-           <img src="<?php echo  fm_enc('?p=&proxy_file=1&path=' . urlencode((file_exists($thumbnailPath)) ? $thumbnailPath : $filePath)) ?>" width="110"  height="90" >
+        <a href="<?php echo fm_enc('?p=&proxy_file=1&path=' . urlencode($filePath)) ?>" 
+           data-pswp-width="<?php echo $image['width'] ?>" 
+           data-pswp-height="<?php echo $image['height'] ?>" 
+           data-index="<?php echo $index ?>">
+            
+            <img src="<?php echo fm_enc('?p=&proxy_file=1&path=' . urlencode((file_exists($thumbnailPath)) ? $thumbnailPath : $filePath)) ?>" 
+                 alt="缩略图">
         </a>  
         <?php
-                 $index++;
+                $index++;
             }
-           ?>
+        ?>
     </div>
 
     <script type="module">
@@ -1800,7 +2179,7 @@ if (isset($_POST['copy']) && !FM_READONLY) {
                     }
                     ?>
                     <p class="break-word"><strong><?php echo lng('Files') ?></strong>: <b><?php echo implode('</b>, <b>', $copy_files) ?></b></p>
-                    <p class="break-word"><strong><?php echo lng('SourceFolder') ?></strong>: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?><br>
+                    <p class="break-word"><strong><?php echo lng('SourceFolder') ?></strong>: <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/')  . FM_PATH)) ?><br>
                         <label for="inp_copy_to"><strong><?php echo lng('DestinationFolder') ?></strong>:</label>
                         <?php echo FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?php echo fm_enc(FM_PATH) ?>">
                     </p>
@@ -1825,7 +2204,7 @@ if (isset($_POST['copy']) && !FM_READONLY) {
 if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
-    if ($copy == '' || !file_exists(FM_ROOT_PATH . '/' . $copy)) {
+    if ($copy == '' || !file_exists(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/')  . $copy)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1837,8 +2216,8 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     <div class="path">
         <p><b>Copying</b></p>
         <p class="break-word">
-            <strong>Source path:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
-            <strong>Destination folder:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
+            <strong>Source path:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/')  . $copy)) ?><br>
+            <strong>Destination folder:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . (FM_ROOT_PATH === '/' ? '' : '/')  . FM_PATH)) ?>
         </p>
         <p>
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
@@ -1856,7 +2235,7 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
             foreach ($folders as $f) {
             ?>
                 <li>
-                    <a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>&amp;copy=<?php echo urlencode($copy) ?>"><i class="fa fa-folder-o"></i> <?php echo fm_convert_win($f) ?></a>
+                    <a href="?p=<?php echo urlencode(trim(FM_PATH . (FM_PATH === '/' ? '' : '/')  . $f, '/')) ?>&amp;copy=<?php echo urlencode($copy) ?>"><i class="fa fa-folder-o"></i> <?php echo fm_convert_win($f) ?></a>
                 </li>
             <?php
             }
@@ -2023,7 +2402,7 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    if ($file == '' || !is_file($path . ($path=== '/' ? '' : '/')  . $file) || !fm_is_exclude_items($file, $path . ($path=== '/' ? '' : '/')  . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2033,7 +2412,7 @@ if (isset($_GET['view'])) {
     fm_show_nav_path(FM_PATH); // current path
 
     $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
-    $file_path = $path . '/' . $file;
+    $file_path = $path . ($path=== '/' ? '' : '/')  . $file;
     $file_url = ($_SERVER['DOCUMENT_ROOT'] === $root_path) ? $file_url : ('?p=&proxy_file=1&path=' . urlencode($file_path));
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
@@ -2230,7 +2609,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    if ($file == '' || !is_file($path . ($path=== '/' ? '' : '/')  . $file) || !fm_is_exclude_items($file, $path . ($path=== '/' ? '' : '/')  . $file)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2241,7 +2620,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     fm_show_nav_path(FM_PATH); // current path
 
     $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
-    $file_path = $path . '/' . $file;
+    $file_path = $path . ($path=== '/' ? '' : '/')  . $file;
 
     // normal editer
     $isNormalEditor = true;
@@ -2335,7 +2714,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     $file = $_GET['chmod'];
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
-    if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
+    if ($file == '' || (!is_file($path . ($path=== '/' ? '' : '/')  . $file) && !is_dir($path . ($path=== '/' ? '' : '/')  . $file))) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -2345,9 +2724,9 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     fm_show_nav_path(FM_PATH); // current path
 
     $file_url = FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file;
-    $file_path = $path . '/' . $file;
+    $file_path = $path . ($path=== '/' ? '' : '/')  . $file;
 
-    $mode = fileperms($path . '/' . $file);
+    $mode = fileperms($path . ($path=== '/' ? '' : '/')  . $file);
 ?>
     <div class="path">
         <div class="card mb-2" data-bs-theme="<?php echo FM_THEME; ?>">
@@ -2458,26 +2837,26 @@ $all_files_size = 0;
             }
             $ii = 3399;
             foreach ($folders as $f) {
-                $is_link = is_link($path . '/' . $f);
+                $is_link = is_link($path . ($path=== '/' ? '' : '/')  . $f);
                 $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
-                $modif_raw = filemtime($path . '/' . $f);
+                $modif_raw = filemtime($path . ($path=== '/' ? '' : '/')  . $f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 $date_sorting = strtotime(date("F d Y H:i:s.", $modif_raw));
                 $filesize_raw = "";
                 $filesize = lng('Folder');
-                $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
+                $perms = substr(decoct(fileperms($path . ($path=== '/' ? '' : '/')  . $f)), -4);
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     try {
-                        $owner_id = fileowner($path . '/' . $f);
+                        $owner_id = fileowner($path . ($path=== '/' ? '' : '/')  . $f);
                         if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
                             if ($owner_info) {
                                 $owner =  $owner_info;
                             }
                         }
-                        $group_id = filegroup($path . '/' . $f);
+                        $group_id = filegroup($path . ($path=== '/' ? '' : '/')  . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
                             $group =  $group_info;
@@ -2499,7 +2878,7 @@ $all_files_size = 0;
                     <td data-sort=<?php echo fm_convert_win(fm_enc($f)) ?>>
                         <div class="filename">
                             <a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?></a>
-                            <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                            <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . ($path=== '/' ? '' : '/')  . $f) . '</i>' : '') ?>
                         </div>
                     </td>
                     <td data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>">
@@ -2520,7 +2899,7 @@ $all_files_size = 0;
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
                     <?php
-                        $foldDirectLink =  ($_SERVER['DOCUMENT_ROOT'] === $root_path ) ? (FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') : ('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH. '/' .$f. '/'));
+                        $foldDirectLink =  ($_SERVER['DOCUMENT_ROOT'] === $root_path ) ? (FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') : ('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . (FM_ROOT_PATH=== '/' ? '' : '/')  .FM_PATH  . '/' .$f. '/'));
 	                ?>			
                         <a title="<?php echo lng('DirectLink') ?>" href="<?php echo  fm_enc($foldDirectLink); ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                     </td>
@@ -2531,28 +2910,28 @@ $all_files_size = 0;
             }
             $ik = 8002;
             foreach ($files as $f) {
-                $is_link = is_link($path . '/' . $f);
-                $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . '/' . $f);
-                $modif_raw = filemtime($path . '/' . $f);
+                $is_link = is_link($path . ($path=== '/' ? '' : '/')  . $f);
+                $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . ($path=== '/' ? '' : '/')  . $f);
+                $modif_raw = filemtime($path . ($path=== '/' ? '' : '/')  . $f);
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 $date_sorting = strtotime(date("F d Y H:i:s.", $modif_raw));
-                $filesize_raw = fm_get_size($path . '/' . $f);
+                $filesize_raw = fm_get_size($path . ($path=== '/' ? '' : '/')  . $f);
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
                 $all_files_size += $filesize_raw;
-                $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
+                $perms = substr(decoct(fileperms($path . ($path=== '/' ? '' : '/')  . $f)), -4);
                 $owner = array('name' => '?'); 
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     try {
-                        $owner_id = fileowner($path . '/' . $f);
+                        $owner_id = fileowner($path . ($path=== '/' ? '' : '/')  . $f);
                         if ($owner_id != 0) {
                             $owner_info = posix_getpwuid($owner_id);
                             if ($owner_info) {
                                 $owner =  $owner_info;
                             }
                         }
-                        $group_id = filegroup($path . '/' . $f);
+                        $group_id = filegroup($path . ($path=== '/' ? '' : '/')  . $f);
                         $group_info = posix_getgrgid($group_id);
                         if ($group_info) {
                             $group =  $group_info;
@@ -2573,15 +2952,26 @@ $all_files_size = 0;
                     <td data-sort=<?php echo fm_enc($f) ?>>
                         <div class="filename">
                             <?php
-                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
-                                 <?php $imagePreview = fm_enc('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f));  ?>
-                                <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
+                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): 
+                                 $sourcePath =  FM_ROOT_PATH . (FM_ROOT_PATH=== '/' ? '' : '/') .FM_PATH ;
+                                 // 检查是否是 "thumbnails" 目录，跳过不必要的处理 (保留)
+                                 $isThumbnailsDir = (basename($sourcePath) === 'thumbnails');
+                                 if (!$isThumbnailsDir) {
+                                    createThumbnail($sourcePath. '/'. $f);
+                                    $imagePreview = fm_enc('?p=&proxy_file=1&path=' . urlencode($sourcePath. '/thumbnails/' . $f));  
+                                 }
+                                 else {
+                                  $imagePreview = fm_enc('?p=&proxy_file=1&path=' . urlencode($sourcePath. '/'. $f));  
+                                 }
+                                 
+                                 ?>
+                                <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" >
                                 <?php else: ?>
                                     <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
                                     <?php endif; ?>
                                     <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
                                     </a>
-                                    <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                                    <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . ($path=== '/' ? '' : '/')   . $f) . '</i>' : '') ?>
                         </div>
                     </td>
                     <td data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
@@ -2600,7 +2990,7 @@ $all_files_size = 0;
                             <a title="<?php echo lng('CopyTo') ?>..."
                                 href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
-			            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f)) ?>" target="_blank"><i class="fa fa-link"></i></a>
+			            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc('?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . (FM_ROOT_PATH=== '/' ? '' : '/') .FM_PATH . '/'.$f)) ?>" target="_blank"><i class="fa fa-link"></i></a>
                         <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
                     </td>
                 </tr>
@@ -2707,7 +3097,7 @@ function fm_rdelete($path)
         if (is_array($objects)) {
             foreach ($objects as $file) {
                 if ($file != '.' && $file != '..') {
-                    if (!fm_rdelete($path . '/' . $file)) {
+                    if (!fm_rdelete($path . ($path=== '/' ? '' : '/')  . $file)) {
                         $ok = false;
                     }
                 }
@@ -2738,7 +3128,7 @@ function fm_rchmod($path, $filemode, $dirmode)
         if (is_array($objects)) {
             foreach ($objects as $file) {
                 if ($file != '.' && $file != '..') {
-                    if (!fm_rchmod($path . '/' . $file, $filemode, $dirmode)) {
+                    if (!fm_rchmod($path . ($path=== '/' ? '' : '/')  . $file, $filemode, $dirmode)) {
                         return false;
                     }
                 }
@@ -2925,6 +3315,10 @@ function get_absolute_path($path)
  */
 function fm_clean_path($path, $trim = true)
 {
+    if ($path == '/') {
+    return $path;
+    }
+   
     $path = $trim ? trim($path) : $path;
     $path = trim($path, '\\/');
     $path = str_replace(array('../', '..\\'), '', $path);
@@ -2942,6 +3336,10 @@ function fm_clean_path($path, $trim = true)
  */
 function fm_get_parent_path($path)
 {
+    if ($path == '/') {
+    return $path;
+    }
+    
     $path = fm_clean_path($path);
     if ($path != '') {
         $array = explode('/', $path);
@@ -3646,7 +4044,7 @@ function fm_get_file_mimes($extension)
  */
 function scan($dir = '', $filter = '')
 {
-    $path = FM_ROOT_PATH . '/' . $dir;
+    $path = FM_ROOT_PATH . (FM_ROOT_PATH=== '/' ? '' : '/')  . $dir;
     if ($path) {
         $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
         $rii = new RegexIterator($ite, "/(" . $filter . ")/i");
@@ -3839,12 +4237,12 @@ class FM_Zipper
         if (is_array($objects)) {
             foreach ($objects as $file) {
                 if ($file != '.' && $file != '..') {
-                    if (is_dir($path . '/' . $file)) {
-                        if (!$this->addDir($path . '/' . $file)) {
+                    if (is_dir($path . ($path=== '/' ? '' : '/')  . $file)) {
+                        if (!$this->addDir($path . ($path=== '/' ? '' : '/')  . $file)) {
                             return false;
                         }
-                    } elseif (is_file($path . '/' . $file)) {
-                        if (!$this->zip->addFile($path . '/' . $file)) {
+                    } elseif (is_file($path . ($path=== '/' ? '' : '/')  . $file)) {
+                        if (!$this->zip->addFile($path . ($path=== '/' ? '' : '/')  . $file)) {
                             return false;
                         }
                     }
@@ -3942,13 +4340,13 @@ class FM_Zipper_Tar
         if (is_array($objects)) {
             foreach ($objects as $file) {
                 if ($file != '.' && $file != '..') {
-                    if (is_dir($path . '/' . $file)) {
-                        if (!$this->addDir($path . '/' . $file)) {
+                    if (is_dir($path . ($path=== '/' ? '' : '/')  . $file)) {
+                        if (!$this->addDir($path . ($path=== '/' ? '' : '/')  . $file)) {
                             return false;
                         }
-                    } elseif (is_file($path . '/' . $file)) {
+                    } elseif (is_file($path . ($path=== '/' ? '' : '/')  . $file)) {
                         try {
-                            $this->tar->addFile($path . '/' . $file);
+                            $this->tar->addFile($path . ($path=== '/' ? '' : '/')  . $file);
                         } catch (Exception $e) {
                             return false;
                         }
