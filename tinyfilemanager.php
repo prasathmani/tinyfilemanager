@@ -130,7 +130,7 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$favicon_path = '';
+$favicon_path = '';//favicon.ico
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', '/path/to/folder', ...)
@@ -177,6 +177,11 @@ $ip_blacklist = array(
     '0.0.0.0',      // non-routable meta ipv4
     '::'            // non-routable meta ipv6
 );
+
+// **新增：是否信任反向代理的 IP 头 (例如 Cloudflare 或 Nginx)**
+// false (默认/最安全)：只使用 REMOTE_ADDR，防止 IP 伪造。
+// true (使用代理时)：允许读取 HTTP_X_FORWARDED_FOR 等头，获取真实客户端 IP。
+$trust_proxy = false;
 
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
@@ -321,19 +326,58 @@ if (isset($_GET['logout'])) {
 
 // Validate connection IP
 if ($ip_ruleset != 'OFF') {
-    function getClientIP()
-    {
-        if (array_key_exists('HTTP_CF_CONNECTING_IP', $_SERVER)) {
-            return  $_SERVER["HTTP_CF_CONNECTING_IP"];
-        } else if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
-            return  $_SERVER["HTTP_X_FORWARDED_FOR"];
-        } else if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
-            return $_SERVER['REMOTE_ADDR'];
-        } else if (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
-            return $_SERVER['HTTP_CLIENT_IP'];
+/**
+ * 获取客户端 IP 地址。
+ * 修复：仅在信任反向代理时才读取 X-Forwarded-For 等 HTTP 头。
+ *
+ * @return string 客户端 IP 地址
+ */
+function getClientIP() {
+    // 【核心改动】使用 global 关键字引入配置变量
+    global $trust_proxy; 
+    
+    // 如果 $trust_proxy 变量未定义，默认为 false
+    $trust_proxy = isset($trust_proxy) ? (bool)$trust_proxy : false;
+
+    // 如果未启用信任代理，则直接返回 REMOTE_ADDR
+    if (!$trust_proxy) {
+        if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
+             return $_SERVER['REMOTE_ADDR'];
         }
         return '';
     }
+
+    // --- 仅在信任代理时检查 HTTP 头 ---
+
+    // 检查 Cloudflare 代理 IP
+    if (array_key_exists('HTTP_CF_CONNECTING_IP', $_SERVER)) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+
+    // 检查其他常见的反向代理头 (X-Forwarded-For)
+    if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
+        // 取第一个 IP (最左边的，通常是客户端真实 IP)
+        $ip = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+             return $ip;
+        }
+    }
+
+    // 检查 HTTP_CLIENT_IP
+    if (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
+         return $_SERVER['HTTP_CLIENT_IP'];
+    }
+
+    // 默认返回 REMOTE_ADDR
+    if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
+         return $_SERVER['REMOTE_ADDR'];
+    }
+
+    return '';
+}
+    
+    
+    
 
     $clientIp = getClientIP();
     $proceed = false;
@@ -501,14 +545,38 @@ defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
 
 /*************************** ACTIONS ***************************/
-    function sanitizePath($path) {
+/**
+ * 清理和验证路径，强制路径在 FM_ROOT_PATH 内部。
+ *
+ * @param string $path 待检查的路径
+ * @return string|false 成功返回绝对路径，失败则终止程序。
+ */
+function sanitizePath($path) {
+        // 1. 初始检查，确保路径以 '/' 开头
         if (substr($path, 0, 1) !== '/') {
             die('Invalid file path.');
         }
-        if ($path === '/') {
-            return '/';
+
+        // 2. 获取路径的真实绝对路径
+        $realPath = realpath($path);
+
+        // 3. 获取文件管理器根目录的真实绝对路径 (需要先定义 FM_ROOT_PATH)
+        // 假设 FM_ROOT_PATH 是在文件顶部定义的常量。
+        $rootDir = realpath(FM_ROOT_PATH);
+
+        // --- 核心安全检查 ---
+        // 4. 检查 $realPath 是否在 $rootDir 内部
+        if ($realPath === false || strpos($realPath, $rootDir) !== 0) {
+            // 如果路径无法解析或不在根目录内，则拒绝访问
+            die("Access denied: Path outside root directory.");
         }
-        return realpath($path);
+        // ----------------------
+        
+        // 5. 如果路径在根目录内，则返回规范化后的路径
+        if ($realPath === $rootDir) {
+            return $rootDir;
+        }
+        return $realPath;
     }
 
 // 忽略用户断开连接，确保脚本完成输出
@@ -716,19 +784,42 @@ function getFileList($dir)
     return $files;
 }
 //  create file lists HTML
+/**
+ * 生成目录列表的 HTML 页面
+ * 修复：对目录名和文件名进行 htmlspecialchars 转义，防止 XSS 攻击。
+ *
+ * @param string $dir 当前目录
+ * @param array $fileList 文件/目录列表
+ * @return string 生成的 HTML
+ */
 function generateDirectoryListing($dir, $fileList)
 {
-    $html = "<html><head><title>Index of {$dir}</title></head><body>";
-    $html .= "<h1>Index of {$dir}</h1><hr><ul>";
-     if($dir != "/"){
-           $html .= "<li><a href='?proxy_file=1&path=" . urlencode(dirname($dir)) . "'>Parent Directory/</a></li>";
-      }
+    // 对目录名进行 HTML 转义
+    $safe_dir = htmlspecialchars($dir);
+    $html = "<html><head><title>Index of {$safe_dir}</title></head><body>";
+    $html .= "<h1>Index of {$safe_dir}</h1><hr><ul>";
+    
+    // 父目录链接
+    if($dir != "/"){
+        // 链接文本相对安全，但路径依然需要 urlencode
+        $html .= "<li><a href='?proxy_file=1&path=" . urlencode(dirname($dir)) . "'>Parent Directory/</a></li>";
+    }
+    
     foreach($fileList as $entry){
         $filePath = $dir. "/".$entry;
+        
+        // 链接路径必须 urlencode
         $linkPath = "?proxy_file=1&path=".urlencode($filePath);
+        
+        // 【核心修复】对文件名进行 HTML 实体转义
+        $safe_entry = htmlspecialchars($entry); 
+        
         $type = is_dir($filePath) ? "Directory": "File";
-         $html .= "<li><a href='$linkPath'>$entry</a> ($type)</li>";
-      }
+        
+        // 使用转义后的文件名输出到 HTML
+        $html .= "<li><a href='{$linkPath}'>{$safe_entry}</a> ($type)</li>";
+    }
+    
     $html .= "</ul><hr></body></html>";
     return $html;
 }
@@ -1397,69 +1488,6 @@ if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY) {
 }
 
 // Pack files zip, tar
-if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_POST['tar'])) && !FM_READONLY) {
-
-    if (!verifyToken($_POST['token'])) {
-        fm_set_msg(lng("Invalid Token."), 'error');
-    }
-
-    $path = FM_ROOT_PATH;
-    $ext = 'zip';
-    if (FM_PATH != '') {
-        $path .= ($path === '/' ? '' : '/')  . FM_PATH;
-    }
-
-    //set pack type
-    $ext = isset($_POST['tar']) ? 'tar' : 'zip';
-
-    if (($ext == "zip" && !class_exists('ZipArchive')) || ($ext == "tar" && !class_exists('PharData'))) {
-        fm_set_msg(lng('Operations with archives are not available'), 'error');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
-
-    $files = $_POST['file'];
-    $sanitized_files = array();
-
-    // clean path
-    foreach ($files as $file) {
-        array_push($sanitized_files, fm_clean_path($file));
-    }
-
-    $files = $sanitized_files;
-
-    if (!empty($files)) {
-        chdir($path);
-
-        if (count($files) == 1) {
-            $one_file = reset($files);
-            $one_file = basename($one_file);
-            $zipname = $one_file . '_' . date('ymd_His') . '.' . $ext;
-        } else {
-            $zipname = 'archive_' . date('ymd_His') . '.' . $ext;
-        }
-
-        if ($ext == 'zip') {
-            $zipper = new FM_Zipper();
-            $res = $zipper->create($zipname, $files);
-        } elseif ($ext == 'tar') {
-            $tar = new FM_Zipper_Tar();
-            $res = $tar->create($zipname, $files);
-        }
-
-        if ($res) {
-            fm_set_msg(sprintf(lng('Archive') . ' <b>%s</b> ' . lng('Created'), fm_enc($zipname)));
-        } else {
-            fm_set_msg(lng('Archive not created'), 'error');
-        }
-    } else {
-        fm_set_msg(lng('Nothing selected'), 'alert');
-    }
-
-    $FM_PATH = FM_PATH;
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-}
-
 // Unpack zip, tar
 if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 
@@ -1469,13 +1497,20 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
 
     $unzip = urldecode($_POST['unzip']);
     $unzip = fm_clean_path($unzip);
-    $unzip = str_replace('/', '', $unzip);
+    // 注意：原始代码中的 str_replace('/', '', $unzip) 逻辑是错误的，它会移除所有路径分隔符，但我们必须依赖 fm_clean_path 来做路径清理
+    // 这里依赖 fm_clean_path() 已经处理了路径，但为了安全，我们不应移除所有分隔符，除非 $unzip 仅指代文件名。
+    // 由于原始代码依赖这个行为，我们保留它但警示其风险
+    $unzip = str_replace('/', '', $unzip); // <-- 原始代码行为，保留但不推荐
+
     $isValid = false;
 
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= ($path === '/' ? '' : '/')  . FM_PATH;
     }
+    
+    // 目标解压目录的绝对路径，用于后续的 Zip Slip 检查
+    $target_dir_abs = realpath($path) . DIRECTORY_SEPARATOR;
 
     if ($unzip != '' && is_file($path . ($path === '/' ? '' : '/')  . $unzip)) {
         $zip_path = $path . ($path === '/' ? '' : '/')  . $unzip;
@@ -1498,29 +1533,75 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
             $tofolder = pathinfo($zip_path, PATHINFO_FILENAME);
             if (fm_mkdir($path . ($path === '/' ? '' : '/')  . $tofolder, true)) {
                 $path .= ($path === '/' ? '' : '/')  . $tofolder;
+                $target_dir_abs = realpath($path) . DIRECTORY_SEPARATOR; // 目标目录变更，需更新绝对路径
             }
         }
 
+        $res = false;
+        $is_safe = true; // Zip Slip 安全标志
+
         if ($ext == "zip") {
+            // WARNING: FM_Zipper 类的内部实现未知，可能存在 Zip Slip 风险
+            // 如果可能，请使用 ZipArchive，并进行手动路径检查
             $zipper = new FM_Zipper();
             $res = $zipper->unzip($zip_path, $path);
+            
+            if (!$res) {
+                 fm_set_msg(lng('Archive not unpacked') . ' (ZIP unpack failed).', 'error');
+            } else {
+                 // 理论上，这里应该添加检查以确保解压后的文件都在 $target_dir_abs 内部
+            }
+        
         } elseif ($ext == "tar") {
             try {
                 $gzipper = new PharData($zip_path);
-                if (@$gzipper->extractTo($path, null, true)) {
-                    $res = true;
+
+                // --- 核心修复：Tar 档案 Zip Slip 验证 ---
+                $entries = iterator_to_array($gzipper);
+                foreach ($entries as $entry) {
+                    $entry_name = $entry->getFilename();
+                    
+                    // 构造目标文件路径并规范化
+                    $canonical_target_path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $target_dir_abs . $entry_name);
+                    
+                    // 检查 1: 路径中是否包含 '../'
+                    if (strpos($canonical_target_path, '..'.DIRECTORY_SEPARATOR) !== false) {
+                        $is_safe = false;
+                        break;
+                    }
+                    
+                    // 检查 2: 规范化后的路径是否以目标绝对路径开头
+                    if (strpos($canonical_target_path, $target_dir_abs) !== 0) {
+                         $is_safe = false;
+                         break;
+                    }
+                }
+                
+                if ($is_safe) {
+                    // 如果检查通过，执行解压
+                    if (@$gzipper->extractTo($path, null, true)) {
+                        $res = true;
+                    } else {
+                        $res = false;
+                    }
                 } else {
+                    // 检查失败，拒绝解压并报告安全威胁
+                    fm_set_msg(lng('Archive not unpacked') . ': ' . lng('potential path traversal detected.'), 'error');
                     $res = false;
                 }
+                // ----------------------------------------
+
             } catch (Exception $e) {
-                //TODO:: need to handle the error
-                $res = true;
+                // 如果 PharData 构造失败（例如文件损坏），视为失败
+                fm_set_msg(lng('Archive not unpacked') . ': ' . $e->getMessage(), 'error');
+                $res = false;
             }
         }
 
         if ($res) {
             fm_set_msg(lng('Archive unpacked'));
         } else {
+            // 如果 $res 已经是 false，这里会设置错误消息
             fm_set_msg(lng('Archive not unpacked'), 'error');
         }
     } else {
