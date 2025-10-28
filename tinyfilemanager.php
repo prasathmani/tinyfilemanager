@@ -127,6 +127,14 @@ $upload_chunk_size_bytes = 2000000; // chunk size 2,000,000 bytes (~2MB)
 // OR => Connection must be on the whitelist, or not on the blacklist
 $ip_ruleset = 'OFF';
 
+// List of HTTP headers that may contain the real IP address of the user
+$ip_http_headers = array(
+    'HTTP_CF_CONNECTING_IP',
+    'HTTP_X_FORWARDED_FOR',
+    'REMOTE_ADDR',
+    'HTTP_CLIENT_IP',
+);
+
 // Should users be notified of their block?
 $ip_silent = true;
 
@@ -148,6 +156,8 @@ $config_file = __DIR__ . '/config.php';
 if (is_readable($config_file)) {
     @include($config_file);
 }
+
+defined('FM_IP_HTTP_HEADERS') || define('FM_IP_HTTP_HEADERS', version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($ip_http_headers) : $ip_http_headers);
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
@@ -283,14 +293,16 @@ if (isset($_GET['logout'])) {
 if ($ip_ruleset != 'OFF') {
     function getClientIP()
     {
-        if (array_key_exists('HTTP_CF_CONNECTING_IP', $_SERVER)) {
-            return  $_SERVER["HTTP_CF_CONNECTING_IP"];
-        } else if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
-            return  $_SERVER["HTTP_X_FORWARDED_FOR"];
-        } else if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
-            return $_SERVER['REMOTE_ADDR'];
-        } else if (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
-            return $_SERVER['HTTP_CLIENT_IP'];
+        $ip_http_headers = FM_IP_HTTP_HEADERS;
+        if (is_string($ip_http_headers)) {
+            $ip_http_headers = @unserialize($ip_http_headers);
+        }
+        if (is_array($ip_http_headers)) {
+            foreach ($ip_http_headers as $header) {
+                if (array_key_exists($header, $_SERVER)) {
+                    return $_SERVER[$header];
+                }
+            }
         }
         return '';
     }
