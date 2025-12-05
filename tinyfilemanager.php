@@ -1778,8 +1778,8 @@ if (isset($_GET['view'])) {
             <ul class="list-group w-50 my-3" data-bs-theme="<?php echo FM_THEME; ?>">
                 <li class="list-group-item active" aria-current="true"><strong><?php echo lng($view_title) ?>:</strong> <?php echo fm_enc(fm_convert_win($file)) ?></li>
                 <?php $display_path = fm_get_display_path($file_path); ?>
-                <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, filemtime($file_path)); ?></li>
                 <li class="list-group-item"><strong><?php echo lng($display_path['label']); ?>:</strong> <?php echo $display_path['path']; ?></li>
+                <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, filemtime($file_path)); ?></li>
                 <li class="list-group-item"><strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
                 <li class="list-group-item"><strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?></li>
                 <?php
