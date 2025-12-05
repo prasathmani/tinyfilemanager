@@ -684,10 +684,10 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
         }
         $is_dir = is_dir($path . '/' . $del);
         if (fm_rdelete($path . '/' . $del)) {
-            $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
+            $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : mb_strtolower(lng('File'), 'UTF-8') . ' <b>%s</b> ' . lng('Deleted');
             fm_set_msg(sprintf($msg, fm_enc($del)));
         } else {
-            $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('not deleted') : lng('File') . ' <b>%s</b> ' . lng('not deleted');
+            $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('not deleted') : mb_strtolower(lng('File'), 'UTF-8') . ' <b>%s</b> ' . lng('not deleted');
             fm_set_msg(sprintf($msg, fm_enc($del)), 'error');
         }
     } else {
@@ -1778,7 +1778,7 @@ if (isset($_GET['view'])) {
             <ul class="list-group w-50 my-3" data-bs-theme="<?php echo FM_THEME; ?>">
                 <li class="list-group-item active" aria-current="true"><strong><?php echo lng($view_title) ?>:</strong> <?php echo fm_enc(fm_convert_win($file)) ?></li>
                 <?php $display_path = fm_get_display_path($file_path); ?>
-                <li class="list-group-item"><strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?></li>
+                <li class="list-group-item"><strong><?php echo lng($display_path['label']); ?>:</strong> <?php echo $display_path['path']; ?></li>
                 <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, filemtime($file_path)); ?></li>
                 <li class="list-group-item"><strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
                 <li class="list-group-item"><strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?></li>
@@ -1825,7 +1825,18 @@ if (isset($_GET['view'])) {
                     <button type="submit" class="btn btn-link btn-sm text-decoration-none fw-bold p-0"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></button> &nbsp;
                 </form>
                 <?php if (!FM_READONLY): ?>
-                    <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
+                  <a class="fw-bold btn btn-outline-primary"
+                     title="<?php echo lng('Delete'); ?>"
+                     href="?p=<?php echo urlencode(FM_PATH); ?>&amp;del=<?php echo urlencode($file); ?>"
+                     onclick="confirmDialog(
+                              event,
+                              1209,
+                              '<?php echo mb_strtolower(lng('Delete') . ' ' . lng('File'), 'UTF-8'); ?>',
+                              <?php echo json_encode($file); ?>,
+                              this.href
+                          );"
+                     <i class="fa fa-trash"></i> <?php echo lng('Delete'); ?>
+                  </a>
                 <?php endif; ?>
                 <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 <?php
@@ -2164,7 +2175,7 @@ $all_files_size = 0;
                 $filesize_raw = "";
                 $filesize = lng('Folder');
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
-                $owner = array('name' => '?'); 
+                $owner = array('name' => '?');
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     try {
@@ -2213,7 +2224,17 @@ $all_files_size = 0;
                         </td>
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('Delete'); ?>"
+                                      href="?p=<?php echo urlencode(FM_PATH); ?>&amp;del=<?php echo urlencode($f); ?>"
+                                      onclick="confirmDialog(
+                                       event,
+                                       '1028',
+                                       '<?php echo mb_strtolower(lng('Delete') . ' ' . lng('Folder'), 'UTF-8'); ?>',
+                                       '<?php echo urlencode($f); ?>',
+                                       this.href
+                                      );">
+                                      <i class="fa fa-trash-o" aria-hidden="true"></i>
+                            </a>
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
@@ -2236,7 +2257,7 @@ $all_files_size = 0;
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
                 $all_files_size += $filesize_raw;
                 $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
-                $owner = array('name' => '?'); 
+                $owner = array('name' => '?');
                 $group = array('name' => '?');
                 if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     try {
@@ -2290,13 +2311,34 @@ $all_files_size = 0;
                     <?php endif; ?>
                     <td class="inline-actions">
                         <?php if (!FM_READONLY): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($f); ?>', this.href);"> <i class="fa fa-trash-o"></i></a>
+                          <?php $encoded = urlencode($f); ?>
+                            <a title="<?php echo lng('Delete'); ?>"
+                                       href="?p=<?php echo urlencode(FM_PATH); ?>&amp;del=<?php echo $encoded; ?>"
+                                       onclick="confirmDialog(
+                                           event,
+                                           1209,
+                                           '<?php echo mb_strtolower(lng('Delete') . ' ' . lng('File'), 'UTF-8'); ?>',
+                                           '<?php echo $encoded; ?>',
+                                           this.href
+                                       );">
+                                        <i class="fa fa-trash-o"></i>
+                            </a>
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..."
                                 href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
                         <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
-                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
+                        <a title="<?php echo lng('Download'); ?>"
+                                   href="?p=<?php echo urlencode(FM_PATH); ?>&amp;dl=<?php echo urlencode($f); ?>"
+                                   onclick="confirmDialog(
+                                       event,
+                                       1211,
+                                       '<?php echo mb_strtolower(lng('Download'), 'UTF-8'); ?>',
+                                       '<?php echo urlencode($f); ?>',
+                                       this.href
+                                   );">
+                                    <i class="fa fa-download"></i>
+                        </a>
                     </td>
                 </tr>
             <?php
@@ -2317,8 +2359,8 @@ $all_files_size = 0;
                     <tr>
                         <td class="gray fs-7" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' : '7') : (FM_READONLY ? '4' : '5') ?>">
                             <?php echo lng('FullSize') . ': <span class="badge text-bg-light border-radius-0">' . fm_get_filesize($all_files_size) . '</span>' ?>
-                            <?php echo lng('File') . ': <span class="badge text-bg-light border-radius-0">' . $num_files . '</span>' ?>
-                            <?php echo lng('Folder') . ': <span class="badge text-bg-light border-radius-0">' . $num_folders . '</span>' ?>
+                            <?php echo lng('Files') . ': <span class="badge text-bg-light border-radius-0">' . $num_files . '</span>' ?>
+                            <?php echo lng('Folders') . ': <span class="badge text-bg-light border-radius-0">' . $num_folders . '</span>' ?>
                         </td>
                     </tr>
                 </tfoot>
@@ -4769,7 +4811,7 @@ function fm_show_header_login()
             </div>
 
             <!--Rename Modal -->
-            <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="renameDailog" data-bs-theme="<?php echo FM_THEME; ?>">
+            <div class="modal modal-alert" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="renameDialog" data-bs-theme="<?php echo FM_THEME; ?>">
                 <div class="modal-dialog" role="document">
                     <form class="modal-content rounded-3 shadow" method="post" autocomplete="off">
                         <div class="modal-body p-4 text-center">
@@ -4790,7 +4832,7 @@ function fm_show_header_login()
 
             <!-- Confirm Modal -->
             <script type="text/html" id="js-tpl-confirm">
-                <div class="modal modal-alert confirmDailog" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="confirmDailog-<%this.id%>" data-bs-theme="<?php echo FM_THEME; ?>">
+                <div class="modal modal-alert confirmDialog" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" id="confirmDialog-<%this.id%>" data-bs-theme="<?php echo FM_THEME; ?>">
                     <div class="modal-dialog" role="document">
                         <form class="modal-content rounded-3 shadow" method="post" autocomplete="off" action="<%this.action%>">
                             <div class="modal-body p-4 text-center">
@@ -4850,7 +4892,7 @@ function fm_show_header_login()
                 if (t) {
                     $("#js-rename-from").val(t);
                     $("#js-rename-to").val(t);
-                    $("#renameDailog").modal('show');
+                    $("#renameDialog").modal('show');
                 }
             }
 
@@ -5075,8 +5117,8 @@ function fm_show_header_login()
                 }
             }
 
-            // action confirm dailog modal
-            function confirmDailog(e, id = 0, title = "Action", content = "", action = null) {
+            // action confirm Dialog modal
+            function confirmDialog(e, id = 0, title = "Action", content = "", action = null) {
                 e.preventDefault();
                 const tplObj = {
                     id,
@@ -5085,10 +5127,10 @@ function fm_show_header_login()
                     action
                 };
                 let tpl = $("#js-tpl-confirm").html();
-                $(".modal.confirmDailog").remove();
+                $(".modal.confirmDialog").remove();
                 $('#wrapper').append(template(tpl, tplObj));
-                const $confirmDailog = $("#confirmDailog-" + tplObj.id);
-                $confirmDailog.modal('show');
+                const $confirmDialog = $("#confirmDialog-" + tplObj.id);
+                $confirmDialog.modal('show');
                 return false;
             }
 
@@ -5597,9 +5639,6 @@ function fm_show_header_login()
         $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
         $tr['en']['Are you sure want to rename?']                   = 'Are you sure want to rename?';
         $tr['en']['Are you sure want to']                           = 'Are you sure want to';
-        $tr['en']['Date Modified']                                  = 'Date Modified';
-        $tr['en']['File size']                                      = 'File size';
-        $tr['en']['MIME-type']                                      = 'MIME-type';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
