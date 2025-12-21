@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Web based File Manager in PHP, Manage your files efficiently and easily with Tiny File Manager">
+    <meta name="author" content="CCP Programmers">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <title>TINY PHP5 PASSWORD HASH GENERATOR</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        .code {
+            background: #e8e8e8;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        pre { margin: 0}
+        .form-control:focus {
+            border-color: #28a745;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body class="bg-secondary">
+<div id="wrapper" class="container-fluid">
+
+    <section>
+
+        <div class="row">
+            <div class="col-xs-12 col-sm-6">
+
+                <div class="card mt-4 mb-2">
+                    <h5 class="card-header">TINY FILE MANAGER</h5>
+                    <div class="card-body">
+                        <h5 class="card-title">PHP5 PASSWORD HASH GENERATOR</h5>
+                        <p class="card-text">PHP5 password_hash() is a predefined (built in) function on php 5.5 and above. Verifiable with password_verify() but non reversable.</p>
+
+                        <form class="form-signin" action="" method="post" autocomplete="off">
+                            <div class="form-row align-items-center">
+                                <div class="col-sm-8 my-1">
+                                    <label class="sr-only" for="fm_pwd">Password</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">Password</div>
+                                        </div>
+                                        <input type="text" class="form-control" id="fm_pwd" name="fm_pwd" placeholder="Enter your password" required="">
+                                    </div>
+                                </div>
+                                <div class="col-auto my-1">
+                                    <button class="btn btn-outline-primary btn-sm mr-1" id="js-new-pwd" title="Create random password">
+                                        <!--?xml version="1.0" encoding="UTF-8"?-->
+                                        <svg width="27px" height="27px" style="vertical-align: bottom;" enable-background="new 0 0 561 561" version="1.1" viewBox="0 0 561 561" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+		<path d="m280.5 76.5v-76.5l-102 102 102 102v-76.5c84.15 0 153 68.85 153 153 0 25.5-7.65 51-17.85 71.4l38.25 38.25c17.85-33.15 30.6-68.85 30.6-109.65 0-112.2-91.8-204-204-204zm0 357c-84.15 0-153-68.85-153-153 0-25.5 7.65-51 17.85-71.4l-38.25-38.25c-17.85 33.15-30.6 68.85-30.6 109.65 0 112.2 91.8 204 204 204v76.5l102-102-102-102v76.5z" fill="#006DF0"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="submit" class="btn btn-success">GENERATE</button>
+                                </div>
+
+                                <div class="col-10 mt-3">
+                                    <div class="form-group">
+                                        <label for="resultarea">PASSWORD HASH <img src="../img/30.gif" id="loading-image" class="d-none"></label>
+                                        <textarea type="text" class="form-control" rows="3" id="resultarea" readonly=""></textarea>
+                                        <a href="#/resultarea" id="copy-hash">Copy</a>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-xs-12 col-sm-6">
+                <div class="card mt-4 mb-2">
+                    <h5 class="card-header">HOW TO USE</h5>
+                    <div class="card-body">
+                    <div class="code" role="alert">
+<pre><code>$auth_users = array(
+    'username' =&gt; 'REPLACE YOUR GENERATED PASSWORD HERE'
+);
+</code></pre>
+                    </div>
+                    <p>or you can use directly use password with hash in <code>$auth_users</code></p>
+                    <div class="code" role="alert">
+<pre><code>$auth_users = array(
+    'username' =&gt; password_hash('password here', PASSWORD_DEFAULT)
+);
+</code></pre>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="mt-5 text-center text-white">
+        —— © <a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="text-white"> Tiny File Manager</a> ——
+    </div>
+
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script>
+
+    function copyToClipboard(text) {
+        if (window.clipboardData && window.clipboardData.setData) {
+            return clipboardData.setData("Text", text);
+
+        } else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+            var textarea = document.createElement("textarea");
+            textarea.textContent = text;
+            textarea.style.position = "fixed";
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                return document.execCommand("copy");
+            } catch (ex) {
+                console.warn("Copy to clipboard failed.", ex);
+                return false;
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+    }
+
+    function generate(l) {
+        if (typeof l==='undefined'){var l=8;}
+        /* c : alphanumeric character string */
+        var c='abcdefghijknopqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ12345679',
+            n=c.length,
+            /* p : special character string */
+            p='!@#$+-*_',
+            o=p.length,
+            r='',
+            n=c.length,
+            /* s : determinate the position of the special character */
+            s=Math.floor(Math.random() * (p.length-1));
+
+        for(var i=0; i<l; ++i){
+            if(s == i){
+                /* special charact insertion (random position s) */
+                r += p.charAt(Math.floor(Math.random() * o));
+            }else{
+                /* alphanumeric insertion */
+                r += c.charAt(Math.floor(Math.random() * n));
+            }
+        }
+        return r;
+    }
+
+    $("#js-new-pwd").on("click", function (e) {
+        e.preventDefault();
+        $("#fm_pwd").val(generate(10));
+    })
+
+    $("a#copy-hash").on("click", function (e) {
+        e.preventDefault();
+        var data = $("#resultarea").val();
+        if(!!data) {
+            copyToClipboard(data);
+        }
+    });
+
+    $('.form-signin').on('submit', function (e) {
+        e.preventDefault();
+        $("#resultarea").val('');
+        var pwd = $('#fm_pwd').val();
+        if(!!pwd) {
+            $.ajax({
+                type: "GET",
+                url: "http://tinyfilemanager.alwaysdata.net/pwd.php",
+                data: 'pwd='+pwd,
+                dataType: 'jsonp',
+                cache: false,
+                beforeSend: function() {
+                    $("#loading-image").removeClass('d-none');
+                },
+                success: function(data){
+                    $("#loading-image").addClass('d-none');
+                    $("#resultarea").val(data);
+                },
+                error : function(){
+                    $("#loading-image").addClass('d-none');
+                }
+            });
+        }
+
+    });
+</script>
+
+
+</body></html>
