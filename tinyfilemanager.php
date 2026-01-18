@@ -3315,7 +3315,6 @@ function fm_get_file_mimes($extension)
     $fileTypes['mpg'] = 'video/mpeg';
     $fileTypes['mpe'] = 'video/mpeg';
     $fileTypes['mov'] = 'video/quicktime';
-    $fileTypes['swf'] = 'video/quicktime';
     $fileTypes['3gp'] = 'video/quicktime';
     $fileTypes['m4a'] = 'video/quicktime';
     $fileTypes['aac'] = 'video/quicktime';
