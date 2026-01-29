@@ -950,7 +950,14 @@
         "Invalid characters in file or folder name": "Unzulässige Zeichen im Datei- oder Ordnernamen",
         "Operations with archives are not available": "Archiv-Funktionen nicht verfügbar",
         "File or folder with this path already exists": "Datei oder Ordner mit diesem Pfad existiert bereits",
-        "Moved from": "Verschoben aus"
+        "Moved from": "Verschoben aus",
+        "Are you sure want to rename?": "Wirklich umbenennen?",
+        "Enter new file name": "Neuen Dateinamen eingeben",
+        "Are you sure want to": "",
+        "Cancel": "Abbrechen",
+        "Sometimes the save action may not work on the first try, so please attempt it again": "Zweimal speichern, falls die Änderungen nicht übernommen werden",
+        "Upload from URL": "Upload von URL",
+        "Enter here...": "Hier eingeben..."
       }
     },
     {
