@@ -1,15 +1,20 @@
 services:
   tinyfilemanager:
-    build: . 
-#    image: tinyfilemanager/tinyfilemanager                    ###  If you want to run a Docker container on an image from Docker Hub, comment on the upper line 'build: .'
+    build: .                                            # Uncomment if you want to build locally instead of pulling
+#    image: tinyfilemanager/tinyfilemanager:latest      ###  If you want to run a Docker container on an image from Docker Hub, comment on the upper line 'build: .'
     container_name: tinyfilemanager
-    restart: always
+    restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"                               
     volumes:
-      - /absolute/path/to/storage/data:/var/www/html/data      ### Add to commend or remove this line and uncomment the last lines if you want to use Docker volumes for stored data. 
-      - /absolute/path/to/config.php:/var/www/html/config.php  ### Uncomment if you are using config.php
-#      - tinyfilenabager_data:/var/www/html/data               ### uncomment if you want to use docker volumes as storage data. 
+      - ./data:/var/www/html/data                       ### You can change "./data:" to your path if you want to keep your data in a dedicated directory.  
+      - ./config.php:/var/www/html/config.php           ### Uncomment if you are using config.php
+   
+    environment:
+      TZ: UTC
 
-# volumes:
-#    tinyfilenabager_data:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
