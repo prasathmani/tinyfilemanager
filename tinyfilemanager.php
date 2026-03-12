@@ -2019,7 +2019,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
         } elseif ($is_text) {
             echo '<div id="editor" contenteditable="true">' . htmlspecialchars($content) . '</div>';
         } else {
-            fm_set_msg(lng('FILE EXTENSION HAS NOT SUPPORTED'), 'error');
+            fm_set_msg(lng('FILE EXTENSION IS NOT SUPPORTED'), 'error');
         }
         ?>
     </div>
@@ -5586,7 +5586,7 @@ function fm_show_header_login()
         $tr['en']['Advanced Search']    = 'Advanced Search';
         $tr['en']['Error while copying from']    = 'Error while copying from';
         $tr['en']['Invalid characters in file name']                = 'Invalid characters in file name';
-        $tr['en']['FILE EXTENSION HAS NOT SUPPORTED']               = 'FILE EXTENSION HAS NOT SUPPORTED';
+        $tr['en']['FILE EXTENSION IS NOT SUPPORTED']                = 'FILE EXTENSION IS NOT SUPPORTED';
         $tr['en']['Selected files and folder deleted']              = 'Selected files and folder deleted';
         $tr['en']['Error while fetching archive info']              = 'Error while fetching archive info';
         $tr['en']['Delete selected files and folders?']             = 'Delete selected files and folders?';
