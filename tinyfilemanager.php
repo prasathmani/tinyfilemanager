@@ -604,15 +604,75 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
         $url = !empty($_REQUEST["uploadurl"]) && preg_match("|^http(s)?://.+$|", stripslashes($_REQUEST["uploadurl"])) ? stripslashes($_REQUEST["uploadurl"]) : null;
 
-        //prevent 127.* domain and known ports
-        $domain = parse_url($url, PHP_URL_HOST);
-        $port = parse_url($url, PHP_URL_PORT);
-        $knownPorts = [22, 23, 25, 3306];
-
-        if (preg_match("/^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^(?:0*\:)*?:?0*1$/i", $domain) || in_array($port, $knownPorts)) {
-            $err = array("message" => "URL is not allowed");
+        // Validate URL exists
+        if (!$url) {
+            $err = array("message" => "Invalid URL");
             event_callback(array("fail" => $err));
             exit();
+        }
+
+        // Parse URL components
+        $parsed_url = parse_url($url);
+        if (!$parsed_url || !isset($parsed_url['host'])) {
+            $err = array("message" => "Invalid URL format");
+            event_callback(array("fail" => $err));
+            exit();
+        }
+
+        $host = $parsed_url['host'];
+        $port = isset($parsed_url['port']) ? $parsed_url['port'] : null;
+        $scheme = isset($parsed_url['scheme']) ? strtolower($parsed_url['scheme']) : '';
+
+        // Only allow HTTP and HTTPS protocols
+        if (!in_array($scheme, ['http', 'https'])) {
+            $err = array("message" => "Only HTTP and HTTPS protocols are allowed");
+            event_callback(array("fail" => $err));
+            exit();
+        }
+
+        // Block dangerous ports (expanded list)
+        $blocked_ports = [21, 22, 23, 25, 110, 143, 445, 3306, 3389, 5432, 5984, 6379, 7001, 8020, 8888, 9200, 11211, 27017];
+        if ($port && in_array($port, $blocked_ports)) {
+            $err = array("message" => "Access to this port is not allowed");
+            event_callback(array("fail" => $err));
+            exit();
+        }
+
+        // Resolve hostname to IP addresses
+        $ip_list = @gethostbynamel($host);
+        if ($ip_list === false || empty($ip_list)) {
+            // If DNS resolution fails, check if host is already an IP
+            $resolved_ip = @gethostbyname($host);
+            if ($resolved_ip === $host) {
+                // Check if it's a valid IP address
+                if (filter_var($host, FILTER_VALIDATE_IP)) {
+                    $ip_list = [$host];
+                } else {
+                    $err = array("message" => "Cannot resolve hostname");
+                    event_callback(array("fail" => $err));
+                    exit();
+                }
+            } else {
+                $ip_list = [$resolved_ip];
+            }
+        }
+
+        // Validate all resolved IPs are not private/internal
+        foreach ($ip_list as $ip) {
+            if (fm_is_ip_restricted($ip)) {
+                $err = array("message" => "Access to private/internal resources is not allowed");
+                event_callback(array("fail" => $err));
+                exit();
+            }
+        }
+
+        // If host is an IP address, validate it directly as well
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            if (fm_is_ip_restricted($host)) {
+                $err = array("message" => "Access to private/internal resources is not allowed");
+                event_callback(array("fail" => $err));
+                exit();
+            }
         }
 
         $use_curl = false;
@@ -639,7 +699,18 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             @$ch = curl_init($url);
             curl_setopt($ch, CURLOPT_NOPROGRESS, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
             curl_setopt($ch, CURLOPT_FILE, $fp);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'TinyFileManager/2.6');
+            // Restrict protocols to HTTP/HTTPS only
+            if (defined('CURLOPT_PROTOCOLS')) {
+                curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            }
+            if (defined('CURLOPT_REDIR_PROTOCOLS')) {
+                curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            }
             @$success = curl_exec($ch);
             $curl_info = curl_getinfo($ch);
             if (!$success) {
@@ -650,7 +721,24 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $fileinfo->size = $curl_info["size_download"];
             $fileinfo->type = $curl_info["content_type"];
         } else {
-            $ctx = stream_context_create();
+            // Create stream context with timeout and security options
+            $context_options = array(
+                'http' => array(
+                    'timeout' => 10,
+                    'follow_location' => 1,
+                    'max_redirects' => 3,
+                    'user_agent' => 'TinyFileManager/2.6',
+                    'ignore_errors' => false
+                ),
+                'https' => array(
+                    'timeout' => 10,
+                    'follow_location' => 1,
+                    'max_redirects' => 3,
+                    'user_agent' => 'TinyFileManager/2.6',
+                    'ignore_errors' => false
+                )
+            );
+            $ctx = stream_context_create($context_options);
             @$success = copy($url, $temp_file, $ctx);
             if (!$success) {
                 $err = error_get_last();
@@ -734,9 +822,16 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
 }
 
 // Copy folder / file
-if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
+if (isset($_POST['copy'], $_POST['finish'], $_POST['token']) && !FM_READONLY) {
+    // Validate CSRF token
+    if (!verifyToken($_POST['token'])) {
+        fm_set_msg(lng('Invalid Token.'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+    
     // from
-    $copy = urldecode($_GET['copy']);
+    $copy = urldecode($_POST['copy']);
     $copy = fm_clean_path($copy);
     // empty path
     if ($copy == '') {
@@ -753,7 +848,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     }
     $dest .= '/' . basename($from);
     // move?
-    $move = isset($_GET['move']);
+    $move = isset($_POST['move']);
     $move = fm_clean_path(urldecode($move));
     // copy/move/duplicate
     if ($from != $dest) {
@@ -1540,9 +1635,28 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
             <strong>Destination folder:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
         </p>
         <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> Move</a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="text-danger"><i class="fa fa-times-circle"></i> Cancel</a></b>
+            <form method="post" action="" style="display:inline;">
+                <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                <input type="hidden" name="copy" value="<?php echo fm_enc($copy) ?>">
+                <input type="hidden" name="finish" value="1">
+                <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+                <button type="submit" class="btn btn-sm btn-success" style="padding: 3px 6px; font-size: 14px;">
+                    <i class="fa fa-check-circle"></i> <?php echo lng('Copy') ?>
+                </button>
+            </form>
+            &nbsp;
+            <form method="post" action="" style="display:inline;">
+                <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                <input type="hidden" name="copy" value="<?php echo fm_enc($copy) ?>">
+                <input type="hidden" name="finish" value="1">
+                <input type="hidden" name="move" value="1">
+                <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+                <button type="submit" class="btn btn-sm btn-success" style="padding: 3px 6px; font-size: 14px;">
+                    <i class="fa fa-check-circle"></i> <?php echo lng('Move') ?>
+                </button>
+            </form>
+            &nbsp;
+            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="text-danger"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>
         </p>
         <p><i><?php echo lng('Select folder') ?></i></p>
         <ul class="folders break-word">
@@ -2356,6 +2470,58 @@ fm_show_footer();
 // --- END HTML ---
 
 // Functions
+
+/**
+ * Check if an IP address is private, loopback, or otherwise restricted
+ * Prevents SSRF attacks by blocking access to internal resources
+ * @param string $ip The IP address to check
+ * @return bool True if IP is restricted, false if safe to access
+ */
+function fm_is_ip_restricted($ip)
+{
+    // Remove brackets from IPv6 addresses
+    $ip = trim($ip, '[]');
+    
+    // Validate IP format
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+        return true; // Invalid IP is restricted
+    }
+    
+    // Check for private or reserved IP ranges using PHP filters
+    // This covers: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8
+    // IPv6: fd00::/8, fe80::/10, ::1/128, and other reserved ranges
+    if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+        return true; // Private or reserved IP
+    }
+    
+    // Additional IPv6 loopback check for variations
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $ipv6_lower = strtolower($ip);
+        // Check for ::1 and its expanded forms (0:0:0:0:0:0:0:1, etc.)
+        if (preg_match('/^(0*:){1,7}0*1$/', $ipv6_lower) || $ipv6_lower === '::1') {
+            return true;
+        }
+    }
+    
+    // Additional IPv4 checks for edge cases
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        // Block 0.0.0.0/8 (including shorthand like "0")
+        $parts = explode('.', $ip);
+        if (count($parts) === 4 && $parts[0] === '0') {
+            return true;
+        }
+        // Also block single "0" or "0.0.0.0"
+        if ($ip === '0' || $ip === '0.0.0.0') {
+            return true;
+        }
+        // Block link-local 169.254.0.0/16
+        if (preg_match('/^169\.254\./', $ip)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
 
 /**
  * It prints the css/js files into html
