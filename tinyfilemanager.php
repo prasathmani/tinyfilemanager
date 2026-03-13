@@ -5609,5 +5609,32 @@ function fm_show_header_login()
         else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
         else return "$txt";
     }
+   
+if ($lang != 'en') {                                                        # Check your language
+// if (@$_GET['lng'] != 'lng') {                                            # URL-trigger: tinyfilemanager.php?lng=lng
+    function extractLngStrings($input) {                                    # Make a updated lng-keylist:
+        preg_match_all('/lng\([\'"]([^\'"]*)[\'"]\)/', $input, $matches);   # Scann source-file for keywords in lng()-call
+        if (!isset($matches[1])) { return []; }                             # 
+        $unique = array_unique($matches[1]);                                # Remove dublicates
+        sort($unique, SORT_NATURAL | SORT_FLAG_CASE);                       # Sort alphabetic
+        return $unique;                                                     # 
+    }                                                                       # Output result to screen:
+    echo '<br><b>Translate control:</b><br>';
+    echo 'Updated list of current keywords for your language, to be used in translation.json:<br>';   # 'Vers:'. VERSION .
+    echo 'Use CTRL-A to mark all in the green frame. Copy/Paste it to your UTF8 editor and complete translation.';
+    echo '<div contenteditable="true" style="border: solid green; padding:5px; margin:1em;">{<br><pre>'; 
+    echo '"name": "'.$lang_list[$lang].'",<br>';
+    echo '"code": "'.$lang.'",<br>';
+    echo '"translation": {<br>';
+    $array= extractLngStrings(file_get_contents(__FILE__));
+    $last = count($array) - 1; $n=0;
+    foreach ($array as $ix => $key) { if ($key==lng($key)) $n++;
+        echo '    "'.$key.'": "'.($key==lng($key) ? '<b><i>'. $n.': ' : '').lng($key).'</i></b>'.'"';
+        echo ($ix < $last) ? ",<br>" : "<br>";
+    } 
+    echo '}</pre></div>';
+    echo 'Check the strings shown with italic & bold (KeyString != TranslateString)<br>';
+    echo 'If you have a complete translate for the newest version of Filemanager, do share it on Github';
+} 
 
 ?>
