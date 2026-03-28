@@ -1,7 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
-
+$CONFIG = '{"lang":"en","show_translation":false,"error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 /**
  * H3K ~ Tiny File Manager V2.6
  * @author CCP Programmers
@@ -183,6 +182,9 @@ $cfg = new FM_Config();
 
 // Default language
 $lang = isset($cfg->data['lang']) ? $cfg->data['lang'] : 'en';
+
+// Show or hide translation control
+$show_translation = isset($cfg->data['show_translation']) ? $cfg->data['show_translation'] : true;
 
 // Show or hide files and folders that starts with a dot
 $show_hidden_files = isset($cfg->data['show_hidden']) ? $cfg->data['show_hidden'] : true;
@@ -537,13 +539,14 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
+        global $cfg, $lang, $show_translation, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
         if (!array_key_exists($newLng, $lang_list)) {
             $newLng = 'en';
         }
-
+ 
+        $trl = isset($_POST['js-show-translation']) && $_POST['js-show-translation'] == "true" ? true : false;
         $erp = isset($_POST['js-error-report']) && $_POST['js-error-report'] == "true" ? true : false;
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
@@ -553,15 +556,15 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $cfg->data['lang'] = $newLng;
             $lang = $newLng;
         }
+        if ($cfg->data['show_translation'] != $trl) {
+            $cfg->data['show_translation'] = $trl;
+            $show_translation = $trl;
+        }
         if ($cfg->data['error_reporting'] != $erp) {
             $cfg->data['error_reporting'] = $erp;
             $report_errors = $erp;
         }
-        if ($cfg->data['show_hidden'] != $shf) {
-            $cfg->data['show_hidden'] = $shf;
-            $show_hidden_files = $shf;
-        }
-        if ($cfg->data['show_hidden'] != $shf) {
+       if ($cfg->data['show_hidden'] != $shf) {
             $cfg->data['show_hidden'] = $shf;
             $show_hidden_files = $shf;
         }
@@ -1599,7 +1602,17 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                             </select>
                         </div>
                     </div>
-                    <div class="mt-3 mb-3 row ">
+
+                    <div class="mt-3 mb-3 row">
+                        <label for="js-show-translation" class="col-sm-3 col-form-label"><?php echo lng('Check translation') ?></label>
+                        <div class="col-sm-9">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="js-show-translation" name="js-show-translation" value="true" <?php echo $show_translation ? 'checked' : ''; ?> />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 row ">
                         <label for="js-error-report" class="col-sm-3 col-form-label"><?php echo lng('ErrorReporting') ?></label>
                         <div class="col-sm-9">
                             <div class="form-check form-switch">
@@ -4892,7 +4905,8 @@ function fm_show_header_login()
             // Toast message
             function toast(txt) {
                 var x = document.getElementById("snackbar");
-                x.innerHTML = txt;
+                var translated = (typeof i18n !== 'undefined' && i18n[txt]) ? i18n[txt] : txt;
+                x.innerHTML = translated;
                 x.className = "show";
                 setTimeout(function() {
                     x.className = x.className.replace("show", "");
@@ -5488,7 +5502,7 @@ function fm_show_header_login()
      */
     function lng($txt)
     {
-        global $lang;
+        global $lang, $tr;
 
         // English Language
         $tr['en']['AppName']        = 'Tiny File Manager';
@@ -5609,5 +5623,63 @@ function fm_show_header_login()
         else if (isset($tr['en'][$txt])) return fm_enc($tr['en'][$txt]);
         else return "$txt";
     }
-
+   
+if ($show_translation == true) { 
+    function extractTxt($input, $txt='lng') {                               # Make a updated lng-keylist:
+        preg_match_all('/'.$txt.'\([\'"]([^\'"]*)[\'"]\)/',$input,$matches);# Scann source-file for keywords in lng()-call
+        if (!isset($matches[1])) { return []; }
+        $unique = array_unique($matches[1]);                                # Remove dublicates
+        sort($unique, SORT_NATURAL | SORT_FLAG_CASE);                       # Sort alphabetic
+        return $unique; 
+    }
+    function indentAfter($text, $totalWidth = 30) {
+        return str_repeat(' ', max(0, $totalWidth - strlen($text)));
+    }
+    function arrPretty($arrVar,$titl='',$attr='rows="10" cols="120"',$wdth='50%',$rtrn=false) {    ## Pretty output of any variable
+        $result= "<meta charset='UTF-8'>
+              <div style='background: lightcyan; width:".$wdth.";'>".$titl."</div>
+              <textarea ".$attr." wrap = 'off' style='padding: 10px; width: ".$wdth."; display: block;'>".
+                    print_r($arrVar,true).
+              "</textarea><hr>\n";
+        if (!$rtrn) echo $result;  else return $result;
+    }
+    
+    echo '<br><b>Translate control:</b><br>';       # Output result to screen:
+    echo 'Updated list of current keywords for your language, to be used in translation.json:<br>';
+    echo 'Use CTRL-A to mark all in the green frame. Copy/Paste it to your UTF8 editor and complete translation or let AI do the work. (Plese profread!)';
+    echo '<div contenteditable="true" style="border: solid green; padding:5px; margin:1em;">{<br><pre>'; 
+    echo '"name": "'.$lang_list[$lang].'",<br>';
+    echo '"code": "'.$lang.'",<br>';
+    echo '"vers": "'.APP_TITLE.' '.VERSION.'",<br>';
+    echo '"note": "vers, note, date, author are new fields 2026",<br>';
+    echo '"date": "'.date("Y-m-d").'",<br>';
+    echo '"author": "----",<br>';
+    echo '"translation": {<br>';
+    $array1= extractTxt(file_get_contents(__FILE__),'lng');
+    $array2= extractTxt(file_get_contents(__FILE__),'toast'); 
+    $array = array_merge(array_values($array1), array_values($array2));
+    $last  = count($array) - 1; $n=0;
+    foreach ($array as $ix => $key) { 
+        if ($key == lng($key)) $n++;
+        echo '    "'.$key.'": "'.($key==lng($key) ? '<b><i>'. $n.': ' : '').lng($key).'</i></b>'.'"';
+        echo ($ix < $last) ? ",<br>" : "<br>";
+    } 
+    echo '}</pre></div>';
+    echo 'Check the strings shown with italic & bold (KeyString != TranslateString)<br>';
+    echo 'If you have a complete translate for the newest version of Filemanager, do share it on Github';
+    arrPretty($array1,'$Strings sendt to lng()');
+    arrPretty($array2,'$Strings sendt to toast()');
+    if (true) {
+        echo '<br><br><pre>Suggestions for updating the english tr table:<br>';
+        $s= [];
+        foreach ($array as $a) { # in function lng($txt) add $tr as global:  "global $lang, $tr;"
+            $str = '        $tr[\'en\'][\''.$a.'\'] ';
+            echo $str.indentAfter($str,70).'= \''.($tr['en'][($a)] > '' ? $tr['en'][($a)] : $a).'\';<br>';
+            $newArr[$a] =  $a;
+        }
+        echo ' Total: '.count($array) . ' keys in list.';
+        $ar= array_merge($newArr, array_diff($tr['en']));
+     }
+}
+ 
 ?>
