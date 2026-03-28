@@ -458,6 +458,79 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 
 /*************************** ACTIONS ***************************/
 
+// file proxy
+if (isset($_GET['proxy_file'])) {    
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET');
+
+    function sanitizePath($path) {
+        if (substr($path, 0, 1) !== '/') {
+            die('Invalid file path.');
+        }
+         if ($path === '/')
+           return '/';
+        return realpath($path);
+    }
+
+   // get file path 
+    $filePath = isset($_GET['path'])?$_GET['path']:"/";
+
+    $filePath = sanitizePath($filePath);
+
+    if ($filePath === false || !file_exists($filePath)) {
+        http_response_code(404);
+        die('File not found or inaccessible.');
+    }
+    
+    if (is_dir($filePath)) {
+        // if it is dir,list the content
+        $fileList = getFileList($filePath);
+        echo generateDirectoryListing($filePath, $fileList);
+        exit;
+    } else {
+       // if it is image or vedio file ,return  the immage file content
+        if (!is_readable($filePath)) {
+          http_response_code(403);
+          die("File is not readable.");
+        }
+        $mimeType = mime_content_type($filePath);
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . filesize($filePath));
+        readfile($filePath);
+        exit;
+    }
+}
+
+// get file lists
+function getFileList($dir)
+{
+    $files = array();
+    $entries = scandir($dir);
+    foreach ($entries as $entry) {
+      if ($entry != "." && $entry != "..") {
+        $files[] = $entry;
+        }
+    }
+    return $files;
+}
+//  create file lists HTML
+function generateDirectoryListing($dir, $fileList)
+{
+    $html = "<html><head><title>Index of {$dir}</title></head><body>";
+    $html .= "<h1>Index of {$dir}</h1><hr><ul>";
+     if($dir != "/"){
+           $html .= "<li><a href='?proxy_file=1&path=" . urlencode(dirname($dir)) . "'>Parent Directory/</a></li>";
+      }
+    foreach($fileList as $entry){
+        $filePath = $dir. "/".$entry;
+        $linkPath = "?proxy_file=1&path=".urlencode($filePath);
+        $type = is_dir($filePath) ? "Directory": "File";
+         $html .= "<li><a href='$linkPath'>$entry</a> ($type)</li>";
+      }
+    $html .= "</ul><hr></body></html>";
+    return $html;
+}
+
 // Handle all AJAX Request
 if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) || !FM_USE_AUTH) && isset($_POST['ajax'], $_POST['token'])) {
     if (!verifyToken($_POST['token'])) {
@@ -1827,8 +1900,14 @@ if (isset($_GET['view'])) {
                 <?php if (!FM_READONLY): ?>
                     <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
                 <?php endif; ?>
-                <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
-                <?php
+                <a class="fw-bold btn btn-outline-primary" href="<?php 
+		                                                   if($_SERVER['DOCUMENT_ROOT'] === $root_path){
+						                        echo fm_enc($file_url);}
+						                   else{
+						                         echo '?p=&proxy_file=1&path=' . urlencode($file_path); 
+								       }						
+								?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+		<?php
                 // ZIP actions
                 if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
                     $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
@@ -1882,8 +1961,15 @@ if (isset($_GET['view'])) {
                     }
                 } elseif ($is_image) {
                     // Image content
-                    if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
-                        echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($file_url) . '" alt="image" class="preview-img"></label></p>';
+                    if (in_array($ext, array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
+						if($_SERVER['DOCUMENT_ROOT'] === $root_path){
+						   echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' .fm_enc($file_url). '" alt="image" 
+						class="preview-img"></label></p>';
+						}
+						else{
+						   echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . '?p=&proxy_file=1&path=' . urlencode($file_path) . '" alt="image" 
+						class="preview-img"></label></p>';							
+						}
                     }
                 } elseif ($is_audio) {
                     // Audio content
@@ -2217,7 +2303,16 @@ $all_files_size = 0;
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                    <?php                    
+                        $foldDirectLink ='';
+                        if( $_SERVER['DOCUMENT_ROOT']   === $root_path ){
+                              $foldDirectLink = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f. '/') ; 
+                            }
+                        else{
+                             $foldDirectLink = '?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH .$f. '/');
+                        }
+	            ?>			
+                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo  $foldDirectLink; ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                     </td>
                 </tr>
             <?php
@@ -2268,8 +2363,8 @@ $all_files_size = 0;
                     <td data-sort=<?php echo fm_enc($f) ?>>
                         <div class="filename">
                             <?php
-                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
-                                <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
+                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg','jfif', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
+                                 <?php $imagePreview = '?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f);  ?>
                                 <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
                                 <?php else: ?>
                                     <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
@@ -2295,7 +2390,14 @@ $all_files_size = 0;
                             <a title="<?php echo lng('CopyTo') ?>..."
                                 href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
+                        <a title="<?php echo lng('DirectLink') ?>" href="
+			<?php 
+			    if($_SERVER['DOCUMENT_ROOT'] === $root_path){
+			         echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f);}
+			    else{
+				 echo '?p=&proxy_file=1&path=' . urlencode(FM_ROOT_PATH . '/'.FM_PATH . '/'.$f); 
+				}
+			?>" target="_blank"><i class="fa fa-link"></i></a>
                         <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
                     </td>
                 </tr>
@@ -2913,6 +3015,7 @@ function fm_get_file_icon_class($path)
         case 'gif':
         case 'jpg':
         case 'jpeg':
+	case 'jfif':
         case 'jpc':
         case 'jp2':
         case 'jpx':
@@ -3110,7 +3213,7 @@ function fm_get_file_icon_class($path)
  */
 function fm_get_image_exts()
 {
-    return array('ico', 'gif', 'jpg', 'jpeg', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
+    return array('ico', 'gif', 'jpg', 'jpeg','jfif', 'jpc', 'jp2', 'jpx', 'xbm', 'wbmp', 'png', 'bmp', 'tif', 'tiff', 'psd', 'svg', 'webp', 'avif');
 }
 
 /**
@@ -3294,6 +3397,7 @@ function fm_get_file_mimes($extension)
     $fileTypes['gif'] = 'image/gif';
     $fileTypes['png'] = 'image/png';
     $fileTypes['jpeg'] = 'image/jpg';
+    $fileTypes['jfif'] = 'image/jfif';
     $fileTypes['jpg'] = 'image/jpg';
     $fileTypes['webp'] = 'image/webp';
     $fileTypes['avif'] = 'image/avif';
