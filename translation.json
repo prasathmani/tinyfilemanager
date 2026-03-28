@@ -247,7 +247,7 @@
     },
     {
       "name": "فارسی",
-      "code": "Fa",
+      "code": "fa",
       "translation": {
         "Tiny File Manager": "مدیریت فایل کوچک",
         "File Manager": "مدیریت فایل",
@@ -1881,7 +1881,7 @@
     },
     {
       "name": "العربية",
-      "code": "Ar",
+      "code": "ar",
       "translation": {
         "AppName": "مدير الملفات الصغير",
         "AppTitle": "مدير الملفات",
