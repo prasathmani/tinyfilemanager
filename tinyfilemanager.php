@@ -3250,6 +3250,7 @@ function fm_get_text_mimes()
         'image/svg+xml',
         'message/rfc822',
         'application/json',
+        'application/x-empty',
     );
 }
 
