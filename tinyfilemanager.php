@@ -149,6 +149,9 @@ if (is_readable($config_file)) {
     @include($config_file);
 }
 
+define('ACE_FONTSIZE', $ace_fontsize ?? 12);
+define('ACE_THEME', $ace_theme ?? 'textmate');
+
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">',
@@ -5176,7 +5179,7 @@ function fm_show_header_login()
                     path: "ace/mode/<?php echo $ext; ?>",
                     inline: true
                 });
-                //editor.setTheme("ace/theme/twilight"); // Dark Theme
+                editor.setTheme("ace/theme/<?php echo ACE_THEME; ?>"); // Dark Theme
                 editor.setShowPrintMargin(false); // Hide the vertical ruler
                 function ace_commend(cmd) {
                     editor.commands.exec(cmd, editor);
@@ -5436,7 +5439,7 @@ function fm_show_header_login()
                     $themeEl.val(editor.getTheme());
                     $(function() {
                         //set default font size in drop down
-                        $fontSizeEl.val(12).change();
+                        $fontSizeEl.val(<?php echo ACE_FONTSIZE; ?>).change();
                     });
                 }
 
