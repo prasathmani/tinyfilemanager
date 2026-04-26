@@ -2460,15 +2460,22 @@ $all_files_size = 0;
                     <td class="fm-col-name" data-sort=<?php echo fm_enc($f) ?>>
                         <div class="filename">
                             <?php
-                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
-                                <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
-                                <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
-                                <?php else: ?>
-                                    <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
-                                    <?php endif; ?>
-                                    <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
-                                    </a>
-                                    <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                            $ext_lower = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+                            $previewUrl = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . rawurlencode($f));
+                            $previewType = '';
+                            $isPdf = false;
+                            if (in_array($ext_lower, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
+                                $previewType = 'image';
+                            } elseif (in_array($ext_lower, array('mp4', 'webm', 'ogg', 'mov', 'm4v'))) {
+                                $previewType = 'video';
+                            } elseif ($ext_lower === 'pdf') {
+                                $isPdf = true;
+                            }
+                            ?>
+                            <a href="<?php echo $filelink ?>" data-full-path="<?php echo fm_enc(trim(FM_PATH . '/' . $f, '/')); ?>" <?php echo $previewType ? 'data-preview-type="' . $previewType . '" data-preview-src="' . $previewUrl . '"' : ''; ?> <?php echo $isPdf ? 'data-preview-type="pdf"' : ''; ?> <?php echo $previewType === 'image' ? 'data-preview-image="' . $previewUrl . '"' : ''; ?> title="<?php echo fm_enc($f) ?>">
+                                <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
+                            </a>
+                            <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
                         </div>
                     </td>
                     <td class="fm-col-size" data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
@@ -5284,17 +5291,37 @@ function fm_show_header_login()
                 align-items: center;
                 justify-content: center;
                 overflow: hidden;
+                position: relative;
             }
 
-            .fm-grid-thumb img {
+            .fm-grid-thumb img,
+            .fm-grid-thumb video {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
                 display: block;
             }
 
+            .fm-grid-thumb video {
+                background: #0e1218;
+            }
+
             .fm-grid-thumb i {
                 font-size: 34px;
+            }
+
+            .fm-grid-pdf-badge {
+                position: absolute;
+                top: 6px;
+                right: 6px;
+                background: #ff3b30;
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                z-index: 1;
             }
 
             .fm-grid-body {
@@ -5318,6 +5345,22 @@ function fm_show_header_login()
                 display: flex;
                 justify-content: space-between;
                 gap: 8px;
+            }
+
+            .fm-grid-path-row {
+                margin-top: 6px;
+                margin-bottom: 4px;
+                font-size: 11px;
+                color: #666;
+                word-break: break-word;
+            }
+
+            .fm-grid-path {
+                display: block;
+                padding: 2px 4px;
+                background: #f5f5f5;
+                border-radius: 3px;
+                font-family: monospace;
             }
 
             .fm-grid-actions {
@@ -6024,7 +6067,8 @@ function fm_show_header_login()
                 var storageKey = 'fm_view_mode',
                     $viewButtons = $('.js-view-mode'),
                     $tableWrap = $('.table-responsive').first(),
-                    $grid = $('#fm-grid-view');
+                    $grid = $('#fm-grid-view'),
+                    fmIsManagerOrAdmin = <?php echo (FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY)) ? 'true' : 'false'; ?>;
 
                 function isMobileViewport() {
                     return window.matchMedia('(max-width: 767.98px)').matches;
@@ -6085,20 +6129,35 @@ function fm_show_header_login()
 
                         var title = $.trim($nameLink.text()),
                             href = $nameLink.attr('href') || '#',
+                            fullPath = $nameLink.attr('data-full-path') || '',
                             iconHtml = $nameCell.find('.filename i').first().prop('outerHTML') || '<i class="fa fa-file-o"></i>',
-                            preview = $nameCell.find('[data-preview-image]').first().data('preview-image') || '',
+                            previewType = $nameLink.attr('data-preview-type') || '',
+                            previewSrc = $nameLink.attr('data-preview-src') || '',
                             size = $.trim($tds.eq(sizeIndex).text()),
                             modified = $.trim($tds.eq(modIndex).text()),
                             actionsHtml = $tds.last().html() || '',
-                            parentClass = title === '..' ? ' fm-grid-parent' : '';
+                            parentClass = title === '..' ? ' fm-grid-parent' : '',
+                            thumbHtml = iconHtml,
+                            badgeHtml = '',
+                            pathDisplay = (fmIsManagerOrAdmin && fullPath) ? '<span class="fm-grid-path" title="' + fullPath.replace(/"/g, '&quot;') + '">' + fullPath + '</span>' : '';
+
+                        if (previewType === 'image' && previewSrc) {
+                            thumbHtml = '<img src="' + previewSrc + '" alt="' + title.replace(/"/g, '&quot;') + '">';
+                        } else if (previewType === 'video' && previewSrc) {
+                            thumbHtml = '<video src="' + previewSrc + '" muted preload="metadata" playsinline></video>';
+                        } else if (previewType === 'pdf') {
+                            badgeHtml = '<div class="fm-grid-pdf-badge">PDF</div>';
+                        }
 
                         cards.push(
                             '<div class="fm-grid-item' + parentClass + '">' +
                             '<div class="fm-grid-thumb">' +
-                            (preview ? '<img src="' + preview + '" alt="' + title.replace(/"/g, '&quot;') + '">' : iconHtml) +
+                            thumbHtml +
+                            badgeHtml +
                             '</div>' +
                             '<div class="fm-grid-body">' +
                             '<div class="fm-grid-name"><a href="' + href + '" title="' + title.replace(/"/g, '&quot;') + '">' + title + '</a></div>' +
+                            (pathDisplay ? '<div class="fm-grid-path-row">' + pathDisplay + '</div>' : '') +
                             '<div class="fm-grid-meta"><span>' + size + '</span><span>' + modified + '</span></div>' +
                             '</div>' +
                             '<div class="fm-grid-actions"><div class="inline-actions">' + actionsHtml + '</div></div>' +
