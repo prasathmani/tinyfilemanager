@@ -131,6 +131,19 @@ $directories_users = array(
    mkdir /var/www/html/uploads/client3
    ```
 
+## Release 1.6
+
+### Novinky
+
+- Stabilnejšie uloženie nastavení s JSON odpoveďou a lepšou detekciou chýb pri zápise konfigurácie.
+- Po uložení nastavení sa zobrazí potvrdenie a používateľ sa automaticky presmeruje späť na zoznam súborov.
+- Vylepšené prepínanie témy (light/dark) vrátane konzistentného zebra štýlu tabuľky.
+- Mobilné UX zlepšenia: rýchle akcie v navigácii, väčšie dotykové ciele, sticky panel pre multi-výber.
+- Automatický grid režim na mobile, ak nie je uložená preferencia používateľa.
+- Kompaktný režim tabuľky pod 480 px (skrytie menej dôležitých stĺpcov).
+- Lokalizácia textu „Selected“ pre nové mobilné počítadlo výberu (vrátane `translation.json`).
+- Pripravený release balík `tinyfilemanager-1.6.zip`.
+
 ### <a name=license></a>License, Credit
 
 - Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)

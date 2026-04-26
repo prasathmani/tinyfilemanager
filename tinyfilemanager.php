@@ -2232,13 +2232,13 @@ $all_files_size = 0;
                                 <label class="custom-control-label" for="js-select-all-items"></label>
                             </div>
                         </th><?php endif; ?>
-                    <th><?php echo lng('Name') ?></th>
-                    <th><?php echo lng('Size') ?></th>
-                    <th><?php echo lng('Modified') ?></th>
+                    <th class="fm-col-name"><?php echo lng('Name') ?></th>
+                    <th class="fm-col-size"><?php echo lng('Size') ?></th>
+                    <th class="fm-col-modified"><?php echo lng('Modified') ?></th>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <th><?php echo lng('Perms') ?></th>
-                        <th><?php echo lng('Owner') ?></th><?php endif; ?>
-                    <th><?php echo lng('Actions') ?></th>
+                        <th class="fm-col-perms"><?php echo lng('Perms') ?></th>
+                        <th class="fm-col-owner"><?php echo lng('Owner') ?></th><?php endif; ?>
+                    <th class="fm-col-actions"><?php echo lng('Actions') ?></th>
                 </tr>
             </thead>
             <?php
@@ -2247,13 +2247,13 @@ $all_files_size = 0;
             ?>
                 <tr><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                         <td class="nosort"></td><?php endif; ?>
-                    <td class="border-0" data-sort><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
-                    <td class="border-0" data-order></td>
-                    <td class="border-0" data-order></td>
-                    <td class="border-0"></td>
+                    <td class="border-0 fm-col-name" data-sort><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
+                    <td class="border-0 fm-col-size" data-order></td>
+                    <td class="border-0 fm-col-modified" data-order></td>
+                    <td class="border-0 fm-col-actions"></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
-                        <td class="border-0"></td>
-                        <td class="border-0"></td>
+                        <td class="border-0 fm-col-perms"></td>
+                        <td class="border-0 fm-col-owner"></td>
                     <?php } ?>
                 </tr>
             <?php
@@ -2298,25 +2298,25 @@ $all_files_size = 0;
                             </div>
                         </td>
                     <?php endif; ?>
-                    <td data-sort=<?php echo fm_convert_win(fm_enc($f)) ?>>
+                    <td class="fm-col-name" data-sort=<?php echo fm_convert_win(fm_enc($f)) ?>>
                         <div class="filename">
                             <a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?></a>
                             <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
                         </div>
                     </td>
-                    <td data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>">
+                    <td class="fm-col-size" data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>">
                         <?php echo $filesize; ?>
                     </td>
-                    <td data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
+                    <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td>
+                        <td class="fm-col-perms">
                             <?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td>
+                        <td class="fm-col-owner">
                             <?php echo $owner['name'] . ':' . $group['name'] ?>
                         </td>
                     <?php endif; ?>
-                    <td class="inline-actions"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+                    <td class="inline-actions fm-col-actions"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                             <?php if (!FM_MANAGER): ?>
                             <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
                             <?php endif; ?>
@@ -2371,7 +2371,7 @@ $all_files_size = 0;
                                 <label class="custom-control-label" for="<?php echo $ik ?>"></label>
                             </div>
                         </td><?php endif; ?>
-                    <td data-sort=<?php echo fm_enc($f) ?>>
+                    <td class="fm-col-name" data-sort=<?php echo fm_enc($f) ?>>
                         <div class="filename">
                             <?php
                             if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
@@ -2385,16 +2385,16 @@ $all_files_size = 0;
                                     <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
                         </div>
                     </td>
-                    <td data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
+                    <td class="fm-col-size" data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
                             <?php echo $filesize; ?>
                         </span></td>
-                    <td data-order="b-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
+                    <td class="fm-col-modified" data-order="b-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
+                        <td class="fm-col-owner"><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
                     <?php endif; ?>
-                    <td class="inline-actions">
+                    <td class="inline-actions fm-col-actions">
                         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                             <?php if (!FM_MANAGER): ?>
                             <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($f); ?>', this.href);"> <i class="fa fa-trash-o"></i></a>
@@ -5133,6 +5133,25 @@ function fm_show_header_login()
                     justify-content: center;
                 }
             }
+
+            @media (max-width: 479.98px) {
+                #main-table.fm-compact-mobile .fm-col-modified,
+                #main-table.fm-compact-mobile .fm-col-perms,
+                #main-table.fm-compact-mobile .fm-col-owner {
+                    display: none;
+                }
+
+                #main-table.fm-compact-mobile .fm-col-size,
+                #main-table.fm-compact-mobile .fm-col-actions {
+                    white-space: nowrap;
+                    width: 1%;
+                }
+
+                #main-table.fm-compact-mobile .inline-actions > a {
+                    padding-left: .2rem;
+                    padding-right: .2rem;
+                }
+            }
         </style>
         <?php
         if (FM_THEME == "dark"): ?>
@@ -5719,6 +5738,11 @@ function fm_show_header_login()
                     }
                 }
 
+                function applyCompactMobileMode() {
+                    var compact = window.matchMedia('(max-width: 479.98px)').matches;
+                    $table.toggleClass('fm-compact-mobile', compact);
+                }
+
                 function renderGridView() {
                     var hasSelect = $('#main-table thead th').first().hasClass('custom-checkbox-header'),
                         rows = $('#main-table tbody tr'),
@@ -5787,12 +5811,14 @@ function fm_show_header_login()
                 });
 
                 setViewMode(getViewMode(), !!localStorage.getItem(storageKey));
+                applyCompactMobileMode();
 
                 // Keep view mode in sync with viewport when no explicit preference exists.
                 $(window).on('resize', function() {
                     if (!localStorage.getItem(storageKey)) {
                         setViewMode(getViewMode(), false);
                     }
+                    applyCompactMobileMode();
                 });
 
                 var $selectionBar = $('#fm-selection-bar'),
@@ -5803,7 +5829,7 @@ function fm_show_header_login()
                         return item.checked;
                     }).length;
 
-                    $selectionCount.text('Vybrané: ' + selected);
+                    $selectionCount.text('<?php echo addslashes(lng('Selected')); ?>: ' + selected);
                     $selectionCount.toggle(selected > 0);
 
                     if (isMobileViewport()) {
@@ -6251,6 +6277,7 @@ function fm_show_header_login()
         $tr['en']['FullSize']       = 'Full Size';
         $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';
         $tr['en']['You are logged in'] = 'You are logged in';
+        $tr['en']['Selected']          = 'Selected';
         $tr['en']['Nothing selected']  = 'Nothing selected';
         $tr['en']['Paths must be not equal']    = 'Paths must be not equal';
         $tr['en']['Renamed from']       = 'Renamed from';
