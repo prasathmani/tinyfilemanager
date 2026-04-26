@@ -2102,11 +2102,11 @@
       }
     },
     {
-      "name": "Slovensky",
+      "name": "Slovenčina",
       "code": "sk",
       "translation": {
         "AppName": "Tiny File Manager",
-        "AppTitle": "File Manager",
+        "AppTitle": "Správca suborov",
         "Login": "Prihlásiť sa",
         "Username": "Prihlasovacie meno",
         "Password": "Heslo",

@@ -70,8 +70,8 @@ $max_upload_size_bytes = 5000000000;
 // Povolené prípony pre upload (prázdne = všetky)
 $allowed_upload_extensions = '';
 
-// Jazyk rozhrania
-// $lang = 'sk'; // odkomentujte ak pridáte slovenský preklad
+// Predvolený jazyk a UI nastavenia
+$CONFIG = '{"lang":"sk","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
 
 // Téma: 'light' alebo 'dark'
 // $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark"}';

@@ -234,7 +234,8 @@ define('FM_THEME', $theme);
 
 //available languages
 $lang_list = array(
-    'en' => 'English'
+    'en' => 'English',
+    'sk' => 'Slovensky'
 );
 
 if ($report_errors == true) {
@@ -2155,6 +2156,16 @@ $all_files_size = 0;
     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
     <input type="hidden" name="group" value="1">
     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+    <div class="d-flex justify-content-end mb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+            <button type="button" class="btn btn-outline-primary js-view-mode active" data-view-mode="list">
+                <i class="fa fa-list" aria-hidden="true"></i> List
+            </button>
+            <button type="button" class="btn btn-outline-primary js-view-mode" data-view-mode="grid">
+                <i class="fa fa-th-large" aria-hidden="true"></i> Grid
+            </button>
+        </div>
+    </div>
     <div class="table-responsive">
         <table class="table table-bordered table-hover table-sm" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
             <thead class="thead-white">
@@ -2367,6 +2378,7 @@ $all_files_size = 0;
             <?php } ?>
         </table>
     </div>
+    <div id="fm-grid-view" class="hidden"></div>
 
     <div class="row">
         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY): ?>
@@ -4664,6 +4676,113 @@ function fm_show_header_login()
             .fs-7 {
                 font-size: 14px;
             }
+
+            #fm-grid-view {
+                margin-bottom: 12px;
+            }
+
+            .fm-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 12px;
+            }
+
+            .fm-grid-item {
+                border: 1px solid #e8ecf2;
+                border-radius: 10px;
+                background: #fff;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+                overflow: hidden;
+                transition: transform .12s ease, box-shadow .12s ease;
+            }
+
+            .fm-grid-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+            }
+
+            .fm-grid-thumb {
+                height: 122px;
+                background: linear-gradient(120deg, #f7f9fc, #eef3f8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .fm-grid-thumb img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            .fm-grid-thumb i {
+                font-size: 34px;
+            }
+
+            .fm-grid-body {
+                padding: 10px 12px 8px;
+            }
+
+            .fm-grid-name a {
+                display: block;
+                color: #1d2b3a;
+                font-weight: 600;
+                text-decoration: none;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .fm-grid-meta {
+                margin-top: 6px;
+                font-size: 12px;
+                color: #7a8490;
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+            }
+
+            .fm-grid-actions {
+                border-top: 1px solid #edf1f5;
+                padding: 8px 10px;
+                text-align: right;
+            }
+
+            .fm-grid-actions .inline-actions {
+                white-space: nowrap;
+            }
+
+            .fm-grid-item.fm-grid-parent .fm-grid-thumb {
+                background: linear-gradient(120deg, #eef6ff, #e5f1ff);
+            }
+
+            .theme-dark .fm-grid-item {
+                background: #1f282e;
+                border-color: #2f3b42;
+                box-shadow: none;
+            }
+
+            .theme-dark .fm-grid-item:hover {
+                box-shadow: 0 8px 18px rgba(0, 0, 0, .25);
+            }
+
+            .theme-dark .fm-grid-thumb {
+                background: linear-gradient(120deg, #263238, #202a31);
+            }
+
+            .theme-dark .fm-grid-name a {
+                color: #e2ecef;
+            }
+
+            .theme-dark .fm-grid-meta {
+                color: #9fb0b7;
+            }
+
+            .theme-dark .fm-grid-actions {
+                border-top-color: #2f3b42;
+            }
         </style>
         <?php
         if (FM_THEME == "dark"): ?>
@@ -5183,6 +5302,93 @@ function fm_show_header_login()
                         orderable: false
                     }]
                 });
+
+                var storageKey = 'fm_view_mode',
+                    $viewButtons = $('.js-view-mode'),
+                    $tableWrap = $('.table-responsive').first(),
+                    $grid = $('#fm-grid-view');
+
+                function getViewMode() {
+                    return localStorage.getItem(storageKey) || 'list';
+                }
+
+                function setViewMode(mode) {
+                    var gridMode = mode === 'grid';
+                    $viewButtons.removeClass('active');
+                    $viewButtons.filter('[data-view-mode="' + mode + '"]').addClass('active');
+                    $tableWrap.toggleClass('hidden', gridMode);
+                    $grid.toggleClass('hidden', !gridMode);
+                    if (gridMode) {
+                        renderGridView();
+                    }
+                    localStorage.setItem(storageKey, mode);
+                }
+
+                function renderGridView() {
+                    var hasSelect = $('#main-table thead th').first().hasClass('custom-checkbox-header'),
+                        rows = $('#main-table tbody tr'),
+                        nameIndex = hasSelect ? 1 : 0,
+                        sizeIndex = hasSelect ? 2 : 1,
+                        modIndex = hasSelect ? 3 : 2,
+                        cards = [];
+
+                    rows.each(function() {
+                        var $tr = $(this),
+                            $tds = $tr.children('td');
+
+                        if (!$tds.length) {
+                            return;
+                        }
+
+                        var $nameCell = $tds.eq(nameIndex),
+                            $nameLink = $nameCell.find('.filename a').first();
+
+                        if (!$nameLink.length) {
+                            return;
+                        }
+
+                        var title = $.trim($nameLink.text()),
+                            href = $nameLink.attr('href') || '#',
+                            iconHtml = $nameCell.find('.filename i').first().prop('outerHTML') || '<i class="fa fa-file-o"></i>',
+                            preview = $nameCell.find('[data-preview-image]').first().data('preview-image') || '',
+                            size = $.trim($tds.eq(sizeIndex).text()),
+                            modified = $.trim($tds.eq(modIndex).text()),
+                            actionsHtml = $tds.last().html() || '',
+                            parentClass = title === '..' ? ' fm-grid-parent' : '';
+
+                        cards.push(
+                            '<div class="fm-grid-item' + parentClass + '">' +
+                            '<div class="fm-grid-thumb">' +
+                            (preview ? '<img src="' + preview + '" alt="' + title.replace(/"/g, '&quot;') + '">' : iconHtml) +
+                            '</div>' +
+                            '<div class="fm-grid-body">' +
+                            '<div class="fm-grid-name"><a href="' + href + '" title="' + title.replace(/"/g, '&quot;') + '">' + title + '</a></div>' +
+                            '<div class="fm-grid-meta"><span>' + size + '</span><span>' + modified + '</span></div>' +
+                            '</div>' +
+                            '<div class="fm-grid-actions"><div class="inline-actions">' + actionsHtml + '</div></div>' +
+                            '</div>'
+                        );
+                    });
+
+                    if (!cards.length) {
+                        $grid.html('<div class="alert alert-light border mb-2"><?php echo addslashes(lng('Folder is empty')); ?></div>');
+                        return;
+                    }
+
+                    $grid.html('<div class="fm-grid">' + cards.join('') + '</div>');
+                }
+
+                $viewButtons.on('click', function() {
+                    setViewMode($(this).data('view-mode'));
+                });
+
+                mainTable.on('draw', function() {
+                    if (getViewMode() === 'grid') {
+                        renderGridView();
+                    }
+                });
+
+                setViewMode(getViewMode());
 
                 // filter table
                 $('#search-addon').on('keyup', function() {
