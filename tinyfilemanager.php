@@ -28,57 +28,25 @@ $use_auth = true;
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
-$auth_users = array(
-    // --- Admin (full access: upload, edit, rename, copy, delete) ---
-    'admin'     => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-
-    // --- Managers (see & edit everything, cannot delete) ---
-    'manager1'  => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
-    'manager2'  => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
-
-    // --- Clients (upload + download, isolated directory, cannot delete/edit) ---
-    'client1'   => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
-    'client2'   => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
-
-    // --- Suppliers (download/view only, isolated directory) ---
-    'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
-    'supplier2' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO', //12345
-);
+// NOTE: All users, roles and directories are managed in config.php.
+//       These defaults are only used if config.php is missing.
+$auth_users = array();
 
 // Readonly users (download/view only – no write access at all)
-// e.g. array('supplier1', 'supplier2', ...)
-$readonly_users = array(
-);
+$readonly_users = array();
 
-// Upload-only users (can upload and download/view, but cannot delete/rename/move/copy/edit)
-// each client should have their own directory set in $directories_users below
-$upload_only_users = array(
-    'client1',
-    'client2',
-    'supplier1',
-    'supplier2'
-);
+// Upload-only users (upload + download, cannot delete/rename/move/copy/edit)
+$upload_only_users = array();
 
 // Manager users (full access except delete)
-// They see all files with no directory restriction
-$manager_users = array(
-    'manager1',
-    'manager2'
-);
+$manager_users = array();
 
 // Global readonly, including when auth is not being used
 $global_readonly = false;
 
-// user specific directories
-// Each user can have one or multiple allowed directories.
-// Managers and admin can have no entry here – they see the full root.
+// User-specific directories (leave empty – managed in config.php)
 // array('Username' => 'Directory path', 'Username2' => array('Dir1', 'Dir2'), ...)
-$directories_users = array(
-    'client1'   => $_SERVER['DOCUMENT_ROOT'] . '/uploads/Nemocnica PP',
-    'client2'   => $_SERVER['DOCUMENT_ROOT'] . '/uploads/BARMO',
-    'supplier1' => $_SERVER['DOCUMENT_ROOT'] . '/uploads/supplier1',
-    'supplier2' => $_SERVER['DOCUMENT_ROOT'] . '/uploads/supplier2',
-);
+$directories_users = array();
 
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
@@ -215,7 +183,33 @@ if (!defined('FM_SESSION_ID')) {
     define('FM_SESSION_ID', 'filemanager');
 }
 
-// Configuration
+// Start session early so FM_Config can read the logged-in user and load per-user settings.
+if (!defined('FM_EMBED')) {
+    @set_time_limit(600);
+    date_default_timezone_set($default_timezone);
+    ini_set('default_charset', 'UTF-8');
+    if (version_compare(PHP_VERSION, '5.6.0', '<') && function_exists('mb_internal_encoding')) {
+        mb_internal_encoding('UTF-8');
+    }
+    if (function_exists('mb_regex_encoding')) {
+        mb_regex_encoding('UTF-8');
+    }
+    session_cache_limiter('nocache');
+    session_name(FM_SESSION_ID);
+    function session_error_handling_function($code, $msg, $file, $line)
+    {
+        if ($code == 2) {
+            session_abort();
+            session_id(session_create_id());
+            @session_start();
+        }
+    }
+    set_error_handler('session_error_handling_function');
+    session_start();
+    restore_error_handler();
+}
+
+// Configuration – loads global defaults, then overrides with per-user settings if logged in.
 $cfg = new FM_Config();
 
 // Default language
@@ -253,33 +247,6 @@ if ($report_errors == true) {
 if (defined('FM_EMBED')) {
     $use_auth = false;
     $sticky_navbar = false;
-} else {
-    @set_time_limit(600);
-
-    date_default_timezone_set($default_timezone);
-
-    ini_set('default_charset', 'UTF-8');
-    if (version_compare(PHP_VERSION, '5.6.0', '<') && function_exists('mb_internal_encoding')) {
-        mb_internal_encoding('UTF-8');
-    }
-    if (function_exists('mb_regex_encoding')) {
-        mb_regex_encoding('UTF-8');
-    }
-
-    session_cache_limiter('nocache'); // Prevent logout issue after page was cached
-    session_name(FM_SESSION_ID);
-    function session_error_handling_function($code, $msg, $file, $line)
-    {
-        // Permission denied for default session, try to create a new one
-        if ($code == 2) {
-            session_abort();
-            session_id(session_create_id());
-            @session_start();
-        }
-    }
-    set_error_handler('session_error_handling_function');
-    session_start();
-    restore_error_handler();
 }
 
 //Generating CSRF Token
@@ -314,8 +281,22 @@ if (!defined('FM_EMBED')) {
 
 // logout
 if (isset($_GET['logout'])) {
-    unset($_SESSION[FM_SESSION_ID]['logged']);
-    unset($_SESSION['token']);
+    // Unset all session variables
+    $_SESSION = array();
+    // Delete the session cookie to prevent the browser from reusing the session ID
+    if (ini_get('session.use_cookies')) {
+        $p = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $p['path'], $p['domain'],
+            $p['secure'], $p['httponly']
+        );
+    }
+    // Destroy the session on the server side
+    session_destroy();
+    // Prevent browser from serving cached authenticated pages via Back button
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
     fm_redirect(FM_SELF_URL);
 }
 
@@ -670,6 +651,56 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             'success' => (bool)$saved,
             'theme' => $theme
         ));
+    }
+
+    // Change password for the currently logged-in user
+    if (isset($_POST['type']) && $_POST['type'] == 'changepwd') {
+        header('Content-Type: application/json; charset=utf-8');
+        $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
+        if (empty($username)) {
+            echo json_encode(['success' => false, 'msg' => 'Not authenticated']);
+            exit;
+        }
+        $currentPwd  = isset($_POST['current_password'])  ? $_POST['current_password']  : '';
+        $newPwd      = isset($_POST['new_password'])      ? $_POST['new_password']      : '';
+        $confirmPwd  = isset($_POST['confirm_password'])  ? $_POST['confirm_password']  : '';
+
+        global $auth_users;
+        if (!isset($auth_users[$username]) || !password_verify($currentPwd, $auth_users[$username])) {
+            echo json_encode(['success' => false, 'msg' => 'Current password is incorrect']);
+            exit;
+        }
+        if (strlen($newPwd) < 6) {
+            echo json_encode(['success' => false, 'msg' => 'New password must be at least 6 characters']);
+            exit;
+        }
+        if ($newPwd !== $confirmPwd) {
+            echo json_encode(['success' => false, 'msg' => 'Passwords do not match']);
+            exit;
+        }
+
+        $newHash = password_hash($newPwd, PASSWORD_BCRYPT);
+
+        // Determine config file path (same logic as FM_Config::save)
+        $cfgFile = defined('FM_CONFIG_FILE') ? FM_CONFIG_FILE : (file_exists(__DIR__ . '/config.php') ? __DIR__ . '/config.php' : '');
+        $updated = false;
+        if ($cfgFile && is_writable($cfgFile)) {
+            $content = file_get_contents($cfgFile);
+            // Replace the specific user's hash line, supporting various whitespace/quote styles
+            $pattern = "/('[\"]".preg_quote($username, '/')."['\"]\s*=>\s*')['\"][^'\"]+['\"]/";
+            $replacement = '${1}\'' . $newHash . "'";
+            $newContent = preg_replace($pattern, $replacement, $content, 1, $count);
+            if ($count > 0) {
+                $updated = (file_put_contents($cfgFile, $newContent) !== false);
+            }
+        }
+
+        if ($updated) {
+            echo json_encode(['success' => true, 'msg' => 'Password changed successfully']);
+        } else {
+            echo json_encode(['success' => false, 'msg' => 'Could not update config file. Check write permissions.']);
+        }
+        exit;
     }
 
     // new password hash
@@ -1753,6 +1784,37 @@ if (isset($_GET['settings']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_
 
                     <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</small>
                 </form>
+
+                <?php if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
+                <hr>
+                <h6 class="mt-3 mb-3"><i class="fa fa-lock"></i> <?php echo lng('Change Password') ?></h6>
+                <form id="js-changepwd-form" action="" method="post" onsubmit="return change_password(this)">
+                    <input type="hidden" name="type" value="changepwd" aria-label="hidden" aria-hidden="true">
+                    <div class="mb-2 row">
+                        <label class="col-sm-3 col-form-label"><?php echo lng('Current password') ?></label>
+                        <div class="col-sm-5">
+                            <input type="password" class="form-control" name="current_password" autocomplete="current-password" required>
+                        </div>
+                    </div>
+                    <div class="mb-2 row">
+                        <label class="col-sm-3 col-form-label"><?php echo lng('New password') ?></label>
+                        <div class="col-sm-5">
+                            <input type="password" class="form-control" name="new_password" autocomplete="new-password" minlength="6" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-sm-3 col-form-label"><?php echo lng('Confirm password') ?></label>
+                        <div class="col-sm-5">
+                            <input type="password" class="form-control" name="confirm_password" autocomplete="new-password" minlength="6" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <div class="col-sm-10">
+                            <button type="submit" class="btn btn-warning"><i class="fa fa-key"></i> <?php echo lng('Change Password') ?></button>
+                        </div>
+                    </div>
+                </form>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -3937,6 +3999,8 @@ class FM_Zipper_Tar
 class FM_Config
 {
     var $data;
+    // Directory where per-user setting JSON files are stored.
+    const USER_CFG_DIR = '.fm_usercfg';
 
     function __construct()
     {
@@ -3962,10 +4026,64 @@ class FM_Config
         }
         if (is_array($data) && count($data)) $this->data = $data;
         else $this->save();
+
+        // Override with per-user settings if a user is already logged in (session started early).
+        $logged = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : null;
+        if ($logged) {
+            $user_data = $this->loadUserSettings($logged);
+            if ($user_data) {
+                $this->data = array_merge($this->data, $user_data);
+            }
+        }
+    }
+
+    /**
+     * Return the path to a user's settings JSON file.
+     */
+    private function userCfgPath($username)
+    {
+        return __DIR__ . DIRECTORY_SEPARATOR . self::USER_CFG_DIR
+             . DIRECTORY_SEPARATOR . md5($username) . '.json';
+    }
+
+    /**
+     * Load per-user settings. Returns array on success, false if none saved yet.
+     */
+    function loadUserSettings($username)
+    {
+        $path = $this->userCfgPath($username);
+        if (!is_readable($path)) return false;
+        $decoded = json_decode(@file_get_contents($path), true);
+        return is_array($decoded) ? $decoded : false;
+    }
+
+    /**
+     * Ensure the per-user config directory exists and is protected from web access.
+     */
+    private function ensureUserCfgDir()
+    {
+        $dir = __DIR__ . DIRECTORY_SEPARATOR . self::USER_CFG_DIR;
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0750, true);
+        }
+        $htaccess = $dir . DIRECTORY_SEPARATOR . '.htaccess';
+        if (!file_exists($htaccess)) {
+            @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
+        }
+        return $dir;
     }
 
     function save()
     {
+        // If a user is logged in, save to their personal settings file only.
+        $logged = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : null;
+        if ($logged) {
+            $this->ensureUserCfgDir();
+            $path = $this->userCfgPath($logged);
+            return (@file_put_contents($path, json_encode($this->data)) !== false);
+        }
+
+        // No user logged in – fall back to updating $CONFIG in config.php.
         global $config_file;
         $fm_file = is_readable($config_file) ? $config_file : __FILE__;
         $var_value = var_export(json_encode($this->data), true);
@@ -3980,7 +4098,6 @@ class FM_Config
             return false;
         }
 
-        // Replace existing $CONFIG = ...; line in-place (preserves all other settings).
         if (preg_match('/^\s*\$CONFIG\s*=/m', $content)) {
             $new_content = preg_replace(
                 '/^\s*\$CONFIG\s*=.*?;\s*$/m',
@@ -3988,17 +4105,14 @@ class FM_Config
                 $content
             );
         } else {
-            // $CONFIG not found – append it before closing tag or at end.
             $new_content = rtrim($content) . "\n" . $new_line . "\n";
         }
 
         if ($new_content === null || $new_content === $content) {
-            // preg_replace failed or nothing changed – still report success if data matches.
             return ($new_content !== null);
         }
 
-        $ok = (@file_put_contents($fm_file, $new_content) !== false);
-        return $ok;
+        return (@file_put_contents($fm_file, $new_content) !== false);
     }
 }
 
@@ -5546,6 +5660,30 @@ function fm_show_header_login()
                 return false;
             }
 
+            // Change password for logged-in user
+            function change_password($this) {
+                let form = $($this);
+                $.ajax({
+                    type: 'post',
+                    url: '',
+                    data: form.serialize() + '&token=' + window.csrf + '&ajax=true',
+                    success: function(data) {
+                        let response = data;
+                        if (typeof data === 'string') {
+                            try { response = JSON.parse(data); } catch(e) { response = {success:false,msg:'Unknown error'}; }
+                        }
+                        if (response && response.success) {
+                            toast(response.msg || 'Password changed successfully');
+                            form[0].reset();
+                        } else {
+                            toast((response && response.msg) ? response.msg : 'Password change failed');
+                        }
+                    },
+                    error: function() { toast('Password change failed'); }
+                });
+                return false;
+            }
+
             //Create new password hash
             function new_password_hash($this) {
                 let form = $($this),
@@ -6300,7 +6438,11 @@ function fm_show_header_login()
         $tr['en']['Report Issue']   = 'Report Issue';
         $tr['en']['Generate']       = 'Generate';
         $tr['en']['FullSize']       = 'Full Size';
-        $tr['en']['HideColumns']    = 'Hide Perms/Owner columns';
+        $tr['en']['HideColumns']        = 'Hide Perms/Owner columns';
+        $tr['en']['Change Password']    = 'Change Password';
+        $tr['en']['Current password']   = 'Current password';
+        $tr['en']['New password']       = 'New password';
+        $tr['en']['Confirm password']   = 'Confirm password';
         $tr['en']['You are logged in'] = 'You are logged in';
         $tr['en']['Selected']          = 'Selected';
         $tr['en']['Nothing selected']  = 'Nothing selected';
