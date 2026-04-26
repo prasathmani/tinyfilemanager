@@ -48,21 +48,26 @@ $manager_users = array(
     'manager2',
 );
 
-// --- IZOLOVANÉ PRIEČINKY ---
-// Klienti a dodávatelia vidia LEN svoj priečinok.
+// --- IZOLOVANÉ PRIEČINKY / PROJEKTY ---
+// Klienti a dodávatelia môžu mať prístup do jedného alebo viacerých projektových priečinkov.
 // Manažéri a admin tu nemajú záznam – vidia celý root_path.
 // Cesty musia existovať na disku a webserver musí mať práva na zápis.
 $directories_users = array(
-    'client1'   => '/var/www/html/uploads/client1',
-    'client2'   => '/var/www/html/uploads/client2',
-    'supplier1' => '/var/www/html/uploads/supplier1',
-    'supplier2' => '/var/www/html/uploads/supplier2',
+    'client1'   => __DIR__ . '/uploads/client1',
+    'client2'   => __DIR__ . '/uploads/client2',
+    'supplier1' => __DIR__ . '/uploads/supplier1',
+    'supplier2' => __DIR__ . '/uploads/supplier2',
+    // Príklad používateľa s viacerými projektmi:
+    // 'client3' => array(
+    //     __DIR__ . '/uploads/projects/proj-a',
+    //     __DIR__ . '/uploads/projects/proj-b',
+    // ),
 );
 
 // --- VŠEOBECNÉ NASTAVENIA ---
 
 // Koreňový priečinok pre admin a manažérov
-$root_path = '/var/www/html/uploads';
+$root_path = __DIR__ . '/uploads';
 
 // Maximálna veľkosť uploadu (~5 GB)
 $max_upload_size_bytes = 5000000000;
