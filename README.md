@@ -66,6 +66,71 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 ### [Deploy by Docker](https://github.com/prasathmani/tinyfilemanager/wiki/Deploy-by-Docker)
 
+---
+
+## Rozšírenie oprávnení a rolí (vlastné úpravy)
+
+Tento fork pridáva systém rolí pre zdieľanie súborov medzi klientmi a dodávateľmi projektu.
+
+### Roly a oprávnenia
+
+| Rola | Upload | Download | Rename / Zip / Copy | Mazať | Vidí |
+|---|:---:|:---:|:---:|:---:|---|
+| `admin` | ✅ | ✅ | ✅ | ✅ | celý root priečinok |
+| `manager` | ✅ | ✅ | ✅ | ❌ | celý root priečinok |
+| `client` | ✅ | ✅ | ❌ | ❌ | len svoj priečinok |
+| `supplier` | ✅ | ✅ | ❌ | ❌ | len svoj priečinok |
+
+### Konfigurácia
+
+Všetky nastavenia sa nachádzajú v súbore **`config.php`** v rovnakom priečinku ako `tinyfilemanager.php`. Hlavný súbor `tinyfilemanager.php` **neupravujte** – `config.php` jeho hodnoty automaticky prepíše.
+
+```php
+// Používatelia a heslá (bcrypt hash)
+$auth_users = array(
+    'admin'    => '$2y$10$...', // admin@123
+    'manager1' => '$2y$10$...', // 12345
+    'client1'  => '$2y$10$...', // 12345
+    'supplier1'=> '$2y$10$...', // 12345
+);
+
+// Roly
+$readonly_users     = array();                           // len sťahovanie
+$upload_only_users  = array('client1', 'supplier1');     // upload + download
+$manager_users      = array('manager1');                 // všetko okrem mazania
+
+// Izolované priečinky (klienti/dodávatelia vidia len svoj)
+$directories_users = array(
+    'client1'   => '/var/www/html/uploads/client1',
+    'supplier1' => '/var/www/html/uploads/supplier1',
+);
+```
+
+### Pridanie nového používateľa
+
+1. **Vygenerovať hash hesla** (v termináli na serveri):
+   ```bash
+   php -r "echo password_hash('vase_heslo', PASSWORD_BCRYPT) . PHP_EOL;"
+   ```
+   Prípadne online: https://tinyfilemanager.github.io/docs/pwd.html
+
+2. **Doplniť do `config.php`:**
+   ```php
+   // 1. pridať používateľa
+   $auth_users['client3'] = '$2y$10$...hash...';
+
+   // 2. priradiť rolu
+   $upload_only_users[] = 'client3';
+
+   // 3. nastaviť izolovaný priečinok
+   $directories_users['client3'] = '/var/www/html/uploads/client3';
+   ```
+
+3. **Vytvoriť priečinok na disku:**
+   ```bash
+   mkdir /var/www/html/uploads/client3
+   ```
+
 ### <a name=license></a>License, Credit
 
 - Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
