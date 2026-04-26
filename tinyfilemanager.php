@@ -366,7 +366,10 @@ if ($ip_ruleset != 'OFF') {
 // Checking if the user is logged in or not. If not, it will show the login form.
 if ($use_auth) {
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
-        // Logged
+        // Logged. Prevent rendering or processing login form again.
+        if (isset($_POST['fm_usr']) || isset($_POST['fm_pwd']) || (isset($_GET['login']) && $_GET['login'] == '1')) {
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode(''));
+        }
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'], $_POST['token'])) {
         // Logging In
         sleep(1);
@@ -4034,6 +4037,7 @@ function fm_show_nav_path($path)
                         <li class="nav-item avatar dropdown">
                             <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle"></i>
+                                <span class="ms-1"><?php echo fm_enc($_SESSION[FM_SESSION_ID]['logged']); ?></span>
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="navbarDropdownMenuLink-5" data-bs-theme="<?php echo FM_THEME; ?>">
