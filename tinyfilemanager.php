@@ -14,6 +14,9 @@ define('VERSION', '2.6');
 
 //Application Title
 define('APP_TITLE', 'Tiny File Manager');
+define('LOGIN_COMPANY_NAME', 'Dremont s.r.o.');
+define('LOGIN_COMPANY_URL', 'https://dremont.in');
+define('LOGIN_LOGO_PATH', 'KatalogMD.webp');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
@@ -388,16 +391,13 @@ if ($use_auth) {
                                 <form class="form-signin" action="" method="post" autocomplete="off">
                                     <div class="mb-3">
                                         <div class="brand">
-                                            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" M1008 width="100%" height="80px" viewBox="0 0 238.000000 140.000000" aria-label="H3K Tiny File Manager">
-                                                <g transform="translate(0.000000,140.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none">
-                                                    <path d="M160 700 l0 -600 110 0 110 0 0 260 0 260 70 0 70 0 0 -260 0 -260 110 0 110 0 0 600 0 600 -110 0 -110 0 0 -260 0 -260 -70 0 -70 0 0 260 0 260 -110 0 -110 0 0 -600z" />
-                                                    <path fill="#003500" d="M1008 1227 l-108 -72 0 -117 0 -118 110 0 110 0 0 110 0 110 70 0 70 0 0 -180 0 -180 -125 0 c-69 0 -125 -3 -125 -6 0 -3 23 -39 52 -80 l52 -74 73 0 73 0 0 -185 0 -185 -70 0 -70 0 0 115 0 115 -110 0 -110 0 0 -190 0 -190 181 0 181 0 109 73 108 72 1 181 0 181 -69 48 -68 49 68 50 69 49 0 249 0 248 -182 -1 -183 0 -107 -72z" />
-                                                    <path d="M1640 700 l0 -600 110 0 110 0 0 208 0 208 35 34 35 34 35 -34 35 -34 0 -208 0 -208 110 0 110 0 0 212 0 213 -87 87 -88 88 88 88 87 87 0 213 0 212 -110 0 -110 0 0 -208 0 -208 -70 -69 -70 -69 0 277 0 277 -110 0 -110 0 0 -600z" />
-                                                </g>
-                                            </svg>
+                                            <img src="<?php echo fm_enc(LOGIN_LOGO_PATH); ?>" alt="<?php echo fm_enc(LOGIN_COMPANY_NAME); ?>">
                                         </div>
                                         <div class="text-center">
                                             <h1 class="card-title"><?php echo APP_TITLE; ?></h1>
+                                            <div class="company-subtitle">
+                                                <?php echo LOGIN_COMPANY_NAME; ?>
+                                            </div>
                                         </div>
                                     </div>
                                     <hr />
@@ -425,7 +425,7 @@ if ($use_auth) {
                         </div>
                         <div class="footer text-center">
                             &mdash;&mdash; &copy;
-                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-decoration-none text-muted" data-version="<?php echo VERSION; ?>">CCP Programmers</a> &mdash;&mdash;
+                            <a href="<?php echo LOGIN_COMPANY_URL; ?>" target="_blank" class="text-decoration-none text-muted" data-version="<?php echo VERSION; ?>"><?php echo LOGIN_COMPANY_NAME; ?></a> &mdash;&mdash;
                         </div>
                     </div>
                 </div>
@@ -4026,7 +4026,7 @@ function fm_show_header_login()
             }
 
             .fm-login-page .brand {
-                width: 121px;
+                width: 180px;
                 overflow: hidden;
                 margin: 0 auto;
                 position: relative;
@@ -4034,7 +4034,10 @@ function fm_show_header_login()
             }
 
             .fm-login-page .brand img {
-                width: 100%
+                width: 100%;
+                height: auto;
+                display: block;
+                border-radius: 6px;
             }
 
             .fm-login-page .card-wrapper {
@@ -4050,6 +4053,16 @@ function fm_show_header_login()
                 margin-bottom: 1.5rem;
                 font-size: 24px;
                 font-weight: 400;
+            }
+
+            .fm-login-page .company-subtitle {
+                margin-top: -10px;
+                margin-bottom: 8px;
+                font-size: 13px;
+                font-weight: 600;
+                letter-spacing: .4px;
+                color: #2f3f4f;
+                text-transform: uppercase;
             }
 
             .fm-login-page .form-control {
@@ -4113,14 +4126,13 @@ function fm_show_header_login()
                 background-color: #2f2a2a;
             }
 
-            .theme-dark svg g,
-            .theme-dark svg path {
-                fill: #ffffff;
-            }
-
             .theme-dark .form-control {
                 color: #fff;
                 background-color: #403e3e;
+            }
+
+            .theme-dark .company-subtitle {
+                color: #cfd8dc;
             }
 
             .h-100vh {

@@ -47,7 +47,8 @@ trap 'rm -f "$TMP_LIST"' EXIT
 mkdir -p "$OUT_DIR"
 
 # Package tracked files to avoid accidental local artifacts.
-git -C "$ROOT_DIR" ls-files > "$TMP_LIST"
+# Never include previously generated release archives.
+git -C "$ROOT_DIR" ls-files | grep -v '^releases/' > "$TMP_LIST"
 
 if [[ ! -s "$TMP_LIST" ]]; then
   echo "Error: no tracked files found to package." >&2
