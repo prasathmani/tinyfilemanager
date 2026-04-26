@@ -655,8 +655,12 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $cfg->data['theme'] = $te3;
             $theme = $te3;
         }
-        $cfg->save();
-        echo true;
+        $saved = $cfg->save();
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(array(
+            'success' => (bool)$saved,
+            'theme' => $theme
+        ));
     }
 
     // new password hash
@@ -2434,7 +2438,8 @@ $all_files_size = 0;
     <div class="row">
         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
             <div class="col-xs-12 col-sm-9">
-                <div class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
+                <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
+                    <span id="fm-selection-count" class="btn btn-small btn-outline-secondary btn-2 pe-none" style="display:none;">0</span>
                     <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a>
                     <a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a>
                     <a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a>
@@ -3957,16 +3962,27 @@ class FM_Config
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
         $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration" . chr(13) . chr(10) . "$var_name = $var_value;" . chr(13) . chr(10);
-        if (is_writable($fm_file)) {
-            $lines = file($fm_file);
-            if ($fh = @fopen($fm_file, "w")) {
-                @fputs($fh, $config_string, strlen($config_string));
-                for ($x = 3; $x < count($lines); $x++) {
-                    @fputs($fh, $lines[$x], strlen($lines[$x]));
-                }
-                @fclose($fh);
-            }
+        if (!is_writable($fm_file)) {
+            return false;
         }
+
+        $lines = file($fm_file);
+        if ($lines === false) {
+            return false;
+        }
+
+        $fh = @fopen($fm_file, "w");
+        if (!$fh) {
+            return false;
+        }
+
+        $ok = (@fputs($fh, $config_string, strlen($config_string)) !== false);
+        for ($x = 3; $x < count($lines) && $ok; $x++) {
+            $ok = (@fputs($fh, $lines[$x], strlen($lines[$x])) !== false);
+        }
+
+        @fclose($fh);
+        return $ok;
     }
 }
 
@@ -3983,6 +3999,15 @@ function fm_show_nav_path($path)
 ?>
     <nav class="navbar navbar-expand-lg mb-4 main-nav <?php echo $isStickyNavBar ?> bg-body-tertiary" data-bs-theme="<?php echo FM_THEME; ?>">
         <a class="navbar-brand"> <?php echo lng('AppTitle') ?> </a>
+        <div class="fm-mobile-quickbar d-flex d-lg-none ms-auto me-2">
+            <a class="btn btn-sm btn-outline-primary" href="#" id="js-mobile-focus-search" aria-label="<?php echo lng('Search') ?>" title="<?php echo lng('Search') ?>"><i class="fa fa-search" aria-hidden="true"></i></a>
+            <?php if ((!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH): ?>
+                <a class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload" aria-label="<?php echo lng('Upload') ?>" title="<?php echo lng('Upload') ?>"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
+            <?php endif; ?>
+            <?php if (!FM_READONLY): ?>
+                <a class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1" aria-label="<?php echo lng('Settings') ?>" title="<?php echo lng('Settings') ?>"><i class="fa fa-cog" aria-hidden="true"></i></a>
+            <?php endif; ?>
+        </div>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -4295,6 +4320,22 @@ function fm_show_header_login()
                 scroll-behavior: smooth;
             }
 
+            :root {
+                --fm-body-bg: #f7f7f7;
+                --fm-body-color: #222222;
+                --fm-row-odd: #ffffff;
+                --fm-row-even: #f3f4f6;
+                --fm-row-hover: #e9f2ff;
+            }
+
+            html[data-bs-theme="dark"] {
+                --fm-body-bg: #1c2429;
+                --fm-body-color: #cfd8dc;
+                --fm-row-odd: #1f282e;
+                --fm-row-even: #263238;
+                --fm-row-hover: #32424a;
+            }
+
             *,
             *::before,
             *::after {
@@ -4303,8 +4344,9 @@ function fm_show_header_login()
 
             body {
                 font-size: 15px;
-                color: #222;
-                background: #F7F7F7;
+                color: var(--fm-body-color);
+                background: var(--fm-body-bg);
+                transition: background-color .2s ease, color .2s ease;
             }
 
             body.navbar-fixed {
@@ -4644,6 +4686,19 @@ function fm_show_header_login()
                 box-shadow: 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12), 0 2px 4px -1px rgba(0, 0, 0, .2)
             }
 
+            .fm-mobile-quickbar {
+                gap: 6px;
+            }
+
+            .fm-mobile-quickbar .btn {
+                min-width: 42px;
+                min-height: 42px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            }
+
             .dataTables_filter {
                 display: none;
             }
@@ -4885,8 +4940,16 @@ function fm_show_header_login()
                 border-left: 1px solid #1b77fd;
             }
 
-            #main-table tr.even {
-                background-color: #F8F9Fa;
+            #main-table tbody tr:nth-child(odd)>td {
+                background-color: var(--fm-row-odd);
+            }
+
+            #main-table tbody tr:nth-child(even)>td {
+                background-color: var(--fm-row-even);
+            }
+
+            #main-table.table-hover>tbody>tr:hover>td {
+                background-color: var(--fm-row-hover);
             }
 
             .filename>a>i {
@@ -5002,6 +5065,73 @@ function fm_show_header_login()
 
             .theme-dark .fm-grid-actions {
                 border-top-color: #2f3b42;
+            }
+
+            @media (max-width: 767.98px) {
+                body {
+                    padding-bottom: 76px;
+                }
+
+                .main-nav {
+                    padding: 0.35rem 0.6rem;
+                }
+
+                .navbar-brand {
+                    max-width: 44vw;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .navbar-collapse .col-xs-6 {
+                    width: 100%;
+                    max-width: 100%;
+                    margin-bottom: 8px;
+                }
+
+                .navbar-nav .nav-link,
+                .btn.btn-2,
+                .inline-actions > a {
+                    min-height: 44px;
+                    display: inline-flex;
+                    align-items: center;
+                }
+
+                #main-table td,
+                #main-table th {
+                    padding-top: .55rem;
+                    padding-bottom: .55rem;
+                }
+
+                #fm-selection-bar {
+                    position: fixed;
+                    left: 8px;
+                    right: 8px;
+                    bottom: 8px;
+                    z-index: 1040;
+                    background: rgba(255, 255, 255, 0.96);
+                    border: 1px solid #d9e0e8;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+                    padding: 8px;
+                    gap: 6px;
+                    display: none;
+                }
+
+                body.theme-dark #fm-selection-bar {
+                    background: rgba(27, 35, 40, 0.96);
+                    border-color: #2f3b42;
+                }
+
+                #fm-selection-bar .btn {
+                    flex: 1 1 calc(50% - 6px);
+                    justify-content: center;
+                }
+
+                #fm-selection-bar #fm-selection-count {
+                    flex: 1 0 100%;
+                    justify-content: center;
+                }
             }
         </style>
         <?php
@@ -5240,7 +5370,10 @@ function fm_show_header_login()
             }
 
             function change_checkboxes(e, t) {
-                for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked
+                for (var n = e.length - 1; n >= 0; n--) e[n].checked = "boolean" == typeof t ? t : !e[n].checked;
+                if (typeof window.fmUpdateSelectionBar === 'function') {
+                    window.fmUpdateSelectionBar();
+                }
             }
 
             function get_checkboxes() {
@@ -5335,15 +5468,44 @@ function fm_show_header_login()
 
             // Save Settings
             function save_settings($this) {
-                let form = $($this);
+                let form = $($this),
+                    selectedTheme = form.find('select[name="js-theme-3"]').val() || 'light';
+
+                // Apply instantly so the user can see the theme switch right away.
+                document.documentElement.setAttribute('data-bs-theme', selectedTheme);
+                $('body').toggleClass('theme-dark', selectedTheme === 'dark');
+
                 $.ajax({
                     type: form.attr('method'),
                     url: form.attr('action'),
                     data: form.serialize() + "&token=" + window.csrf + "&ajax=" + true,
                     success: function(data) {
-                        if (data) {
-                            window.location.reload();
+                        var response = data;
+                        if (typeof data === 'string') {
+                            try {
+                                response = JSON.parse(data);
+                            } catch (e) {
+                                response = {
+                                    success: false
+                                };
+                            }
                         }
+
+                        if (response && response.success) {
+                            toast('Settings saved successfully');
+                            var url = new URL(window.location.href);
+                            url.searchParams.delete('settings');
+                            url.hash = '';
+                            var nextUrl = url.pathname + (url.searchParams.toString() ? ('?' + url.searchParams.toString()) : '');
+                            setTimeout(function() {
+                                window.location.assign(nextUrl);
+                            }, 450);
+                        } else {
+                            toast('Settings could not be saved. Check write permissions for config.php');
+                        }
+                    },
+                    error: function() {
+                        toast('Settings could not be saved. Check write permissions for config.php');
                     }
                 });
                 return false;
@@ -5528,11 +5690,22 @@ function fm_show_header_login()
                     $tableWrap = $('.table-responsive').first(),
                     $grid = $('#fm-grid-view');
 
-                function getViewMode() {
-                    return localStorage.getItem(storageKey) || 'list';
+                function isMobileViewport() {
+                    return window.matchMedia('(max-width: 767.98px)').matches;
                 }
 
-                function setViewMode(mode) {
+                function getViewMode() {
+                    var savedMode = localStorage.getItem(storageKey);
+                    if (savedMode) {
+                        return savedMode;
+                    }
+                    return isMobileViewport() ? 'grid' : 'list';
+                }
+
+                function setViewMode(mode, persist) {
+                    if (typeof persist === 'undefined') {
+                        persist = true;
+                    }
                     var gridMode = mode === 'grid';
                     $viewButtons.removeClass('active');
                     $viewButtons.filter('[data-view-mode="' + mode + '"]').addClass('active');
@@ -5541,7 +5714,9 @@ function fm_show_header_login()
                     if (gridMode) {
                         renderGridView();
                     }
-                    localStorage.setItem(storageKey, mode);
+                    if (persist) {
+                        localStorage.setItem(storageKey, mode);
+                    }
                 }
 
                 function renderGridView() {
@@ -5599,16 +5774,67 @@ function fm_show_header_login()
                 }
 
                 $viewButtons.on('click', function() {
-                    setViewMode($(this).data('view-mode'));
+                    setViewMode($(this).data('view-mode'), true);
                 });
 
                 mainTable.on('draw', function() {
                     if (getViewMode() === 'grid') {
                         renderGridView();
                     }
+                    if (typeof window.fmUpdateSelectionBar === 'function') {
+                        window.fmUpdateSelectionBar();
+                    }
                 });
 
-                setViewMode(getViewMode());
+                setViewMode(getViewMode(), !!localStorage.getItem(storageKey));
+
+                // Keep view mode in sync with viewport when no explicit preference exists.
+                $(window).on('resize', function() {
+                    if (!localStorage.getItem(storageKey)) {
+                        setViewMode(getViewMode(), false);
+                    }
+                });
+
+                var $selectionBar = $('#fm-selection-bar'),
+                    $selectionCount = $('#fm-selection-count');
+
+                window.fmUpdateSelectionBar = function() {
+                    var selected = get_checkboxes().filter(function(item) {
+                        return item.checked;
+                    }).length;
+
+                    $selectionCount.text('Vybrané: ' + selected);
+                    $selectionCount.toggle(selected > 0);
+
+                    if (isMobileViewport()) {
+                        $selectionBar.css('display', selected > 0 ? 'flex' : 'none');
+                    } else {
+                        $selectionBar.css('display', '');
+                    }
+                };
+
+                $(document).on('change', 'input[name="file[]"], #js-select-all-items', function() {
+                    window.fmUpdateSelectionBar();
+                });
+
+                $('#js-mobile-focus-search').on('click', function(e) {
+                    e.preventDefault();
+                    var target = document.getElementById('navbarSupportedContent');
+                    if (target && !target.classList.contains('show')) {
+                        var bsCollapse = bootstrap.Collapse.getOrCreateInstance(target, {
+                            toggle: false
+                        });
+                        bsCollapse.show();
+                    }
+                    setTimeout(function() {
+                        var searchInput = document.getElementById('search-addon');
+                        if (searchInput) {
+                            searchInput.focus();
+                        }
+                    }, 160);
+                });
+
+                window.fmUpdateSelectionBar();
 
                 // filter table
                 $('#search-addon').on('keyup', function() {
