@@ -58,10 +58,10 @@ $directories_users = array(
     'supplier1' => __DIR__ . '/uploads/supplier1',
     'supplier2' => __DIR__ . '/uploads/supplier2',
     // Príklad používateľa s viacerými projektmi:
-    // 'client3' => array(
-    //     __DIR__ . '/uploads/projects/proj-a',
-    //     __DIR__ . '/uploads/projects/proj-b',
-    // ),
+     'client3' => array(
+         __DIR__ . '/uploads/Nemocnica PP',
+         __DIR__ . '/uploads/free',
+     ),
 );
 
 // --- VŠEOBECNÉ NASTAVENIA ---
