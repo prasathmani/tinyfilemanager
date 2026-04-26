@@ -13,7 +13,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
 define('VERSION', '2.6.13');
 
 //Application Title
-define('APP_TITLE', 'Tiny File Manager');
+define('APP_TITLE', 'Správca súborov');
 define('LOGIN_COMPANY_NAME', 'Dremont s.r.o. PIAR & team');
 define('LOGIN_COMPANY_URL', 'https://dremont.in');
 define('LOGIN_LOGO_PATH', 'KatalogMD.webp');
