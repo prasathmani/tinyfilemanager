@@ -2210,10 +2210,10 @@ $all_files_size = 0;
     <div class="d-flex justify-content-end mb-2">
         <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
             <button type="button" class="btn btn-outline-primary js-view-mode active" data-view-mode="list">
-                <i class="fa fa-list" aria-hidden="true"></i> List
+                <i class="fa fa-list" aria-hidden="true"></i> Zoznam
             </button>
             <button type="button" class="btn btn-outline-primary js-view-mode" data-view-mode="grid">
-                <i class="fa fa-th-large" aria-hidden="true"></i> Grid
+                <i class="fa fa-th-large" aria-hidden="true"></i> Mriežka
             </button>
         </div>
     </div>
