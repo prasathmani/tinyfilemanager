@@ -281,6 +281,9 @@ if (!defined('FM_EMBED')) {
 
 // logout
 if (isset($_GET['logout'])) {
+    if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
+        fm_online_remove_user($_SESSION[FM_SESSION_ID]['logged']);
+    }
     // Unset all session variables
     $_SESSION = array();
     // Delete the session cookie to prevent the browser from reusing the session ID
@@ -357,6 +360,7 @@ if ($use_auth) {
         if (function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
+                fm_online_touch_user($_POST['fm_usr']);
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
             } else {
@@ -426,6 +430,10 @@ if ($use_auth) {
         fm_show_footer_login();
         exit;
     }
+}
+
+if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
+    fm_online_touch_user($_SESSION[FM_SESSION_ID]['logged']);
 }
 
 // clean and check $root_path
@@ -2517,6 +2525,10 @@ $all_files_size = 0;
         <?php
         $footerLoggedUser = (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
         $footerShowUserBadges = !empty($footerLoggedUser) && (FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY));
+        $footerOnlineUsers = $footerShowUserBadges ? fm_online_get_users() : array();
+        if ($footerShowUserBadges && empty($footerOnlineUsers)) {
+            $footerOnlineUsers = array($footerLoggedUser);
+        }
         ?>
         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
             <div class="col-xs-12 col-sm-9">
@@ -2539,9 +2551,11 @@ $all_files_size = 0;
             </div>
             <div class="col-3 d-none d-sm-block">
                 <?php if ($footerShowUserBadges): ?>
-                    <div class="float-right d-flex gap-2 align-items-center">
-                        <span class="badge text-bg-secondary"><?php echo lng('You are logged in') ?>: <?php echo fm_enc($footerLoggedUser); ?></span>
-                        <span class="badge text-bg-primary"><?php echo FM_MANAGER ? lng('Manager') : lng('Admin'); ?></span>
+                    <div class="float-right d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                        <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
+                        <?php foreach ($footerOnlineUsers as $onlineUser): ?>
+                            <span class="badge <?php echo ($onlineUser === $footerLoggedUser) ? 'text-bg-primary' : 'text-bg-secondary'; ?>"><?php echo fm_enc($onlineUser); ?></span>
+                        <?php endforeach; ?>
                     </div>
                 <?php else: ?>
                     <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a>
@@ -2551,8 +2565,10 @@ $all_files_size = 0;
             <div class="col-12">
                 <?php if ($footerShowUserBadges): ?>
                     <div class="float-right d-flex gap-2 align-items-center flex-wrap">
-                        <span class="badge text-bg-secondary"><?php echo lng('You are logged in') ?>: <?php echo fm_enc($footerLoggedUser); ?></span>
-                        <span class="badge text-bg-primary"><?php echo FM_MANAGER ? lng('Manager') : lng('Admin'); ?></span>
+                        <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
+                        <?php foreach ($footerOnlineUsers as $onlineUser): ?>
+                            <span class="badge <?php echo ($onlineUser === $footerLoggedUser) ? 'text-bg-primary' : 'text-bg-secondary'; ?>"><?php echo fm_enc($onlineUser); ?></span>
+                        <?php endforeach; ?>
                     </div>
                 <?php else: ?>
                     <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a>
@@ -2801,6 +2817,124 @@ function fm_redirect($url, $code = 302)
 {
     header('Location: ' . $url, true, $code);
     exit;
+}
+
+/**
+ * Track active authenticated users for manager/admin footer badges.
+ */
+function fm_online_state_file()
+{
+    $dir = __DIR__ . '/.fm_usercfg';
+    if (!@is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $htaccess = $dir . '/.htaccess';
+    if (!@file_exists($htaccess)) {
+        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
+    }
+    return $dir . '/online_users.json';
+}
+
+function fm_online_touch_user($username)
+{
+    if (!is_string($username) || $username === '') {
+        return;
+    }
+
+    $file = fm_online_state_file();
+    $now = time();
+    $ttl = 900;
+
+    $fh = @fopen($file, 'c+');
+    if ($fh === false) {
+        return;
+    }
+
+    if (!@flock($fh, LOCK_EX)) {
+        @fclose($fh);
+        return;
+    }
+
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw ?: '{}', true);
+    if (!is_array($data)) {
+        $data = array();
+    }
+
+    foreach ($data as $user => $ts) {
+        if (!is_numeric($ts) || ((int)$ts < ($now - $ttl))) {
+            unset($data[$user]);
+        }
+    }
+
+    $data[$username] = $now;
+    ksort($data);
+
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($data));
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+}
+
+function fm_online_remove_user($username)
+{
+    if (!is_string($username) || $username === '') {
+        return;
+    }
+
+    $file = fm_online_state_file();
+    $fh = @fopen($file, 'c+');
+    if ($fh === false) {
+        return;
+    }
+
+    if (!@flock($fh, LOCK_EX)) {
+        @fclose($fh);
+        return;
+    }
+
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw ?: '{}', true);
+    if (!is_array($data)) {
+        $data = array();
+    }
+
+    unset($data[$username]);
+
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($data));
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+}
+
+function fm_online_get_users()
+{
+    $file = fm_online_state_file();
+    if (!@file_exists($file)) {
+        return array();
+    }
+
+    $raw = @file_get_contents($file);
+    $data = json_decode($raw ?: '{}', true);
+    if (!is_array($data)) {
+        return array();
+    }
+
+    $now = time();
+    $ttl = 900;
+    $users = array();
+    foreach ($data as $user => $ts) {
+        if (is_string($user) && $user !== '' && is_numeric($ts) && ((int)$ts >= ($now - $ttl))) {
+            $users[] = $user;
+        }
+    }
+
+    sort($users, SORT_NATURAL | SORT_FLAG_CASE);
+    return $users;
 }
 
 /**
@@ -6468,6 +6602,7 @@ function fm_show_header_login()
         $tr['en']['Generate']       = 'Generate';
         $tr['en']['FullSize']       = 'Full Size';
         $tr['en']['HideColumns']        = 'Hide Perms/Owner columns';
+        $tr['en']['Online users']       = 'Online users';
         $tr['en']['Some internal options are available only for managers'] = 'Some internal options are available only for managers';
         $tr['en']['Change Password']    = 'Change Password';
         $tr['en']['Current password']   = 'Current password';
