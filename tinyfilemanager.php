@@ -620,22 +620,21 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
         $te3 = $_POST['js-theme-3'];
+        $canChangeInternalFlags = !FM_UPLOAD_ONLY;
 
         if ($cfg->data['lang'] != $newLng) {
             $cfg->data['lang'] = $newLng;
             $lang = $newLng;
         }
-        if ($cfg->data['error_reporting'] != $erp) {
-            $cfg->data['error_reporting'] = $erp;
-            $report_errors = $erp;
-        }
-        if ($cfg->data['show_hidden'] != $shf) {
-            $cfg->data['show_hidden'] = $shf;
-            $show_hidden_files = $shf;
-        }
-        if ($cfg->data['show_hidden'] != $shf) {
-            $cfg->data['show_hidden'] = $shf;
-            $show_hidden_files = $shf;
+        if ($canChangeInternalFlags) {
+            if ($cfg->data['error_reporting'] != $erp) {
+                $cfg->data['error_reporting'] = $erp;
+                $report_errors = $erp;
+            }
+            if ($cfg->data['show_hidden'] != $shf) {
+                $cfg->data['show_hidden'] = $shf;
+                $show_hidden_files = $shf;
+            }
         }
         if ($cfg->data['hide_Cols'] != $hco) {
             $cfg->data['hide_Cols'] = $hco;
@@ -1699,7 +1698,7 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY && !FM_UPLOA
     exit;
 }
 
-if (isset($_GET['settings']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) {
+if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) || (!FM_READONLY && FM_CAN_WRITE_IN_PATH))) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     global $cfg, $lang, $lang_list;
@@ -1731,6 +1730,7 @@ if (isset($_GET['settings']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_
                             </select>
                         </div>
                     </div>
+                    <?php if (!FM_UPLOAD_ONLY): ?>
                     <div class="mt-3 mb-3 row ">
                         <label for="js-error-report" class="col-sm-3 col-form-label"><?php echo lng('ErrorReporting') ?></label>
                         <div class="col-sm-9">
@@ -1748,6 +1748,13 @@ if (isset($_GET['settings']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_
                             </div>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (FM_UPLOAD_ONLY): ?>
+                    <div class="alert alert-info py-2 px-3" role="alert">
+                        <i class="fa fa-info-circle" aria-hidden="true"></i>
+                        <?php echo lng('Some internal options are available only for managers'); ?>
+                    </div>
+                    <?php endif; ?>
 
                     <div class="mb-3 row">
                         <label for="js-hide-cols" class="col-sm-3 col-form-label"><?php echo lng('HideColumns') ?></label>
@@ -2507,6 +2514,10 @@ $all_files_size = 0;
     <div id="fm-grid-view" class="hidden"></div>
 
     <div class="row">
+        <?php
+        $footerLoggedUser = (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
+        $footerShowUserBadges = !empty($footerLoggedUser) && (FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY));
+        ?>
         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
             <div class="col-xs-12 col-sm-9">
                 <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
@@ -2526,9 +2537,27 @@ $all_files_size = 0;
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
                 </div>
             </div>
-            <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
+            <div class="col-3 d-none d-sm-block">
+                <?php if ($footerShowUserBadges): ?>
+                    <div class="float-right d-flex gap-2 align-items-center">
+                        <span class="badge text-bg-secondary"><?php echo lng('You are logged in') ?>: <?php echo fm_enc($footerLoggedUser); ?></span>
+                        <span class="badge text-bg-primary"><?php echo FM_MANAGER ? lng('Manager') : lng('Admin'); ?></span>
+                    </div>
+                <?php else: ?>
+                    <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a>
+                <?php endif; ?>
+            </div>
         <?php else: ?>
-            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
+            <div class="col-12">
+                <?php if ($footerShowUserBadges): ?>
+                    <div class="float-right d-flex gap-2 align-items-center flex-wrap">
+                        <span class="badge text-bg-secondary"><?php echo lng('You are logged in') ?>: <?php echo fm_enc($footerLoggedUser); ?></span>
+                        <span class="badge text-bg-primary"><?php echo FM_MANAGER ? lng('Manager') : lng('Admin'); ?></span>
+                    </div>
+                <?php else: ?>
+                    <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
     </div>
 </form>
@@ -4134,7 +4163,7 @@ function fm_show_nav_path($path)
             <?php if ((!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH): ?>
                 <a class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload" aria-label="<?php echo lng('Upload') ?>" title="<?php echo lng('Upload') ?>"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
             <?php endif; ?>
-            <?php if (!FM_READONLY): ?>
+            <?php if ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) || !FM_READONLY): ?>
                 <a class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1" aria-label="<?php echo lng('Settings') ?>" title="<?php echo lng('Settings') ?>"><i class="fa fa-cog" aria-hidden="true"></i></a>
             <?php endif; ?>
         </div>
@@ -4196,7 +4225,7 @@ function fm_show_nav_path($path)
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="navbarDropdownMenuLink-5" data-bs-theme="<?php echo FM_THEME; ?>">
-                                <?php if (!FM_READONLY): ?>
+                                <?php if ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) || !FM_READONLY): ?>
                                     <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                                 <?php endif ?>
                                 <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
@@ -6439,6 +6468,7 @@ function fm_show_header_login()
         $tr['en']['Generate']       = 'Generate';
         $tr['en']['FullSize']       = 'Full Size';
         $tr['en']['HideColumns']        = 'Hide Perms/Owner columns';
+        $tr['en']['Some internal options are available only for managers'] = 'Some internal options are available only for managers';
         $tr['en']['Change Password']    = 'Change Password';
         $tr['en']['Current password']   = 'Current password';
         $tr['en']['New password']       = 'New password';
