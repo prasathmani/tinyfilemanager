@@ -273,6 +273,62 @@ $root_url = fm_clean_path($root_url);
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
 defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
 
+// Lightweight PWA manifest endpoint (no service worker)
+if (isset($_GET['manifest'])) {
+    $icon_source = LOGIN_LOGO_PATH ? LOGIN_LOGO_PATH : $favicon_path;
+    $icon_url = '';
+    if (!empty($icon_source)) {
+        if (preg_match('#^https?://#i', $icon_source)) {
+            $icon_url = $icon_source;
+        } else {
+            $icon_url = FM_ROOT_URL . '/' . ltrim($icon_source, '/');
+        }
+    }
+
+    $icon_type = 'image/png';
+    $icon_ext = strtolower(pathinfo($icon_source, PATHINFO_EXTENSION));
+    if ($icon_ext === 'webp') {
+        $icon_type = 'image/webp';
+    } elseif ($icon_ext === 'svg') {
+        $icon_type = 'image/svg+xml';
+    } elseif ($icon_ext === 'jpg' || $icon_ext === 'jpeg') {
+        $icon_type = 'image/jpeg';
+    } elseif ($icon_ext === 'avif') {
+        $icon_type = 'image/avif';
+    }
+
+    $manifest = array(
+        'name' => APP_TITLE,
+        'short_name' => 'TFM',
+        'start_url' => FM_SELF_URL . '?p=',
+        'scope' => FM_SELF_URL,
+        'display' => 'standalone',
+        'orientation' => 'portrait',
+        'background_color' => '#f7f7f7',
+        'theme_color' => '#1f6feb',
+        'icons' => array(),
+    );
+
+    if (!empty($icon_url)) {
+        $manifest['icons'][] = array(
+            'src' => $icon_url,
+            'sizes' => '192x192',
+            'type' => $icon_type,
+            'purpose' => 'any'
+        );
+        $manifest['icons'][] = array(
+            'src' => $icon_url,
+            'sizes' => '512x512',
+            'type' => $icon_type,
+            'purpose' => 'any'
+        );
+    }
+
+    header('Content-Type: application/manifest+json; charset=utf-8');
+    echo json_encode($manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // On unexpected runtime failures, fallback to login page instead of exposing errors.
 if (!defined('FM_EMBED')) {
     set_exception_handler('fm_unexpected_exception_handler');
@@ -1077,6 +1133,63 @@ if (isset($_GET['dl'], $_POST['token'])) {
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
+}
+
+// Inline preview (images/videos/pdf) for authenticated UI cards and hover preview
+if (isset($_GET['preview'])) {
+    $pv = urldecode($_GET['preview']);
+    $pv = fm_clean_path($pv);
+    $pv = str_replace('/', '', $pv); // prevent directory traversal
+
+    $path = FM_ROOT_PATH;
+    if (FM_PATH != '') {
+        $path .= '/' . FM_PATH;
+    }
+
+    $file_path = $path . '/' . $pv;
+    if ($pv === '' || !is_file($file_path) || !fm_is_exclude_items($pv, $file_path)) {
+        header('HTTP/1.1 404 Not Found');
+        exit;
+    }
+
+    $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+    $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_video_exts(), array('pdf')));
+    if (!in_array($ext, $allowed_preview_exts, true)) {
+        header('HTTP/1.1 403 Forbidden');
+        exit;
+    }
+
+    $content_type = fm_get_mime_type($file_path);
+    if (!$content_type || $content_type === '--') {
+        $fallback = array(
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'webp' => 'image/webp',
+            'avif' => 'image/avif',
+            'bmp' => 'image/bmp',
+            'mp4' => 'video/mp4',
+            'webm' => 'video/webm',
+            'ogg' => 'video/ogg',
+            'mov' => 'video/quicktime',
+            'm4v' => 'video/x-m4v',
+        );
+        $content_type = isset($fallback[$ext]) ? $fallback[$ext] : 'application/octet-stream';
+    }
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+
+    header('Content-Type: ' . $content_type);
+    header('Content-Length: ' . filesize($file_path));
+    header('Content-Disposition: inline; filename="' . basename($file_path) . '"');
+    header('Cache-Control: private, max-age=300');
+    readfile($file_path);
+    exit;
 }
 
 // Upload
@@ -1922,6 +2035,7 @@ if (isset($_GET['view'])) {
     $is_image = false;
     $is_audio = false;
     $is_video = false;
+    $is_pdf = false;
     $is_text = false;
     $is_onlineViewer = false;
 
@@ -1930,7 +2044,10 @@ if (isset($_GET['view'])) {
     $content = ''; // for text
     $online_viewer = strtolower(FM_DOC_VIEWER);
 
-    if ($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())) {
+    if ($ext === 'pdf') {
+        $is_pdf = true;
+        $view_title = 'PDF';
+    } elseif ($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())) {
         $is_onlineViewer = true;
     } elseif ($ext == 'zip' || $ext == 'tar') {
         $is_zip = true;
@@ -2039,11 +2156,18 @@ if (isset($_GET['view'])) {
             </div>
             <div class="row mt-3">
                 <?php
-                if ($is_onlineViewer) {
-                    if ($online_viewer == 'google') {
-                        echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
-                    } else if ($online_viewer == 'microsoft') {
-                        echo '<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
+                if ($is_pdf) {
+                    $pdf_preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    echo '<iframe src="' . fm_enc($pdf_preview_url) . '" frameborder="no" style="width:100%;min-height:640px"></iframe>';
+                } elseif ($is_onlineViewer) {
+                    $office_exts = array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx');
+                    $prefer_ms = in_array($ext, $office_exts, true);
+                    $google_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($file_url);
+                    $ms_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($file_url);
+                    if ($prefer_ms || $online_viewer == 'microsoft') {
+                        echo '<iframe src="' . fm_enc($ms_src) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
+                    } else {
+                        echo '<iframe src="' . fm_enc($google_src) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
                     }
                 } elseif ($is_zip) {
                     // ZIP content
@@ -2461,7 +2585,7 @@ $all_files_size = 0;
                         <div class="filename">
                             <?php
                             $ext_lower = strtolower(pathinfo($f, PATHINFO_EXTENSION));
-                            $previewUrl = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . rawurlencode($f));
+                            $previewUrl = fm_enc(FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($f));
                             $previewType = '';
                             $isPdf = false;
                             if (in_array($ext_lower, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
@@ -4411,6 +4535,7 @@ function fm_show_header_login()
     header("Pragma: no-cache");
 
     global $favicon_path;
+    $pwa_icon = LOGIN_LOGO_PATH ? LOGIN_LOGO_PATH : $favicon_path;
 ?>
     <!DOCTYPE html>
     <html lang="en" data-bs-theme="<?php echo (FM_THEME == "dark") ? 'dark' : 'light' ?>">
@@ -4422,8 +4547,17 @@ function fm_show_header_login()
         <meta name="author" content="CCP Programmers">
         <meta name="robots" content="noindex, nofollow">
         <meta name="googlebot" content="noindex">
+        <meta name="theme-color" content="#1f6feb">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="<?php echo fm_enc(APP_TITLE); ?>">
+        <link rel="manifest" href="<?php echo fm_enc(FM_SELF_URL . '?manifest=1'); ?>">
         <?php if ($favicon_path) {
             echo '<link rel="icon" href="' . fm_enc($favicon_path) . '" type="image/png">';
+        } ?>
+        <?php if ($pwa_icon) {
+            echo '<link rel="apple-touch-icon" href="' . fm_enc($pwa_icon) . '">';
         } ?>
         <title><?php echo fm_enc(APP_TITLE) ?></title>
         <?php print_external('pre-jsdelivr'); ?>
@@ -4586,6 +4720,7 @@ function fm_show_header_login()
 
         global $sticky_navbar, $favicon_path;
         $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
+        $pwa_icon = LOGIN_LOGO_PATH ? LOGIN_LOGO_PATH : $favicon_path;
 ?>
     <!DOCTYPE html>
     <html data-bs-theme="<?php echo FM_THEME; ?>">
@@ -4597,8 +4732,17 @@ function fm_show_header_login()
         <meta name="author" content="CCP Programmers">
         <meta name="robots" content="noindex, nofollow">
         <meta name="googlebot" content="noindex">
+        <meta name="theme-color" content="#1f6feb">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="<?php echo fm_enc(APP_TITLE); ?>">
+        <link rel="manifest" href="<?php echo fm_enc(FM_SELF_URL . '?manifest=1'); ?>">
         <?php if ($favicon_path) {
             echo '<link rel="icon" href="' . fm_enc($favicon_path) . '" type="image/png">';
+        } ?>
+        <?php if ($pwa_icon) {
+            echo '<link rel="apple-touch-icon" href="' . fm_enc($pwa_icon) . '">';
         } ?>
         <title><?php echo fm_enc(APP_TITLE) ?> | <?php echo (isset($_GET['view']) ? $_GET['view'] : ((isset($_GET['edit'])) ? $_GET['edit'] : "H3K")); ?></title>
         <?php print_external('pre-jsdelivr'); ?>
