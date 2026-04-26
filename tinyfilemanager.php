@@ -74,8 +74,8 @@ $global_readonly = false;
 // Managers and admin can have no entry here – they see the full root.
 // array('Username' => 'Directory path', 'Username2' => array('Dir1', 'Dir2'), ...)
 $directories_users = array(
-    'client1'   => $_SERVER['DOCUMENT_ROOT'] . '/uploads/client1',
-    'client2'   => $_SERVER['DOCUMENT_ROOT'] . '/uploads/client2',
+    'client1'   => $_SERVER['DOCUMENT_ROOT'] . '/uploads/Nemocnica PP',
+    'client2'   => $_SERVER['DOCUMENT_ROOT'] . '/uploads/BARMO',
     'supplier1' => $_SERVER['DOCUMENT_ROOT'] . '/uploads/supplier1',
     'supplier2' => $_SERVER['DOCUMENT_ROOT'] . '/uploads/supplier2',
 );
@@ -484,11 +484,20 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'], $directories_users[$_
     $fm_user_allowed_dirs = array_values(array_unique($fm_user_allowed_dirs));
 
     if (empty($fm_user_allowed_dirs)) {
-        fm_set_msg('Access denied. No valid project directories assigned to your account.', 'error');
-        fm_show_header_login();
-        fm_show_message();
-        fm_show_footer_login();
-        exit;
+        // No valid personal directory found – fall back to the shared 'free' folder.
+        $free_dir = rtrim(str_replace('\\', '/', $root_path), '/') . '/free';
+        if (!@is_dir($free_dir)) {
+            @mkdir($free_dir, 0755, true);
+        }
+        if (@is_dir($free_dir)) {
+            $fm_user_allowed_dirs = array($free_dir);
+        } else {
+            fm_set_msg('Access denied. No valid project directories assigned to your account.', 'error');
+            fm_show_header_login();
+            fm_show_message();
+            fm_show_footer_login();
+            exit;
+        }
     }
 }
 
@@ -3959,29 +3968,36 @@ class FM_Config
     {
         global $config_file;
         $fm_file = is_readable($config_file) ? $config_file : __FILE__;
-        $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
-        $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration" . chr(13) . chr(10) . "$var_name = $var_value;" . chr(13) . chr(10);
+        $new_line = '\$CONFIG = ' . $var_value . ';';
+
         if (!is_writable($fm_file)) {
             return false;
         }
 
-        $lines = file($fm_file);
-        if ($lines === false) {
+        $content = @file_get_contents($fm_file);
+        if ($content === false) {
             return false;
         }
 
-        $fh = @fopen($fm_file, "w");
-        if (!$fh) {
-            return false;
+        // Replace existing $CONFIG = ...; line in-place (preserves all other settings).
+        if (preg_match('/^\s*\$CONFIG\s*=/m', $content)) {
+            $new_content = preg_replace(
+                '/^\s*\$CONFIG\s*=.*?;\s*$/m',
+                $new_line,
+                $content
+            );
+        } else {
+            // $CONFIG not found – append it before closing tag or at end.
+            $new_content = rtrim($content) . "\n" . $new_line . "\n";
         }
 
-        $ok = (@fputs($fh, $config_string, strlen($config_string)) !== false);
-        for ($x = 3; $x < count($lines) && $ok; $x++) {
-            $ok = (@fputs($fh, $lines[$x], strlen($lines[$x])) !== false);
+        if ($new_content === null || $new_content === $content) {
+            // preg_replace failed or nothing changed – still report success if data matches.
+            return ($new_content !== null);
         }
 
-        @fclose($fh);
+        $ok = (@file_put_contents($fm_file, $new_content) !== false);
         return $ok;
     }
 }
@@ -4350,7 +4366,7 @@ function fm_show_header_login()
             }
 
             body.navbar-fixed {
-                margin-top: 55px;
+                /* margin-top set dynamically via JS to handle multi-line navbar on mobile */
             }
 
             a,
@@ -5810,8 +5826,16 @@ function fm_show_header_login()
                     }
                 });
 
+                function adjustNavbarOffset() {
+                    if ($('body').hasClass('navbar-fixed')) {
+                        var h = $('.main-nav.fixed-top').outerHeight(true) || 56;
+                        $('body').css('margin-top', h + 'px');
+                    }
+                }
+
                 setViewMode(getViewMode(), !!localStorage.getItem(storageKey));
                 applyCompactMobileMode();
+                adjustNavbarOffset();
 
                 // Keep view mode in sync with viewport when no explicit preference exists.
                 $(window).on('resize', function() {
@@ -5819,6 +5843,7 @@ function fm_show_header_login()
                         setViewMode(getViewMode(), false);
                     }
                     applyCompactMobileMode();
+                    adjustNavbarOffset();
                 });
 
                 var $selectionBar = $('#fm-selection-bar'),
