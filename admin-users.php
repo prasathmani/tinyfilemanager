@@ -1,5 +1,15 @@
 <?php
 // admin-users.php: Administračná stránka pre správu užívateľov a ich oprávnení
+
+// Definuj FM_SESSION_ID a inicializuj session ako v tinyfilemanager.php
+if (!defined('FM_SESSION_ID')) {
+    define('FM_SESSION_ID', 'filemanager');
+}
+session_name(FM_SESSION_ID);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/src/bootstrap.php';
 require_once __DIR__ . '/src/FM_Config.php';
 
