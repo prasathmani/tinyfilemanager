@@ -1258,14 +1258,15 @@ if (isset($_GET['preview'])) {
         exit;
     }
 
+    $content_type = fm_get_mime_type($file_path);
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_audio_exts(), fm_get_video_exts(), fm_get_onlineViewer_exts(), array('pdf')));
-    if (!in_array($ext, $allowed_preview_exts, true)) {
+    $is_image_mime = fm_is_image_mime_type($content_type);
+    if (!in_array($ext, $allowed_preview_exts, true) && !$is_image_mime) {
         header('HTTP/1.1 403 Forbidden');
         exit;
     }
 
-    $content_type = fm_get_mime_type($file_path);
     if (!$content_type || $content_type === '--') {
         $fallback = array(
             'pdf' => 'application/pdf',
@@ -2172,6 +2173,7 @@ if (isset($_GET['view'])) {
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $mime_type = fm_get_mime_type($file_path);
+    $is_image_mime = fm_is_image_mime_type($mime_type);
     $filesize_raw = fm_get_size($file_path);
     $filesize = fm_get_filesize($filesize_raw);
 
@@ -2198,7 +2200,7 @@ if (isset($_GET['view'])) {
         $is_zip = true;
         $view_title = 'Archive';
         $filenames = fm_get_zif_info($file_path, $ext);
-    } elseif (in_array($ext, fm_get_image_exts())) {
+    } elseif (in_array($ext, fm_get_image_exts()) || $is_image_mime) {
         $is_image = true;
         $view_title = 'Image';
     } elseif (in_array($ext, fm_get_audio_exts())) {
@@ -2332,10 +2334,8 @@ if (isset($_GET['view'])) {
                     }
                 } elseif ($is_image) {
                     // Image content
-                    if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
-                        $preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
-                        echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($preview_url) . '" alt="image" class="preview-img"></label></p>';
-                    }
+                    $preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
+                    echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($preview_url) . '" alt="image" class="preview-img"></label></p>';
                 } elseif ($is_audio) {
                     // Audio content
                     $preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
@@ -2735,9 +2735,10 @@ $all_files_size = 0;
                             <?php
                             $ext_lower = strtolower(pathinfo($f, PATHINFO_EXTENSION));
                             $previewUrl = fm_enc(FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $f));
+                            $item_mime = fm_get_mime_type($path . '/' . $f);
                             $previewType = '';
                             $isPdf = false;
-                            if (in_array($ext_lower, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
+                            if (in_array($ext_lower, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif')) || fm_is_image_mime_type($item_mime)) {
                                 $previewType = 'image';
                             } elseif (in_array($ext_lower, array('mp4', 'webm', 'ogg', 'mov', 'm4v'))) {
                                 $previewType = 'video';
@@ -3179,6 +3180,19 @@ function fm_get_mime_type($file_path)
     } else {
         return '--';
     }
+}
+
+/**
+ * Check whether MIME type is an image MIME.
+ * @param mixed $mime_type
+ * @return bool
+ */
+function fm_is_image_mime_type($mime_type)
+{
+    if (!is_string($mime_type) || $mime_type === '' || $mime_type === '--') {
+        return false;
+    }
+    return strpos(strtolower($mime_type), 'image/') === 0;
 }
 
 /**
