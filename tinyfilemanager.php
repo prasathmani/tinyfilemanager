@@ -166,6 +166,9 @@ if (is_readable($security_file)) {
     function fm_validate_input($i, $t='filename') { return $i; }
 }
 
+// Modular handlers (incremental extraction from monolith)
+require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
+
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">',
@@ -1205,109 +1208,16 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
 }
 
 // Download
-if (isset($_GET['dl'], $_POST['token'])) {
-    // Verify the token to ensure it's valid
-    if (!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
+if (class_exists('TFM_DownloadPreviewHandler')) {
+    $download_preview_handler = new TFM_DownloadPreviewHandler(FM_ROOT_PATH, FM_PATH);
+    if ($download_preview_handler->handleDownload($_GET, $_POST)) {
         exit;
     }
 
-    // Clean the download file path
-    // Keep literal '+' in filenames; urldecode() would turn it into a space.
-    $dl = rawurldecode((string) $_GET['dl']);
-    $dl = fm_clean_path($dl);
-    $dl = str_replace('/', '', $dl); // Prevent directory traversal attacks
-
-    // Define the file path
-    $path = FM_ROOT_PATH;
-    if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
-    }
-
-    // Check if the file exists and is valid
-    if ($dl != '' && is_file($path . '/' . $dl)) {
-        // Close the session to prevent session locking
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_write_close();
-        }
-
-        // Call the download function
-        fm_download_file($path . '/' . $dl, $dl, 1024); // Download with a buffer size of 1024 bytes
-        exit;
-    } else {
-        // Handle the case where the file is not found
-        fm_set_msg(lng('File not found'), 'error');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
-}
-
-// Inline preview (images/audio/videos/pdf/office) for authenticated UI cards and file view embeds
-if (isset($_GET['preview'])) {
-    // Keep literal '+' in filenames; urldecode() would turn it into a space.
-    $pv = rawurldecode((string) $_GET['preview']);
-    $pv = fm_clean_path($pv);
-    $pv = str_replace('/', '', $pv); // prevent directory traversal
-
-    $path = FM_ROOT_PATH;
-    if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
-    }
-
-    $file_path = $path . '/' . $pv;
-    if ($pv === '' || !is_file($file_path) || !fm_is_exclude_items($pv, $file_path)) {
-        header('HTTP/1.1 404 Not Found');
+    // Inline preview (images/audio/videos/pdf/office) for authenticated UI cards and file view embeds
+    if ($download_preview_handler->handlePreview($_GET)) {
         exit;
     }
-
-    $content_type = fm_get_mime_type($file_path);
-    $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
-    $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_audio_exts(), fm_get_video_exts(), fm_get_onlineViewer_exts(), array('pdf')));
-    $is_image_mime = fm_is_image_mime_type($content_type);
-    if (!in_array($ext, $allowed_preview_exts, true) && !$is_image_mime) {
-        header('HTTP/1.1 403 Forbidden');
-        exit;
-    }
-
-    if (!$content_type || $content_type === '--') {
-        $fallback = array(
-            'pdf' => 'application/pdf',
-            'jpg' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            'gif' => 'image/gif',
-            'svg' => 'image/svg+xml',
-            'webp' => 'image/webp',
-            'avif' => 'image/avif',
-            'bmp' => 'image/bmp',
-            'mp4' => 'video/mp4',
-            'webm' => 'video/webm',
-            'ogg' => 'video/ogg',
-            'mov' => 'video/quicktime',
-            'm4v' => 'video/x-m4v',
-            'doc' => 'application/msword',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'xls' => 'application/vnd.ms-excel',
-            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'ppt' => 'application/vnd.ms-powerpoint',
-            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'odt' => 'application/vnd.oasis.opendocument.text',
-            'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
-            'xps' => 'application/oxps',
-        );
-        $content_type = isset($fallback[$ext]) ? $fallback[$ext] : 'application/octet-stream';
-    }
-
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        session_write_close();
-    }
-
-    header('Content-Type: ' . $content_type);
-    header('Content-Length: ' . filesize($file_path));
-    header('Content-Disposition: inline; filename="' . basename($file_path) . '"');
-    header('Cache-Control: private, max-age=300');
-    readfile($file_path);
-    exit;
 }
 
 // Upload
