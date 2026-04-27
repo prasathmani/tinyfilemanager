@@ -1213,7 +1213,8 @@ if (isset($_GET['dl'], $_POST['token'])) {
     }
 
     // Clean the download file path
-    $dl = urldecode($_GET['dl']);
+    // Keep literal '+' in filenames; urldecode() would turn it into a space.
+    $dl = rawurldecode((string) $_GET['dl']);
     $dl = fm_clean_path($dl);
     $dl = str_replace('/', '', $dl); // Prevent directory traversal attacks
 
@@ -1243,7 +1244,8 @@ if (isset($_GET['dl'], $_POST['token'])) {
 
 // Inline preview (images/audio/videos/pdf/office) for authenticated UI cards and file view embeds
 if (isset($_GET['preview'])) {
-    $pv = urldecode($_GET['preview']);
+    // Keep literal '+' in filenames; urldecode() would turn it into a space.
+    $pv = rawurldecode((string) $_GET['preview']);
     $pv = fm_clean_path($pv);
     $pv = str_replace('/', '', $pv); // prevent directory traversal
 
@@ -2168,7 +2170,7 @@ if (isset($_GET['view'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
-    $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
+    $file_url = fm_build_public_file_url(FM_PATH, $file);
     $file_path = $path . '/' . $file;
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
@@ -2309,7 +2311,11 @@ if (isset($_GET['view'])) {
                 } elseif ($is_onlineViewer) {
                     $office_exts = array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx');
                     $prefer_ms = in_array($ext, $office_exts, true);
-                    $office_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                    // Office online viewers work more reliably with direct file URLs ending in the original extension.
+                    $office_preview_url = $file_url;
+                    if (!preg_match('#^https?://#i', $office_preview_url)) {
+                        $office_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                    }
                     $google_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($office_preview_url);
                     $ms_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($office_preview_url);
                     if ($prefer_ms || $online_viewer == 'microsoft') {
@@ -2391,7 +2397,7 @@ if (isset($_GET['edit']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_P
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
-    $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
+    $file_url = fm_build_public_file_url(FM_PATH, $file);
     $file_path = $path . '/' . $file;
 
     // normal editer
@@ -2495,7 +2501,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_IS_WIN && FM
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
-    $file_url = FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file;
+    $file_url = fm_build_public_file_url(FM_PATH, $file);
     $file_path = $path . '/' . $file;
 
     $mode = fileperms($path . '/' . $file);
@@ -2905,7 +2911,8 @@ function verifyToken($token)
 function fm_preview_relative_target($path, $file)
 {
     $path = fm_clean_path((string) $path);
-    $file = urldecode((string) $file);
+    // Preserve '+' when file names come from directory entries and signed URLs.
+    $file = rawurldecode((string) $file);
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
     if ($file === '') {
@@ -2951,7 +2958,8 @@ function fm_preview_signature($relative_target, $expires)
 function fm_build_preview_query($path, $file, $ttl = 900)
 {
     $path = fm_clean_path((string) $path);
-    $raw_file = urldecode((string) $file);
+    // Preserve '+' when file names come from directory entries and signed URLs.
+    $raw_file = rawurldecode((string) $file);
     $file = str_replace('/', '', fm_clean_path($raw_file, false));
     $relative_target = fm_preview_relative_target($path, $file);
 
@@ -3557,6 +3565,38 @@ function fm_get_display_path($file_path)
                 'path' => fm_enc(fm_convert_win($file_path))
             );
     }
+}
+
+/**
+ * Build absolute public file URL with encoded path segments.
+ * @param string $path
+ * @param string $file
+ * @return string
+ */
+function fm_build_public_file_url($path, $file)
+{
+    $base = rtrim((string) FM_ROOT_URL, '/');
+    $relative = trim((string) $path, '/');
+    $file = (string) $file;
+
+    $parts = array();
+    if ($relative !== '') {
+        foreach (explode('/', str_replace('\\', '/', $relative)) as $segment) {
+            if ($segment !== '') {
+                $parts[] = rawurlencode($segment);
+            }
+        }
+    }
+
+    if ($file !== '') {
+        $parts[] = rawurlencode($file);
+    }
+
+    if (empty($parts)) {
+        return $base;
+    }
+
+    return $base . '/' . implode('/', $parts);
 }
 
 /**
