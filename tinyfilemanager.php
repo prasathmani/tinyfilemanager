@@ -455,8 +455,16 @@ if ($ip_ruleset != 'OFF') {
 }
 
 // Checking if the user is logged in or not. If not, it will show the login form.
+$fm_signed_preview_request = isset($_GET['preview'])
+    && fm_has_valid_preview_signature(
+        $_GET['p'] ?? '',
+        $_GET['preview'] ?? '',
+        $_GET['exp'] ?? '',
+        $_GET['sig'] ?? ''
+    );
+
 if ($use_auth) {
-    if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
+    if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) || $fm_signed_preview_request) {
         // Logged. Prevent rendering or processing login form again.
         if (isset($_POST['fm_usr']) || isset($_POST['fm_pwd']) || (isset($_GET['login']) && $_GET['login'] == '1')) {
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(''));
@@ -1233,7 +1241,7 @@ if (isset($_GET['dl'], $_POST['token'])) {
     }
 }
 
-// Inline preview (images/audio/videos/pdf) for authenticated UI cards and file view embeds
+// Inline preview (images/audio/videos/pdf/office) for authenticated UI cards and file view embeds
 if (isset($_GET['preview'])) {
     $pv = urldecode($_GET['preview']);
     $pv = fm_clean_path($pv);
@@ -1251,7 +1259,7 @@ if (isset($_GET['preview'])) {
     }
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
-    $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_audio_exts(), fm_get_video_exts(), array('pdf')));
+    $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_audio_exts(), fm_get_video_exts(), fm_get_onlineViewer_exts(), array('pdf')));
     if (!in_array($ext, $allowed_preview_exts, true)) {
         header('HTTP/1.1 403 Forbidden');
         exit;
@@ -1274,6 +1282,15 @@ if (isset($_GET['preview'])) {
             'ogg' => 'video/ogg',
             'mov' => 'video/quicktime',
             'm4v' => 'video/x-m4v',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'odt' => 'application/vnd.oasis.opendocument.text',
+            'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+            'xps' => 'application/oxps',
         );
         $content_type = isset($fallback[$ext]) ? $fallback[$ext] : 'application/octet-stream';
     }
@@ -2285,13 +2302,14 @@ if (isset($_GET['view'])) {
             <div class="row mt-3">
                 <?php
                 if ($is_pdf) {
-                    $pdf_preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    $pdf_preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
                     echo '<iframe src="' . fm_enc($pdf_preview_url) . '" frameborder="no" style="width:100%;min-height:640px"></iframe>';
                 } elseif ($is_onlineViewer) {
                     $office_exts = array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx');
                     $prefer_ms = in_array($ext, $office_exts, true);
-                    $google_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($file_url);
-                    $ms_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($file_url);
+                    $office_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                    $google_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($office_preview_url);
+                    $ms_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($office_preview_url);
                     if ($prefer_ms || $online_viewer == 'microsoft') {
                         echo '<iframe src="' . fm_enc($ms_src) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
                     } else {
@@ -2315,16 +2333,16 @@ if (isset($_GET['view'])) {
                 } elseif ($is_image) {
                     // Image content
                     if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
-                        $preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                        $preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
                         echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($preview_url) . '" alt="image" class="preview-img"></label></p>';
                     }
                 } elseif ($is_audio) {
                     // Audio content
-                    $preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    $preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
                     echo '<p><audio src="' . fm_enc($preview_url) . '" controls preload="metadata"></audio></p>';
                 } elseif ($is_video) {
                     // Video content
-                    $preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    $preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
                     echo '<div class="preview-video"><video src="' . fm_enc($preview_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
                 } elseif ($is_text) {
                     if (FM_USE_HIGHLIGHTJS) {
@@ -2716,7 +2734,7 @@ $all_files_size = 0;
                         <div class="filename">
                             <?php
                             $ext_lower = strtolower(pathinfo($f, PATHINFO_EXTENSION));
-                            $previewUrl = fm_enc(FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($f));
+                            $previewUrl = fm_enc(FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $f));
                             $previewType = '';
                             $isPdf = false;
                             if (in_array($ext_lower, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
@@ -2875,6 +2893,99 @@ function verifyToken($token)
         return true;
     }
     return false;
+}
+
+/**
+ * Build normalized relative preview target from current path and filename.
+ * @param string $path
+ * @param string $file
+ * @return string
+ */
+function fm_preview_relative_target($path, $file)
+{
+    $path = fm_clean_path((string) $path);
+    $file = urldecode((string) $file);
+    $file = fm_clean_path($file, false);
+    $file = str_replace('/', '', $file);
+    if ($file === '') {
+        return '';
+    }
+    return ltrim(($path !== '' ? $path . '/' : '') . $file, '/');
+}
+
+/**
+ * Derive preview signing secret from runtime configuration.
+ * @return string
+ */
+function fm_preview_secret()
+{
+    static $secret = null;
+    if ($secret !== null) {
+        return $secret;
+    }
+
+    global $root_path, $auth_users;
+    $secret = hash('sha256', __FILE__ . '|' . (string) $root_path . '|' . json_encode($auth_users));
+    return $secret;
+}
+
+/**
+ * Sign preview target for time-limited public access.
+ * @param string $relative_target
+ * @param int $expires
+ * @return string
+ */
+function fm_preview_signature($relative_target, $expires)
+{
+    return hash_hmac('sha256', (string) $expires . '|' . $relative_target, fm_preview_secret());
+}
+
+/**
+ * Build signed preview query string.
+ * @param string $path
+ * @param string $file
+ * @param int $ttl
+ * @return string
+ */
+function fm_build_preview_query($path, $file, $ttl = 900)
+{
+    $path = fm_clean_path((string) $path);
+    $raw_file = urldecode((string) $file);
+    $file = str_replace('/', '', fm_clean_path($raw_file, false));
+    $relative_target = fm_preview_relative_target($path, $file);
+
+    $ttl = max(60, (int) $ttl);
+    $expires = time() + $ttl;
+    $sig = fm_preview_signature($relative_target, $expires);
+
+    return 'p=' . urlencode($path) . '&preview=' . urlencode($file) . '&exp=' . $expires . '&sig=' . $sig;
+}
+
+/**
+ * Verify signed preview request.
+ * @param string $path
+ * @param string $file
+ * @param mixed $expires
+ * @param string $sig
+ * @return bool
+ */
+function fm_has_valid_preview_signature($path, $file, $expires, $sig)
+{
+    if (!is_numeric($expires) || !is_string($sig) || $sig === '') {
+        return false;
+    }
+
+    $expires = (int) $expires;
+    if ($expires < (time() - 30) || $expires > (time() + 86400)) {
+        return false;
+    }
+
+    $relative_target = fm_preview_relative_target($path, $file);
+    if ($relative_target === '') {
+        return false;
+    }
+
+    return hash_equals(fm_preview_signature($relative_target, $expires), $sig);
 }
 
 /**
