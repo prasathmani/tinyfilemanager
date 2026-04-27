@@ -321,3 +321,33 @@ function fm_show_footer_login()
 
 <?php
 }
+
+/**
+ * Build the accepted upload extension list for Dropzone.
+ *
+ * @return string
+ */
+function getUploadExt()
+{
+    $extArr = explode(',', FM_UPLOAD_EXTENSION);
+    if (FM_UPLOAD_EXTENSION && $extArr) {
+        array_walk($extArr, function (&$x) {
+            $x = '.' . $x;
+        });
+        return implode(',', $extArr);
+    }
+
+    return '';
+}
+
+/**
+ * Return the selected attribute for the active language option.
+ *
+ * @param string $languageCode
+ * @return string
+ */
+function getSelected($languageCode)
+{
+    global $lang;
+    return ($lang == $languageCode) ? 'selected' : '';
+}
