@@ -30,8 +30,8 @@ function fm_show_nav_path($path)
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
 ?>
     <nav class="navbar navbar-expand-lg mb-4 main-nav <?php echo $isStickyNavBar ?> bg-body-tertiary" data-bs-theme="<?php echo FM_THEME; ?>">
-        <a class="navbar-brand">
-            <img src="https://dremont.sk/wp-content/uploads/2024/04/logo-DREMONTMA_3_11_10izak-e1714296077460.png" alt="DREMONT logo" style="height:32px;vertical-align:middle;margin-right:8px;">
+        <a class="navbar-brand"><a href="https://dremont.sk">
+            <img src="https://dremont.sk/wp-content/uploads/2024/04/logo-DREMONTMA_3_11_10izak-e1714296077460.png" alt="DREMONT logo" style="height:32px;vertical-align:middle;margin-right:8px;"></a>
             <?php echo lng('AppTitle') ?>
         </a>
         <div class="fm-mobile-quickbar d-flex d-lg-none ms-auto me-2">
