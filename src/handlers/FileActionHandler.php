@@ -125,6 +125,66 @@ class TFM_FileActionHandler {
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
     }
 
+    /**
+     * Handle chmod request.
+     * Preserves legacy behavior and redirects back.
+     * @param array $post
+     * @return void
+     */
+    public function handleChmod($post) {
+        if (!verifyToken($post['token'])) {
+            fm_set_msg(lng('Invalid Token.'), 'error');
+            die('Invalid Token.');
+        }
+
+        $path = $this->basePath();
+
+        $file = $post['chmod'];
+        $file = fm_clean_path($file);
+        $file = str_replace('/', '', $file);
+        if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
+            fm_set_msg(lng('File not found'), 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+        }
+
+        $mode = 0;
+        if (!empty($post['ur'])) {
+            $mode |= 0400;
+        }
+        if (!empty($post['uw'])) {
+            $mode |= 0200;
+        }
+        if (!empty($post['ux'])) {
+            $mode |= 0100;
+        }
+        if (!empty($post['gr'])) {
+            $mode |= 0040;
+        }
+        if (!empty($post['gw'])) {
+            $mode |= 0020;
+        }
+        if (!empty($post['gx'])) {
+            $mode |= 0010;
+        }
+        if (!empty($post['or'])) {
+            $mode |= 0004;
+        }
+        if (!empty($post['ow'])) {
+            $mode |= 0002;
+        }
+        if (!empty($post['ox'])) {
+            $mode |= 0001;
+        }
+
+        if (@chmod($path . '/' . $file, $mode)) {
+            fm_set_msg(lng('Permissions changed'));
+        } else {
+            fm_set_msg(lng('Permissions not changed'), 'error');
+        }
+
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+    }
+
     private function basePath() {
         $path = $this->root_path;
         if ($this->current_path !== '') {
