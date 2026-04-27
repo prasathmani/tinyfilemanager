@@ -1199,7 +1199,7 @@ if (isset($_GET['dl'], $_POST['token'])) {
     }
 }
 
-// Inline preview (images/videos/pdf) for authenticated UI cards and hover preview
+// Inline preview (images/audio/videos/pdf) for authenticated UI cards and file view embeds
 if (isset($_GET['preview'])) {
     $pv = urldecode($_GET['preview']);
     $pv = fm_clean_path($pv);
@@ -1217,7 +1217,7 @@ if (isset($_GET['preview'])) {
     }
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
-    $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_video_exts(), array('pdf')));
+    $allowed_preview_exts = array_unique(array_merge(fm_get_image_exts(), fm_get_audio_exts(), fm_get_video_exts(), array('pdf')));
     if (!in_array($ext, $allowed_preview_exts, true)) {
         header('HTTP/1.1 403 Forbidden');
         exit;
