@@ -2187,14 +2187,17 @@ if (isset($_GET['view'])) {
                 } elseif ($is_image) {
                     // Image content
                     if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
-                        echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($file_url) . '" alt="image" class="preview-img"></label></p>';
+                        $preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                        echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($preview_url) . '" alt="image" class="preview-img"></label></p>';
                     }
                 } elseif ($is_audio) {
                     // Audio content
-                    echo '<p><audio src="' . fm_enc($file_url) . '" controls preload="metadata"></audio></p>';
+                    $preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    echo '<p><audio src="' . fm_enc($preview_url) . '" controls preload="metadata"></audio></p>';
                 } elseif ($is_video) {
                     // Video content
-                    echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
+                    $preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    echo '<div class="preview-video"><video src="' . fm_enc($preview_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
                 } elseif ($is_text) {
                     if (FM_USE_HIGHLIGHTJS) {
                         // highlight
@@ -5436,6 +5439,12 @@ function fm_show_header_login()
                 justify-content: center;
                 overflow: hidden;
                 position: relative;
+                transition: opacity .15s ease, background .15s ease;
+            }
+
+            .fm-grid-thumb[onclick]:hover {
+                opacity: 0.85;
+                background: linear-gradient(120deg, #f0f4f9, #e8eef8);
             }
 
             .fm-grid-thumb img,
@@ -5475,11 +5484,23 @@ function fm_show_header_login()
             .fm-grid-name a {
                 display: block;
                 color: #1d2b3a;
-                font-weight: 600;
+                font-weight: 700;
                 text-decoration: none;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+            }
+
+            .fm-grid-item.fm-grid-parent .fm-grid-name a {
+                color: #0066cc;
+            }
+
+            .fm-grid-item:not(.fm-grid-parent) .fm-grid-name a {
+                color: #1d2b3a;
+            }
+
+            .theme-dark .fm-grid-item.fm-grid-parent .fm-grid-name a {
+                color: #4da6ff;
             }
 
             .fm-grid-meta {
@@ -6293,14 +6314,17 @@ function fm_show_header_login()
                             badgeHtml = '<div class="fm-grid-pdf-badge">PDF</div>';
                         }
 
+                        var thumbClickable = (previewType === 'image' || previewType === 'video' || previewType === 'pdf') ? ' style="cursor:pointer"' : '';
+                        var thumbClick = (previewType === 'image' || previewType === 'video' || previewType === 'pdf') ? ' onclick="window.location.href=\'' + href.replace(/'/g, '\\\'') + '\';return false;"' : '';
+                        
                         cards.push(
                             '<div class="fm-grid-item' + parentClass + '">' +
-                            '<div class="fm-grid-thumb">' +
+                            '<div class="fm-grid-thumb"' + thumbClickable + thumbClick + '>' +
                             thumbHtml +
                             badgeHtml +
                             '</div>' +
                             '<div class="fm-grid-body">' +
-                            '<div class="fm-grid-name"><a href="' + href + '" title="' + title.replace(/"/g, '&quot;') + '">' + title + '</a></div>' +
+                            '<div class="fm-grid-name"><a href="' + href + '" class="fm-grid-link" title="' + title.replace(/"/g, '&quot;') + '">' + title + '</a></div>' +
                             (pathDisplay ? '<div class="fm-grid-path-row">' + pathDisplay + '</div>' : '') +
                             '<div class="fm-grid-meta"><span>' + size + '</span><span>' + modified + '</span></div>' +
                             '</div>' +
