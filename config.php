@@ -12,16 +12,18 @@
 // Formát: 'meno' => 'bcrypt_hash_hesla'
 $auth_users = array(
     // Admin – plný prístup (upload, download, rename, copy, zip, delete)
-    'admin'     => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW',
+    'admin'     => '$2y$10$MDkNAqrsNXnWDpWSUe9po.luFRyHwfktNXEcX0/cqKsnq9NJqPmIG', // Spdlhé
 
     // Manažéri – vidia a upravujú všetko, nemôžu mazať
-    'manager1'  => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
-    'manager2'  => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
+    'rehák'  => '$2y$10$WqbQGH1KGzPywYv6KEdJkuz7YWRxAJmIf8F5ESz8Zt50LFCPW7NPC', //Rehák01
+    'bílek'  => '$2y$10$.u0a6jwDjrZGe5679SYqh.ipfrIhzqVn8GkpFzwwjwNsbh5WuXvaW', // Bílek01
+    'znava'  => '$2y$10$255.N7QKQ/tgfFkcW6Wzwu7NimvvoOIn5Y0MqsRgb2e5jnbY0FDCS', // Znava01
 
     // Klienti – môžu nahrávať a sťahovať, len svoj priečinok
-    'client1'   => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
-    'client2'   => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
-    'client3'   => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
+    'šaňo'   => '$2y$10$ttOoy.PKbGhypSnt7habEe1a1bh1ZVmr7je7Dc.WthEfzf3O.L74i', //Šaňo01
+    'kristián'   => '$2y$10$yB9dlXQyrnVdl9dReexdPOG1xzMDVhNjFyjenHPXDW8TDuZ25jQ6W',
+    'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy',
+    'marián'   => '$2y$10$ZDstCy90JIV1uwG2EMsgKOyZiLALBlVGDMvekN5lqWQn/M97CHrUu',
 
     // Dodávatelia – môžu len sťahovať/prezerať, len svoj priečinok
     'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
@@ -37,16 +39,16 @@ $readonly_users = array(
 
 // Upload-only: môžu nahrávať + sťahovať, nemôžu mazať/editovať/premenovávať
 $upload_only_users = array(
-    'client1',
-    'client2',
-    'supplier1',
-    'supplier2',
+    'šaňo',
+    'kristián',
+    'marián',
+    'fero',
 );
 
 // Manager: môžu všetko okrem mazania
 $manager_users = array(
-    'manager1',
-    'manager2',
+    'rehák',
+    'bílek',
 );
 
 // --- IZOLOVANÉ PRIEČINKY / PROJEKTY ---
@@ -54,21 +56,21 @@ $manager_users = array(
 // Manažéri a admin tu nemajú záznam – vidia celý root_path.
 // Cesty musia existovať na disku a webserver musí mať práva na zápis.
 $directories_users = array(
-    'client1'   => __DIR__ . '/uploads/client1',
-    'client2'   => __DIR__ . '/uploads/client2',
+    'šaňo'   => __DIR__ . '/Mirko/BARMO',
+    'kristián'   => __DIR__ . '/Mirko/BARMO',
     'supplier1' => __DIR__ . '/uploads/supplier1',
     'supplier2' => __DIR__ . '/uploads/supplier2',
     // Príklad používateľa s viacerými projektmi:
-     'client3' => array(
-         __DIR__ . '/uploads/Nemocnica PP',
-         __DIR__ . '/uploads/free',
+     'marián' => array(
+         __DIR__ . '/Mirko/Nemocnica PP',
+         __DIR__ . '/Mirko/free',
      ),
 );
 
 // --- VŠEOBECNÉ NASTAVENIA ---
 
 // Koreňový priečinok pre admin a manažérov
-$root_path = __DIR__ . '/uploads';
+$root_path = __DIR__ . '/Mirko';
 
 // Maximálna veľkosť uploadu (~5 GB)
 $max_upload_size_bytes = 5000000000;
