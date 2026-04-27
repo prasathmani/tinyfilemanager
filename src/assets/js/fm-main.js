@@ -401,6 +401,9 @@
     var table = $('#main-table');
     var tableLng = table.find('th').length;
     var targets = tableLng && tableLng == 7 ? [0, 4, 5, 6] : tableLng == 5 ? [0, 4] : [3];
+    if ($.fn.DataTable.isDataTable(table)) {
+      table.DataTable().destroy();
+    }
     window.mainTable = table.DataTable({
       paging: false,
       info: false,
