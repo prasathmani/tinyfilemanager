@@ -274,16 +274,50 @@ if (empty($auth_users)) {
     $use_auth = false;
 }
 
-$is_https = isset($_SERVER['HTTPS']) && (strtolower($_SERVER['HTTPS']) == 'on' || $_SERVER['HTTPS'] == 1)
-    || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
+$forwarded_proto = '';
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+    $forwarded_proto_parts = explode(',', (string) $_SERVER['HTTP_X_FORWARDED_PROTO']);
+    $forwarded_proto = strtolower(trim($forwarded_proto_parts[0]));
+}
+
+$forwarded_ssl_on = !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string) $_SERVER['HTTP_X_FORWARDED_SSL']) === 'on';
+$front_end_https_on = !empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower((string) $_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off';
+$request_scheme_https = !empty($_SERVER['REQUEST_SCHEME']) && strtolower((string) $_SERVER['REQUEST_SCHEME']) === 'https';
+
+$is_https = (isset($_SERVER['HTTPS']) && (strtolower((string) $_SERVER['HTTPS']) === 'on' || (string) $_SERVER['HTTPS'] === '1'))
+    || $forwarded_proto === 'https'
+    || $forwarded_ssl_on
+    || $front_end_https_on
+    || $request_scheme_https;
+
+if (!empty($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+    $forwarded_host_parts = explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST']);
+    $http_host = trim($forwarded_host_parts[0]);
+} elseif (!empty($_SERVER['HTTP_HOST'])) {
+    $http_host = (string) $_SERVER['HTTP_HOST'];
+}
 
 $fm_user_allowed_dirs = array();
+
+// If root_url is empty and root_path is inside web document root, derive it automatically.
+if ((string) $root_url === '' && !empty($_SERVER['DOCUMENT_ROOT']) && !empty($root_path)) {
+    $doc_root_norm = rtrim(str_replace('\\', '/', (string) $_SERVER['DOCUMENT_ROOT']), '/');
+    $root_path_norm = rtrim(str_replace('\\', '/', (string) $root_path), '/');
+    if ($doc_root_norm !== '' && strpos($root_path_norm . '/', $doc_root_norm . '/') === 0) {
+        $derived_root_url = ltrim(substr($root_path_norm, strlen($doc_root_norm)), '/');
+        if ($derived_root_url !== '') {
+            $root_url = $derived_root_url;
+        }
+    }
+}
+
 // clean $root_url
 $root_url = fm_clean_path($root_url);
 
 // abs path for site
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
-defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
+defined('FM_SELF_PATH') || define('FM_SELF_PATH', $_SERVER['PHP_SELF']);
+defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . FM_SELF_PATH);
 
 // Lightweight PWA manifest endpoint (no service worker)
 if (isset($_GET['manifest'])) {
@@ -2251,7 +2285,7 @@ if (isset($_GET['view'])) {
             <div class="row mt-3">
                 <?php
                 if ($is_pdf) {
-                    $pdf_preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    $pdf_preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
                     echo '<iframe src="' . fm_enc($pdf_preview_url) . '" frameborder="no" style="width:100%;min-height:640px"></iframe>';
                 } elseif ($is_onlineViewer) {
                     $office_exts = array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx');
@@ -2281,16 +2315,16 @@ if (isset($_GET['view'])) {
                 } elseif ($is_image) {
                     // Image content
                     if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
-                        $preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                        $preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
                         echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($preview_url) . '" alt="image" class="preview-img"></label></p>';
                     }
                 } elseif ($is_audio) {
                     // Audio content
-                    $preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    $preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
                     echo '<p><audio src="' . fm_enc($preview_url) . '" controls preload="metadata"></audio></p>';
                 } elseif ($is_video) {
                     // Video content
-                    $preview_url = FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
+                    $preview_url = FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($file);
                     echo '<div class="preview-video"><video src="' . fm_enc($preview_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
                 } elseif ($is_text) {
                     if (FM_USE_HIGHLIGHTJS) {
@@ -2682,7 +2716,7 @@ $all_files_size = 0;
                         <div class="filename">
                             <?php
                             $ext_lower = strtolower(pathinfo($f, PATHINFO_EXTENSION));
-                            $previewUrl = fm_enc(FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($f));
+                            $previewUrl = fm_enc(FM_SELF_PATH . '?p=' . urlencode(FM_PATH) . '&preview=' . urlencode($f));
                             $previewType = '';
                             $isPdf = false;
                             if (in_array($ext_lower, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
