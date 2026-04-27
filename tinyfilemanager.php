@@ -174,6 +174,7 @@ require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
 require_once __DIR__ . '/src/handlers/FileActionHandler.php';
 require_once __DIR__ . '/src/handlers/LegacyUploadHandler.php';
 require_once __DIR__ . '/src/services/DirectoryListingService.php';
+require_once __DIR__ . '/src/services/ChmodPageContextService.php';
 require_once __DIR__ . '/src/services/FileEditorContextService.php';
 require_once __DIR__ . '/src/services/FileViewContextService.php';
 require_once __DIR__ . '/src/services/FileViewInfoService.php';
@@ -1586,22 +1587,16 @@ if (isset($_GET['edit']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_P
 
 // chmod (not for Windows)
 if (isset($_GET['chmod']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_IS_WIN && FM_CAN_WRITE_IN_PATH) {
-    $file = $_GET['chmod'];
-    $file = fm_clean_path($file);
-    $file = str_replace('/', '', $file);
-    if ($file == '' || (!is_file($path . '/' . $file) && !is_dir($path . '/' . $file))) {
-        fm_set_msg(lng('File not found'), 'error');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
+    $chmod_page_context_service = new TFM_ChmodPageContextService(FM_ROOT_PATH, FM_PATH);
+    $chmod_context = $chmod_page_context_service->build($_GET['chmod']);
+
+    $file = $chmod_context['file'];
+    $file_url = $chmod_context['file_url'];
+    $file_path = $chmod_context['file_path'];
+    $mode = $chmod_context['mode'];
 
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-
-    $file_url = fm_build_public_file_url(FM_PATH, $file);
-    $file_path = $path . '/' . $file;
-
-    $mode = fileperms($path . '/' . $file);
 ?>
     <div class="path">
         <div class="card mb-2" data-bs-theme="<?php echo FM_THEME; ?>">
