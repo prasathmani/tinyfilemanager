@@ -173,6 +173,7 @@ require_once __DIR__ . '/src/handlers/CopyActionHandler.php';
 require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
 require_once __DIR__ . '/src/handlers/FileActionHandler.php';
 require_once __DIR__ . '/src/handlers/LegacyUploadHandler.php';
+require_once __DIR__ . '/src/services/DirectoryListingService.php';
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
@@ -790,53 +791,15 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_UPLOAD_ONLY &
 
 /*************************** ACTIONS ***************************/
 
-// get current path
-$path = FM_ROOT_PATH;
-if (FM_PATH != '') {
-    $path .= '/' . FM_PATH;
-}
+$directory_listing_service = new TFM_DirectoryListingService(FM_ROOT_PATH, FM_PATH);
+$listing_context = $directory_listing_service->buildContext();
 
-// check path
-if (!is_dir($path)) {
-    fm_redirect(FM_SELF_URL . '?p=');
-}
-
-// get parent folder
-$parent = fm_get_parent_path(FM_PATH);
-if ($parent !== false) {
-    $parent_path = FM_ROOT_PATH . ($parent !== '' ? '/' . $parent : '');
-    if (!fm_user_can_access_path($parent_path, true)) {
-        $parent = false;
-    }
-}
-
-$objects = is_readable($path) ? scandir($path) : array();
-$folders = array();
-$files = array();
-$current_path = array_slice(explode("/", $path), -1)[0];
-if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
-    foreach ($objects as $file) {
-        if ($file == '.' || $file == '..') {
-            continue;
-        }
-        if (!FM_SHOW_HIDDEN && substr($file, 0, 1) === '.') {
-            continue;
-        }
-        $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path) && fm_user_can_access_path($new_path, false)) {
-            $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path) && fm_user_can_access_path($new_path, true)) {
-            $folders[] = $file;
-        }
-    }
-}
-
-if (!empty($files)) {
-    natcasesort($files);
-}
-if (!empty($folders)) {
-    natcasesort($folders);
-}
+$path = $listing_context['path'];
+$parent = $listing_context['parent'];
+$objects = $listing_context['objects'];
+$folders = $listing_context['folders'];
+$files = $listing_context['files'];
+$current_path = $listing_context['current_path'];
 
 // upload form
 if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH) {
