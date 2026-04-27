@@ -2319,36 +2319,53 @@ if (isset($_GET['view'])) {
                     // ppt/pptx  → Google Docs viewer fallback (no reliable free client lib)
                     $local_preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
                     $local_preview_url_json = json_encode($local_preview_url);
+                          $office_txt_download_original = lng('DownloadOriginal');
+                          $office_txt_loading_doc = json_encode(lng('OfficeLoadingDocument'));
+                          $office_txt_loading_sheet = json_encode(lng('OfficeLoadingSpreadsheet'));
+                          $office_txt_load_error = json_encode(lng('OfficeLoadError'));
+                          $office_txt_render_error = json_encode(lng('OfficeRenderError'));
+                          $office_txt_lib_docx_error = json_encode(lng('OfficeLibraryLoadErrorDocx'));
+                          $office_txt_lib_xlsx_error = json_encode(lng('OfficeLibraryLoadErrorXlsx'));
 
                     $word_exts  = array('doc', 'docx');
                     $excel_exts = array('xls', 'xlsx', 'xlsm', 'xlsb');
 
+                          echo '<div class="mb-2">'
+                              . '<form method="post" class="d-inline" action="?p=' . urlencode(FM_PATH) . '&amp;dl=' . urlencode($file) . '">'
+                              . '<input type="hidden" name="token" value="' . $_SESSION['token'] . '">'
+                              . '<button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa fa-cloud-download"></i> ' . $office_txt_download_original . '</button>'
+                              . '</form>'
+                              . '</div>';
+
                     if (in_array($ext, $word_exts, true)) {
                         // ── Word viewer ──────────────────────────────────────────────
                         echo '<div id="office-viewer-wrap" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;overflow:auto;background:#fff;padding:8px;">'
-                           . '<div id="office-viewer-msg" style="padding:20px;color:#6c757d;">Načítavam dokument…</div>'
+                                    . '<div id="office-viewer-msg" style="padding:20px;color:#6c757d;">' . lng('OfficeLoadingDocument') . '</div>'
                            . '</div>';
                         echo '<script>'
                            . 'document.addEventListener("DOMContentLoaded",function(){'
                            .   'var wrap=document.getElementById("office-viewer-wrap");'
                            .   'var msg=document.getElementById("office-viewer-msg");'
                            .   'var url=' . $local_preview_url_json . ';'
+                                    .   'var txtLoadErr=' . $office_txt_load_error . ';'
+                                    .   'var txtRenderErr=' . $office_txt_render_error . ';'
+                                    .   'var txtLibErr=' . $office_txt_lib_docx_error . ';'
                            .   'function run(){'
                            .     'fetch(url,{credentials:"same-origin"})'
                            .       '.then(function(r){return r.arrayBuffer();})'
                            .       '.then(function(buf){'
                            .         'msg.remove();'
                            .         'docx.renderAsync(buf,wrap,null,{className:"docx-render",inWrapper:false})'
-                           .           '.catch(function(e){wrap.innerHTML="<p style=\'padding:16px;color:red;\'>Chyba pri zobrazení: "+e+"</p>";});'
+                                    .           '.catch(function(e){wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtRenderErr+": "+e+"</p>";});'
                            .       '})'
-                           .       '.catch(function(e){msg.textContent="Chyba pri načítaní: "+e;});'
+                                    .       '.catch(function(e){msg.textContent=txtLoadErr+": "+e;});'
                            .   '}'
                            .   'if(typeof docx!=="undefined"){run();}'
                            .   'else{'
                            .     'var s=document.createElement("script");'
                            .     's.src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js";'
                            .     's.onload=run;'
-                           .     's.onerror=function(){msg.textContent="Knižnica docx-preview sa nedala načítať.";};'
+                                    .     's.onerror=function(){msg.textContent=txtLibErr;};'
                            .     'document.head.appendChild(s);'
                            .   '}'
                            . '});'
@@ -2359,7 +2376,7 @@ if (isset($_GET['view'])) {
                         echo '<div style="width:100%;border:1px solid #dee2e6;border-radius:4px;background:#fff;">'
                            . '<div id="xlsx-sheet-tabs" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;border-bottom:1px solid #dee2e6;background:#f8f9fa;"></div>'
                            . '<div id="xlsx-table-wrap" style="overflow:auto;max-height:560px;padding:4px 8px;">'
-                           . '<p id="office-viewer-msg" style="padding:20px;color:#6c757d;">Načítavam tabuľku…</p>'
+                                    . '<p id="office-viewer-msg" style="padding:20px;color:#6c757d;">' . lng('OfficeLoadingSpreadsheet') . '</p>'
                            . '</div>'
                            . '</div>';
                         echo '<script>'
@@ -2369,6 +2386,8 @@ if (isset($_GET['view'])) {
                            .   'var tableWrap=document.getElementById("xlsx-table-wrap");'
                            .   'var tabsEl=document.getElementById("xlsx-sheet-tabs");'
                            .   'var wb=null;'
+                                    .   'var txtLoadErr=' . $office_txt_load_error . ';'
+                                    .   'var txtLibErr=' . $office_txt_lib_xlsx_error . ';'
                            .   'function renderSheet(name){'
                            .     'var ws=wb.Sheets[name];'
                            .     'var html=XLSX.utils.sheet_to_html(ws,{editable:false});'
@@ -2399,14 +2418,14 @@ if (isset($_GET['view'])) {
                            .         'buildTabs();'
                            .         'renderSheet(wb.SheetNames[0]);'
                            .       '})'
-                           .       '.catch(function(e){msg.textContent="Chyba pri načítaní: "+e;});'
+                           .       '.catch(function(e){msg.textContent=txtLoadErr+": "+e;});'
                            .   '}'
                            .   'if(typeof XLSX!=="undefined"){run();}'
                            .   'else{'
                            .     'var s=document.createElement("script");'
                            .     's.src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";'
                            .     's.onload=run;'
-                           .     's.onerror=function(){msg.textContent="Knižnica SheetJS sa nedala načítať.";};'
+                           .     's.onerror=function(){msg.textContent=txtLibErr;};'
                            .     'document.head.appendChild(s);'
                            .   '}'
                            . '});'
@@ -5831,9 +5850,10 @@ function fm_show_header_login()
                 overflow: hidden;
                 position: relative;
                 transition: opacity .15s ease, background .15s ease;
+                cursor: pointer;
             }
 
-            .fm-grid-thumb[onclick]:hover {
+            .fm-grid-thumb:hover {
                 opacity: 0.85;
                 background: linear-gradient(120deg, #f0f4f9, #e8eef8);
             }
@@ -5880,6 +5900,22 @@ function fm_show_header_login()
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                cursor: pointer;
+            }
+
+            .fm-grid-name a:hover,
+            .fm-grid-name a:focus {
+                text-decoration: underline;
+            }
+
+            .fm-grid-name a.fm-grid-link-dir {
+                color: #0a66c2;
+                font-weight: 700;
+            }
+
+            .fm-grid-name a.fm-grid-link-file {
+                color: #1d2b3a;
+                font-weight: 600;
             }
 
             .fm-grid-item.fm-grid-parent .fm-grid-name a {
@@ -5892,6 +5928,14 @@ function fm_show_header_login()
 
             .theme-dark .fm-grid-item.fm-grid-parent .fm-grid-name a {
                 color: #4da6ff;
+            }
+
+            .theme-dark .fm-grid-name a.fm-grid-link-dir {
+                color: #6bb8ff;
+            }
+
+            .theme-dark .fm-grid-name a.fm-grid-link-file {
+                color: #e2ecef;
             }
 
             .fm-grid-meta {
@@ -6685,6 +6729,7 @@ function fm_show_header_login()
 
                         var title = $.trim($nameLink.text()),
                             href = $nameLink.attr('href') || '#',
+                            hrefSafe = (href || '#').replace(/"/g, '&quot;'),
                             fullPath = $nameLink.attr('data-full-path') || '',
                             iconHtml = $nameCell.find('.filename i').first().prop('outerHTML') || '<i class="fa fa-file-o"></i>',
                             previewType = $nameLink.attr('data-preview-type') || '',
@@ -6693,6 +6738,8 @@ function fm_show_header_login()
                             modified = $.trim($tds.eq(modIndex).text()),
                             actionsHtml = $tds.last().html() || '',
                             parentClass = title === '..' ? ' fm-grid-parent' : '',
+                            isFile = href.indexOf('&view=') !== -1,
+                            linkClass = isFile ? 'fm-grid-link-file' : 'fm-grid-link-dir',
                             thumbHtml = iconHtml,
                             badgeHtml = '',
                             pathDisplay = (fmIsManagerOrAdmin && fullPath) ? '<span class="fm-grid-path" title="' + fullPath.replace(/"/g, '&quot;') + '">' + fullPath + '</span>' : '';
@@ -6705,17 +6752,15 @@ function fm_show_header_login()
                             badgeHtml = '<div class="fm-grid-pdf-badge">PDF</div>';
                         }
 
-                        var thumbClickable = (previewType === 'image' || previewType === 'video' || previewType === 'pdf') ? ' style="cursor:pointer"' : '';
-                        var thumbClick = (previewType === 'image' || previewType === 'video' || previewType === 'pdf') ? ' onclick="window.location.href=\'' + href.replace(/'/g, '\\\'') + '\';return false;"' : '';
-                        
+
                         cards.push(
                             '<div class="fm-grid-item' + parentClass + '">' +
-                            '<div class="fm-grid-thumb"' + thumbClickable + thumbClick + '>' +
+                            '<div class="fm-grid-thumb" data-href="' + hrefSafe + '">' +
                             thumbHtml +
                             badgeHtml +
                             '</div>' +
                             '<div class="fm-grid-body">' +
-                            '<div class="fm-grid-name"><a href="' + href + '" class="fm-grid-link" title="' + title.replace(/"/g, '&quot;') + '">' + title + '</a></div>' +
+                            '<div class="fm-grid-name"><a href="' + hrefSafe + '" class="fm-grid-link ' + linkClass + '" title="' + title.replace(/"/g, '&quot;') + '">' + title + '</a></div>' +
                             (pathDisplay ? '<div class="fm-grid-path-row">' + pathDisplay + '</div>' : '') +
                             '<div class="fm-grid-meta"><span>' + size + '</span><span>' + modified + '</span></div>' +
                             '</div>' +
@@ -6734,6 +6779,19 @@ function fm_show_header_login()
 
                 $viewButtons.on('click', function() {
                     setViewMode($(this).data('view-mode'), true);
+                });
+
+                $grid.off('click.fmgrid').on('click.fmgrid', '.fm-grid-thumb, .fm-grid-name', function(e) {
+                    if ($(e.target).closest('a,button,input,label,form').length) {
+                        return;
+                    }
+
+                    var $item = $(this).closest('.fm-grid-item'),
+                        href = $(this).data('href') || $item.find('.fm-grid-link').attr('href');
+
+                    if (href) {
+                        window.location.href = href;
+                    }
                 });
 
                 mainTable.on('draw', function() {
@@ -7275,6 +7333,13 @@ function fm_show_header_login()
         $tr['en']['Date Modified']                                  = 'Date Modified';
         $tr['en']['File size']                                      = 'File size';
         $tr['en']['MIME-type']                                      = 'MIME-type';
+        $tr['en']['DownloadOriginal']                               = 'Download original';
+        $tr['en']['OfficeLoadingDocument']                          = 'Loading document...';
+        $tr['en']['OfficeLoadingSpreadsheet']                       = 'Loading spreadsheet...';
+        $tr['en']['OfficeLoadError']                                = 'Loading failed';
+        $tr['en']['OfficeRenderError']                              = 'Rendering failed';
+        $tr['en']['OfficeLibraryLoadErrorDocx']                     = 'docx-preview library could not be loaded.';
+        $tr['en']['OfficeLibraryLoadErrorXlsx']                     = 'SheetJS library could not be loaded.';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
