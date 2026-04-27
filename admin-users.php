@@ -31,6 +31,7 @@ $users = $config->getUsers(); // Očakáva sa, že FM_Config má metódu getUser
     <meta charset="UTF-8">
     <title>Správa užívateľov | DREMONT</title>
     <link rel="stylesheet" href="src/assets/css/fm-navbar-fix.css">
+    <!-- Nepoužívame hlavný JS ani jQuery, aby nevznikali JS chyby -->
     <style>
         .admin-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
         .admin-table th, .admin-table td { border: 1px solid #ccc; padding: 8px; }
