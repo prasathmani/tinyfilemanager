@@ -49,6 +49,46 @@ class TFM_FileActionHandler {
     }
 
     /**
+     * Handle create file/folder request.
+     * Preserves legacy behavior and redirects back.
+     * @param array $post
+     * @return void
+     */
+    public function handleCreate($post) {
+        $type = urldecode($post['newfile']);
+        $new = str_replace('/', '', fm_clean_path(strip_tags($post['newfilename'])));
+
+        if (fm_isvalid_filename($new) && $new != '' && $new != '..' && $new != '.' && verifyToken($post['token'])) {
+            $path = $this->basePath();
+
+            if ($type == 'file') {
+                if (!file_exists($path . '/' . $new)) {
+                    if (fm_is_valid_ext($new)) {
+                        @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
+                        fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
+                    } else {
+                        fm_set_msg(lng('File extension is not allowed'), 'error');
+                    }
+                } else {
+                    fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
+                }
+            } else {
+                if (fm_mkdir($path . '/' . $new, false) === true) {
+                    fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
+                } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
+                    fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
+                } else {
+                    fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('not created'), fm_enc($new)), 'error');
+                }
+            }
+        } else {
+            fm_set_msg(lng('Invalid characters in file or folder name'), 'error');
+        }
+
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+    }
+
+    /**
      * Handle file rename request.
      * Preserves legacy behavior and redirects back.
      * @param array $post

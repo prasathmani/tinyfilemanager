@@ -187,11 +187,97 @@ class TFM_LegacyUploadHandler {
         exit();
     }
 
+    /**
+     * Handle upload-via-URL request and echo legacy JSON response.
+     * @param array $request
+     * @return void
+     */
+    public function handleUrlUpload($request) {
+        $path = $this->basePath();
+        $url = !empty($request['uploadurl']) && preg_match("|^http(s)?://.+$|", stripslashes($request['uploadurl'])) ? stripslashes($request['uploadurl']) : null;
+
+        $domain = parse_url($url, PHP_URL_HOST);
+        $port = parse_url($url, PHP_URL_PORT);
+        $knownPorts = array(22, 23, 25, 3306);
+
+        if (preg_match("/^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^(?:0*\:)*?:?0*1$/i", $domain) || in_array($port, $knownPorts)) {
+            $err = array('message' => 'URL is not allowed');
+            $this->emitUrlUploadEvent(array('fail' => $err));
+            exit();
+        }
+
+        $use_curl = false;
+        $temp_file = tempnam(sys_get_temp_dir(), 'upload-');
+        $fileinfo = new stdClass();
+        $fileinfo->name = trim(urldecode(basename($url)), ".\x00..\x20");
+
+        $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
+        $ext = strtolower(pathinfo($fileinfo->name, PATHINFO_EXTENSION));
+        $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+
+        $err = false;
+
+        if (!$isFileAllowed) {
+            $err = array('message' => 'File extension is not allowed');
+            $this->emitUrlUploadEvent(array('fail' => $err));
+            exit();
+        }
+
+        if (!$url) {
+            $success = false;
+        } else if ($use_curl) {
+            @$fp = fopen($temp_file, 'w');
+            @$ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            @$success = curl_exec($ch);
+            $curl_info = curl_getinfo($ch);
+            if (!$success) {
+                $err = array('message' => curl_error($ch));
+            }
+            @curl_close($ch);
+            fclose($fp);
+            $fileinfo->size = $curl_info['size_download'];
+            $fileinfo->type = $curl_info['content_type'];
+        } else {
+            $ctx = stream_context_create();
+            @$success = copy($url, $temp_file, $ctx);
+            if (!$success) {
+                $err = error_get_last();
+            }
+        }
+
+        if ($success) {
+            $success = rename($temp_file, strtok($this->urlUploadTargetPath($path, $fileinfo, $temp_file), '?'));
+        }
+
+        if ($success) {
+            $this->emitUrlUploadEvent(array('done' => $fileinfo));
+        } else {
+            unlink($temp_file);
+            if (!$err) {
+                $err = array('message' => 'Invalid url parameter');
+            }
+            $this->emitUrlUploadEvent(array('fail' => $err));
+        }
+
+        exit();
+    }
+
     private function basePath() {
         $path = $this->root_path;
         if ($this->current_path !== '') {
             $path .= '/' . $this->current_path;
         }
         return $path;
+    }
+
+    private function emitUrlUploadEvent($message) {
+        echo json_encode($message);
+    }
+
+    private function urlUploadTargetPath($path, $fileinfo, $temp_file) {
+        return $path . '/' . basename($fileinfo->name);
     }
 }
