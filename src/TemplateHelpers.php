@@ -90,27 +90,22 @@ function fm_show_nav_path($path)
                         </li>
                         <?php endif; ?>
                     <?php endif; ?>
-                    <?php if (FM_USE_AUTH): ?>
+                    <?php if (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
                         <li class="nav-item avatar dropdown">
                             <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle"></i>
                                 <span class="ms-1"><?php echo fm_enc($_SESSION[FM_SESSION_ID]['logged']); ?></span>
                             </a>
-
                             <div class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="navbarDropdownMenuLink-5" data-bs-theme="<?php echo FM_THEME; ?>">
-                                <?php if ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) || !FM_READONLY): ?>
-                                    <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
-                                <?php endif ?>
+                                <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                                 <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
                                 <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>
                             </div>
                         </li>
-                    <?php else: ?>
-                        <?php if (!FM_READONLY): ?>
-                            <li class="nav-item">
-                                <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
-                            </li>
-                        <?php endif; ?>
+                    <?php elseif (!FM_READONLY): ?>
+                        <li class="nav-item">
+                            <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
+                        </li>
                     <?php endif; ?>
                 </ul>
             </div>
@@ -174,6 +169,7 @@ function fm_show_header_login()
         <title><?php echo fm_enc(APP_TITLE) ?></title>
         <?php print_external('pre-jsdelivr'); ?>
         <?php print_external('css-bootstrap'); ?>
+        <link rel="stylesheet" href="src/assets/css/fm-navbar-fix.css?v=<?php echo rawurlencode((string) VERSION); ?>">
         <style>
             body.fm-login-page {
                 background-color: #f7f9fb;
