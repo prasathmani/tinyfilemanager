@@ -21,9 +21,11 @@ $auth_users = array(
 
     // Klienti – môžu nahrávať a sťahovať, len svoj priečinok
     'šaňo'   => '$2y$10$ttOoy.PKbGhypSnt7habEe1a1bh1ZVmr7je7Dc.WthEfzf3O.L74i', //Šaňo01
-    'kristián'   => '$2y$10$yB9dlXQyrnVdl9dReexdPOG1xzMDVhNjFyjenHPXDW8TDuZ25jQ6W',
-    'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy',
-    'marián'   => '$2y$10$ZDstCy90JIV1uwG2EMsgKOyZiLALBlVGDMvekN5lqWQn/M97CHrUu',
+    'kristián'   => '$2y$10$yB9dlXQyrnVdl9dReexdPOG1xzMDVhNjFyjenHPXDW8TDuZ25jQ6W',//Kristián01
+
+    'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy', //Fero01
+
+    'marián'   => '$2y$10$ZDstCy90JIV1uwG2EMsgKOyZiLALBlVGDMvekN5lqWQn/M97CHrUu', //Marián01    
 
     // Dodávatelia – môžu len sťahovať/prezerať, len svoj priečinok
     'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',

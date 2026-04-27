@@ -168,6 +168,7 @@ if (is_readable($security_file)) {
 
 // Modular handlers (incremental extraction from monolith)
 require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
+require_once __DIR__ . '/src/handlers/FileActionHandler.php';
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
@@ -966,33 +967,9 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
 // Delete file / folder
 if (isset($_GET['del'], $_POST['token']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_MANAGER && FM_CAN_WRITE_IN_PATH) {
-    $del = str_replace('/', '', fm_clean_path($_GET['del']));
-    if ($del != '' && $del != '..' && $del != '.' && verifyToken($_POST['token'])) {
-        $path = FM_ROOT_PATH;
-        if (FM_PATH != '') {
-            $path .= '/' . FM_PATH;
-        }
-        $is_dir = is_dir($path . '/' . $del);
-        
-        // Audit log delete attempt
-        if (class_exists('AuditLogger')) {
-            $audit = new AuditLogger();
-            $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : 'unknown';
-            $audit->log('file_delete_attempt', $username, ($is_dir ? 'DIR: ' : 'FILE: ') . $del);
-        }
-        
-        if (fm_rdelete($path . '/' . $del)) {
-            $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
-            fm_set_msg(sprintf($msg, fm_enc($del)));
-        } else {
-            $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('not deleted') : lng('File') . ' <b>%s</b> ' . lng('not deleted');
-            fm_set_msg(sprintf($msg, fm_enc($del)), 'error');
-        }
-    } else {
-        fm_set_msg(lng('Invalid file or folder name'), 'error');
-    }
-    $FM_PATH = FM_PATH;
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    $file_action_handler = new TFM_FileActionHandler(FM_ROOT_PATH, FM_PATH);
+    $file_action_handler->handleDelete($_GET, $_POST);
+    exit;
 }
 
 // Create a new file/folder
@@ -1176,35 +1153,9 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
 
 // Rename
 if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) {
-    if (!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
-        die("Invalid Token.");
-    }
-    // old name
-    $old = urldecode($_POST['rename_from']);
-    $old = fm_clean_path($old);
-    $old = str_replace('/', '', $old);
-    // new name
-    $new = urldecode($_POST['rename_to']);
-    $new = fm_clean_path(strip_tags($new));
-    $new = str_replace('/', '', $new);
-    // path
-    $path = FM_ROOT_PATH;
-    if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
-    }
-    // rename
-    if (fm_isvalid_filename($new) && $old != '' && $new != '') {
-        if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
-            fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
-        } else {
-            fm_set_msg(sprintf(lng('Error while renaming from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');
-        }
-    } else {
-        fm_set_msg(lng('Invalid characters in file name'), 'error');
-    }
-    $FM_PATH = FM_PATH;
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    $file_action_handler = new TFM_FileActionHandler(FM_ROOT_PATH, FM_PATH);
+    $file_action_handler->handleRename($_POST);
+    exit;
 }
 
 // Download
