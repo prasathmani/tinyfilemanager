@@ -174,6 +174,7 @@ require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
 require_once __DIR__ . '/src/handlers/FileActionHandler.php';
 require_once __DIR__ . '/src/handlers/LegacyUploadHandler.php';
 require_once __DIR__ . '/src/services/DirectoryListingService.php';
+require_once __DIR__ . '/src/services/FileViewContextService.php';
 require_once __DIR__ . '/src/services/FileViewInfoService.php';
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
@@ -1192,23 +1193,16 @@ if (isset($_GET['help'])) {
 
 // file viewer
 if (isset($_GET['view'])) {
-    $file = $_GET['view'];
-    $file = fm_clean_path($file, false);
-    $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
-        fm_set_msg(lng('File not found'), 'error');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
+    $file_view_context_service = new TFM_FileViewContextService(FM_ROOT_PATH, FM_PATH);
+    $file_view_context = $file_view_context_service->build($_GET['view']);
+
+    $file = $file_view_context['file'];
+    $file_url = $file_view_context['file_url'];
+    $file_path = $file_view_context['file_path'];
+    $view_info = $file_view_context['view_info'];
 
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-
-    $file_url = fm_build_public_file_url(FM_PATH, $file);
-    $file_path = $path . '/' . $file;
-
-    $file_view_info_service = new TFM_FileViewInfoService();
-    $view_info = $file_view_info_service->build($file_path);
 
     $ext = $view_info['ext'];
     $mime_type = $view_info['mime_type'];
