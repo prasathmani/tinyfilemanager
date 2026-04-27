@@ -2309,18 +2309,116 @@ if (isset($_GET['view'])) {
                     $pdf_preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file);
                     echo '<iframe src="' . fm_enc($pdf_preview_url) . '" frameborder="no" style="width:100%;min-height:640px"></iframe>';
                 } elseif ($is_onlineViewer) {
-                    $office_exts = array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx');
-                    $prefer_ms = in_array($ext, $office_exts, true);
-                    // Office online viewers work more reliably with direct file URLs ending in the original extension.
-                    $office_preview_url = $file_url;
-                    if (!preg_match('#^https?://#i', $office_preview_url)) {
-                        $office_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
-                    }
-                    $google_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($office_preview_url);
-                    $ms_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($office_preview_url);
-                    if ($prefer_ms || $online_viewer == 'microsoft') {
-                        echo '<iframe src="' . fm_enc($ms_src) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
+                    // Client-side Office rendering — works even behind CDN bot-protection
+                    // because the file is fetched via our signed preview endpoint using
+                    // the user's own session cookie (same-origin), no external server
+                    // ever needs to reach the file directly.
+                    //
+                    // doc/docx  → docx-preview.js  (renders Word into HTML in-browser)
+                    // xls/xlsx  → SheetJS           (renders spreadsheet into HTML table)
+                    // ppt/pptx  → Google Docs viewer fallback (no reliable free client lib)
+                    $local_preview_url = FM_SELF_PATH . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                    $local_preview_url_json = json_encode($local_preview_url);
+
+                    $word_exts  = array('doc', 'docx');
+                    $excel_exts = array('xls', 'xlsx', 'xlsm', 'xlsb');
+
+                    if (in_array($ext, $word_exts, true)) {
+                        // ── Word viewer ──────────────────────────────────────────────
+                        echo '<div id="office-viewer-wrap" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;overflow:auto;background:#fff;padding:8px;">'
+                           . '<div id="office-viewer-msg" style="padding:20px;color:#6c757d;">Načítavam dokument…</div>'
+                           . '</div>';
+                        echo '<script>'
+                           . 'document.addEventListener("DOMContentLoaded",function(){'
+                           .   'var wrap=document.getElementById("office-viewer-wrap");'
+                           .   'var msg=document.getElementById("office-viewer-msg");'
+                           .   'var url=' . $local_preview_url_json . ';'
+                           .   'function run(){'
+                           .     'fetch(url,{credentials:"same-origin"})'
+                           .       '.then(function(r){return r.arrayBuffer();})'
+                           .       '.then(function(buf){'
+                           .         'msg.remove();'
+                           .         'docx.renderAsync(buf,wrap,null,{className:"docx-render",inWrapper:false})'
+                           .           '.catch(function(e){wrap.innerHTML="<p style=\'padding:16px;color:red;\'>Chyba pri zobrazení: "+e+"</p>";});'
+                           .       '})'
+                           .       '.catch(function(e){msg.textContent="Chyba pri načítaní: "+e;});'
+                           .   '}'
+                           .   'if(typeof docx!=="undefined"){run();}'
+                           .   'else{'
+                           .     'var s=document.createElement("script");'
+                           .     's.src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js";'
+                           .     's.onload=run;'
+                           .     's.onerror=function(){msg.textContent="Knižnica docx-preview sa nedala načítať.";};'
+                           .     'document.head.appendChild(s);'
+                           .   '}'
+                           . '});'
+                           . '</script>';
+
+                    } elseif (in_array($ext, $excel_exts, true)) {
+                        // ── Excel viewer ─────────────────────────────────────────────
+                        echo '<div style="width:100%;border:1px solid #dee2e6;border-radius:4px;background:#fff;">'
+                           . '<div id="xlsx-sheet-tabs" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;border-bottom:1px solid #dee2e6;background:#f8f9fa;"></div>'
+                           . '<div id="xlsx-table-wrap" style="overflow:auto;max-height:560px;padding:4px 8px;">'
+                           . '<p id="office-viewer-msg" style="padding:20px;color:#6c757d;">Načítavam tabuľku…</p>'
+                           . '</div>'
+                           . '</div>';
+                        echo '<script>'
+                           . 'document.addEventListener("DOMContentLoaded",function(){'
+                           .   'var url=' . $local_preview_url_json . ';'
+                           .   'var msg=document.getElementById("office-viewer-msg");'
+                           .   'var tableWrap=document.getElementById("xlsx-table-wrap");'
+                           .   'var tabsEl=document.getElementById("xlsx-sheet-tabs");'
+                           .   'var wb=null;'
+                           .   'function renderSheet(name){'
+                           .     'var ws=wb.Sheets[name];'
+                           .     'var html=XLSX.utils.sheet_to_html(ws,{editable:false});'
+                           .     'tableWrap.innerHTML="<div style=\"font-size:13px;\">"+html+"</div>";'
+                           .     'tableWrap.querySelectorAll("table").forEach(function(t){'
+                           .       't.classList.add("table","table-bordered","table-sm");'
+                           .       't.style.cssText="min-width:100%;white-space:nowrap;";'
+                           .     '});'
+                           .   '}'
+                           .   'function buildTabs(){'
+                           .     'wb.SheetNames.forEach(function(name,i){'
+                           .       'var btn=document.createElement("button");'
+                           .       'btn.textContent=name;'
+                           .       'btn.className="btn btn-sm "+(i===0?"btn-primary":"btn-outline-secondary");'
+                           .       'btn.onclick=function(){'
+                           .         'tabsEl.querySelectorAll("button").forEach(function(b){b.className="btn btn-sm btn-outline-secondary";});'
+                           .         'btn.className="btn btn-sm btn-primary";'
+                           .         'renderSheet(name);'
+                           .       '};'
+                           .       'tabsEl.appendChild(btn);'
+                           .     '});'
+                           .   '}'
+                           .   'function run(){'
+                           .     'fetch(url,{credentials:"same-origin"})'
+                           .       '.then(function(r){return r.arrayBuffer();})'
+                           .       '.then(function(buf){'
+                           .         'wb=XLSX.read(new Uint8Array(buf),{type:"array"});'
+                           .         'buildTabs();'
+                           .         'renderSheet(wb.SheetNames[0]);'
+                           .       '})'
+                           .       '.catch(function(e){msg.textContent="Chyba pri načítaní: "+e;});'
+                           .   '}'
+                           .   'if(typeof XLSX!=="undefined"){run();}'
+                           .   'else{'
+                           .     'var s=document.createElement("script");'
+                           .     's.src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";'
+                           .     's.onload=run;'
+                           .     's.onerror=function(){msg.textContent="Knižnica SheetJS sa nedala načítať.";};'
+                           .     'document.head.appendChild(s);'
+                           .   '}'
+                           . '});'
+                           . '</script>';
+
                     } else {
+                        // ── PowerPoint: Google Docs viewer fallback ───────────────────
+                        $office_preview_url = $file_url;
+                        if (!preg_match('#^https?://#i', $office_preview_url)) {
+                            $office_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                        }
+                        $google_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($office_preview_url);
                         echo '<iframe src="' . fm_enc($google_src) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
                     }
                 } elseif ($is_zip) {
