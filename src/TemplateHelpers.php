@@ -94,6 +94,14 @@ function fm_show_nav_path($path)
                         <?php endif; ?>
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
+                        <?php
+                        // Zobraziť admin odkaz len pre admina
+                        $is_admin = isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === 'admin';
+                        if ($is_admin): ?>
+                            <li class="nav-item">
+                                <a title="Správa užívateľov" class="nav-link" href="/admin-users.php"><i class="fa fa-users-cog"></i> Správa užívateľov</a>
+                            </li>
+                        <?php endif; ?>
                         <li class="nav-item avatar dropdown">
                             <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle"></i>
