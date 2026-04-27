@@ -15,8 +15,11 @@ if (!is_dir(TEMP_DIR)) {
     mkdir(TEMP_DIR, 0755, true);
 }
 
-// Autoload Composer dependencies
-require __DIR__ . '/../vendor/autoload.php';
+// Autoload Composer dependencies when available.
+$composerAutoload = __DIR__ . '/../vendor/autoload.php';
+if (is_readable($composerAutoload)) {
+    require $composerAutoload;
+}
 
 // Mock WordPress-style constants if they don't exist
 if (!defined('__FILE__')) {
@@ -48,14 +51,18 @@ function create_test_file($path, $content = '') {
 // Helper to clean up test files
 function cleanup_test_files() {
     if (is_dir(TEMP_DIR)) {
-        array_map(function($file) {
-            $path = TEMP_DIR . '/' . $file;
-            if (is_file($path)) {
-                unlink($path);
-            } elseif (is_dir($path)) {
-                rmdir($path);
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(TEMP_DIR, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                @rmdir($file->getRealPath());
+            } else {
+                @unlink($file->getRealPath());
             }
-        }, array_diff(scandir(TEMP_DIR) ?: [], ['.', '..']));
+        }
     }
 }
 

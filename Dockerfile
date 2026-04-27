@@ -1,26 +1,28 @@
 # how to build?
-# docker login
-## .....input your docker id and password
-#docker build . -t tinyfilemanager/tinyfilemanager:master
-#docker push tinyfilemanager/tinyfilemanager:master
+# docker build -t tinyfilemanager/tinyfilemanager:master .
 
-# how to use?
-# docker run -d -v /absolute/path:/var/www/html/data -p 80:80 --restart=always --name tinyfilemanager tinyfilemanager/tinyfilemanager:master
+FROM php:8.3-cli-alpine AS runtime
 
-FROM php:7.4-cli-alpine
-
-# if run in China
-# RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-
-RUN apk add --no-cache \
-    libzip-dev \
-    oniguruma-dev
-
-RUN docker-php-ext-install \
-    zip 
+RUN apk add --no-cache curl libzip-dev oniguruma-dev \
+    && docker-php-ext-install zip
 
 WORKDIR /var/www/html
 
-COPY tinyfilemanager.php index.php
+COPY tinyfilemanager.php ./index.php
+COPY config.php ./config.php
+COPY src ./src
+COPY translation.json ./translation.json
+COPY KatalogMD.webp ./KatalogMD.webp
 
-CMD ["sh", "-c", "php -S 0.0.0.0:80"]
+RUN addgroup -S tfm && adduser -S -G tfm tfm \
+    && mkdir -p /var/www/html/data /var/www/html/uploads \
+    && chown -R tfm:tfm /var/www/html
+
+USER tfm
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8080/ >/dev/null || exit 1
+
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]
