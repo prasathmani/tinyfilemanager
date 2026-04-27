@@ -53,6 +53,81 @@ $users = $config->getUsers(); // Očakáva sa, že FM_Config má metódu getUser
         <?php endforeach; ?>
         </tbody>
     </table>
-    <p><a href="?add">Pridať nového užívateľa</a></p>
+    <p><a href="#" onclick="showUserModal();return false;">Pridať nového užívateľa</a></p>
+
+    <!-- Modálny formulár pre pridanie/úpravu užívateľa -->
+    <div id="userModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:2rem;max-width:400px;margin:auto;border-radius:8px;box-shadow:0 2px 8px #0002;position:relative;">
+            <h2 id="modalTitle">Pridať užívateľa</h2>
+            <form method="post" id="userForm">
+                <input type="hidden" name="action" value="save_user">
+                <div style="margin-bottom:1em;">
+                    <label>Používateľské meno:<br><input type="text" name="username" id="username" required></label>
+                </div>
+                <div style="margin-bottom:1em;">
+                    <label>Heslo:<br><input type="password" name="password" id="password" required></label>
+                </div>
+                <div style="margin-bottom:1em;">
+                    <label>Rola:<br>
+                        <select name="role" id="role">
+                            <option value="user">Používateľ</option>
+                            <option value="manager">Manažér</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </label>
+                </div>
+                <div style="margin-bottom:1em;">
+                    <label>Povolené priečinky (oddelené čiarkou):<br><input type="text" name="folders" id="folders"></label>
+                </div>
+                <div style="text-align:right;">
+                    <button type="button" onclick="hideUserModal()">Zrušiť</button>
+                    <button type="submit">Uložiť</button>
+                </div>
+            </form>
+            <button onclick="hideUserModal()" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.5em;">&times;</button>
+        </div>
+    </div>
+    <script>
+    function showUserModal() {
+        document.getElementById('userModal').style.display = 'flex';
+        document.getElementById('userForm').reset();
+        document.getElementById('modalTitle').innerText = 'Pridať užívateľa';
+    }
+    function hideUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+    </script>
+
+<?php
+// Spracovanie formulára na pridanie/úpravu užívateľa
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_user') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $role = $_POST['role'] ?? 'user';
+    $folders = array_map('trim', explode(',', $_POST['folders'] ?? ''));
+    if ($username && $password) {
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        // Načítať config.php
+        $config_path = __DIR__ . '/config.php';
+        $config_code = file_get_contents($config_path);
+        // Pridať/aktualizovať užívateľa v $auth_users
+        $pattern = '/\$auth_users\s*=\s*array\((.*?)\);/s';
+        if (preg_match($pattern, $config_code, $matches)) {
+            $users_code = trim($matches[1]);
+            // Odstrániť existujúci záznam pre užívateľa
+            $users_code = preg_replace("/'" . preg_quote($username, '/') . "'\s*=>\s*'[^']*',?/", '', $users_code);
+            // Pridať nový záznam
+            $users_code = rtrim($users_code, ",\n\r ");
+            if ($users_code !== '') $users_code .= ",\n    ";
+            $users_code .= "'" . addslashes($username) . "' => '" . addslashes($hash) . "'";
+            $new_code = preg_replace($pattern, "\$auth_users = array(\n    $users_code\n);", $config_code);
+            file_put_contents($config_path, $new_code);
+        }
+        // TODO: Uložiť rolu a priečinky do config.php podľa štruktúry
+        echo '<script>alert("Užívateľ uložený.");window.location.href=window.location.pathname;</script>';
+        exit;
+    }
+}
+?>
 </body>
 </html>
