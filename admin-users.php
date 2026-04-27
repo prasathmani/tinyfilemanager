@@ -19,7 +19,7 @@ $users = $config->getUsers(); // Očakáva sa, že FM_Config má metódu getUser
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>Správa užívateľov | TinyFileManager</title>
+    <title>Správa užívateľov | DREMONT</title>
     <link rel="stylesheet" href="src/assets/css/fm-navbar-fix.css">
     <style>
         .admin-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
