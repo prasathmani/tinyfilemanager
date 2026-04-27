@@ -259,8 +259,8 @@ function fm_show_header_login()
 
             .message {
                 padding: 4px 7px;
-                border: 1px solid #ddd;
-                background-color: #fff;
+                border: 1px solid #051280;
+                background-color: #b6bdf7
                 margin-top: 72px; /* výška lišty + medzera */
                 position: relative;
                 z-index: 1;
