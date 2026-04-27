@@ -87,6 +87,44 @@ class TFM_FileActionHandler {
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
     }
 
+    /**
+     * Handle mass delete request.
+     * Preserves legacy behavior and redirects back.
+     * @param array $post
+     * @return void
+     */
+    public function handleMassDelete($post) {
+        if (!verifyToken($post['token'])) {
+            fm_set_msg(lng('Invalid Token.'), 'error');
+            die('Invalid Token.');
+        }
+
+        $path = $this->basePath();
+        $errors = 0;
+        $files = $post['file'];
+
+        if (is_array($files) && count($files)) {
+            foreach ($files as $f) {
+                if ($f != '') {
+                    $new_path = $path . '/' . $f;
+                    if (!fm_rdelete($new_path)) {
+                        $errors++;
+                    }
+                }
+            }
+
+            if ($errors == 0) {
+                fm_set_msg(lng('Selected files and folder deleted'));
+            } else {
+                fm_set_msg(lng('Error while deleting items'), 'error');
+            }
+        } else {
+            fm_set_msg(lng('Nothing selected'), 'alert');
+        }
+
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+    }
+
     private function basePath() {
         $path = $this->root_path;
         if ($this->current_path !== '') {

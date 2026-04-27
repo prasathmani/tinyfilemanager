@@ -167,6 +167,7 @@ if (is_readable($security_file)) {
 }
 
 // Modular handlers (incremental extraction from monolith)
+require_once __DIR__ . '/src/handlers/CopyActionHandler.php';
 require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
 require_once __DIR__ . '/src/handlers/FileActionHandler.php';
 require_once __DIR__ . '/src/handlers/LegacyUploadHandler.php';
@@ -1011,145 +1012,16 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
 
 // Copy folder / file
 if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) {
-    // from
-    $copy = urldecode($_GET['copy']);
-    $copy = fm_clean_path($copy);
-    // empty path
-    if ($copy == '') {
-        fm_set_msg(lng('Source path not defined'), 'error');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
-    // abs path from
-    $from = FM_ROOT_PATH . '/' . $copy;
-    // abs path to
-    $dest = FM_ROOT_PATH;
-    if (FM_PATH != '') {
-        $dest .= '/' . FM_PATH;
-    }
-    $dest .= '/' . basename($from);
-    // move?
-    $move = isset($_GET['move']);
-    $move = fm_clean_path(urldecode($move));
-    // copy/move/duplicate
-    if ($from != $dest) {
-        $msg_from = trim(FM_PATH . '/' . basename($from), '/');
-        if ($move) { // Move and to != from so just perform move
-            $rename = fm_rename($from, $dest);
-            if ($rename) {
-                fm_set_msg(sprintf(lng('Moved from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
-            } elseif ($rename === null) {
-                fm_set_msg(lng('File or folder with this path already exists'), 'alert');
-            } else {
-                fm_set_msg(sprintf(lng('Error while moving from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)), 'error');
-            }
-        } else { // Not move and to != from so copy with original name
-            if (fm_rcopy($from, $dest)) {
-                fm_set_msg(sprintf(lng('Copied from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
-            } else {
-                fm_set_msg(sprintf(lng('Error while copying from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)), 'error');
-            }
-        }
-    } else {
-        if (!$move) { //Not move and to = from so duplicate
-            $msg_from = trim(FM_PATH . '/' . basename($from), '/');
-            $fn_parts = pathinfo($from);
-            $extension_suffix = '';
-            if (!is_dir($from)) {
-                $extension_suffix = '.' . $fn_parts['extension'];
-            }
-            //Create new name for duplicate
-            $fn_duplicate = $fn_parts['dirname'] . '/' . $fn_parts['filename'] . '-' . date('YmdHis') . $extension_suffix;
-            $loop_count = 0;
-            $max_loop = 1000;
-            // Check if a file with the duplicate name already exists, if so, make new name (edge case...)
-            while (file_exists($fn_duplicate) & $loop_count < $max_loop) {
-                $fn_parts = pathinfo($fn_duplicate);
-                $fn_duplicate = $fn_parts['dirname'] . '/' . $fn_parts['filename'] . '-copy' . $extension_suffix;
-                $loop_count++;
-            }
-            if (fm_rcopy($from, $fn_duplicate, False)) {
-                fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
-            } else {
-                fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
-            }
-        } else {
-            fm_set_msg(lng('Paths must be not equal'), 'alert');
-        }
-    }
-    $FM_PATH = FM_PATH;
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    $copy_action_handler = new TFM_CopyActionHandler(FM_ROOT_PATH, FM_PATH);
+    $copy_action_handler->handleCopy($_GET);
+    exit;
 }
 
 // Mass copy files/ folders
 if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) {
-
-    if (!verifyToken($_POST['token'])) {
-        fm_set_msg(lng('Invalid Token.'), 'error');
-        die("Invalid Token.");
-    }
-
-    // from
-    $path = FM_ROOT_PATH;
-    if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
-    }
-    // to
-    $copy_to_path = FM_ROOT_PATH;
-    $copy_to = fm_clean_path($_POST['copy_to']);
-    if ($copy_to != '') {
-        $copy_to_path .= '/' . $copy_to;
-    }
-    if ($path == $copy_to_path) {
-        fm_set_msg(lng('Paths must be not equal'), 'alert');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
-    if (!is_dir($copy_to_path)) {
-        if (!fm_mkdir($copy_to_path, true)) {
-            fm_set_msg('Unable to create destination folder', 'error');
-            $FM_PATH = FM_PATH;
-            fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-        }
-    }
-    // move?
-    $move = isset($_POST['move']);
-    // copy/move
-    $errors = 0;
-    $files = $_POST['file'];
-    if (is_array($files) && count($files)) {
-        foreach ($files as $f) {
-            if ($f != '') {
-                $f = fm_clean_path($f);
-                // abs path from
-                $from = $path . '/' . $f;
-                // abs path to
-                $dest = $copy_to_path . '/' . $f;
-                // do
-                if ($move) {
-                    $rename = fm_rename($from, $dest);
-                    if ($rename === false) {
-                        $errors++;
-                    }
-                } else {
-                    if (!fm_rcopy($from, $dest)) {
-                        $errors++;
-                    }
-                }
-            }
-        }
-        if ($errors == 0) {
-            $msg = $move ? 'Selected files and folders moved' : 'Selected files and folders copied';
-            fm_set_msg($msg);
-        } else {
-            $msg = $move ? 'Error while moving items' : 'Error while copying items';
-            fm_set_msg($msg, 'error');
-        }
-    } else {
-        fm_set_msg(lng('Nothing selected'), 'alert');
-    }
-    $FM_PATH = FM_PATH;
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    $copy_action_handler = new TFM_CopyActionHandler(FM_ROOT_PATH, FM_PATH);
+    $copy_action_handler->handleMassCopy($_POST);
+    exit;
 }
 
 // Rename
@@ -1180,39 +1052,9 @@ if (!empty($_FILES) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH)
 
 // Mass deleting
 if (isset($_POST['group'], $_POST['delete'], $_POST['token']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_MANAGER && FM_CAN_WRITE_IN_PATH) {
-
-    if (!verifyToken($_POST['token'])) {
-        fm_set_msg(lng("Invalid Token."), 'error');
-        die("Invalid Token.");
-    }
-
-    $path = FM_ROOT_PATH;
-    if (FM_PATH != '') {
-        $path .= '/' . FM_PATH;
-    }
-
-    $errors = 0;
-    $files = $_POST['file'];
-    if (is_array($files) && count($files)) {
-        foreach ($files as $f) {
-            if ($f != '') {
-                $new_path = $path . '/' . $f;
-                if (!fm_rdelete($new_path)) {
-                    $errors++;
-                }
-            }
-        }
-        if ($errors == 0) {
-            fm_set_msg(lng('Selected files and folder deleted'));
-        } else {
-            fm_set_msg(lng('Error while deleting items'), 'error');
-        }
-    } else {
-        fm_set_msg(lng('Nothing selected'), 'alert');
-    }
-
-    $FM_PATH = FM_PATH;
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    $file_action_handler = new TFM_FileActionHandler(FM_ROOT_PATH, FM_PATH);
+    $file_action_handler->handleMassDelete($_POST);
+    exit;
 }
 
 // Pack files zip, tar
