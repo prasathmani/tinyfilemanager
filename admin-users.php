@@ -1,7 +1,7 @@
 <?php
 // admin-users.php: Administračná stránka pre správu užívateľov a ich oprávnení
-require_once __DIR__ . '/../src/bootstrap.php';
-require_once __DIR__ . '/../src/FM_Config.php';
+require_once __DIR__ . '/src/bootstrap.php';
+require_once __DIR__ . '/src/FM_Config.php';
 
 session_start();
 
