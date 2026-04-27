@@ -174,6 +174,7 @@ require_once __DIR__ . '/src/handlers/DownloadPreviewHandler.php';
 require_once __DIR__ . '/src/handlers/FileActionHandler.php';
 require_once __DIR__ . '/src/handlers/LegacyUploadHandler.php';
 require_once __DIR__ . '/src/services/DirectoryListingService.php';
+require_once __DIR__ . '/src/services/FileEditorContextService.php';
 require_once __DIR__ . '/src/services/FileViewContextService.php';
 require_once __DIR__ . '/src/services/FileViewInfoService.php';
 
@@ -1506,49 +1507,23 @@ if (isset($_GET['view'])) {
 
 // file editor
 if (isset($_GET['edit']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) {
-    $file = $_GET['edit'];
-    $file = fm_clean_path($file, false);
-    $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
-        fm_set_msg(lng('File not found'), 'error');
-        $FM_PATH = FM_PATH;
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
-    }
-    $editFile = ' : <i><b>' . $file . '</b></i>';
+    $file_editor_context_service = new TFM_FileEditorContextService(FM_ROOT_PATH, FM_PATH);
+    $editor_context = $file_editor_context_service->build($_GET['edit'], $_GET, $_POST);
+
+    $file = $editor_context['file'];
+    $editFile = $editor_context['editFile'];
+    $file_url = $editor_context['file_url'];
+    $file_path = $editor_context['file_path'];
+    $isNormalEditor = $editor_context['isNormalEditor'];
+    $ext = $editor_context['ext'];
+    $mime_type = $editor_context['mime_type'];
+    $filesize = $editor_context['filesize'];
+    $is_text = $editor_context['is_text'];
+    $content = $editor_context['content'];
+
     header('X-XSS-Protection:0');
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
-
-    $file_url = fm_build_public_file_url(FM_PATH, $file);
-    $file_path = $path . '/' . $file;
-
-    // normal editer
-    $isNormalEditor = true;
-    if (isset($_GET['env'])) {
-        if ($_GET['env'] == "ace") {
-            $isNormalEditor = false;
-        }
-    }
-
-    // Save File
-    if (isset($_POST['savedata'])) {
-        $writedata = $_POST['savedata'];
-        $fd = fopen($file_path, "w");
-        @fwrite($fd, $writedata);
-        fclose($fd);
-        fm_set_msg(lng('File Saved Successfully'));
-    }
-
-    $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
-    $mime_type = fm_get_mime_type($file_path);
-    $filesize = filesize($file_path);
-    $is_text = false;
-    $content = ''; // for text
-
-    if (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
-        $is_text = true;
-        $content = file_get_contents($file_path);
-    }
 
 ?>
     <div class="path">
