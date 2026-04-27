@@ -1,4 +1,4 @@
-?>
+// ...existing code...
     <div class="row">
         <div class="col-12">
             <ul class="list-group w-50 my-3" data-bs-theme="<?php echo FM_THEME; ?>">
@@ -124,12 +124,14 @@
                             .       '.then(function(r){return r.arrayBuffer();})'
                             .       '.then(function(buf){'
                             .         'msg.remove();'
-                            .         'docx.renderAsync(buf,wrap,null,{className:"docx-render",inWrapper:false})'
-                            .           '.catch(function(e){wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtRenderErr+": "+e+"</p>";});'
+                            .         'if(typeof docx!=="undefined" && typeof docx.renderAsync==="function"){'
+                            .           'docx.renderAsync(buf,wrap,null,{className:"docx-render",inWrapper:false})'
+                            .             '.catch(function(e){wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtRenderErr+": "+e+"</p>";});'
+                            .         '}else{wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtLibErr+"</p>";}'
                             .       '})'
                             .       '.catch(function(e){msg.textContent=txtLoadErr+": "+e;});'
                             .   '}'
-                            .   'if(typeof docx!=="undefined"){run();}'
+                            .   'if(typeof docx!=="undefined" && typeof docx.renderAsync==="function"){run();}'
                             .   'else{'
                             .     'var s=document.createElement("script");'
                             .     's.src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js";'

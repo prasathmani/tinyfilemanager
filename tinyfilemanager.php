@@ -99,7 +99,7 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$favicon_path = '';
+$favicon_path = 'https://dremont.sk/wp-content/uploads/2022/09/logo-MA-DREMONTnew.png';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', '/path/to/folder', ...)
@@ -2593,6 +2593,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
             #main-table .filename a {
                 color: #222222;
+                font-weight: bold;
             }
 
             .table td,
@@ -3152,18 +3153,19 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 gap: 12px;
             }
 
-            .fm-grid-item {
-                border: 1px solid #e8ecf2;
-                border-radius: 10px;
-                background: #fff;
-                box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+            .fm-grid-thumb {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 120px;
+                margin-bottom: 8px;
+                background: #f8f9fa;
+                border-radius: 4px;
                 overflow: hidden;
-                transition: transform .12s ease, box-shadow .12s ease;
+                position: relative;
+                cursor: pointer;
             }
-
-            .fm-grid-item:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
             }
 
             .fm-grid-thumb {
