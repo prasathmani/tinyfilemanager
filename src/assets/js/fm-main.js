@@ -404,18 +404,19 @@
     if (!table.length) return;
     var tableLng = table.find('th').length;
     var targets = tableLng && tableLng == 7 ? [0, 4, 5, 6] : tableLng == 5 ? [0, 4] : [3];
-    if ($.fn.DataTable.isDataTable(table)) {
-      table.DataTable().destroy();
+    if ($.fn.dataTable.isDataTable('#main-table')) {
+      window.mainTable = table.DataTable();
+    } else {
+      window.mainTable = table.DataTable({
+        paging: false,
+        info: false,
+        order: [],
+        columnDefs: [{
+          targets: targets,
+          orderable: false
+        }]
+      });
     }
-    window.mainTable = table.DataTable({
-      paging: false,
-      info: false,
-      order: [],
-      columnDefs: [{
-        targets: targets,
-        orderable: false
-      }]
-    });
   }
 
   $(document).ready(function () {
