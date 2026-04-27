@@ -15,17 +15,15 @@ $auth_users = array(
     'admin'     => '$2y$10$MDkNAqrsNXnWDpWSUe9po.luFRyHwfktNXEcX0/cqKsnq9NJqPmIG', // Spdlhé
 
     // Manažéri – vidia a upravujú všetko, nemôžu mazať
-    'rehák'  => '$2y$10$WqbQGH1KGzPywYv6KEdJkuz7YWRxAJmIf8F5ESz8Zt50LFCPW7NPC', //Rehák01
-    'bílek'  => '$2y$10$.u0a6jwDjrZGe5679SYqh.ipfrIhzqVn8GkpFzwwjwNsbh5WuXvaW', // Bílek01
+    'rehak'  => '$2y$10$MDqH4vvwosCqjePZo60nHeucpxRrN30Vu/HNHjvW04wTnS.GgoiDG', //Rehak01
+    'bilek'  => '$2y$10$aAkrv/JD3fD9Fq0UWZlkk.vCioO7UAlByO9H6jyfa7pyTdBSkJwPq', // Bilek01
     'znava'  => '$2y$10$255.N7QKQ/tgfFkcW6Wzwu7NimvvoOIn5Y0MqsRgb2e5jnbY0FDCS', // Znava01
 
     // Klienti – môžu nahrávať a sťahovať, len svoj priečinok
-    'šaňo'   => '$2y$10$ttOoy.PKbGhypSnt7habEe1a1bh1ZVmr7je7Dc.WthEfzf3O.L74i', //Šaňo01
-    'kristián'   => '$2y$10$kvlm8v8CCr0T5uU2aPzueu78ULkiCsOVwZbHC56ylINactaTgPe1a',//Kristián01
-
+    'sano'   => '$2y$10$m9ONc6v2Cro9GvhcPunBLOzL4tjQmxj/d6uosb4fEF6gGc5SrHko6', //Sano01
+    'kristian'   => '$2y$10$UGPcbNMYVQv5p66bhyvQeuH6..JmXmdkF7fdpOqdTwKAluBywKyDC',//Kristian01
     'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy', //Fero01
-
-    'marián'   => '$2y$10$ZDstCy90JIV1uwG2EMsgKOyZiLALBlVGDMvekN5lqWQn/M97CHrUu', //Marián01    
+    'marian'   => '$2y$10$1bqqSfV0RrNerti7upxoOui77TBWQZQTVnxHbvCxqjhQ.JTNvFzSG', //Marian01    
 
     // Dodávatelia – môžu len sťahovať/prezerať, len svoj priečinok
     'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',

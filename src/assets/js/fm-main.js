@@ -397,11 +397,17 @@
     s.previewImage();
   })(jQuery);
 
+
+  var dtInitCount = window.dtInitCount || 0;
   $(document).ready(function () {
+    dtInitCount++;
+    window.dtInitCount = dtInitCount;
+    console.log('[DataTable] Inicializácia #' + dtInitCount + ', isDataTable:', $.fn.DataTable.isDataTable($('#main-table')));
     var table = $('#main-table');
     var tableLng = table.find('th').length;
     var targets = tableLng && tableLng == 7 ? [0, 4, 5, 6] : tableLng == 5 ? [0, 4] : [3];
     if ($.fn.DataTable.isDataTable(table)) {
+      console.log('[DataTable] Destroy pred reinit');
       table.DataTable().destroy();
     }
     window.mainTable = table.DataTable({
@@ -413,6 +419,7 @@
         orderable: false
       }]
     });
+    console.log('[DataTable] Inicializované na #main-table');
 
     var storageKey = 'fm_view_mode';
     var viewButtons = $('.js-view-mode');
