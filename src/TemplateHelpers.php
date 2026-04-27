@@ -261,7 +261,9 @@ function fm_show_header_login()
                 padding: 4px 7px;
                 border: 1px solid #ddd;
                 background-color: #fff;
-                margin-top: 16px;
+                margin-top: 72px; /* výška lišty + medzera */
+                position: relative;
+                z-index: 1;
             }
 
             .message.ok {
