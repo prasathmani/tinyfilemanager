@@ -21,7 +21,7 @@ $auth_users = array(
 
     // Klienti – môžu nahrávať a sťahovať, len svoj priečinok
     'šaňo'   => '$2y$10$ttOoy.PKbGhypSnt7habEe1a1bh1ZVmr7je7Dc.WthEfzf3O.L74i', //Šaňo01
-    'kristián'   => '$2y$10$kvlm8v8CCr0T5uU2aPzueu78ULkiCsOVwZbHC56ylINactaTgPe1a',//Kristián01
+    'kristián'   => '$2y$10$yB9dlXQyrnVdl9dReexdPOG1xzMDVhNjFyjenHPXDW8TDuZ25jQ6W',//Kristián01
 
     'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy', //Fero01
 
