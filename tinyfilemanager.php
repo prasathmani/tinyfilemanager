@@ -154,6 +154,18 @@ if (is_readable($config_file)) {
     @include($config_file);
 }
 
+// Load security layer
+$security_file = __DIR__ . '/src/security.php';
+if (is_readable($security_file)) {
+    @include($security_file);
+} else {
+    // Fallback: create minimal security functions if security.php missing
+    function fm_validate_magic_bytes($f, $e) { return true; }
+    function fm_validate_mime_type($f, $t=[]) { return true; }
+    function fm_validate_filepath($p, $r) { return true; }
+    function fm_validate_input($i, $t='filename') { return $i; }
+}
+
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
     'css-bootstrap' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">',
@@ -339,6 +351,11 @@ if (!defined('FM_EMBED')) {
 if (isset($_GET['logout'])) {
     if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
         fm_online_remove_user($_SESSION[FM_SESSION_ID]['logged']);
+        // Audit log logout
+        if (class_exists('AuditLogger')) {
+            $audit = new AuditLogger();
+            $audit->log('user_logout', $_SESSION[FM_SESSION_ID]['logged']);
+        }
     }
     // Unset all session variables
     $_SESSION = array();
@@ -411,15 +428,54 @@ if ($use_auth) {
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(''));
         }
     } elseif (isset($_POST['fm_usr'], $_POST['fm_pwd'], $_POST['token'])) {
-        // Logging In
-        sleep(1);
+        // Logging In - with rate limiting
+        $username = isset($_POST['fm_usr']) ? fm_validate_input($_POST['fm_usr'], 'username') : '';
+        $password = isset($_POST['fm_pwd']) ? $_POST['fm_pwd'] : '';
+        $token = isset($_POST['token']) ? $_POST['token'] : '';
+        
+        // Rate limiting
+        $rate_limiter = null;
+        if (class_exists('RateLimiter')) {
+            $rate_limiter = new RateLimiter();
+            if (!$rate_limiter->check_limit('login')) {
+                $audit = new AuditLogger();
+                $audit->log('login_blocked_rate_limit', $username, 'Too many attempts');
+                fm_set_msg(lng('Too many login attempts. Please try again later.'), 'error');
+                fm_redirect(FM_SELF_URL);
+            }
+        }
+        
+        sleep(1); // Anti-brute force delay
+        
         if (function_exists('password_verify')) {
-            if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
-                $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
-                fm_online_touch_user($_POST['fm_usr']);
+            if ($username && isset($auth_users[$username]) && password_verify($password, $auth_users[$username]) && verifyToken($token)) {
+                // Successful login
+                $_SESSION[FM_SESSION_ID]['logged'] = $username;
+                fm_online_touch_user($username);
+                
+                // Audit log
+                if (class_exists('AuditLogger')) {
+                    $audit = new AuditLogger();
+                    $audit->log('user_login', $username, 'Successful login');
+                }
+                
+                // Reset rate limiter
+                if ($rate_limiter) {
+                    $rate_limiter->reset('login');
+                }
+                
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
             } else {
+                // Failed login attempt
+                $audit = new AuditLogger();
+                $audit->log('login_failed', $username ?? 'unknown', 'Invalid username or password');
+                
+                // Record rate limit attempt
+                if ($rate_limiter) {
+                    $rate_limiter->record_attempt('login');
+                }
+                
                 unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
                 fm_redirect(FM_SELF_URL);
@@ -872,6 +928,14 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY && !FM_UPLOAD_ONLY && !
             $path .= '/' . FM_PATH;
         }
         $is_dir = is_dir($path . '/' . $del);
+        
+        // Audit log delete attempt
+        if (class_exists('AuditLogger')) {
+            $audit = new AuditLogger();
+            $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : 'unknown';
+            $audit->log('file_delete_attempt', $username, ($is_dir ? 'DIR: ' : 'FILE: ') . $del);
+        }
+        
         if (fm_rdelete($path . '/' . $del)) {
             $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
             fm_set_msg(sprintf($msg, fm_enc($del)));
@@ -1237,6 +1301,36 @@ if (!empty($_FILES) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH)
         );
         echo json_encode($response);
         exit();
+    }
+    
+    // Validate MIME type
+    if (function_exists('fm_validate_mime_type')) {
+        if (!fm_validate_mime_type($tmp_name)) {
+            $audit = new AuditLogger();
+            $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $filename");
+            $response = array(
+                'status'    => 'error',
+                'info'      => "Dangerous file MIME type detected!",
+            );
+            echo json_encode($response);
+            @unlink($tmp_name);
+            exit();
+        }
+    }
+    
+    // Validate magic bytes
+    if (function_exists('fm_validate_magic_bytes')) {
+        if (!fm_validate_magic_bytes($tmp_name, $ext)) {
+            $audit = new AuditLogger();
+            $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $filename (ext: $ext)");
+            $response = array(
+                'status'    => 'error',
+                'info'      => "File signature does not match extension!",
+            );
+            echo json_encode($response);
+            @unlink($tmp_name);
+            exit();
+        }
     }
 
     $targetPath = $path . $ds;
