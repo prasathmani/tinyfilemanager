@@ -8,7 +8,8 @@ RUN apk add --no-cache curl libzip-dev oniguruma-dev \
 
 WORKDIR /var/www/html
 
-COPY tinyfilemanager.php ./index.php
+COPY tinyfilemanager.php ./tinyfilemanager.php
+COPY index.php ./index.php
 COPY config.php ./config.php
 COPY src ./src
 COPY translation.json ./translation.json
