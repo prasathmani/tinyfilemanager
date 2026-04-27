@@ -264,6 +264,9 @@ function fm_show_header_login()
                 margin-top: 72px; /* výška lišty + medzera */
                 position: relative;
                 z-index: 1;
+                width: 66%;
+                margin-left: auto;
+                margin-right: auto;
             }
 
             .message.ok {
