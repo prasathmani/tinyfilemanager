@@ -1,3 +1,10 @@
+# Future Security Improvements
+
+**User credentials and metadata should eventually be moved out of config.php into a dedicated server-side users storage file, for example data/users.php or a protected private file outside web root.**
+
+- Password hashes must never be rendered into HTML, JavaScript, hidden inputs, or modal content.
+- The admin UI should accept plaintext password input only in New/Edit modal forms, generate password_hash() server-side on Save, and store only the resulting hash.
+- For now, config.php remains the active storage for compatibility and simplicity.
 ## User Administration
 User administration has been reintroduced as an integrated read-only page in the main runtime. It does not modify config.php yet.
 Access to the user administration page and navigation link is now restricted to the admin user only (not manager_users).

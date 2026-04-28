@@ -63,12 +63,16 @@ This roadmap defines the phased development plan for DREMONT File Manager after 
 - Expiring share links
 - Access logs
 
-### 8. Future Layout Modernization
 - Unified layout.php or equivalent
 - Partial renderers
 - Reusable components
 - Cleaner JS structure
 - Possible API/PWA frontend later
+
+### Security hardening / Future improvements
+- Move user credentials and metadata from config.php to protected server-side users storage.
+- Keep config.php as legacy/fallback during migration.
+- Never expose password hashes in UI or client-side code.
 
 ---
 
