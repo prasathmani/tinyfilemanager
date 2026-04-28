@@ -11,11 +11,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 
+session_start();
 require_once __DIR__ . '/src/bootstrap.php';
 require_once __DIR__ . '/src/FM_Config.php';
 require_once __DIR__ . '/src/renderers/layout.php';
-
-session_start();
 
 // Kontrola, či je prihlásený administrátor
 if (!isset($_SESSION[FM_SESSION_ID]['logged']) || !isset($_SESSION[FM_SESSION_ID]['is_admin']) || !$_SESSION[FM_SESSION_ID]['is_admin']) {

@@ -1,5 +1,7 @@
 <?php
 $all_files_size = 0;
+require_once __DIR__ . '/layout.php';
+ob_start();
 ?>
 <script src="src/assets/js/navbar-padding-fix.js?v=<?php echo rawurlencode((string) VERSION); ?>"></script>
 <form action="" method="post" class="pt-3">
@@ -101,6 +103,14 @@ $all_files_size = 0;
                     <td class="fm-col-size" data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>">
                         <?php echo $filesize; ?>
                     </td>
+<?php } // ...existing code... ?>
+<?php
+$content = ob_get_clean();
+render_layout([
+    'title' => 'Správca súborov',
+    'content' => $content,
+]);
+?>
                     <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td class="fm-col-perms">
