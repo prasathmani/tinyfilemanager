@@ -458,3 +458,25 @@ See also: CHANGELOG.md (removal log)
 ## Known Issues
 
 - Advanced editor (ACE) opens, but save behavior is currently not reliable. Basic text editor save is functional and validated.
+
+## Stabilization checkpoint – 2.9.18
+
+### Stable
+- Application starts and does not crash.
+- Main file listing renders correctly.
+- Shared header/body/footer frame is stable.
+- Navbar offset fallback works for non-table pages.
+- Basic text editor save works with CSRF token.
+- Release packaging excludes archives, backups, tests and release artifacts.
+
+### Removed
+- Nonfunctional standalone admin-users.php entrypoint.
+
+### Known issues
+- Advanced editor opens, but save behavior is currently not reliable.
+- Integrated user administration is not implemented yet.
+- Further UI polishing may be needed after real user testing.
+
+### Next recommended steps
+- 2.9.19: functional smoke test and UI cleanup only.
+- 2.9.20+: integrated read-only user administration via main runtime.
