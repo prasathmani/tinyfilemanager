@@ -1,8 +1,4 @@
-<?php
-$all_files_size = 0;
-require_once __DIR__ . '/layout.php';
-ob_start();
-?>
+<?php $all_files_size = 0; ?>
 <script src="src/assets/js/navbar-padding-fix.js?v=<?php echo rawurlencode((string) VERSION); ?>"></script>
 <form action="" method="post" class="pt-3">
     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
@@ -103,14 +99,28 @@ ob_start();
                     <td class="fm-col-size" data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>">
                         <?php echo $filesize; ?>
                     </td>
-<?php } // ...existing code... ?>
-<?php
-$content = ob_get_clean();
-render_layout([
-    'title' => 'Správca súborov',
-    'content' => $content,
-]);
-?>
+                    <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
+                    <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
+                        <td class="fm-col-perms"><?php echo $perms ?></td>
+                        <td class="fm-col-owner"><?php echo $owner['name'] . ':' . $group['name'] ?></td>
+                    <?php } ?>
+                    <td class="inline-actions fm-col-actions">
+                        <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+                            <?php if (!FM_MANAGER): ?>
+                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                            <?php endif; ?>
+                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
+                        <?php endif; ?>
+                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                    </td>
+                </tr>
+            <?php
+                flush();
+                $ii++;
+            }
+            // End foreach folders
+            ?>
                     <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td class="fm-col-perms">
@@ -223,6 +233,8 @@ render_layout([
                 flush();
                 $ik++;
             }
+            // Close the foreach for $files
+            }
 
             if (empty($folders) && empty($files)) { ?>
                 <tfoot>
@@ -305,4 +317,3 @@ render_layout([
 </form>
 
 <?php
-fm_show_footer();
