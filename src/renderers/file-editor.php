@@ -53,5 +53,3 @@
         ?>
     </div>
 <?php
-    fm_show_footer();
-    exit;
