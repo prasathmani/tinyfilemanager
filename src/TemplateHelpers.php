@@ -99,7 +99,7 @@ function fm_show_nav_path($path)
                         $is_admin = isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === 'admin';
                         if ($is_admin): ?>
                             <li class="nav-item">
-                                <a title="Správa užívateľov" class="nav-link" href="/admin-users.php"><i class="fa fa-users-cog"></i> Správa užívateľov</a>
+                                <!-- <a title="Správa užívateľov" class="nav-link" href="/admin-users.php"><i class="fa fa-users-cog"></i> Správa užívateľov</a> -->
                             </li>
                         <?php endif; ?>
                         <li class="nav-item avatar dropdown">
