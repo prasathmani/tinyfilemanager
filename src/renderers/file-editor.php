@@ -1,3 +1,4 @@
+<input type="hidden" id="fm-editor-token" name="token" value="<?php echo htmlspecialchars($_SESSION['token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
 
     <div class="path">
         <div class="row">
@@ -45,8 +46,10 @@
         if ($is_text && $isNormalEditor) {
             echo '<textarea class="mt-2" id="normal-editor" rows="33" cols="120" style="width: 99.5%;">' . htmlspecialchars($content) . '</textarea>';
             echo '<script>document.addEventListener("keydown", function(e) {if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) { e.preventDefault();edit_save(this,"nrl");}}, false);</script>';
+            echo '<script>window.csrf = document.getElementById("fm-editor-token").value;</script>';
         } elseif ($is_text) {
             echo '<div id="editor" contenteditable="true">' . htmlspecialchars($content) . '</div>';
+            echo '<script>window.csrf = document.getElementById("fm-editor-token").value;</script>';
         } else {
             fm_set_msg(lng('FILE EXTENSION IS NOT SUPPORTED'), 'error');
         }
