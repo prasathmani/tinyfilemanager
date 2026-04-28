@@ -50,20 +50,21 @@
 ├── SECURITY.md
 ├── SMOKE_TEST_2.9.19.md
 └── docs/
-    └── archive/
-        ├── TEST_RESULTS.md
-        ├── Structure.md
-        ├── REFACTORING.md
-        ├── PHASE2_README.md
-        ├── PHASE3_README.md
-        ├── PHASE4_PLAN.md
-        ├── PHASE4_PROGRESS.md
-        ├── PHASE4_COMPLETE.md
-        └── PHASE5_PLAN.md
+  └── archive/
+    └── refactor-history/
+      ├── TEST_RESULTS.md
+      ├── Structure.md
+      ├── REFACTORING.md
+      ├── PHASE2_README.md
+      ├── PHASE3_README.md
+      ├── PHASE4_PLAN.md
+      ├── PHASE4_PROGRESS.md
+      ├── PHASE4_COMPLETE.md
+      └── PHASE5_PLAN.md
 ```
 
 - **Active docs**: Only current, user-facing, and operational documentation in the root.
-- **Archive**: All phase, refactoring, and historical docs in `docs/archive/`.
+- **Archive**: All phase, refactoring, and historical docs in `docs/archive/refactor-history/`.
 
 ## 4. Notes
 - No files have been moved, deleted, or modified yet. This is an audit and proposal only.

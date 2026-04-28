@@ -1,3 +1,5 @@
+### Documentation
+- Archived historical refactor and phase documentation under docs/archive/refactor-history/.
 # Changelog
 
 ## [Unreleased]
