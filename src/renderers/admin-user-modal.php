@@ -61,7 +61,7 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary">Save</button>
           <?php if ($modal_mode === 'edit'): ?>
-          <button type="button" class="btn btn-danger ms-2" id="admin-user-delete-btn">Delete</button>
+          <button type="button" class="btn btn-danger ms-2" id="admin-user-delete-btn">Zmazať</button>
           <?php endif; ?>
         </div>
       </form>
@@ -91,7 +91,7 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
         + '<h5 class="modal-title">Potvrdenie vymazania</h5>'
         + '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>'
         + '</div>'
-        + '<div class="modal-body">Naozaj chceš vymazať užívateľa <strong>' + username.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong>?</div>'
+        + '<div class="modal-body">Naozaj chceš vymazať užívateľa <strong>' + String(username).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong>?</div>'
         + '<div class="modal-footer">'
         + '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="admin-user-delete-no">No</button>'
         + '<button type="button" class="btn btn-danger" id="admin-user-delete-yes">Yes</button>'
