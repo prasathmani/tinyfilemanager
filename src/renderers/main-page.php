@@ -120,30 +120,6 @@
                 $ii++;
             }
             // End foreach folders
-            ?>
-                    <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
-                    <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td class="fm-col-perms">
-                            <?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
-                        </td>
-                        <td class="fm-col-owner">
-                            <?php echo $owner['name'] . ':' . $group['name'] ?>
-                        </td>
-                    <?php endif; ?>
-                    <td class="inline-actions fm-col-actions"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
-                            <?php if (!FM_MANAGER): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                            <?php endif; ?>
-                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
-                        <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
-                    </td>
-                </tr>
-            <?php
-                flush();
-                $ii++;
-            }
             $ik = 8002;
             foreach ($files as $f) {
                 $is_link = is_link($path . '/' . $f);
@@ -234,7 +210,6 @@
                 $ik++;
             }
             // Close the foreach for $files
-            }
 
             if (empty($folders) && empty($files)) { ?>
                 <tfoot>
