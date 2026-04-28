@@ -34,8 +34,15 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
+
 if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
   echo "Error: invalid version '$VERSION'. Expected e.g. 1.1, 1.1.0 or 1.1-rc1." >&2
+  exit 1
+fi
+
+# Ensure git working tree is clean
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Error: git working tree is not clean. Commit or stash your changes before releasing." >&2
   exit 1
 fi
 
@@ -49,12 +56,20 @@ mkdir -p "$OUT_DIR"
 # Package tracked files to avoid accidental local artifacts.
 # Never include previously generated release archives.
 # Exclude development-only directories from production release bundles.
-git -C "$ROOT_DIR" ls-files | grep -Ev '^(releases/|\.github/|tests/|\.gitignore$|\.gitattributes$)' > "$TMP_LIST"
+git -C "$ROOT_DIR" ls-files | grep -Ev '^(releases/|\.github/|tests/|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' > "$TMP_LIST"
 
 if [[ ! -s "$TMP_LIST" ]]; then
   echo "Error: no tracked files found to package." >&2
   exit 1
 fi
+
+
+# PHP lint all PHP files before packaging
+while IFS= read -r file; do
+  if [[ "$file" == *.php ]]; then
+    php -l "$ROOT_DIR/$file" >/dev/null
+  fi
+done < "$TMP_LIST"
 
 rm -f "$OUT_FILE"
 zip -q -9 "$OUT_FILE" -@ < "$TMP_LIST"
