@@ -1265,6 +1265,15 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_IS_WIN && FM
     exit;
 }
 
+// --- ADMIN USERS PAGE (admin only) ---
+if (isset($_GET['admin_users']) && isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === 'admin') {
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
+    require __DIR__ . '/src/renderers/admin-users-readonly.php';
+    fm_show_footer();
+    exit;
+}
+
 // --- TINYFILEMANAGER MAIN ---
 fm_show_header(); // HEADER
 fm_show_nav_path(FM_PATH); // current path

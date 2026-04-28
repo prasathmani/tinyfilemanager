@@ -95,10 +95,9 @@ function fm_show_nav_path($path)
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
                         <?php
-                        // Zobraziť admin odkaz len pre managera
+                        // Zobraziť admin odkaz len pre admina
                         $current_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
-                        $mgrs = (isset($manager_users) && is_array($manager_users)) ? $manager_users : array();
-                        if ($current_user && in_array($current_user, $mgrs)) : ?>
+                        if ($current_user === 'admin') : ?>
                             <li class="nav-item">
                                 <a title="Správa používateľov" class="nav-link" href="?admin_users=1"><i class="fa fa-users-cog"></i> Správa používateľov</a>
                             </li>

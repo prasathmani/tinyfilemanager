@@ -56,7 +56,7 @@ mkdir -p "$OUT_DIR"
 # Package tracked files to avoid accidental local artifacts.
 # Never include previously generated release archives.
 # Exclude development-only directories from production release bundles.
-git -C "$ROOT_DIR" ls-files | grep -Ev '^(releases/|\.github/|tests/|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' > "$TMP_LIST"
+git -C "$ROOT_DIR" ls-files | grep -Ev '^(releases/|\.github/|tests/|docs/archive/|DOCS_AUDIT\.md$|ROADMAP_DREMONT\.md$|SMOKE_TEST_2\.9\.19\.md$|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' > "$TMP_LIST"
 
 if [[ ! -s "$TMP_LIST" ]]; then
   echo "Error: no tracked files found to package." >&2
