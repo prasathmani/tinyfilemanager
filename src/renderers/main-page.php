@@ -232,7 +232,64 @@
             <?php } ?>
         </table>
     </div>
-    <div id="fm-grid-view" class="hidden"></div>
+    <div id="fm-grid-view" class="hidden">
+        <?php
+        // Render grid view items
+        foreach ($folders as $f) {
+            $is_link = is_link($path . '/' . $f);
+            $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
+            $modif_raw = filemtime($path . '/' . $f);
+            $modif = date(FM_DATETIME_FORMAT, $modif_raw);
+            $filesize = lng('Folder');
+            $filelink = '?p=' . urlencode(trim(FM_PATH . '/' . $f, '/'));
+        ?>
+        <div class="fm-grid-item card mb-3" tabindex="0" data-grid-item>
+            <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+            <div class="custom-control custom-checkbox position-absolute m-2">
+                <input type="checkbox" class="custom-control-input" id="gcb-<?php echo fm_enc($f) ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
+                <label class="custom-control-label" for="gcb-<?php echo fm_enc($f) ?>"></label>
+            </div>
+            <?php endif; ?>
+            <div class="card-body text-center p-3">
+                <div class="fm-grid-thumb mb-2">
+                    <i class="<?php echo $img ?> fa-3x"></i>
+                </div>
+                <div class="fm-grid-filename">
+                    <a href="<?php echo $filelink ?>" class="stretched-link" data-main-link><?php echo fm_convert_win(fm_enc($f)) ?></a>
+                    <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                </div>
+            </div>
+        </div>
+        <?php }
+        foreach ($files as $f) {
+            $is_link = is_link($path . '/' . $f);
+            $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . '/' . $f);
+            $modif_raw = filemtime($path . '/' . $f);
+            $modif = date(FM_DATETIME_FORMAT, $modif_raw);
+            $filesize_raw = fm_get_size($path . '/' . $f);
+            $filesize = fm_get_filesize($filesize_raw);
+            $filelink = '?p=' . urlencode(FM_PATH) . '&view=' . urlencode($f);
+        ?>
+        <div class="fm-grid-item card mb-3" tabindex="0" data-grid-item>
+            <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+            <div class="custom-control custom-checkbox position-absolute m-2">
+                <input type="checkbox" class="custom-control-input" id="gcb-<?php echo fm_enc($f) ?>" name="file[]" value="<?php echo fm_enc($f) ?>">
+                <label class="custom-control-label" for="gcb-<?php echo fm_enc($f) ?>"></label>
+            </div>
+            <?php endif; ?>
+            <div class="card-body text-center p-3">
+                <div class="fm-grid-thumb mb-2">
+                    <i class="<?php echo $img ?> fa-3x"></i>
+                </div>
+                <div class="fm-grid-filename">
+                    <a href="<?php echo $filelink ?>" class="stretched-link" data-main-link><?php echo fm_convert_win(fm_enc($f)) ?></a>
+                    <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                </div>
+            </div>
+        </div>
+        <?php }
+        ?>
+    </div>
 
     <div class="row">
         <?php
