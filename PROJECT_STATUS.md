@@ -452,3 +452,9 @@ Target Completion:    ~4 weeks from Phase 5 start
 The file `admin-users.php` (standalone user management entrypoint) was removed from the repository. It never functioned as a supported/maintained entrypoint, had parallel session logic, and is not to be fixed or refactored. Future user management will be implemented as an integrated page within the main tinyfilemanager.php runtime, not as a separate file.
 
 See also: CHANGELOG.md (removal log)
+
+---
+
+## Known Issues
+
+- Advanced editor (ACE) opens, but save behavior is currently not reliable. Basic text editor save is functional and validated.
