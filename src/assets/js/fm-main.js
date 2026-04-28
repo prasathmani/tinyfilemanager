@@ -430,21 +430,10 @@
     }
     adjustNavbarOffset();
     $(window).on('resize', adjustNavbarOffset);
-
-    // Grid thumbnail/card click handler
-    $(document).on('click', '[data-grid-item]', function (event) {
-      // Only in grid mode
-      if (!$('.js-view-mode[data-view-mode="grid"]').hasClass('active')) return;
-      // Ignore clicks on interactive elements
-      var ignored = event.target.closest('a, button, input, select, textarea, .dropdown, .dropdown-menu, .custom-control, .form-check, [data-no-card-click]');
-      if (ignored) return;
-      var card = event.currentTarget;
-      var link = card.querySelector('a[data-main-link]');
-      if (link && link.href) {
-        window.location.href = link.href;
-      }
-    });
-
+    if (!hasMainTable) {
+      // No #main-table: only adjust navbar offset, skip DataTable/grid/selection logic
+      return;
+    }
     // ...existing code for DataTable/grid/selection logic...
     // (The rest of the original document.ready handler remains unchanged)
   });
