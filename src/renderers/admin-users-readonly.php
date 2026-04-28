@@ -18,7 +18,48 @@ $usernames = array_merge(
     $manager_users,
     array_keys($directories_users)
 );
+
 $usernames = array_unique(array_filter($usernames, 'strlen'));
+
+// Escaping helper
+if (!function_exists('fm_enc')) {
+    function fm_enc($v) { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); }
+}
+
+function user_type($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users) {
+    if (in_array($u, $manager_users)) return 'manager';
+    if (in_array($u, $upload_only_users)) return 'upload only';
+    if (in_array($u, $readonly_users)) return 'read only';
+    if (array_key_exists($u, $auth_users)) return 'standard';
+    if (array_key_exists($u, $directories_users)) return 'directory mapped';
+    return 'unknown';
+}
+
+function user_dirs($u, $directories_users) {
+    if (!array_key_exists($u, $directories_users)) return 'globálny / podľa hlavnej konfigurácie';
+    $dirs = $directories_users[$u];
+    if (is_array($dirs)) {
+        $out = array();
+        foreach ($dirs as $d) {
+            $out[] = fm_enc($d);
+        }
+        return implode('<br>', $out);
+    } else {
+        return fm_enc($dirs);
+    }
+}
+
+function user_status($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users) {
+    $has_pwd = array_key_exists($u, $auth_users);
+    $type = user_type($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users);
+    if ($has_pwd && $type !== 'unknown') return 'OK';
+    if (!$has_pwd && ($type !== 'unknown' && $type !== 'directory mapped')) return 'Chýba heslo v auth_users';
+    if ($has_pwd && $type === 'standard') return 'Má heslo, ale nemá špecifickú rolu';
+    if (!$has_pwd && $type === 'directory mapped') return 'Má adresár, ale nemá heslo';
+    return 'N/A';
+}
+
+?>
 
 <div class="container mt-4">
     <h2>Správa používateľov</h2>
