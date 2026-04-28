@@ -1,0 +1,5 @@
+# Generated release archives
+releases/tinyfilemanager-*.zip
+
+# Runtime uploads and ad-hoc local test files
+uploads/

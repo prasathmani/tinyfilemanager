@@ -1,0 +1,54 @@
+{
+  "name": "slapiar/tinyfilemanager",
+  "description": "Secure, modular file manager with comprehensive testing",
+  "type": "application",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Prasath",
+      "email": "prasathmhn@gmail.com"
+    },
+    {
+      "name": "Security Refactoring",
+      "role": "Contributors"
+    }
+  ],
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0",
+    "mockery/mockery": "^1.5",
+    "fakerphp/faker": "^1.20",
+    "phpstan/phpstan": "^1.0",
+    "squizlabs/php_codesniffer": "^3.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "TFM\\": "src/"
+    },
+    "files": [
+      "src/bootstrap.php",
+      "src/security.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "TFM\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit tests/",
+    "test:unit": "phpunit tests/unit/",
+    "test:integration": "phpunit tests/integration/",
+    "test:coverage": "phpunit --coverage-html=coverage tests/",
+    "test:security": "phpunit --group=security tests/",
+    "analyze": "phpstan analyse src/",
+    "lint": "phpcs --standard=PSR12 src/ tests/"
+  },
+  "config": {
+    "allow-plugins": {
+      "phpstan/extension-installer": false
+    }
+  }
+}
