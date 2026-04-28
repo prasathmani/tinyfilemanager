@@ -95,11 +95,12 @@ function fm_show_nav_path($path)
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
                         <?php
-                        // Zobraziť admin odkaz len pre admina
-                        $is_admin = isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === 'admin';
-                        if ($is_admin): ?>
+                        // Zobraziť admin odkaz len pre managera
+                        $current_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
+                        $mgrs = (isset($manager_users) && is_array($manager_users)) ? $manager_users : array();
+                        if ($current_user && in_array($current_user, $mgrs)) : ?>
                             <li class="nav-item">
-                                <!-- <a title="Správa užívateľov" class="nav-link" href="/admin-users.php"><i class="fa fa-users-cog"></i> Správa užívateľov</a> -->
+                                <a title="Správa používateľov" class="nav-link" href="?admin_users=1"><i class="fa fa-users-cog"></i> Správa používateľov</a>
                             </li>
                         <?php endif; ?>
                         <li class="nav-item avatar dropdown">

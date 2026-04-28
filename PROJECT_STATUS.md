@@ -1,3 +1,5 @@
+## User Administration
+User administration has been reintroduced as an integrated read-only page in the main runtime. It does not modify config.php yet.
 ## Documentation cleanup
 Historical refactor and phase documents were archived under docs/archive/refactor-history/ to keep the repository root focused on active operational documentation.
 # TinyFileManager Security Refactoring - Project Summary
