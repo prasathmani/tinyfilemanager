@@ -671,6 +671,22 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 
 // instead globals vars
 define('FM_PATH', $p);
+
+// --- ADMIN USERS MODAL (admin only, AJAX load) ---
+if (isset($_GET['admin_users_modal'])) {
+    if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Forbidden';
+        exit;
+    }
+    header('Content-Type: text/html; charset=utf-8');
+    $modal_mode = ($_GET['admin_users_modal'] === 'edit') ? 'edit' : 'new';
+    $modal_username = isset($_GET['user']) ? $_GET['user'] : '';
+    $modal_token = isset($_SESSION['token']) ? $_SESSION['token'] : '';
+    require __DIR__ . '/src/renderers/admin-user-modal.php';
+    exit;
+}
 define('FM_USE_AUTH', $use_auth);
 define('FM_EDIT_FILE', $edit_files);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
