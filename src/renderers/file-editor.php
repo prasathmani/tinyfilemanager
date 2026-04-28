@@ -1,4 +1,4 @@
-?>
+
     <div class="path">
         <div class="row">
             <div class="col-xs-12 col-sm-5 col-lg-6 pt-1">
