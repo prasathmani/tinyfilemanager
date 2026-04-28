@@ -2532,7 +2532,13 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
             }
 
             body.navbar-fixed {
-                /* margin-top set dynamically via JS to handle multi-line navbar on mobile */
+                margin-top: 72px;
+            }
+
+            @media (max-width: 768px) {
+                body.navbar-fixed {
+                    margin-top: 96px;
+                }
             }
 
             a,
