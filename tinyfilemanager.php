@@ -83,6 +83,10 @@ $datetime_format = 'm/d/Y g:i A';
 // 'host' => show path on the host
 $path_display_mode = 'full';
 
+// user specific path display mode when viewing file information
+// array('Username' => 'relative', 'Username2' => 'full', ...)
+$path_display_mode_users = array();
+
 // Allowed file extensions for create and rename files
 // e.g. 'txt,html,css,js'
 $allowed_file_extensions = '';
@@ -412,6 +416,10 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
     $root_path = isset($directories_users[$_SESSION[FM_SESSION_ID]['logged']]) ? $directories_users[$_SESSION[FM_SESSION_ID]['logged']] : $root_path;
 }
 
+// update path display mode
+if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged']) {
+    $path_display_mode = isset($path_display_mode_users[$_SESSION[FM_SESSION_ID]['logged']]) ? $path_display_mode_users[$_SESSION[FM_SESSION_ID]['logged']] : $path_display_mode;
+}
 // clean and check $root_path
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
