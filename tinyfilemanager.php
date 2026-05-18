@@ -1676,7 +1676,7 @@ if (isset($_GET['help'])) {
                 <div class="row">
                     <div class="col-xs-12 col-sm-6">
                         <p>
-                        <h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager <?php echo VERSION; ?></a></h3>
+                        <h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> <?php echo lng("AppName")." ".VERSION; ?></a></h3>
                         </p>
                         <p>Author: PRAŚATH MANİ</p>
                         <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers [at] gmail [dot] com</a> </p>
@@ -2343,9 +2343,9 @@ $all_files_size = 0;
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
                 </div>
             </div>
-            <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
+            <div class="col-3 d-none d-sm-block"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted"><?php echo lng("AppName")." ".VERSION; ?></a></div>
         <?php else: ?>
-            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a></div>
+            <div class="col-12"><a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted"><?php echo lng("AppName")." ".VERSION; ?></a></div>
         <?php endif; ?>
     </div>
 </form>
@@ -3674,7 +3674,7 @@ class FM_Config
         if (strlen($CONFIG)) {
             $data = fm_object_to_array(json_decode($CONFIG));
         } else {
-            $msg = 'Tiny File Manager<br>Error: Cannot load configuration';
+            $msg = lng("AppName").'<br>Error: Cannot load configuration';
             if (substr($fm_url, -1) == '/') {
                 $fm_url = rtrim($fm_url, '/');
                 $msg .= '<br>';
