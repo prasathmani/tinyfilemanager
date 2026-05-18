@@ -831,7 +831,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
     }
     if (!is_dir($copy_to_path)) {
         if (!fm_mkdir($copy_to_path, true)) {
-            fm_set_msg('Unable to create destination folder', 'error');
+            fm_set_msg(lng('Unable to create destination folder'), 'error');
             $FM_PATH = FM_PATH;
             fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
         }
@@ -863,10 +863,10 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
             }
         }
         if ($errors == 0) {
-            $msg = $move ? 'Selected files and folders moved' : 'Selected files and folders copied';
+            $msg = $move ? lng('Selected files and folders moved') : lng('Selected files and folders copied');
             fm_set_msg($msg);
         } else {
-            $msg = $move ? 'Error while moving items' : 'Error while copying items';
+            $msg = $move ? lng('Error while moving items') : lng('Error while copying items');
             fm_set_msg($msg, 'error');
         }
     } else {
@@ -879,7 +879,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
 // Rename
 if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_READONLY) {
     if (!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
+        fm_set_msg(lng("Invalid Token."), 'error');
         die("Invalid Token.");
     }
     // old name
@@ -913,7 +913,7 @@ if (isset($_POST['rename_from'], $_POST['rename_to'], $_POST['token']) && !FM_RE
 if (isset($_GET['dl'], $_POST['token'])) {
     // Verify the token to ensure it's valid
     if (!verifyToken($_POST['token'])) {
-        fm_set_msg("Invalid Token.", 'error');
+        fm_set_msg(lng("Invalid Token."), 'error');
         exit;
     }
 
@@ -950,7 +950,7 @@ if (isset($_GET['dl'], $_POST['token'])) {
 if (!empty($_FILES) && !FM_READONLY) {
     if (isset($_POST['token'])) {
         if (!verifyToken($_POST['token'])) {
-            $response = array('status' => 'error', 'info' => "Invalid Token.");
+            $response = array('status' => 'error', 'info' => lng("Invalid Token."));
             echo json_encode($response);
             exit();
         }
@@ -4917,13 +4917,13 @@ function fm_show_header_login()
                             data: JSON.stringify(data),
                             contentType: "application/json; charset=utf-8",
                             success: function(mes) {
-                                toast("Saved Successfully");
+                                toast("<?php echo lng("Saved Successfully"); ?>");
                                 window.onbeforeunload = function() {
                                     return
                                 }
                             },
                             failure: function(mes) {
-                                toast("Error: try again");
+                                toast("<?php echo lng("Error: try again"); ?>");
                             },
                             error: function(mes) {
                                 toast(`<p style="background-color:red">${mes.responseText}</p>`);
@@ -4999,10 +4999,10 @@ function fm_show_header_login()
                         if (data) {
                             data = JSON.parse(data);
                             if (data.done) {
-                                resultWrapper.append('<div class="alert alert-success row">Uploaded Successful: ' + data.done.name + '</div>');
+                                resultWrapper.append('<div class="alert alert-success row"><?php echo lng("Uploaded Successful"); ?>: ' + data.done.name + '</div>');
                                 form.find("input[name=uploadurl]").val('');
                             } else if (data['fail']) {
-                                resultWrapper.append('<div class="alert alert-danger row">Error: ' + data.fail.message + '</div>');
+                                resultWrapper.append('<div class="alert alert-danger row"><?php echo lng("Error"); ?>: ' + data.fail.message + '</div>');
                             }
                             form.find("input[name=uploadurl]").removeAttr("disabled");
                             form.find("button").show();
@@ -5058,20 +5058,20 @@ function fm_show_header_login()
                                 _html = search_template(data);
                                 searchWrapper.html(_html);
                             } else {
-                                searchWrapper.html('<p class="m-2">No result found!<p>');
+                                searchWrapper.html('<p class="m-2"><?php echo lng("No result found!"); ?><p>');
                             }
                         },
                         error: function(xhr) {
                             $loader.removeClass('show-me');
-                            searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');
+                            searchWrapper.html('<p class="m-2"><?php echo lng("ERROR: Try again later!"); ?></p>');
                         },
                         failure: function(mes) {
                             $loader.removeClass('show-me');
-                            searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');
+                            searchWrapper.html('<p class="m-2"><?php echo lng("ERROR: Try again later!"); ?></p>');
                         }
                     });
                 } else {
-                    searchWrapper.html("OOPS: minimum 3 characters required!");
+                    searchWrapper.html("<?php echo lng("OOPS: minimum 3 characters required!"); ?>");
                 }
             }
 
@@ -5539,6 +5539,7 @@ function fm_show_header_login()
         $tr['en']['BackUp']         = 'Back Up';
         $tr['en']['SourceFolder']   = 'Source Folder';
         $tr['en']['Files']          = 'Files';
+        $tr['en']['Move']           = 'Move';
         $tr['en']['Change']         = 'Change';
         $tr['en']['Settings']       = 'Settings';
         $tr['en']['Language']       = 'Language';
