@@ -142,6 +142,10 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// default mode
+$filemode = 0644;
+$dirmode = 0755;
+
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__ . '/config.php';
@@ -658,6 +662,9 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         }
 
         if ($success) {
+            $success = chmod($temp_file, $filemode);
+        }
+        if ($success) {
             $success = rename($temp_file, strtok(get_file_path(), '?'));
         }
 
@@ -710,6 +717,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
             if (!file_exists($path . '/' . $new)) {
                 if (fm_is_valid_ext($new)) {
                     @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
+                    chmod($path . '/' . $new, $filemode);
                     fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
                 } else {
                     fm_set_msg(lng('File extension is not allowed'), 'error');
@@ -719,6 +727,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
             }
         } else {
             if (fm_mkdir($path . '/' . $new, false) === true) {
+                chmod($path . '/' . $new, $dirmode);
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
             } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
