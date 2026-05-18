@@ -2498,6 +2498,10 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
         if (!fm_mkdir($dest, $force)) {
             return false;
         }
+        $mode = fileperms($path);
+        if ($mode !== false) {
+            chmod($dest, $mode);
+        }
 
         $objects = array_diff(scandir($path), ['.', '..']);
 
@@ -2548,6 +2552,11 @@ function fm_copy($f1, $f2, $upd)
         $time2 = filemtime($f2);
         if ($time2 >= $time1 && $upd) {
             return false;
+        }
+    } else{
+        $mode = fileperms($f1);
+        if ($mode !== false) {
+            chmod($f2, $mode);
         }
     }
     $ok = copy($f1, $f2);
