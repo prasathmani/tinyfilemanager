@@ -2944,6 +2944,8 @@ function fm_get_file_icon_class($path)
         case 'gitignore':
         case 'c':
         case 'cpp':
+        case 'h':
+        case 'hpp':
         case 'cs':
         case 'py':
         case 'rs':
