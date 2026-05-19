@@ -813,9 +813,9 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
                 $loop_count++;
             }
             if (fm_rcopy($from, $fn_duplicate, False)) {
-                fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
+                fm_set_msg(sprintf(lng('Copied from').' <b>%s</b> '.lng('to').' <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
             } else {
-                fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
+                fm_set_msg(sprintf(lng('Error while copying from').' <b>%s</b> '.lng('to').' <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
             }
         } else {
             fm_set_msg(lng('Paths must be not equal'), 'alert');
@@ -1845,7 +1845,7 @@ if (isset($_GET['view'])) {
                     <button type="submit" class="btn btn-link btn-sm text-decoration-none fw-bold p-0"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></button> &nbsp;
                 </form>
                 <?php if (!FM_READONLY): ?>
-                    <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
+                    <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> <?php echo lng("Delete"); ?></a>
                 <?php endif; ?>
                 <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 <?php
@@ -2675,19 +2675,19 @@ function fm_get_display_path($file_path)
     switch ($path_display_mode) {
         case 'relative':
             return array(
-                'label' => 'Path',
+                'label' => lng('Path'),
                 'path' => fm_enc(fm_convert_win(str_replace($root_path, '', $file_path)))
             );
         case 'host':
             $relative_path = str_replace($root_path, '', $file_path);
             return array(
-                'label' => 'Host Path',
+                'label' => lng('Host Path'),
                 'path' => fm_enc(fm_convert_win('/' . $root_url . '/' . ltrim(str_replace('\\', '/', $relative_path), '/')))
             );
         case 'full':
         default:
             return array(
-                'label' => 'Full Path',
+                'label' => lng('Full Path'),
                 'path' => fm_enc(fm_convert_win($file_path))
             );
     }
