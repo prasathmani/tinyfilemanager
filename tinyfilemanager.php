@@ -4839,6 +4839,7 @@ function fm_show_header_login()
      */
     function fm_show_footer()
     {
+        global $ext_language;
         ?>
         </div>
         <?php print_external('js-jquery'); ?>
