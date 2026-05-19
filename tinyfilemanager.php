@@ -5619,11 +5619,12 @@ function fm_show_header_login()
         $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
         $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';
         $tr['en']['File or folder with this path already exists']   = 'File or folder with this path already exists';
-        $tr['en']['Are you sure want to rename?']                   = 'Are you sure want to rename?';
+        $tr['en']['Are you sure want to rename?']                   = 'Are you sure you want to rename?';
         $tr['en']['Are you sure want to']                           = 'Are you sure want to';
         $tr['en']['Date Modified']                                  = 'Date Modified';
         $tr['en']['File size']                                      = 'File size';
         $tr['en']['MIME-type']                                      = 'MIME-type';
+        $tr['en']['a files']                                        = 'files';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
