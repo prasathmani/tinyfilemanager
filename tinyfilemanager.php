@@ -142,6 +142,22 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// extension => language for advanced editor
+$ext_language = array(
+    'js' => 'javascript',
+    'ts' => 'typescript',
+    'py' => 'python',
+    'c' => 'c_cpp',
+    'h' => 'c_cpp',
+    'cpp' => 'c_cpp',
+    'hpp' => 'c_cpp',
+    'rs' => 'rust',
+    'yml' => 'yaml',
+    'bat' => 'batchfile',
+    'go' => 'golang',
+    'md' => 'markdown',
+);
+
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__ . '/config.php';
@@ -2944,6 +2960,8 @@ function fm_get_file_icon_class($path)
         case 'gitignore':
         case 'c':
         case 'cpp':
+        case 'h':
+        case 'hpp':
         case 'cs':
         case 'py':
         case 'rs':
@@ -5167,7 +5185,7 @@ function fm_show_header_login()
 
         <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
             $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
-            $ext =  $ext == "js" ? "javascript" :  $ext;
+            $ext =  isset($ext_language[$ext]) ? $ext_language[$ext] :  $ext;
         ?>
             <?php print_external('js-ace'); ?>
             <script>
