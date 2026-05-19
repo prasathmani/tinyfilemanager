@@ -1777,7 +1777,7 @@ if (isset($_GET['view'])) {
     } elseif ($ext == 'zip' || $ext == 'tar') {
         $is_zip = true;
         $view_title = 'Archive';
-        $filenames = fm_get_zif_info($file_path, $ext);
+        $filenames = fm_get_zip_info($file_path, $ext);
     } elseif (in_array($ext, fm_get_image_exts())) {
         $is_image = true;
         $view_title = 'Image';
@@ -2808,7 +2808,7 @@ function fm_get_filesize($size)
  * @param string $path
  * @return array|bool
  */
-function fm_get_zif_info($path, $ext)
+function fm_get_zip_info($path, $ext)
 {
     if ($ext == 'zip' && function_exists('zip_open')) {
         $arch = @zip_open($path);
