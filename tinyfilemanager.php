@@ -417,7 +417,7 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
 }
 
 // update path display mode
-if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged']) {
+if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
     $path_display_mode = isset($path_display_mode_users[$_SESSION[FM_SESSION_ID]['logged']]) ? $path_display_mode_users[$_SESSION[FM_SESSION_ID]['logged']] : $path_display_mode;
 }
 // clean and check $root_path
