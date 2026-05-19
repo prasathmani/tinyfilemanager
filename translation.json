@@ -903,7 +903,6 @@
         "Are you sure want to rename?": "Wirklich umbenennen?",
         "Enter new file name": "Neuen Dateinamen eingeben",
         "Are you sure want to": "",
-        "Cancel": "Abbrechen",
         "Sometimes the save action may not work on the first try, so please attempt it again": "Zweimal speichern, falls die Änderungen nicht übernommen werden",
         "Upload from URL": "Upload von URL",
         "Enter here...": "Hier eingeben..."
@@ -986,7 +985,6 @@
         "Perms": "权限",
         "Modified": "修改时间",
         "Owner": "拥有者",
-        "Search": "查找",
         "NewItem": "创建新文件/文件夹",
         "Folder": "文件夹",
         "Delete": "删除",
@@ -1107,7 +1105,6 @@
         "Total size": "总大小",
         "Compression": "压缩",
         "Size in archive": "存档中的大小",
-        "Invalid Token.": "无效令牌",
         "Fullscreen": "全屏",
         "Search": "搜索",
         "Word Wrap": "自动换行",
