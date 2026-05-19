@@ -156,6 +156,10 @@ $ext_language = array(
     'bat' => 'batchfile',
     'go' => 'golang',
     'md' => 'markdown',
+    'hbs' => 'handlebars',
+    'cs' => 'csharp',
+    'ps1' => 'powershell',
+    'htm' => 'html',
 );
 
 // if User has the external config file, try to use it to override the default config above [config.php]
@@ -3203,6 +3207,8 @@ function fm_get_text_exts()
         'scss',
         'c',
         'cpp',
+        'h',
+        'hpp',
         'cs',
         'py',
         'go',
