@@ -3203,6 +3203,8 @@ function fm_get_text_exts()
         'scss',
         'c',
         'cpp',
+        'h',
+        'hpp',
         'cs',
         'py',
         'go',
