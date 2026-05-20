@@ -160,6 +160,7 @@ $ext_language = array(
     'cs' => 'csharp',
     'ps1' => 'powershell',
     'htm' => 'html',
+    'htaccess' => 'apache_conf',
 );
 
 // if User has the external config file, try to use it to override the default config above [config.php]
@@ -4838,6 +4839,7 @@ function fm_show_header_login()
      */
     function fm_show_footer()
     {
+        global $ext_language;
         ?>
         </div>
         <?php print_external('js-jquery'); ?>
