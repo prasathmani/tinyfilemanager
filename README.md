@@ -33,6 +33,12 @@ For clients that cannot send custom HTTP headers (for example Joyee), use `joyee
 - Joyee Bridge uses a dedicated workspace root (default `Joyee/`) configured by `$joyee_bridge_root_path`.
 - Use only over HTTPS.
 
+## Joyee Probe
+
+- `joyee-probe.php` is a public diagnostic endpoint without token/auth.
+- It does not grant any permissions and does not expose secrets.
+- It is used only to verify domain reachability for ChatGPT/Joyee runtime.
+
 [![Tiny File Manager](screenshot.gif)](screenshot.gif)
 
 ## Requirements
