@@ -373,6 +373,194 @@ function api_assistant_collect_files($api_root, $requested_files, $max_files, $m
     );
 }
 
+function api_assistant_scope_root($api_root)
+{
+    if (isset($GLOBALS['assistant_root_path']) && trim((string) $GLOBALS['assistant_root_path']) !== '') {
+        return api_real_root((string) $GLOBALS['assistant_root_path']);
+    }
+    return $api_root;
+}
+
+function api_assistant_target_path($assistant_scope_root, $path)
+{
+    $relative = api_normalize_relative_path($path);
+    $root_real = api_real_root($assistant_scope_root);
+    $target = api_path_join($root_real, $relative);
+
+    if ($target !== $root_real && strpos($target, $root_real . DIRECTORY_SEPARATOR) !== 0) {
+        api_error('Target path is outside assistant root.', 403, array('path' => $relative));
+    }
+
+    return array($target, $relative);
+}
+
+function api_assistant_apply_operations($assistant_scope_root, $operations, $require_confirmation = false, $confirmed = array())
+{
+    if (!is_array($operations) || empty($operations)) {
+        api_error('Missing operations payload.', 400);
+    }
+
+    $confirmed_map = array();
+    if ($require_confirmation) {
+        foreach ((array) $confirmed as $confirmed_index) {
+            $confirmed_map[(int) $confirmed_index] = true;
+        }
+    }
+
+    $results = array();
+    $applied_count = 0;
+
+    foreach ($operations as $index => $operation) {
+        if (!is_array($operation)) {
+            api_error('Invalid operation item.', 400);
+        }
+
+        if ($require_confirmation && !isset($confirmed_map[(int) $index])) {
+            $results[] = array(
+                'index' => (int) $index,
+                'action' => isset($operation['action']) ? strtolower(trim((string) $operation['action'])) : 'write',
+                'status' => 'skipped',
+            );
+            continue;
+        }
+
+        $action = isset($operation['action']) ? strtolower(trim((string) $operation['action'])) : '';
+        if ($action === '') {
+            $action = 'write';
+        }
+
+        switch ($action) {
+            case 'write':
+                if (!isset($operation['path']) || trim((string) $operation['path']) === '') {
+                    api_error('Write path is required.', 400);
+                }
+                list($write_target, $write_relative) = api_assistant_target_path($assistant_scope_root, (string) $operation['path']);
+                $write_parent = dirname($write_target);
+                if (!is_dir($write_parent) && !mkdir($write_parent, 0775, true)) {
+                    api_error('Unable to create parent directory for write operation.', 500, array('path' => $write_relative));
+                }
+                $write_content = isset($operation['content']) ? (string) $operation['content'] : '';
+                $write_bytes = file_put_contents($write_target, $write_content, LOCK_EX);
+                if ($write_bytes === false) {
+                    api_error('Unable to apply write operation.', 500, array('path' => $write_relative));
+                }
+                $results[] = array(
+                    'index' => (int) $index,
+                    'action' => 'write',
+                    'path' => $write_relative,
+                    'bytes' => $write_bytes,
+                    'status' => 'applied',
+                );
+                $applied_count++;
+                break;
+
+            case 'mkdir':
+                if (!isset($operation['path']) || trim((string) $operation['path']) === '') {
+                    api_error('Mkdir path is required.', 400);
+                }
+                list($mkdir_target, $mkdir_relative) = api_assistant_target_path($assistant_scope_root, (string) $operation['path']);
+                $mkdir_created = false;
+                if (!is_dir($mkdir_target)) {
+                    if (!mkdir($mkdir_target, 0775, true)) {
+                        api_error('Unable to create directory.', 500, array('path' => $mkdir_relative));
+                    }
+                    $mkdir_created = true;
+                }
+                $results[] = array(
+                    'index' => (int) $index,
+                    'action' => 'mkdir',
+                    'path' => $mkdir_relative,
+                    'created' => $mkdir_created,
+                    'status' => 'applied',
+                );
+                $applied_count++;
+                break;
+
+            case 'delete':
+                if (!isset($operation['path']) || trim((string) $operation['path']) === '') {
+                    api_error('Delete path is required.', 400);
+                }
+                $delete_target = api_resolve_existing_path($assistant_scope_root, (string) $operation['path']);
+                if ($delete_target === api_real_root($assistant_scope_root)) {
+                    api_error('Refusing to delete assistant root.', 403);
+                }
+                if (!api_delete_recursive($delete_target)) {
+                    api_error('Unable to delete path.', 500, array('path' => api_normalize_relative_path((string) $operation['path'])));
+                }
+                $results[] = array(
+                    'index' => (int) $index,
+                    'action' => 'delete',
+                    'path' => api_normalize_relative_path((string) $operation['path']),
+                    'status' => 'applied',
+                );
+                $applied_count++;
+                break;
+
+            case 'move':
+            case 'rename':
+                if (!isset($operation['from']) || !isset($operation['to'])) {
+                    api_error('Move operation requires from and to paths.', 400);
+                }
+                $move_from = api_resolve_existing_path($assistant_scope_root, (string) $operation['from']);
+                list($move_to, $move_to_relative) = api_assistant_target_path($assistant_scope_root, (string) $operation['to']);
+                $move_parent = dirname($move_to);
+                if (!is_dir($move_parent) && !mkdir($move_parent, 0775, true)) {
+                    api_error('Unable to create destination directory.', 500, array('to' => $move_to_relative));
+                }
+                if (!rename($move_from, $move_to)) {
+                    api_error('Unable to move path.', 500, array(
+                        'from' => api_normalize_relative_path((string) $operation['from']),
+                        'to' => $move_to_relative,
+                    ));
+                }
+                $results[] = array(
+                    'index' => (int) $index,
+                    'action' => 'move',
+                    'from' => api_normalize_relative_path((string) $operation['from']),
+                    'to' => $move_to_relative,
+                    'status' => 'applied',
+                );
+                $applied_count++;
+                break;
+
+            case 'copy':
+                if (!isset($operation['from']) || !isset($operation['to'])) {
+                    api_error('Copy operation requires from and to paths.', 400);
+                }
+                $copy_from = api_resolve_existing_path($assistant_scope_root, (string) $operation['from']);
+                list($copy_to, $copy_to_relative) = api_assistant_target_path($assistant_scope_root, (string) $operation['to']);
+                $copy_parent = dirname($copy_to);
+                if (!is_dir($copy_parent) && !mkdir($copy_parent, 0775, true)) {
+                    api_error('Unable to create destination directory.', 500, array('to' => $copy_to_relative));
+                }
+                if (!api_copy_recursive($copy_from, $copy_to)) {
+                    api_error('Unable to copy path.', 500, array(
+                        'from' => api_normalize_relative_path((string) $operation['from']),
+                        'to' => $copy_to_relative,
+                    ));
+                }
+                $results[] = array(
+                    'index' => (int) $index,
+                    'action' => 'copy',
+                    'from' => api_normalize_relative_path((string) $operation['from']),
+                    'to' => $copy_to_relative,
+                    'status' => 'applied',
+                );
+                $applied_count++;
+                break;
+
+            default:
+                api_error('Unsupported assistant operation.', 400, array('action' => $action));
+        }
+    }
+
+    if ($require_confirmation && $applied_count === 0) {
+        api_error('No operations were confirmed for apply.', 400);
+    }
+
+    return $results;
+}
+
 $config_file = __DIR__ . '/config.php';
 if (is_file($config_file)) {
     require $config_file;
@@ -621,7 +809,9 @@ switch ($action) {
             ? trim((string) $assistant_system_prompt)
             : 'You are a careful coding assistant for Tiny File Manager. Work only with the files provided in context, explain changes clearly, and avoid assuming access to anything outside the configured project root.';
 
-        $file_context = api_assistant_collect_files($api_root, $requested_files, $max_files, $max_file_bytes, $allowed_extensions);
+        $assistant_scope_root = api_assistant_scope_root($api_root);
+
+        $file_context = api_assistant_collect_files($assistant_scope_root, $requested_files, $max_files, $max_file_bytes, $allowed_extensions);
 
         $messages = array(
             array(
@@ -680,6 +870,25 @@ switch ($action) {
             'reply' => $assistant_reply,
             'model' => $assistant_model,
             'files' => $file_context['files'],
+        ));
+        break;
+
+    case 'assistant_apply':
+        api_require_capability($capabilities, 'assistant');
+
+        if (empty($assistant_enabled)) {
+            api_error('Assistant is disabled.', 403);
+        }
+
+        $assistant_scope_root = api_assistant_scope_root($api_root);
+        $operations = isset($input['operations']) ? $input['operations'] : (isset($input['edits']) ? $input['edits'] : null);
+        $require_confirmation = !empty($input['require_confirmation']);
+        $confirmed = isset($input['confirmed']) ? $input['confirmed'] : array();
+        $results = api_assistant_apply_operations($assistant_scope_root, $operations, $require_confirmation, $confirmed);
+
+        api_json_response(true, array(
+            'applied' => true,
+            'operations' => $results,
         ));
         break;
 

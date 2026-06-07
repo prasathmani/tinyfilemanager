@@ -29,6 +29,7 @@ $api_tokens = array(
 // Copy this file to api.config.php on the server and keep the real API key there only.
 $assistant_enabled = true;
 $assistant_openai_api_key = 'replace_with_real_openai_api_key';
+$assistant_root_path = __DIR__ . '/Joyee';
 $assistant_openai_model = 'gpt-4o-mini';
 $assistant_openai_base_url = 'https://api.openai.com/v1';
 $assistant_openai_temperature = 0.2;
