@@ -22,6 +22,16 @@ Featuring syntax highlighting for over 150 languages and more than 35 themes, Ti
 
 Tinyfilemanager is highly documented on the [wiki pages](https://github.com/prasathmani/tinyfilemanager/wiki).
 
+## Joyee Bridge
+
+For clients that cannot send custom HTTP headers (for example Joyee), use `joyee-bridge.php` with a dedicated bridge key.
+
+- `joyee-bridge.php?action=ping&bridge_key=...`
+- `joyee-bridge.php?action=list&path=&bridge_key=...`
+- The real API token stays only in `joyee-bridge.config.php`.
+- The bridge key must never be the same value as the API token.
+- Use only over HTTPS.
+
 [![Tiny File Manager](screenshot.gif)](screenshot.gif)
 
 ## Requirements
