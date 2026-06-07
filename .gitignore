@@ -6,3 +6,6 @@ uploads/
 
 # Local Joyee bridge secrets (server-only)
 joyee-bridge.config.php
+
+# Generated ChatGPT source manifest with live machine token
+chatgpt-source-joyee.md
