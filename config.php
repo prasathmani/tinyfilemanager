@@ -61,7 +61,7 @@ $directories_users = array(
     'kristian'   => __DIR__ . '/Mirko/BARMO',
     'supplier1' => __DIR__ . '/uploads/supplier1',
     'supplier2' => __DIR__ . '/uploads/supplier2',
-    'joyee' => __DIR__ . '/uploads/joyee',
+    'joyee' => __DIR__ . '/Joyee',
     // Príklad používateľa s viacerými projektmi:
      'marian' => array(
          __DIR__ . '/Mirko/Nemocnica PP',
