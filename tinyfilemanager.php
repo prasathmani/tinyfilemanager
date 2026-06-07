@@ -113,7 +113,7 @@ $exclude_items = array();
 $online_viewer = 'google';
 
 // DOCX preview mode for built-in viewer.
-// auto      => try local docx-preview, fallback to Microsoft viewer on error
+// auto      => use Microsoft viewer (most reliable default)
 // local     => force local docx-preview only
 // microsoft => force Microsoft viewer iframe
 $docx_preview_mode = 'auto';
