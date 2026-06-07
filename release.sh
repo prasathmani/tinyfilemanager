@@ -4,7 +4,7 @@ set -euo pipefail
 # Build a versioned release ZIP from tracked repository files.
 # Usage:
 #   ./release.sh                # uses version from RELEASE_VERSION
-#   ./release.sh 1.2.0          # uses provided version and updates RELEASE_VERSION
+#   ./release.sh 1.2.0          # uses provided version, then updates RELEASE_VERSION after clean-tree check
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
@@ -19,13 +19,11 @@ fi
 
 if [[ $# -eq 1 ]]; then
   VERSION="$1"
-  echo "$VERSION" > "$VERSION_FILE"
 else
   if [[ -f "$VERSION_FILE" ]]; then
     VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
   else
     VERSION="$DEFAULT_VERSION"
-    echo "$VERSION" > "$VERSION_FILE"
   fi
 fi
 
@@ -34,16 +32,21 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
-
 if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
   echo "Error: invalid version '$VERSION'. Expected e.g. 1.1, 1.1.0 or 1.1-rc1." >&2
   exit 1
 fi
 
-# Ensure git working tree is clean
+# Ensure git working tree is clean before this script changes anything.
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "Error: git working tree is not clean. Commit or stash your changes before releasing." >&2
+  git status --short >&2
   exit 1
+fi
+
+# Persist requested/default version only after clean-tree check.
+if [[ $# -eq 1 || ! -f "$VERSION_FILE" ]]; then
+  echo "$VERSION" > "$VERSION_FILE"
 fi
 
 OUT_DIR="$ROOT_DIR/releases"
@@ -62,7 +65,6 @@ if [[ ! -s "$TMP_LIST" ]]; then
   echo "Error: no tracked files found to package." >&2
   exit 1
 fi
-
 
 # PHP lint all PHP files before packaging
 while IFS= read -r file; do
