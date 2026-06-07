@@ -24,6 +24,7 @@ $auth_users = array(
     'kristian'   => '$2y$10$UGPcbNMYVQv5p66bhyvQeuH6..JmXmdkF7fdpOqdTwKAluBywKyDC',//Kristian01
     'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy', //Fero01
     'marian'   => '$2y$10$1bqqSfV0RrNerti7upxoOui77TBWQZQTVnxHbvCxqjhQ.JTNvFzSG', //Marian01    
+    'joyee'    => '$2y$10$a3Zsg8cx3dMFHfwP5SymIe.gG09/rUd0gZwkTAo5lSTpPMKT5aF56',
 
     // Dodávatelia – môžu len sťahovať/prezerať, len svoj priečinok
     'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
@@ -39,16 +40,16 @@ $readonly_users = array(
 
 // Upload-only: môžu nahrávať + sťahovať, nemôžu mazať/editovať/premenovávať
 $upload_only_users = array(
-    'šaňo',
-    'kristián',
-    'marián',
+    'sano',
+    'kristian',
+    'marian',
     'fero',
 );
 
 // Manager: môžu všetko okrem mazania
 $manager_users = array(
-    'rehák',
-    'bílek',
+    'rehak',
+    'bilek',
 );
 
 // --- IZOLOVANÉ PRIEČINKY / PROJEKTY ---
@@ -56,12 +57,13 @@ $manager_users = array(
 // Manažéri a admin tu nemajú záznam – vidia celý root_path.
 // Cesty musia existovať na disku a webserver musí mať práva na zápis.
 $directories_users = array(
-    'šaňo'   => __DIR__ . '/Mirko/BARMO',
-    'kristián'   => __DIR__ . '/Mirko/BARMO',
+    'sano'   => __DIR__ . '/Mirko/BARMO',
+    'kristian'   => __DIR__ . '/Mirko/BARMO',
     'supplier1' => __DIR__ . '/uploads/supplier1',
     'supplier2' => __DIR__ . '/uploads/supplier2',
+    'joyee' => __DIR__ . '/uploads/joyee',
     // Príklad používateľa s viacerými projektmi:
-     'marián' => array(
+     'marian' => array(
          __DIR__ . '/Mirko/Nemocnica PP',
          __DIR__ . '/Mirko/free',
      ),
@@ -71,6 +73,11 @@ $directories_users = array(
 
 // Koreňový priečinok pre admin a manažérov
 $root_path = __DIR__ . '/Mirko';
+
+// Machine/API login cez URL token (napr. ?machine_token=...)
+// Token držte iba v tomto lokálnom configu; prázdne = vypnuté.
+$machine_login_user = 'joyee';
+$machine_login_token = 'ba7596c5cf28924f0a497a81af62ea713d2836eb3b5939dd9d1d64b726bd81f1';
 
 // Maximálna veľkosť uploadu (~5 GB)
 $max_upload_size_bytes = 5000000000;

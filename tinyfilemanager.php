@@ -325,7 +325,7 @@ if ($use_auth && isset($_GET['machine_token'])) {
 
         $target_path = isset($_GET['p']) ? fm_clean_path((string) $_GET['p']) : '';
         fm_set_msg(lng('You are logged in'));
-        fm_redirect(FM_SELF_URL . '?p=' . urlencode($target_path));
+        fm_redirect('?p=' . urlencode($target_path));
     }
 
     if (class_exists('AuditLogger')) {
@@ -334,7 +334,7 @@ if ($use_auth && isset($_GET['machine_token'])) {
     }
 
     fm_set_msg('Machine login failed.', 'error');
-    fm_redirect(FM_SELF_URL . '?p=' . urlencode(isset($_GET['p']) ? fm_clean_path((string) $_GET['p']) : ''));
+    fm_redirect('?p=' . urlencode(isset($_GET['p']) ? fm_clean_path((string) $_GET['p']) : ''));
 }
 
 $forwarded_proto = '';
