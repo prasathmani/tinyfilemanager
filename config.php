@@ -77,7 +77,7 @@ $root_path = __DIR__ . '/Mirko';
 // Machine/API login cez URL token (napr. ?machine_token=...)
 // Token držte iba v tomto lokálnom configu; prázdne = vypnuté.
 $machine_login_user = 'joyee';
-$machine_login_token = 'ba7596c5cf28924f0a497a81af62ea713d2836eb3b5939dd9d1d64b726bd81f1';
+$machine_login_token = 'ba7596c5cf28924f0a497a81af62ea713d2836eb3b5939dd9d1d64b726bd81f1'; //Slavio&Joyee_260607
 
 // Maximálna veľkosť uploadu (~5 GB)
 $max_upload_size_bytes = 5000000000;
