@@ -112,6 +112,12 @@ $exclude_items = array();
 // false => disable online doc viewer
 $online_viewer = 'google';
 
+// DOCX preview mode for built-in viewer.
+// auto      => try local docx-preview, fallback to Microsoft viewer on error
+// local     => force local docx-preview only
+// microsoft => force Microsoft viewer iframe
+$docx_preview_mode = 'auto';
+
 // Sticky Nav bar
 // true => enable sticky header
 // false => disable sticky header
@@ -572,6 +578,9 @@ if ($use_auth) {
                         <div class="footer text-center">
                             &mdash;&mdash; &copy;
                             <a href="<?php echo LOGIN_COMPANY_URL; ?>" target="_blank" class="text-decoration-none text-muted" data-version="<?php echo VERSION; ?>"><?php echo LOGIN_COMPANY_NAME; ?></a> &mdash;&mdash;
+                            <div class="login-version">
+                                Verzia: <?php echo htmlspecialchars(fm_get_release_version(), ENT_QUOTES, 'UTF-8'); ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -649,6 +658,11 @@ defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extens
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items) : $exclude_items));
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
+$docx_preview_mode = strtolower(trim((string) $docx_preview_mode));
+if (!in_array($docx_preview_mode, array('auto', 'local', 'microsoft'), true)) {
+    $docx_preview_mode = 'auto';
+}
+defined('FM_DOCX_PREVIEW_MODE') || define('FM_DOCX_PREVIEW_MODE', $docx_preview_mode);
 define('FM_READONLY', $global_readonly || ($use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users)));
 define('FM_UPLOAD_ONLY', $use_auth && !empty($upload_only_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $upload_only_users));
 define('FM_MANAGER', $use_auth && !empty($manager_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $manager_users));
@@ -1865,6 +1879,27 @@ function fm_get_zif_info($path, $ext)
 function fm_enc($text)
 {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Read release version from RELEASE_VERSION in project root.
+ *
+ * @return string
+ */
+function fm_get_release_version()
+{
+    $version_file = __DIR__ . '/RELEASE_VERSION';
+
+    if (!is_file($version_file) || !is_readable($version_file)) {
+        return 'neznáma';
+    }
+
+    $version = trim((string) @file_get_contents($version_file));
+    if ($version === '') {
+        return 'neznáma';
+    }
+
+    return $version;
 }
 
 /**

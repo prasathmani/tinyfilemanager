@@ -96,9 +96,13 @@
                     $office_txt_render_error = json_encode(lng('OfficeRenderError'));
                     $office_txt_lib_docx_error = json_encode(lng('OfficeLibraryLoadErrorDocx'));
                     $office_txt_lib_xlsx_error = json_encode(lng('OfficeLibraryLoadErrorXlsx'));
+                    $docx_preview_mode = defined('FM_DOCX_PREVIEW_MODE') ? FM_DOCX_PREVIEW_MODE : 'auto';
 
                     $word_exts  = array('doc', 'docx');
                     $excel_exts = array('xls', 'xlsx', 'xlsm', 'xlsb');
+
+                    $office_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                    $microsoft_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($office_preview_url);
 
                     echo '<div class="mb-2">'
                         . '<form method="post" class="d-inline" action="?p=' . urlencode(FM_PATH) . '&amp;dl=' . urlencode($file) . '">'
@@ -108,39 +112,63 @@
                         . '</div>';
 
                     if (in_array($ext, $word_exts, true)) {
-                        echo '<div id="office-viewer-wrap" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;overflow:auto;background:#fff;padding:8px;">'
-                            . '<div id="office-viewer-msg" style="padding:20px;color:#6c757d;">' . lng('OfficeLoadingDocument') . '</div>'
-                            . '</div>';
-                        echo '<script>'
-                            . 'document.addEventListener("DOMContentLoaded",function(){'
-                            .   'var wrap=document.getElementById("office-viewer-wrap");'
-                            .   'var msg=document.getElementById("office-viewer-msg");'
-                            .   'var url=' . $local_preview_url_json . ';'
-                            .   'var txtLoadErr=' . $office_txt_load_error . ';'
-                            .   'var txtRenderErr=' . $office_txt_render_error . ';'
-                            .   'var txtLibErr=' . $office_txt_lib_docx_error . ';'
-                            .   'function run(){'
-                            .     'fetch(url,{credentials:"same-origin"})'
-                            .       '.then(function(r){return r.arrayBuffer();})'
-                            .       '.then(function(buf){'
-                            .         'msg.remove();'
-                            .         'if(typeof docx!=="undefined" && typeof docx.renderAsync==="function"){'
-                            .           'docx.renderAsync(buf,wrap,null,{className:"docx-render",inWrapper:false})'
-                            .             '.catch(function(e){wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtRenderErr+": "+e+"</p>";});'
-                            .         '}else{wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtLibErr+"</p>";}'
-                            .       '})'
-                            .       '.catch(function(e){msg.textContent=txtLoadErr+": "+e;});'
-                            .   '}'
-                            .   'if(typeof docx!=="undefined" && typeof docx.renderAsync==="function"){run();}'
-                            .   'else{'
-                            .     'var s=document.createElement("script");'
-                            .     's.src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js";'
-                            .     's.onload=run;'
-                            .     's.onerror=function(){msg.textContent=txtLibErr;};'
-                            .     'document.head.appendChild(s);'
-                            .   '}'
-                            . '});'
-                            . '</script>';
+                        if ($docx_preview_mode === 'microsoft') {
+                            echo '<iframe src="' . fm_enc($microsoft_src) . '" frameborder="no" style="width:100%;min-height:520px"></iframe>';
+                        } else {
+                            echo '<div id="office-viewer-wrap" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;overflow:auto;background:#fff;padding:8px;">'
+                                . '<div id="office-viewer-msg" style="padding:20px;color:#6c757d;">' . lng('OfficeLoadingDocument') . '</div>'
+                                . '</div>';
+                            echo '<script>'
+                                . 'document.addEventListener("DOMContentLoaded",function(){'
+                                .   'var wrap=document.getElementById("office-viewer-wrap");'
+                                .   'var msg=document.getElementById("office-viewer-msg");'
+                                .   'var url=' . $local_preview_url_json . ';'
+                                .   'var microsoftSrc=' . json_encode($microsoft_src) . ';'
+                                .   'var mode=' . json_encode($docx_preview_mode) . ';'
+                                .   'var txtLoadErr=' . $office_txt_load_error . ';'
+                                .   'var txtRenderErr=' . $office_txt_render_error . ';'
+                                .   'var txtLibErr=' . $office_txt_lib_docx_error . ';'
+                                .   'function fallbackToMicrosoft(reason){'
+                                .     'if(mode!=="auto"){'
+                                .       'if(msg){msg.textContent=reason;}'
+                                .       'return;'
+                                .     '}'
+                                .     'wrap.innerHTML="<iframe src=\""+microsoftSrc+"\" frameborder=\"no\" style=\"width:100%;min-height:520px\"></iframe>";'
+                                .   '}'
+                                .   'function run(){'
+                                .     'fetch(url,{credentials:"same-origin"})'
+                                .       '.then(function(r){'
+                                .         'if(!r.ok){throw new Error("HTTP "+r.status);}'
+                                .         'return r.arrayBuffer();'
+                                .       '})'
+                                .       '.then(function(buf){'
+                                .         'if(msg){msg.remove();}'
+                                .         'if(typeof docx!=="undefined" && typeof docx.renderAsync==="function"){'
+                                .           'docx.renderAsync(buf,wrap,null,{className:"docx-render",inWrapper:false})'
+                                .             '.catch(function(e){'
+                                .               'if(mode==="auto"){fallbackToMicrosoft(txtRenderErr+": "+e);}else{wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtRenderErr+": "+e+"</p>";}'
+                                .             '});'
+                                .         '}else{'
+                                .           'if(mode==="auto"){fallbackToMicrosoft(txtLibErr);}else{wrap.innerHTML="<p style=\'padding:16px;color:red;\'>"+txtLibErr+"</p>";}'
+                                .         '}'
+                                .       '})'
+                                .       '.catch(function(e){'
+                                .         'if(mode==="auto"){fallbackToMicrosoft(txtLoadErr+": "+e);}else if(msg){msg.textContent=txtLoadErr+": "+e;}'
+                                .       '});'
+                                .   '}'
+                                .   'if(typeof docx!=="undefined" && typeof docx.renderAsync==="function"){run();}'
+                                .   'else{'
+                                .     'var s=document.createElement("script");'
+                                .     's.src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js";'
+                                .     's.onload=run;'
+                                .     's.onerror=function(){'
+                                .       'if(mode==="auto"){fallbackToMicrosoft(txtLibErr);}else if(msg){msg.textContent=txtLibErr;}'
+                                .     '};'
+                                .     'document.head.appendChild(s);'
+                                .   '}'
+                                . '});'
+                                . '</script>';
+                        }
                     } elseif (in_array($ext, $excel_exts, true)) {
                         echo '<div style="width:100%;border:1px solid #dee2e6;border-radius:4px;background:#fff;">'
                             . '<div id="xlsx-sheet-tabs" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;border-bottom:1px solid #dee2e6;background:#f8f9fa;"></div>'

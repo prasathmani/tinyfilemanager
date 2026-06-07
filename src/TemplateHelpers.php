@@ -247,6 +247,12 @@ function fm_show_header_login()
                 text-align: center
             }
 
+            .fm-login-page .login-version {
+                margin-top: 4px;
+                font-size: 12px;
+                opacity: 0.7;
+            }
+
             @media screen and (max-width:425px) {
                 .fm-login-page .card-wrapper {
                     width: 90%;
