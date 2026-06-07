@@ -84,16 +84,14 @@ mkdir -p "$OUT_DIR"
 # Package tracked files to avoid accidental local artifacts.
 # Never include previously generated release archives.
 # Exclude development-only directories from production release bundles.
+# Private deployment config files are intentionally included in private release builds when present.
 git -C "$ROOT_DIR" ls-files | grep -Ev '^(releases/|\.github/|tests/|docs/archive/|DOCS_AUDIT\.md$|ROADMAP_DREMONT\.md$|SMOKE_TEST_2\.9\.19\.md$|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' > "$TMP_LIST"
 
-if [[ "$INCLUDE_LOCAL_CONFIG" == true ]]; then
-  if [[ -f "$ROOT_DIR/api.config.php" ]]; then
-    echo "api.config.php" >> "$TMP_LIST"
+for local_config in api.config.php joyee-bridge.config.php; do
+  if [[ -f "$ROOT_DIR/$local_config" ]]; then
+    grep -qxF "$local_config" "$TMP_LIST" || echo "$local_config" >> "$TMP_LIST"
   fi
-  if [[ -f "$ROOT_DIR/joyee-bridge.config.php" ]]; then
-    echo "joyee-bridge.config.php" >> "$TMP_LIST"
-  fi
-fi
+done
 
 if [[ ! -s "$TMP_LIST" ]]; then
   echo "Error: no tracked files found to package." >&2
