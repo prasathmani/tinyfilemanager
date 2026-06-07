@@ -24,7 +24,7 @@ $auth_users = array(
     'kristian'   => '$2y$10$UGPcbNMYVQv5p66bhyvQeuH6..JmXmdkF7fdpOqdTwKAluBywKyDC',//Kristian01
     'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy', //Fero01
     'marian'   => '$2y$10$1bqqSfV0RrNerti7upxoOui77TBWQZQTVnxHbvCxqjhQ.JTNvFzSG', //Marian01    
-    'joyee'    => '$2y$10$a3Zsg8cx3dMFHfwP5SymIe.gG09/rUd0gZwkTAo5lSTpPMKT5aF56',
+    'joyee'    => '$2y$10$xNI0mSWtiduj8l0.fb4wJe5ybaFxLP7BlqwFhYPTs5.34QLUO.yai',
 
     // Dodávatelia – môžu len sťahovať/prezerať, len svoj priečinok
     'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
