@@ -224,16 +224,28 @@ if (is_file($config_file)) {
     require $config_file;
 }
 
+if (!isset($api_tokens) || !is_array($api_tokens)) {
+    $api_tokens = array();
+}
+
 $api_config_file = __DIR__ . '/api.config.php';
 if (is_file($api_config_file)) {
     require $api_config_file;
+}
+
+if (!isset($api_tokens) || !is_array($api_tokens)) {
+    $api_tokens = array();
+}
+
+if (isset($api_extra_tokens) && is_array($api_extra_tokens)) {
+    $api_tokens = array_merge($api_tokens, $api_extra_tokens);
 }
 
 if (empty($api_enabled)) {
     api_error('API is disabled.', 403);
 }
 
-if (empty($api_tokens) || !is_array($api_tokens)) {
+if (empty($api_tokens)) {
     api_error('No API tokens configured.', 500);
 }
 

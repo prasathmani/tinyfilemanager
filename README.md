@@ -30,6 +30,7 @@ For clients that cannot send custom HTTP headers (for example Joyee), use `joyee
 - `joyee-bridge.php?action=list&path=&bridge_key=...`
 - The real API token stays only in `joyee-bridge.config.php`.
 - The bridge key must never be the same value as the API token.
+- Joyee Bridge uses a dedicated workspace root (default `Joyee/`) configured by `$joyee_bridge_root_path`.
 - Use only over HTTPS.
 
 [![Tiny File Manager](screenshot.gif)](screenshot.gif)

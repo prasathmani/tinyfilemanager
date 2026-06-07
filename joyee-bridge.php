@@ -37,6 +37,21 @@ if (empty($joyee_bridge_key) || empty($joyee_api_token)) {
     joyee_bridge_error('Joyee bridge is not configured.', 500);
 }
 
+if (empty($joyee_bridge_root_path)) {
+    joyee_bridge_error('Joyee bridge root path is not configured.', 500);
+}
+
+$joyee_bridge_root_path = (string) $joyee_bridge_root_path;
+if (!is_dir($joyee_bridge_root_path)) {
+    if (!mkdir($joyee_bridge_root_path, 0775, true)) {
+        joyee_bridge_error('Unable to create Joyee bridge root path.', 500);
+    }
+}
+
+if (!is_writable($joyee_bridge_root_path)) {
+    joyee_bridge_error('Joyee bridge root path is not writable.', 500);
+}
+
 if (hash_equals((string) $joyee_bridge_key, (string) $joyee_api_token)) {
     joyee_bridge_error('Bridge key must be different from API token.', 500);
 }
@@ -70,6 +85,33 @@ if (!in_array($action, $allowed_actions, true)) {
 
 // Force the whitelisted action path that api.core.php will consume first.
 $_GET['action'] = $action;
+
+$default_token_config = array(
+    'label' => 'Joyee Bridge API',
+    'role' => 'admin',
+    'root_path' => $joyee_bridge_root_path,
+    'capabilities' => array(
+        'list' => true,
+        'stat' => true,
+        'read' => true,
+        'write' => true,
+        'mkdir' => true,
+        'delete' => true,
+        'rename' => true,
+        'move' => true,
+        'copy' => true,
+    ),
+);
+
+$joyee_token_config = isset($joyee_api_token_config) && is_array($joyee_api_token_config)
+    ? array_merge($default_token_config, $joyee_api_token_config)
+    : $default_token_config;
+
+$joyee_token_config['root_path'] = $joyee_bridge_root_path;
+
+$api_extra_tokens = array(
+    (string) $joyee_api_token => $joyee_token_config,
+);
 
 $_SERVER['HTTP_X_TFM_API_KEY'] = (string) $joyee_api_token;
 
