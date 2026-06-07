@@ -865,6 +865,226 @@ $folders = $listing_context['folders'];
 $files = $listing_context['files'];
 $current_path = $listing_context['current_path'];
 
+if (isset($_GET['assistant_browser'])) {
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
+
+    $assistant_config_file = __DIR__ . '/api.config.php';
+    $assistant_api_token = '';
+    $assistant_api_tokens = array();
+    if (is_readable($assistant_config_file)) {
+        require $assistant_config_file;
+        if (isset($api_tokens) && is_array($api_tokens)) {
+            $assistant_api_tokens = $api_tokens;
+        }
+    }
+
+    foreach ($assistant_api_tokens as $configured_token => $configured_token_config) {
+        if (is_string($configured_token) && trim($configured_token) !== '') {
+            $assistant_api_token = trim($configured_token);
+            break;
+        }
+    }
+
+    $assistant_message = isset($_POST['assistant_message']) ? trim((string) $_POST['assistant_message']) : '';
+    $assistant_error = '';
+    $assistant_reply = '';
+    $assistant_selected_files = isset($_POST['assistant_files']) && is_array($_POST['assistant_files']) ? array_values(array_filter(array_map('trim', $_POST['assistant_files']), 'strlen')) : array();
+    $assistant_selected_files = array_values(array_filter($assistant_selected_files, static function ($value) {
+        return strpos($value, "\0") === false;
+    }));
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assistant_run'])) {
+        if ($assistant_message === '') {
+            $assistant_error = 'Zadaj otázku pre asistenta.';
+        } elseif ($assistant_api_token === '') {
+            $assistant_error = 'API token pre interný request nie je nakonfigurovaný.';
+        } elseif (empty($assistant_selected_files)) {
+            $assistant_error = 'Vyber aspoň jeden súbor.';
+        } else {
+            $assistant_payload = json_encode(array(
+                'message' => $assistant_message,
+                'files' => $assistant_selected_files,
+            ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+            if ($assistant_payload === false) {
+                $assistant_error = 'Nepodarilo sa pripraviť požiadavku pre asistenta.';
+            } else {
+                $assistant_base_path = rtrim(str_replace('\\', '/', dirname(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '')), '/');
+                if ($assistant_base_path === '.' || $assistant_base_path === '/') {
+                    $assistant_base_path = '';
+                }
+                $assistant_api_url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $assistant_base_path . '/api.php?action=assistant';
+
+                if (function_exists('curl_init')) {
+                    $assistant_curl = curl_init($assistant_api_url);
+                    curl_setopt_array($assistant_curl, array(
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST => true,
+                        CURLOPT_POSTFIELDS => $assistant_payload,
+                        CURLOPT_HTTPHEADER => array(
+                            'Content-Type: application/json',
+                            'Accept: application/json',
+                            'Authorization: Bearer ' . $assistant_api_token,
+                        ),
+                        CURLOPT_CONNECTTIMEOUT => 20,
+                        CURLOPT_TIMEOUT => 120,
+                    ));
+                    $assistant_raw_response = curl_exec($assistant_curl);
+                    if ($assistant_raw_response === false) {
+                        $assistant_error = 'Assistant request failed: ' . curl_error($assistant_curl);
+                    } else {
+                        $assistant_response_status = (int) curl_getinfo($assistant_curl, CURLINFO_HTTP_CODE);
+                        $assistant_response_data = json_decode($assistant_raw_response, true);
+                        if ($assistant_response_status < 200 || $assistant_response_status >= 300) {
+                            $assistant_error = is_array($assistant_response_data) && isset($assistant_response_data['data']['error'])
+                                ? (string) $assistant_response_data['data']['error']
+                                : 'Assistant request failed.';
+                        } elseif (is_array($assistant_response_data) && isset($assistant_response_data['data']['reply'])) {
+                            $assistant_reply = (string) $assistant_response_data['data']['reply'];
+                        } else {
+                            $assistant_error = 'Assistant response is invalid.';
+                        }
+                    }
+                    curl_close($assistant_curl);
+                } else {
+                    $assistant_context = stream_context_create(array(
+                        'http' => array(
+                            'method' => 'POST',
+                            'header' => implode("\r\n", array(
+                                'Content-Type: application/json',
+                                'Accept: application/json',
+                                'Authorization: Bearer ' . $assistant_api_token,
+                            )),
+                            'content' => $assistant_payload,
+                            'timeout' => 120,
+                            'ignore_errors' => true,
+                        ),
+                    ));
+                    $assistant_raw_response = @file_get_contents($assistant_api_url, false, $assistant_context);
+                    $assistant_response_data = is_string($assistant_raw_response) ? json_decode($assistant_raw_response, true) : null;
+                    if (is_array($assistant_response_data) && isset($assistant_response_data['data']['reply'])) {
+                        $assistant_reply = (string) $assistant_response_data['data']['reply'];
+                    } else {
+                        $assistant_error = 'Assistant response is invalid.';
+                    }
+                }
+            }
+        }
+    }
+
+    $assistant_base_path = rtrim(str_replace('\\', '/', dirname(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '')), '/');
+    if ($assistant_base_path === '.' || $assistant_base_path === '/') {
+        $assistant_base_path = '';
+    }
+    $assistant_current_url = '?p=' . urlencode(FM_PATH) . '&assistant_browser=1';
+    ?>
+    <style>
+        body { background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 45%, #ffffff 100%); }
+        .assistant-shell { padding: 1.25rem; }
+        .assistant-hero { background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #38bdf8 100%); color: #fff; border-radius: 1rem; padding: 1.25rem 1.5rem; box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18); }
+        .assistant-card { border: 0; border-radius: 1rem; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); overflow: hidden; }
+        .assistant-card .card-header { background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(8px); }
+        .assistant-files { max-height: 62vh; overflow: auto; }
+        .assistant-file-row { display:flex; align-items:center; gap:.65rem; padding:.6rem .75rem; border-bottom: 1px solid rgba(148, 163, 184, 0.18); }
+        .assistant-file-row:last-child { border-bottom: 0; }
+        .assistant-file-meta { color: #64748b; font-size: .85rem; }
+        .assistant-output { white-space: pre-wrap; background: #0b1220; color: #e5eefc; border-radius: .9rem; padding: 1rem; min-height: 12rem; }
+    </style>
+    <div class="assistant-shell">
+        <div class="assistant-hero mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <h2 class="h4 mb-1">AI browser</h2>
+                    <div class="opacity-75">Vyber súbory, pošli prompt a prehľadávaj projekty bez opustenia file managera.</div>
+                </div>
+                <div class="text-end">
+                    <a class="btn btn-light btn-sm" href="<?php echo $assistant_current_url; ?>"><i class="fa fa-refresh"></i> Obnoviť</a>
+                    <a class="btn btn-outline-light btn-sm" href="?p=<?php echo urlencode(FM_PATH); ?>"><i class="fa fa-folder-open"></i> Klasický pohľad</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-xl-4">
+                <div class="card assistant-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <strong>Prompt</strong>
+                        <span class="badge text-bg-primary">OpenAI</span>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($assistant_error !== ''): ?>
+                            <div class="alert alert-danger"><?php echo fm_enc($assistant_error); ?></div>
+                        <?php endif; ?>
+                        <form method="post" action="<?php echo $assistant_current_url; ?>" id="assistant-browser-form">
+                            <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+                            <div class="mb-3">
+                                <label for="assistant_message" class="form-label">Otázka alebo úloha</label>
+                                <textarea id="assistant_message" name="assistant_message" class="form-control" rows="8" placeholder="Napr. skontroluj tento súbor a navrhni opravy"><?php echo fm_enc($assistant_message); ?></textarea>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary" name="assistant_run" value="1"><i class="fa fa-paper-plane"></i> Odoslať</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="document.querySelectorAll('.assistant-file-check').forEach(function(el){ el.checked = true; });">Vybrať všetko</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="document.querySelectorAll('.assistant-file-check').forEach(function(el){ el.checked = false; });">Zrušiť výber</button>
+                            </div>
+                        </form>
+
+                        <?php if ($assistant_reply !== ''): ?>
+                            <div class="assistant-output"><?php echo fm_enc($assistant_reply); ?></div>
+                        <?php else: ?>
+                            <div class="alert alert-info mb-0">Odpoveď sa zobrazí tu po odoslaní promptu.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-8">
+                <div class="card assistant-card h-100">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <strong>Prehliadač súborov</strong>
+                        <span class="assistant-file-meta"><?php echo fm_enc($current_path !== '' ? $current_path : '/'); ?></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="assistant-files">
+                            <?php if ($parent !== false): ?>
+                                <a class="assistant-file-row text-decoration-none" href="?p=<?php echo urlencode($parent); ?>&assistant_browser=1">
+                                    <i class="fa fa-level-up"></i>
+                                    <span>..</span>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php foreach ($folders as $folder): ?>
+                                <a class="assistant-file-row text-decoration-none" href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $folder, '/')); ?>&assistant_browser=1">
+                                    <i class="fa fa-folder text-warning"></i>
+                                    <span class="flex-grow-1"><?php echo fm_enc($folder); ?></span>
+                                    <span class="assistant-file-meta">priečinok</span>
+                                </a>
+                            <?php endforeach; ?>
+
+                            <?php foreach ($files as $file): ?>
+                                <?php $assistant_file_path = trim(FM_PATH . '/' . $file, '/'); ?>
+                                <label class="assistant-file-row mb-0" for="assistant-file-<?php echo md5($assistant_file_path); ?>">
+                                    <input class="assistant-file-check form-check-input mt-0" type="checkbox" id="assistant-file-<?php echo md5($assistant_file_path); ?>" name="assistant_files[]" value="<?php echo fm_enc($assistant_file_path); ?>" form="assistant-browser-form">
+                                    <i class="fa fa-file-text-o text-primary"></i>
+                                    <span class="flex-grow-1"><?php echo fm_enc($file); ?></span>
+                                    <span class="assistant-file-meta"><?php echo fm_enc(fm_get_filesize(fm_get_size($path . '/' . $file))); ?></span>
+                                </label>
+                            <?php endforeach; ?>
+
+                            <?php if (empty($folders) && empty($files)): ?>
+                                <div class="p-4 text-center text-body-secondary">Tento priečinok je prázdny.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
+    fm_show_footer();
+    exit;
+}
+
 // upload form
 if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH) {
     fm_show_header(); // HEADER

@@ -39,6 +39,13 @@ For clients that cannot send custom HTTP headers (for example Joyee), use `joyee
 - It does not grant any permissions and does not expose secrets.
 - It is used only to verify domain reachability for ChatGPT/Joyee runtime.
 
+## OpenAI Assistant
+
+- Use `api.php?action=assistant` with a bearer token that has the `assistant` capability enabled in `api.config.php`.
+- Add your OpenAI key and assistant settings to local `api.config.php`; do not paste the key into the repository.
+- Send JSON like `{"message":"Review these files","files":["src/Router.php","README.md"]}` to have the assistant inspect selected project files.
+- The assistant reads only files inside the configured API root and only supports text-oriented file types by default.
+
 [![Tiny File Manager](screenshot.gif)](screenshot.gif)
 
 ## Requirements

@@ -108,6 +108,7 @@ function fm_show_nav_path($path)
                                 <span class="ms-1"><?php echo fm_enc($_SESSION[FM_SESSION_ID]['logged']); ?></span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="navbarDropdownMenuLink-5" data-bs-theme="<?php echo FM_THEME; ?>">
+                                <a title="AI browser" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH); ?>&amp;assistant_browser=1"><i class="fa fa-robot" aria-hidden="true"></i> AI browser</a>
                                 <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                                 <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
                                 <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>

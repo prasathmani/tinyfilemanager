@@ -219,6 +219,160 @@ function api_require_capability($capabilities, $capability)
     }
 }
 
+function api_http_post_json($url, array $payload, array $headers = array(), $timeout = 60)
+{
+    $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($body === false) {
+        api_error('Unable to encode assistant request.', 500);
+    }
+
+    $request_headers = array(
+        'Content-Type: application/json',
+        'Accept: application/json',
+    );
+
+    foreach ($headers as $header) {
+        $request_headers[] = $header;
+    }
+
+    if (function_exists('curl_init')) {
+        $curl = curl_init($url);
+        if ($curl === false) {
+            api_error('Unable to initialize HTTP client.', 500);
+        }
+
+        curl_setopt_array($curl, array(
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_HTTPHEADER => $request_headers,
+            CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_TIMEOUT => $timeout,
+        ));
+
+        $response_body = curl_exec($curl);
+        if ($response_body === false) {
+            $error = curl_error($curl);
+            curl_close($curl);
+            api_error('Assistant request failed: ' . $error, 502);
+        }
+
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        return array(
+            'status' => $status,
+            'body' => (string) $response_body,
+        );
+    }
+
+    $request_headers[] = 'Content-Length: ' . strlen($body);
+
+    $context = stream_context_create(array(
+        'http' => array(
+            'method' => 'POST',
+            'header' => implode("\r\n", $request_headers),
+            'content' => $body,
+            'timeout' => $timeout,
+            'ignore_errors' => true,
+        ),
+        'ssl' => array(
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+        ),
+    ));
+
+    $response_body = @file_get_contents($url, false, $context);
+    $status = 0;
+    if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $matches)) {
+        $status = (int) $matches[1];
+    }
+
+    return array(
+        'status' => $status,
+        'body' => $response_body === false ? '' : $response_body,
+    );
+}
+
+function api_assistant_collect_files($api_root, $requested_files, $max_files, $max_file_bytes, $allowed_extensions)
+{
+    if (!is_array($requested_files)) {
+        $requested_files = array($requested_files);
+    }
+
+    $requested_files = array_values(array_filter(array_map('trim', $requested_files), 'strlen'));
+
+    if ($requested_files === array()) {
+        return array('files' => array(), 'context' => '');
+    }
+
+    if ($max_files > 0 && count($requested_files) > $max_files) {
+        api_error('Too many files requested for assistant context.', 400, array('max_files' => $max_files));
+    }
+
+    $allowed_extensions = array_map('strtolower', array_filter(array_map('trim', (array) $allowed_extensions), 'strlen'));
+    $files = array();
+    $context_blocks = array();
+
+    foreach ($requested_files as $requested_file) {
+        $resolved_file = api_resolve_existing_path($api_root, $requested_file);
+
+        if (!is_file($resolved_file)) {
+            api_error('Assistant can only inspect files, not directories.', 400, array('path' => api_normalize_relative_path($requested_file)));
+        }
+
+        $relative_path = api_normalize_relative_path($requested_file);
+        $extension = strtolower(pathinfo($resolved_file, PATHINFO_EXTENSION));
+
+        if ($allowed_extensions !== array() && !in_array($extension, $allowed_extensions, true)) {
+            api_error('File type is not allowed for assistant inspection.', 400, array('path' => $relative_path));
+        }
+
+        $size = filesize($resolved_file);
+        $read_length = $max_file_bytes > 0 ? $max_file_bytes : null;
+        $content = $read_length === null
+            ? file_get_contents($resolved_file)
+            : file_get_contents($resolved_file, false, null, 0, $read_length);
+
+        if ($content === false) {
+            api_error('Unable to read requested file.', 500, array('path' => $relative_path));
+        }
+
+        if (strpos($content, "\0") !== false) {
+            api_error('Binary files are not supported by the assistant.', 400, array('path' => $relative_path));
+        }
+
+        $files[] = array(
+            'path' => $relative_path,
+            'size' => $size,
+            'truncated' => $read_length !== null && is_int($size) && $size > $read_length,
+            'content' => $content,
+        );
+
+        $context_blocks[] = array(
+            'path' => $relative_path,
+            'size' => $size,
+            'truncated' => $read_length !== null && is_int($size) && $size > $read_length,
+            'content' => $content,
+        );
+    }
+
+    $context = '';
+    foreach ($context_blocks as $block) {
+        $context .= "### File: " . $block['path'] . "\n";
+        $context .= 'Size: ' . (string) $block['size'] . " bytes\n";
+        if (!empty($block['truncated'])) {
+            $context .= "Note: content was truncated to the configured maximum size.\n";
+        }
+        $context .= "```\n" . $block['content'] . "\n```\n\n";
+    }
+
+    return array(
+        'files' => $files,
+        'context' => trim($context),
+    );
+}
+
 $config_file = __DIR__ . '/config.php';
 if (is_file($config_file)) {
     require $config_file;
@@ -419,6 +573,114 @@ switch ($action) {
             api_error('Unable to copy path.', 500);
         }
         api_json_response(true, array('from' => api_normalize_relative_path($input['from']), 'to' => api_normalize_relative_path($input['to'])));
+        break;
+
+    case 'assistant':
+        api_require_capability($capabilities, 'assistant');
+
+        if (empty($assistant_enabled)) {
+            api_error('Assistant is disabled.', 403);
+        }
+
+        $assistant_api_key = isset($assistant_openai_api_key) ? trim((string) $assistant_openai_api_key) : '';
+        if ($assistant_api_key === '') {
+            api_error('OpenAI assistant API key is not configured.', 500);
+        }
+
+        $message = isset($input['message']) ? trim((string) $input['message']) : '';
+        if ($message === '') {
+            $message = isset($input['prompt']) ? trim((string) $input['prompt']) : '';
+        }
+        if ($message === '') {
+            $message = isset($input['query']) ? trim((string) $input['query']) : '';
+        }
+        if ($message === '') {
+            api_error('Missing assistant message.', 400);
+        }
+
+        $requested_files = array();
+        if (isset($input['files']) && is_array($input['files'])) {
+            $requested_files = $input['files'];
+        } elseif (isset($input['files']) && is_string($input['files'])) {
+            $requested_files = preg_split('/\s*,\s*/', $input['files']);
+        } elseif (isset($input['paths']) && is_array($input['paths'])) {
+            $requested_files = $input['paths'];
+        }
+
+        $max_files = isset($assistant_max_files) ? (int) $assistant_max_files : 8;
+        $max_file_bytes = isset($assistant_max_file_bytes) ? (int) $assistant_max_file_bytes : 200000;
+        $allowed_extensions = isset($assistant_allowed_extensions) ? $assistant_allowed_extensions : array('php', 'md', 'txt', 'json', 'js', 'css', 'html', 'xml', 'yml', 'yaml', 'ini', 'sh', 'sql', 'env');
+        $assistant_model = isset($assistant_openai_model) && trim((string) $assistant_openai_model) !== ''
+            ? trim((string) $assistant_openai_model)
+            : 'gpt-4o-mini';
+        $assistant_base_url = isset($assistant_openai_base_url) && trim((string) $assistant_openai_base_url) !== ''
+            ? rtrim(trim((string) $assistant_openai_base_url), '/')
+            : 'https://api.openai.com/v1';
+        $assistant_temperature = isset($assistant_openai_temperature) ? (float) $assistant_openai_temperature : 0.2;
+        $assistant_system_prompt = isset($assistant_system_prompt) && trim((string) $assistant_system_prompt) !== ''
+            ? trim((string) $assistant_system_prompt)
+            : 'You are a careful coding assistant for Tiny File Manager. Work only with the files provided in context, explain changes clearly, and avoid assuming access to anything outside the configured project root.';
+
+        $file_context = api_assistant_collect_files($api_root, $requested_files, $max_files, $max_file_bytes, $allowed_extensions);
+
+        $messages = array(
+            array(
+                'role' => 'system',
+                'content' => $assistant_system_prompt,
+            ),
+        );
+
+        $user_content = $message;
+        if (!empty($file_context['context'])) {
+            $user_content .= "\n\nProject file context:\n" . $file_context['context'];
+        }
+
+        $messages[] = array(
+            'role' => 'user',
+            'content' => $user_content,
+        );
+
+        $response = api_http_post_json(
+            $assistant_base_url . '/chat/completions',
+            array(
+                'model' => $assistant_model,
+                'messages' => $messages,
+                'temperature' => $assistant_temperature,
+                'stream' => false,
+            ),
+            array(
+                'Authorization: Bearer ' . $assistant_api_key,
+            ),
+            60
+        );
+
+        if ($response['status'] < 200 || $response['status'] >= 300) {
+            $provider_error = json_decode($response['body'], true);
+            api_error('OpenAI assistant request failed.', 502, array(
+                'provider_status' => $response['status'],
+                'provider_error' => is_array($provider_error) ? $provider_error : $response['body'],
+            ));
+        }
+
+        $decoded = json_decode($response['body'], true);
+        if (!is_array($decoded)) {
+            api_error('OpenAI assistant returned invalid JSON.', 502);
+        }
+
+        $assistant_reply = '';
+        if (isset($decoded['choices'][0]['message']['content'])) {
+            $assistant_reply = (string) $decoded['choices'][0]['message']['content'];
+        }
+
+        if ($assistant_reply === '') {
+            api_error('OpenAI assistant response did not contain a reply.', 502, array('provider_response' => $decoded));
+        }
+
+        api_json_response(true, array(
+            'reply' => $assistant_reply,
+            'model' => $assistant_model,
+            'files' => $file_context['files'],
+        ));
         break;
 
     default:
