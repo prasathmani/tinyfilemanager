@@ -25,6 +25,14 @@ define('LOGIN_LOGO_PATH', 'KatalogMD.webp');
 // Is independent from IP white- and blacklisting
 $use_auth = true;
 
+// Machine/API login by URL token.
+// Set token in local config.php to allow automated login as a managed Joyee user.
+// Keep empty to disable.
+$machine_login_token = '';
+
+// Target username for machine/API login. Must exist in $auth_users.
+$machine_login_user = 'joyee';
+
 // Login user name and password
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
@@ -290,6 +298,43 @@ if (empty($_SESSION['token'])) {
 
 if (empty($auth_users)) {
     $use_auth = false;
+}
+
+// Optional machine/API login via URL token.
+// Creates the same PHP session as regular login and then redirects without token in URL.
+if ($use_auth && isset($_GET['machine_token'])) {
+    $provided_machine_token = trim((string) $_GET['machine_token']);
+    $machine_login_valid = false;
+
+    if ($provided_machine_token !== '' && $machine_login_token !== '' && isset($auth_users[$machine_login_user])) {
+        if (function_exists('hash_equals')) {
+            $machine_login_valid = hash_equals((string) $machine_login_token, $provided_machine_token);
+        } else {
+            $machine_login_valid = ((string) $machine_login_token === $provided_machine_token);
+        }
+    }
+
+    if ($machine_login_valid) {
+        $_SESSION[FM_SESSION_ID]['logged'] = $machine_login_user;
+        fm_online_touch_user($machine_login_user);
+
+        if (class_exists('AuditLogger')) {
+            $audit = new AuditLogger();
+            $audit->log('user_login_machine_token', $machine_login_user, 'Machine/API token login');
+        }
+
+        $target_path = isset($_GET['p']) ? fm_clean_path((string) $_GET['p']) : '';
+        fm_set_msg(lng('You are logged in'));
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($target_path));
+    }
+
+    if (class_exists('AuditLogger')) {
+        $audit = new AuditLogger();
+        $audit->log('login_failed_machine_token', $machine_login_user, 'Invalid machine/API login token');
+    }
+
+    fm_set_msg('Machine login failed.', 'error');
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode(isset($_GET['p']) ? fm_clean_path((string) $_GET['p']) : ''));
 }
 
 $forwarded_proto = '';
