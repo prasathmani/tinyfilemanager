@@ -40,6 +40,22 @@
                     }
                     echo '<li class="list-group-item"><strong>' . lng('Charset') . ':</strong> ' . ($is_utf8 ? 'utf-8' : '8 bit') . '</li>';
                 }
+
+                $open_target_url = $file_url;
+                if ($is_onlineViewer) {
+                    $office_open_preview_url = FM_SELF_URL . '?' . fm_build_preview_query(FM_PATH, $file, 1800);
+                    $microsoft_open_src = 'https://view.officeapps.live.com/op/embed.aspx?src=' . rawurlencode($office_open_preview_url);
+                    $google_open_src = 'https://docs.google.com/viewer?embedded=true&hl=en&url=' . rawurlencode($office_open_preview_url);
+                    $docx_preview_mode = defined('FM_DOCX_PREVIEW_MODE') ? FM_DOCX_PREVIEW_MODE : 'auto';
+
+                    if (in_array($ext, array('doc', 'docx'), true) && $docx_preview_mode !== 'local') {
+                        $open_target_url = $microsoft_open_src;
+                    } elseif (strtolower((string) FM_DOC_VIEWER) === 'microsoft') {
+                        $open_target_url = $microsoft_open_src;
+                    } else {
+                        $open_target_url = $google_open_src;
+                    }
+                }
                 ?>
             </ul>
             <div class="btn-group btn-group-sm flex-wrap" role="group">
@@ -52,7 +68,7 @@
                     <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
                     <?php endif; ?>
                 <?php endif; ?>
-                <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($open_target_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
                 <?php
                 if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH && ($is_zip || $is_gzip) && $filenames !== false) {
                     $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
