@@ -4,7 +4,7 @@ set -euo pipefail
 # Build a versioned release ZIP from tracked repository files.
 # Usage:
 #   ./release.sh                # uses version from RELEASE_VERSION
-#   ./release.sh 1.2.0          # uses provided version, then updates RELEASE_VERSION after clean-tree check
+#   ./release.sh 1.2.0          # uses provided version, then updates RELEASE_VERSION
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
@@ -37,17 +37,17 @@ if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
   exit 1
 fi
 
-# Ensure git working tree is clean before this script changes anything.
-if [[ -n "$(git status --porcelain)" ]]; then
+# Ensure git working tree is clean, but ignore RELEASE_VERSION.
+# RELEASE_VERSION is allowed to be dirty because it is the release marker itself.
+DIRTY_STATUS="$(git status --porcelain | grep -vE '^[ MARC?DU]{1,2} RELEASE_VERSION$' || true)"
+if [[ -n "$DIRTY_STATUS" ]]; then
   echo "Error: git working tree is not clean. Commit or stash your changes before releasing." >&2
-  git status --short >&2
+  echo "$DIRTY_STATUS" >&2
   exit 1
 fi
 
-# Persist requested/default version only after clean-tree check.
-if [[ $# -eq 1 || ! -f "$VERSION_FILE" ]]; then
-  echo "$VERSION" > "$VERSION_FILE"
-fi
+# Persist requested/default version after validation.
+echo "$VERSION" > "$VERSION_FILE"
 
 OUT_DIR="$ROOT_DIR/releases"
 OUT_FILE="$OUT_DIR/tinyfilemanager-${VERSION}.zip"
