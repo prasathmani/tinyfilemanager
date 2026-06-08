@@ -2094,7 +2094,7 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
                     <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</small>
                 </form>
 
-                <?php if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
+                <?php if (!empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
                 <hr>
                 <h6 class="mt-3 mb-3"><i class="fa fa-lock"></i> <?php echo lng('Change Password') ?></h6>
                 <form id="js-changepwd-form" action="" method="post" onsubmit="return change_password(this)">
