@@ -17,6 +17,10 @@ Tento adresár obsahuje preklad pôvodnej wiki od autora projektu.
 - [Login using Database](?help_doc=wiki-login-db)
 - [Authors and Contributors](?help_doc=wiki-authors)
 
+## Naše rozšírenia
+
+- [Naše rozšírenia TinyFileManager](?help_doc=wiki-our-extensions)
+
 ## Zdroj
 
 Pôvodná wiki: https://github.com/prasathmani/tinyfilemanager/wiki

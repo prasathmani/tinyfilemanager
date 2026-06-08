@@ -1854,6 +1854,7 @@ if (isset($_GET['help_doc'])) {
         'wiki-faq' => 'FAQ',
         'wiki-login-db' => 'Prihlásenie pomocou databázy',
         'wiki-authors' => 'Autori a prispievatelia',
+        'wiki-our-extensions' => 'Naše rozšírenia',
     );
     $doc_map = array(
         'user-guide' => array(
@@ -1915,6 +1916,10 @@ if (isset($_GET['help_doc'])) {
         'wiki-authors' => array(
             'title' => 'Wiki SK: Authors and Contributors',
             'path' => __DIR__ . '/docs/wiki-sk/Authors-and-Contributors.SK.md',
+        ),
+        'wiki-our-extensions' => array(
+            'title' => 'Wiki SK: Naše rozšírenia',
+            'path' => __DIR__ . '/docs/wiki-sk/Nase-Rozsirenia.SK.md',
         ),
     );
 
