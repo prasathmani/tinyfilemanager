@@ -3124,6 +3124,43 @@ function fm_admin_write_audit_event($action, $actor, $target, array $meta = arra
     @fclose($fh);
 }
 
+/**
+ * Read recent admin user audit events (newest first).
+ * @param int $limit
+ * @return array
+ */
+function fm_admin_read_audit_events($limit = 50)
+{
+    $limit = (int) $limit;
+    if ($limit < 1) {
+        $limit = 1;
+    }
+    if ($limit > 500) {
+        $limit = 500;
+    }
+
+    $file = fm_admin_audit_log_path();
+    if (!@is_file($file) || !@is_readable($file)) {
+        return array();
+    }
+
+    $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!is_array($lines) || empty($lines)) {
+        return array();
+    }
+
+    $slice = array_slice($lines, -$limit);
+    $events = array();
+    foreach (array_reverse($slice) as $line) {
+        $row = json_decode((string) $line, true);
+        if (is_array($row)) {
+            $events[] = $row;
+        }
+    }
+
+    return $events;
+}
+
 function fm_chat_get_db()
 {
     static $db = null;

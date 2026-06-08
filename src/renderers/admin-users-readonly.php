@@ -8,6 +8,7 @@ $readonly_users = isset($readonly_users) && is_array($readonly_users) ? $readonl
 $upload_only_users = isset($upload_only_users) && is_array($upload_only_users) ? $upload_only_users : array();
 $manager_users = isset($manager_users) && is_array($manager_users) ? $manager_users : array();
 $directories_users = isset($directories_users) && is_array($directories_users) ? $directories_users : array();
+$audit_events = function_exists('fm_admin_read_audit_events') ? fm_admin_read_audit_events(50) : array();
 
 // Union of all usernames
 $usernames = array();
@@ -95,6 +96,66 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             </tbody>
         </table>
     </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <strong>Audit</strong> <span class="text-muted">(posledných <?php echo count($audit_events); ?> záznamov)</span>
+        </div>
+        <div class="card-body p-0">
+            <?php if (empty($audit_events)): ?>
+                <div class="p-3 text-muted">Zatiaľ nie sú dostupné žiadne audit záznamy.</div>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Čas</th>
+                                <th>Akcia</th>
+                                <th>Kto</th>
+                                <th>Cieľový používateľ</th>
+                                <th>IP</th>
+                                <th>Meta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($audit_events as $ev): ?>
+                                <?php
+                                $ev_ts = isset($ev['ts']) ? (string) $ev['ts'] : '';
+                                $ev_action = isset($ev['action']) ? (string) $ev['action'] : '';
+                                $ev_actor = isset($ev['actor']) ? (string) $ev['actor'] : '';
+                                $ev_target = isset($ev['target']) ? (string) $ev['target'] : '';
+                                $ev_ip = isset($ev['ip']) ? (string) $ev['ip'] : '';
+                                $ev_meta = isset($ev['meta']) && is_array($ev['meta']) ? $ev['meta'] : array();
+                                $ev_meta_text = '';
+                                if (!empty($ev_meta)) {
+                                    $meta_parts = array();
+                                    foreach ($ev_meta as $mk => $mv) {
+                                        if (is_bool($mv)) {
+                                            $mv = $mv ? 'true' : 'false';
+                                        } elseif (is_array($mv)) {
+                                            $mv = json_encode($mv, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                                        }
+                                        $meta_parts[] = (string) $mk . '=' . (string) $mv;
+                                    }
+                                    $ev_meta_text = implode('; ', $meta_parts);
+                                }
+                                ?>
+                                <tr>
+                                    <td><?php echo fm_enc($ev_ts); ?></td>
+                                    <td><?php echo fm_enc($ev_action); ?></td>
+                                    <td><?php echo fm_enc($ev_actor); ?></td>
+                                    <td><?php echo fm_enc($ev_target); ?></td>
+                                    <td><?php echo fm_enc($ev_ip); ?></td>
+                                    <td><?php echo fm_enc($ev_meta_text); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <div id="admin-user-modal-container"></div>
         <script>
         document.addEventListener('DOMContentLoaded', function () {
