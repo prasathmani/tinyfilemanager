@@ -29,6 +29,12 @@ class TFM_AjaxActionHandler {
             die('Invalid Token.');
         }
 
+        // Self-service password change must work for any authenticated user,
+        // including readonly and upload-only roles.
+        if (isset($post['type']) && $post['type'] == 'changepwd') {
+            $this->handleChangePassword($post, $auth_users);
+        }
+
         if (isset($post['type']) && $post['type'] == 'search') {
             $dir = $post['path'] == '.' ? '' : $post['path'];
             $response = scan(fm_clean_path($dir), $post['content']);
@@ -50,10 +56,6 @@ class TFM_AjaxActionHandler {
 
         if (isset($post['type']) && $post['type'] == 'settings') {
             $this->handleSettings($post);
-        }
-
-        if (isset($post['type']) && $post['type'] == 'changepwd') {
-            $this->handleChangePassword($post, $auth_users);
         }
 
         if (isset($post['type']) && $post['type'] == 'pwdhash') {
@@ -194,21 +196,43 @@ class TFM_AjaxActionHandler {
             exit;
         }
 
-        $newHash = password_hash($newPwd, PASSWORD_BCRYPT);
+        $newHash = password_hash($newPwd, PASSWORD_DEFAULT);
 
-        $cfgFile = defined('FM_CONFIG_FILE') ? FM_CONFIG_FILE : (file_exists($this->app_root . '/config.php') ? $this->app_root . '/config.php' : '');
-        $updated = false;
-        if ($cfgFile && is_writable($cfgFile)) {
-            $content = file_get_contents($cfgFile);
-            $pattern = "/('[\"]" . preg_quote($username, '/') . "['\"]\s*=>\s*')['\"][^'\"]+['\"]/";
-            $replacement = '${1}\'' . $newHash . "'";
-            $newContent = preg_replace($pattern, $replacement, $content, 1, $count);
-            if ($count > 0) {
-                $updated = (file_put_contents($cfgFile, $newContent) !== false);
-            }
+        $cfgFile = file_exists($this->app_root . '/config.php') ? $this->app_root . '/config.php' : '';
+        if ($cfgFile === '' || !is_file($cfgFile) || !is_writable($cfgFile)) {
+            echo json_encode(array('success' => false, 'msg' => 'Could not update config file. Check write permissions.'));
+            exit;
         }
 
-        if ($updated) {
+        if (!function_exists('fm_admin_load_user_config_arrays') || !function_exists('fm_admin_persist_user_config_arrays')) {
+            echo json_encode(array('success' => false, 'msg' => 'Password update helper is not available.'));
+            exit;
+        }
+
+        $configData = fm_admin_load_user_config_arrays($cfgFile);
+        if (empty($configData['ok'])) {
+            echo json_encode(array('success' => false, 'msg' => 'Could not read config file.'));
+            exit;
+        }
+
+        $authUsersLocal = isset($configData['auth_users']) && is_array($configData['auth_users']) ? $configData['auth_users'] : array();
+        if (!array_key_exists($username, $authUsersLocal)) {
+            echo json_encode(array('success' => false, 'msg' => 'User account is not configured for password login.'));
+            exit;
+        }
+
+        $authUsersLocal[$username] = $newHash;
+        $persistResult = fm_admin_persist_user_config_arrays(
+            $cfgFile,
+            $authUsersLocal,
+            isset($configData['readonly_users']) && is_array($configData['readonly_users']) ? $configData['readonly_users'] : array(),
+            isset($configData['upload_only_users']) && is_array($configData['upload_only_users']) ? $configData['upload_only_users'] : array(),
+            isset($configData['manager_users']) && is_array($configData['manager_users']) ? $configData['manager_users'] : array(),
+            isset($configData['directories_users']) && is_array($configData['directories_users']) ? $configData['directories_users'] : array(),
+            isset($configData['user_notes']) && is_array($configData['user_notes']) ? $configData['user_notes'] : array()
+        );
+
+        if (!empty($persistResult['ok'])) {
             echo json_encode(array('success' => true, 'msg' => 'Password changed successfully'));
         } else {
             echo json_encode(array('success' => false, 'msg' => 'Could not update config file. Check write permissions.'));
