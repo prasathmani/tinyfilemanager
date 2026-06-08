@@ -9,6 +9,8 @@ $upload_only_users = isset($upload_only_users) && is_array($upload_only_users) ?
 $manager_users = isset($manager_users) && is_array($manager_users) ? $manager_users : array();
 $directories_users = isset($directories_users) && is_array($directories_users) ? $directories_users : array();
 $audit_events = function_exists('fm_admin_read_audit_events') ? fm_admin_read_audit_events(50) : array();
+$config_file_path = dirname(__DIR__, 2) . '/config.php';
+$config_is_writable = is_file($config_file_path) && is_writable($config_file_path);
 
 // Union of all usernames
 $usernames = array();
@@ -64,7 +66,13 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
 
 <div class="container mt-4">
     <h2>Správa používateľov</h2>
-    <p class="text-muted">Read-only prehľad používateľov z aktuálnej konfigurácie. Úpravy budú doplnené v ďalšej etape.</p>
+    <p class="text-muted">Prehľad a správa používateľov z aktuálnej konfigurácie.</p>
+    <?php if (!$config_is_writable): ?>
+        <div class="alert alert-warning">
+            <strong>Upozornenie:</strong> Súbor <code>config.php</code> nie je zapisovateľný.
+            Operácie New/Edit/Delete sa neuložia, kým web server nezíska právo zápisu.
+        </div>
+    <?php endif; ?>
     <div class="mb-3">
         <button type="button" class="btn btn-success" data-admin-user-action="new">New user</button>
     </div>
