@@ -765,6 +765,72 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 
 /*************************** ACTIONS ***************************/
 
+// Lightweight user-to-user chat API for online badge popups.
+if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $chat_action = isset($_GET['chat_action']) ? (string) $_GET['chat_action'] : '';
+    $chat_current_user = (string) $_SESSION[FM_SESSION_ID]['logged'];
+    $chat_peer = isset($_REQUEST['with']) ? trim((string) $_REQUEST['with']) : '';
+    if ($chat_peer === '' && isset($_REQUEST['to'])) {
+        $chat_peer = trim((string) $_REQUEST['to']);
+    }
+
+    if ($chat_peer === '' || !isset($auth_users[$chat_peer])) {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Invalid chat user.'));
+        exit;
+    }
+
+    if ($chat_peer === $chat_current_user) {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Cannot chat with yourself.'));
+        exit;
+    }
+
+    if ($chat_action === 'fetch') {
+        $messages = fm_chat_get_conversation($chat_current_user, $chat_peer, 150);
+        echo json_encode(array('ok' => true, 'data' => array('messages' => $messages)));
+        exit;
+    }
+
+    if ($chat_action === 'send') {
+        if (!verifyToken(isset($_POST['token']) ? $_POST['token'] : '')) {
+            http_response_code(401);
+            echo json_encode(array('ok' => false, 'error' => 'Invalid token.'));
+            exit;
+        }
+
+        $message = isset($_POST['message']) ? trim((string) $_POST['message']) : '';
+        if ($message === '') {
+            http_response_code(400);
+            echo json_encode(array('ok' => false, 'error' => 'Message cannot be empty.'));
+            exit;
+        }
+
+        $message_length = function_exists('mb_strlen') ? mb_strlen($message, 'UTF-8') : strlen($message);
+        if ($message_length > 2000) {
+            http_response_code(400);
+            echo json_encode(array('ok' => false, 'error' => 'Message is too long.'));
+            exit;
+        }
+
+        if (!fm_chat_save_message($chat_current_user, $chat_peer, $message)) {
+            http_response_code(500);
+            echo json_encode(array('ok' => false, 'error' => 'Failed to save message.'));
+            exit;
+        }
+
+        $messages = fm_chat_get_conversation($chat_current_user, $chat_peer, 150);
+        echo json_encode(array('ok' => true, 'data' => array('messages' => $messages)));
+        exit;
+    }
+
+    http_response_code(400);
+    echo json_encode(array('ok' => false, 'error' => 'Unknown chat action.'));
+    exit;
+}
+
 // Handle all AJAX Request
 if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) || !FM_USE_AUTH) && isset($_POST['ajax'], $_POST['token'])) {
     $ajax_action_handler = new TFM_AjaxActionHandler(FM_ROOT_PATH, FM_PATH, __DIR__);
@@ -2334,6 +2400,117 @@ function fm_online_get_users()
 
     sort($users, SORT_NATURAL | SORT_FLAG_CASE);
     return $users;
+}
+
+function fm_chat_db_path()
+{
+    $dir = __DIR__ . '/.fm_usercfg';
+    if (!@is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir . '/chat.sqlite';
+}
+
+function fm_chat_get_db()
+{
+    static $db = null;
+    if ($db !== null) {
+        return $db;
+    }
+
+    if (!class_exists('SQLite3')) {
+        return null;
+    }
+
+    try {
+        $db = new SQLite3(fm_chat_db_path());
+        $db->busyTimeout(3000);
+        $db->exec('CREATE TABLE IF NOT EXISTS fm_chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            recipient TEXT NOT NULL,
+            message TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        )');
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_chat_pair_time ON fm_chat_messages(sender, recipient, created_at)');
+    } catch (Exception $e) {
+        $db = null;
+    }
+
+    return $db;
+}
+
+function fm_chat_save_message($sender, $recipient, $message)
+{
+    $db = fm_chat_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $stmt = $db->prepare('INSERT INTO fm_chat_messages (sender, recipient, message, created_at) VALUES (:sender, :recipient, :message, :created_at)');
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bindValue(':sender', (string) $sender, SQLITE3_TEXT);
+    $stmt->bindValue(':recipient', (string) $recipient, SQLITE3_TEXT);
+    $stmt->bindValue(':message', (string) $message, SQLITE3_TEXT);
+    $stmt->bindValue(':created_at', time(), SQLITE3_INTEGER);
+
+    $result = $stmt->execute();
+    if ($result) {
+        $result->finalize();
+    }
+
+    return $result !== false;
+}
+
+function fm_chat_get_conversation($user_a, $user_b, $limit = 100)
+{
+    $db = fm_chat_get_db();
+    if (!$db) {
+        return array();
+    }
+
+    $limit = (int) $limit;
+    if ($limit < 1) {
+        $limit = 1;
+    }
+    if ($limit > 300) {
+        $limit = 300;
+    }
+
+    $stmt = $db->prepare('SELECT id, sender, recipient, message, created_at
+        FROM fm_chat_messages
+        WHERE (sender = :a AND recipient = :b) OR (sender = :b AND recipient = :a)
+        ORDER BY id DESC
+        LIMIT :limit');
+    if (!$stmt) {
+        return array();
+    }
+
+    $stmt->bindValue(':a', (string) $user_a, SQLITE3_TEXT);
+    $stmt->bindValue(':b', (string) $user_b, SQLITE3_TEXT);
+    $stmt->bindValue(':limit', $limit, SQLITE3_INTEGER);
+
+    $result = $stmt->execute();
+    if (!$result) {
+        return array();
+    }
+
+    $messages = array();
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $messages[] = array(
+            'id' => isset($row['id']) ? (int) $row['id'] : 0,
+            'sender' => isset($row['sender']) ? (string) $row['sender'] : '',
+            'recipient' => isset($row['recipient']) ? (string) $row['recipient'] : '',
+            'message' => isset($row['message']) ? (string) $row['message'] : '',
+            'created_at' => isset($row['created_at']) ? (int) $row['created_at'] : 0,
+        );
+    }
+
+    $result->finalize();
+    return array_reverse($messages);
 }
 
 /**

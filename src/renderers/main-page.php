@@ -267,7 +267,14 @@
                     <div class="float-right d-flex gap-2 align-items-center flex-wrap justify-content-end">
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
-                            <span class="badge <?php echo ($onlineUser === $footerLoggedUser) ? 'text-bg-primary' : 'text-bg-secondary'; ?>"><?php echo fm_enc($onlineUser); ?></span>
+                            <button
+                                type="button"
+                                class="badge border-0 fm-user-chat-badge <?php echo ($onlineUser === $footerLoggedUser) ? 'text-bg-primary' : 'text-bg-secondary'; ?>"
+                                data-chat-user="<?php echo fm_enc($onlineUser); ?>"
+                                <?php echo ($onlineUser === $footerLoggedUser) ? 'disabled' : ''; ?>
+                            >
+                                <?php echo fm_enc($onlineUser); ?>
+                            </button>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
@@ -280,7 +287,14 @@
                     <div class="float-right d-flex gap-2 align-items-center flex-wrap">
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
-                            <span class="badge <?php echo ($onlineUser === $footerLoggedUser) ? 'text-bg-primary' : 'text-bg-secondary'; ?>"><?php echo fm_enc($onlineUser); ?></span>
+                            <button
+                                type="button"
+                                class="badge border-0 fm-user-chat-badge <?php echo ($onlineUser === $footerLoggedUser) ? 'text-bg-primary' : 'text-bg-secondary'; ?>"
+                                data-chat-user="<?php echo fm_enc($onlineUser); ?>"
+                                <?php echo ($onlineUser === $footerLoggedUser) ? 'disabled' : ''; ?>
+                            >
+                                <?php echo fm_enc($onlineUser); ?>
+                            </button>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
@@ -290,5 +304,196 @@
         <?php endif; ?>
     </div>
 </form>
+
+<?php if ($footerShowUserBadges): ?>
+    <div class="modal fade" id="fm-chat-modal" tabindex="-1" aria-labelledby="fm-chat-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fm-chat-modal-label">Chat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="fm-chat-history" class="p-3" style="max-height: 420px; overflow-y: auto;"></div>
+                </div>
+                <div class="modal-footer">
+                    <form id="fm-chat-form" class="w-100 d-flex gap-2 m-0">
+                        <input type="text" id="fm-chat-input" class="form-control" maxlength="2000" placeholder="Write a message..." autocomplete="off">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var currentUser = <?php echo json_encode($footerLoggedUser); ?>;
+            if (!currentUser) {
+                return;
+            }
+
+            var modalEl = document.getElementById('fm-chat-modal');
+            var historyEl = document.getElementById('fm-chat-history');
+            var formEl = document.getElementById('fm-chat-form');
+            var inputEl = document.getElementById('fm-chat-input');
+            var titleEl = document.getElementById('fm-chat-modal-label');
+            var tokenEl = document.querySelector('input[name="token"]');
+            var badges = document.querySelectorAll('.fm-user-chat-badge[data-chat-user]');
+
+            if (!modalEl || !historyEl || !formEl || !inputEl || !titleEl || !tokenEl || !window.bootstrap || !window.bootstrap.Modal) {
+                return;
+            }
+
+            var modal = new window.bootstrap.Modal(modalEl);
+            var state = {
+                peer: '',
+                timer: null,
+            };
+
+            function esc(value) {
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function formatTime(ts) {
+                if (!ts) {
+                    return '';
+                }
+                return new Date(ts * 1000).toLocaleString();
+            }
+
+            function renderMessages(messages) {
+                if (!Array.isArray(messages) || messages.length === 0) {
+                    historyEl.innerHTML = '<div class="text-muted small p-2">No messages yet.</div>';
+                    return;
+                }
+
+                var html = messages.map(function (msg) {
+                    var mine = msg.sender === currentUser;
+                    var align = mine ? 'justify-content-end' : 'justify-content-start';
+                    var bubble = mine ? 'bg-primary text-white' : 'bg-light border';
+                    return '<div class="d-flex ' + align + ' mb-2">'
+                        + '<div class="rounded px-3 py-2 ' + bubble + '" style="max-width: 75%;">'
+                        + '<div class="small fw-semibold mb-1">' + esc(msg.sender || '') + '</div>'
+                        + '<div>' + esc(msg.message || '') + '</div>'
+                        + '<div class="small opacity-75 mt-1">' + esc(formatTime(msg.created_at || 0)) + '</div>'
+                        + '</div>'
+                        + '</div>';
+                }).join('');
+
+                historyEl.innerHTML = html;
+                historyEl.scrollTop = historyEl.scrollHeight;
+            }
+
+            function chatFetch() {
+                if (!state.peer) {
+                    return;
+                }
+
+                var url = new URL(window.location.href);
+                url.searchParams.set('chat_action', 'fetch');
+                url.searchParams.set('with', state.peer);
+
+                fetch(url.toString(), {
+                    credentials: 'same-origin'
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (payload) {
+                        if (!payload || payload.ok !== true || !payload.data) {
+                            return;
+                        }
+                        renderMessages(payload.data.messages || []);
+                    })
+                    .catch(function () {
+                    });
+            }
+
+            function chatSend(message) {
+                var url = new URL(window.location.href);
+                url.searchParams.set('chat_action', 'send');
+
+                var body = new URLSearchParams();
+                body.set('to', state.peer);
+                body.set('message', message);
+                body.set('token', tokenEl.value || '');
+
+                return fetch(url.toString(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    credentials: 'same-origin',
+                    body: body.toString()
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (payload) {
+                        if (payload && payload.ok && payload.data) {
+                            renderMessages(payload.data.messages || []);
+                            return true;
+                        }
+                        return false;
+                    })
+                    .catch(function () {
+                        return false;
+                    });
+            }
+
+            function startPolling() {
+                if (state.timer) {
+                    window.clearInterval(state.timer);
+                }
+                state.timer = window.setInterval(chatFetch, 5000);
+            }
+
+            function stopPolling() {
+                if (state.timer) {
+                    window.clearInterval(state.timer);
+                    state.timer = null;
+                }
+            }
+
+            badges.forEach(function (badge) {
+                badge.addEventListener('click', function () {
+                    var peer = badge.getAttribute('data-chat-user') || '';
+                    if (!peer || peer === currentUser) {
+                        return;
+                    }
+                    state.peer = peer;
+                    titleEl.textContent = 'Chat with ' + peer;
+                    historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
+                    modal.show();
+                    chatFetch();
+                    startPolling();
+                });
+            });
+
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                stopPolling();
+                state.peer = '';
+                formEl.reset();
+            });
+
+            formEl.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var message = (inputEl.value || '').trim();
+                if (!message || !state.peer) {
+                    return;
+                }
+
+                chatSend(message).then(function (ok) {
+                    if (ok) {
+                        inputEl.value = '';
+                        inputEl.focus();
+                    }
+                });
+            });
+        })();
+    </script>
+<?php endif; ?>
 
 <?php
