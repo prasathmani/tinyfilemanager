@@ -156,24 +156,14 @@ function persistAuthUsersArray($configFile, array $authUsers)
 
     $newCode = exportAuthUsersCode($authUsers);
 
-    $patterns = array(
-        '/\$auth_users\s*=\s*array\s*\((?:.|[\r\n])*?\)\s*;/U',
-        '/\$auth_users\s*=\s*\[(?:.|[\r\n])*?\]\s*;/U',
-    );
-
-    $updated = null;
-    foreach ($patterns as $pattern) {
-        $count = 0;
-        $candidate = preg_replace($pattern, $newCode, $content, 1, $count);
-        if ($candidate !== null && $count === 1) {
-            $updated = $candidate;
-            break;
-        }
-    }
-
-    if (!is_string($updated)) {
+    $bounds = findAuthUsersAssignmentBounds($content);
+    if (!$bounds['ok']) {
         return array('ok' => false, 'error' => 'Failed to locate $auth_users declaration in config.php.');
     }
+
+    $start = (int) $bounds['start'];
+    $length = (int) $bounds['length'];
+    $updated = substr_replace($content, $newCode, $start, $length);
 
     $backupFile = $configFile . '.bak.reset.' . date('Ymd_His');
     if (@file_put_contents($backupFile, $content) === false) {
@@ -185,4 +175,114 @@ function persistAuthUsersArray($configFile, array $authUsers)
     }
 
     return array('ok' => true, 'backup_file' => $backupFile);
+}
+
+function findAuthUsersAssignmentBounds($content)
+{
+    if (!is_string($content) || $content === '') {
+        return array('ok' => false);
+    }
+
+    if (!preg_match('/\$auth_users\s*=\s*(array\s*\(|\[)/', $content, $m, PREG_OFFSET_CAPTURE)) {
+        return array('ok' => false);
+    }
+
+    $start = (int) $m[0][1];
+    $token = (string) $m[1][0];
+    $openPos = 0;
+    $closeChar = ')';
+
+    if (strpos($token, 'array') === 0) {
+        $openPos = strpos($content, '(', $start);
+        $closeChar = ')';
+    } else {
+        $openPos = strpos($content, '[', $start);
+        $closeChar = ']';
+    }
+
+    if ($openPos === false) {
+        return array('ok' => false);
+    }
+
+    $closePos = findMatchingBracketPos($content, $openPos, $closeChar);
+    if ($closePos < 0) {
+        return array('ok' => false);
+    }
+
+    $end = $closePos + 1;
+    $len = strlen($content);
+    while ($end < $len && ctype_space($content[$end])) {
+        $end++;
+    }
+    if ($end < $len && $content[$end] === ';') {
+        $end++;
+    }
+
+    return array(
+        'ok' => true,
+        'start' => $start,
+        'length' => $end - $start,
+    );
+}
+
+function findMatchingBracketPos($content, $openPos, $closeChar)
+{
+    $openChar = $content[$openPos];
+    $depth = 1;
+    $inSingle = false;
+    $inDouble = false;
+    $escaped = false;
+    $len = strlen($content);
+
+    for ($i = $openPos + 1; $i < $len; $i++) {
+        $ch = $content[$i];
+
+        if ($escaped) {
+            $escaped = false;
+            continue;
+        }
+
+        if ($ch === '\\') {
+            $escaped = true;
+            continue;
+        }
+
+        if ($inSingle) {
+            if ($ch === "'") {
+                $inSingle = false;
+            }
+            continue;
+        }
+
+        if ($inDouble) {
+            if ($ch === '"') {
+                $inDouble = false;
+            }
+            continue;
+        }
+
+        if ($ch === "'") {
+            $inSingle = true;
+            continue;
+        }
+
+        if ($ch === '"') {
+            $inDouble = true;
+            continue;
+        }
+
+        if ($ch === $openChar) {
+            $depth++;
+            continue;
+        }
+
+        if ($ch === $closeChar) {
+            $depth--;
+            if ($depth === 0) {
+                return $i;
+            }
+        }
+    }
+
+    return -1;
 }
