@@ -23,7 +23,7 @@ $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
         <h5 class="modal-title" id="adminUserModalLabel"><?php echo $title; ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="admin-user-modal-form" autocomplete="off">
+      <form id="admin-user-modal-form" method="post" action="<?php echo htmlspecialchars(FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&admin_users_save=1', ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
         <div class="modal-body">
           <div id="admin-user-modal-error" class="alert alert-danger d-none" role="alert"></div>
           <div class="mb-3">
@@ -115,6 +115,9 @@ $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
       fetch(saveUrl, {
         method: 'POST',
         body: fd,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
         credentials: 'same-origin'
       })
         .then(function(resp) {
@@ -170,6 +173,9 @@ $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
         fetch(window.location.pathname + '?p=' + encodeURIComponent(currentPath()) + '&admin_users_delete=1', {
           method: 'POST',
           body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
           credentials: 'same-origin'
         })
           .then(function(resp) {

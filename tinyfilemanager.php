@@ -745,25 +745,45 @@ define('FM_PATH', $p);
 
 // --- ADMIN USERS SAVE (admin only, AJAX POST) ---
 if (isset($_GET['admin_users_save'])) {
-    header('Content-Type: application/json; charset=utf-8');
+    $is_ajax_request = isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+        && strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+    if ($is_ajax_request) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+
+    $admin_users_respond_error = function ($status_code, $message) use ($is_ajax_request) {
+        http_response_code($status_code);
+        if ($is_ajax_request) {
+            echo json_encode(array('ok' => false, 'error' => $message));
+        } else {
+            fm_set_msg($message, 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&admin_users=1');
+        }
+        exit;
+    };
+
+    $admin_users_respond_success = function () use ($is_ajax_request) {
+        if ($is_ajax_request) {
+            echo json_encode(array('ok' => true));
+        } else {
+            fm_set_msg('User saved successfully.', 'success');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&admin_users=1');
+        }
+        exit;
+    };
 
     if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
-        http_response_code(403);
-        echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
-        exit;
+        $admin_users_respond_error(403, 'Forbidden');
     }
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        echo json_encode(array('ok' => false, 'error' => 'Method not allowed'));
-        exit;
+        $admin_users_respond_error(405, 'Method not allowed');
     }
 
     $token = isset($_POST['token']) ? (string) $_POST['token'] : '';
     if (!verifyToken($token)) {
-        http_response_code(401);
-        echo json_encode(array('ok' => false, 'error' => 'Invalid token'));
-        exit;
+        $admin_users_respond_error(401, 'Invalid token');
     }
 
     $mode = isset($_POST['mode']) && $_POST['mode'] === 'edit' ? 'edit' : 'new';
@@ -773,26 +793,22 @@ if (isset($_GET['admin_users_save'])) {
     $password2 = isset($_POST['password2']) ? (string) $_POST['password2'] : '';
     $access_type = isset($_POST['access_type']) ? trim((string) $_POST['access_type']) : 'standard';
     $directories_raw = isset($_POST['directories']) ? (string) $_POST['directories'] : '';
+    $note = isset($_POST['note']) ? trim((string) $_POST['note']) : '';
+    $change_date = isset($_POST['date']) ? trim((string) $_POST['date']) : '';
 
     if ($username === '' || !preg_match('/^[A-Za-z0-9._-]{2,64}$/', $username)) {
-        http_response_code(400);
-        echo json_encode(array('ok' => false, 'error' => 'Invalid username format. Use 2-64 chars: letters, digits, dot, underscore, hyphen.'));
-        exit;
+        $admin_users_respond_error(400, 'Invalid username format. Use 2-64 chars: letters, digits, dot, underscore, hyphen.');
     }
 
     $allowed_access_types = array('standard', 'read only', 'upload only', 'manager');
     if (!in_array($access_type, $allowed_access_types, true)) {
-        http_response_code(400);
-        echo json_encode(array('ok' => false, 'error' => 'Invalid access type'));
-        exit;
+        $admin_users_respond_error(400, 'Invalid access type');
     }
 
     $config_file = __DIR__ . '/config.php';
     $config_data = fm_admin_load_user_config_arrays($config_file);
     if (!$config_data['ok']) {
-        http_response_code(500);
-        echo json_encode(array('ok' => false, 'error' => $config_data['error']));
-        exit;
+        $admin_users_respond_error(500, $config_data['error']);
     }
 
     $auth_users_local = $config_data['auth_users'];
@@ -808,21 +824,15 @@ if (isset($_GET['admin_users_save'])) {
         || array_key_exists($username, $directories_users_local);
 
     if ($mode === 'new' && $exists) {
-        http_response_code(400);
-        echo json_encode(array('ok' => false, 'error' => 'User already exists'));
-        exit;
+        $admin_users_respond_error(400, 'User already exists');
     }
 
     if ($mode === 'edit' && !$exists) {
-        http_response_code(404);
-        echo json_encode(array('ok' => false, 'error' => 'User not found'));
-        exit;
+        $admin_users_respond_error(404, 'User not found');
     }
 
     if ($mode === 'new' && trim($password) === '') {
-        http_response_code(400);
-        echo json_encode(array('ok' => false, 'error' => 'Password is required for new user'));
-        exit;
+        $admin_users_respond_error(400, 'Password is required for new user');
     }
 
     $old_access_type = 'standard';
@@ -841,27 +851,19 @@ if (isset($_GET['admin_users_save'])) {
     $password_changed = false;
     if ($password !== '' || $password2 !== '') {
         if ($password !== $password2) {
-            http_response_code(400);
-            echo json_encode(array('ok' => false, 'error' => 'Passwords do not match'));
-            exit;
+            $admin_users_respond_error(400, 'Passwords do not match');
         }
         if (function_exists('mb_strlen')) {
             if (mb_strlen($password, 'UTF-8') < 6) {
-                http_response_code(400);
-                echo json_encode(array('ok' => false, 'error' => 'Password must be at least 6 characters long'));
-                exit;
+                $admin_users_respond_error(400, 'Password must be at least 6 characters long');
             }
         } elseif (strlen($password) < 6) {
-            http_response_code(400);
-            echo json_encode(array('ok' => false, 'error' => 'Password must be at least 6 characters long'));
-            exit;
+            $admin_users_respond_error(400, 'Password must be at least 6 characters long');
         }
         $auth_users_local[$username] = password_hash($password, PASSWORD_DEFAULT);
         $password_changed = true;
     } elseif ($mode === 'new') {
-        http_response_code(400);
-        echo json_encode(array('ok' => false, 'error' => 'Password is required for new user'));
-        exit;
+        $admin_users_respond_error(400, 'Password is required for new user');
     }
 
     $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
@@ -900,22 +902,36 @@ if (isset($_GET['admin_users_save'])) {
     );
 
     if (!$write_ok['ok']) {
-        http_response_code(500);
-        echo json_encode(array('ok' => false, 'error' => $write_ok['error']));
-        exit;
+        $admin_users_respond_error(500, $write_ok['error']);
     }
 
-    fm_admin_write_audit_event('user_save', $actor, $username, array(
+    $audit_meta = array(
         'mode' => $mode,
         'access_type_old' => $old_access_type,
         'access_type_new' => $access_type,
         'directories_old_count' => $old_dirs_count,
         'directories_new_count' => $new_dirs_count,
         'password_changed' => $password_changed,
+    );
+    if ($note !== '') {
+        $audit_meta['note'] = $note;
+    }
+    if ($change_date !== '') {
+        $audit_meta['change_date'] = $change_date;
+    }
+
+    fm_admin_write_audit_event('user_save', $actor, $username, array(
+        'mode' => $audit_meta['mode'],
+        'access_type_old' => $audit_meta['access_type_old'],
+        'access_type_new' => $audit_meta['access_type_new'],
+        'directories_old_count' => $audit_meta['directories_old_count'],
+        'directories_new_count' => $audit_meta['directories_new_count'],
+        'password_changed' => $audit_meta['password_changed'],
+        'note' => isset($audit_meta['note']) ? $audit_meta['note'] : '',
+        'change_date' => isset($audit_meta['change_date']) ? $audit_meta['change_date'] : '',
     ));
 
-    echo json_encode(array('ok' => true));
-    exit;
+    $admin_users_respond_success();
 }
 
 // --- ADMIN USERS DELETE (admin only, AJAX POST) ---

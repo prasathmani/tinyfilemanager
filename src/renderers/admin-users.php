@@ -415,6 +415,9 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                 fetch(saveUrl, {
                     method: 'POST',
                     body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     credentials: 'same-origin'
                 })
                     .then(function (resp) {
@@ -469,6 +472,9 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                 fetch(deleteUrl, {
                     method: 'POST',
                     body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     credentials: 'same-origin'
                 })
                     .then(function (resp) {
