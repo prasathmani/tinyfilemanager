@@ -1776,13 +1776,19 @@ if (isset($_GET['help'])) {
                         <p>
                         <h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> Tiny File Manager <?php echo VERSION; ?></a></h3>
                         </p>
-                        <p>Author: PRAŚATH MANİ</p>
-                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers [at] gmail [dot] com</a> </p>
+                        <p><strong>Autorský kolektív:</strong></p>
+                        <p class="mb-1">1. Prasath Mani</p>
+                        <p class="mb-1">2. Slavomir Piar</p>
+                        <p class="mb-2">3. CCP Programmers &amp; PIAR team</p>
+                        <p class="mb-2"><strong>S podporou AI modulov:</strong> GitHub Copilot a Joyee</p>
+                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers [at] gmail [dot] com</a></p>
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> <?php echo lng('Help Documents') ?> </a> </li>
+                                <li class="list-group-item"><a href="?p=docs&amp;view=USER_GUIDE_SK.md"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
+                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
+                                <li class="list-group-item"><a href="?p=&amp;view=SECURITY.md"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <?php if (!FM_READONLY) { ?>
                                     <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
