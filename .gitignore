@@ -3,7 +3,9 @@ releases/tinyfilemanager-*.zip
 
 # Runtime uploads and ad-hoc local test files
 uploads/
-.fm_usercfg/online_users.json
+.fm_usercfg/*.json
+.fm_usercfg/*.sqlite
+!.fm_usercfg/.htaccess
 
 # Local Joyee bridge secrets (server-only)
 joyee-bridge.config.php
