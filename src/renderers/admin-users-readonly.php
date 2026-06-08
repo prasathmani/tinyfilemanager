@@ -190,6 +190,22 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
     <div id="admin-user-modal-container"></div>
         <script>
         document.addEventListener('DOMContentLoaded', function () {
+            function executeInjectedScripts(rootEl) {
+                if (!rootEl) {
+                    return;
+                }
+                var scripts = rootEl.querySelectorAll('script');
+                scripts.forEach(function (oldScript) {
+                    var newScript = document.createElement('script');
+                    if (oldScript.src) {
+                        newScript.src = oldScript.src;
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                    }
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            }
+
             var auditAction = document.getElementById('audit-filter-action');
             var auditText = document.getElementById('audit-filter-text');
             var auditCount = document.getElementById('audit-filter-count');
@@ -332,6 +348,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                             return;
                         }
                         container.innerHTML = html;
+                        executeInjectedScripts(container);
                         var modalEl = document.getElementById('adminUserModal');
                         if (!modalEl) {
                             console.error('Missing adminUserModal element in response');
