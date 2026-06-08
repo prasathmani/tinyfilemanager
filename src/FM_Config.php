@@ -6,6 +6,7 @@
 class FM_Config
 {
     var $data;
+    var $last_error;
     // Directory where per-user setting JSON files are stored.
     const USER_CFG_DIR = '.fm_usercfg';
 
@@ -18,6 +19,7 @@ class FM_Config
             'error_reporting' => true,
             'show_hidden' => true
         );
+        $this->last_error = '';
         $data = false;
         if (strlen($CONFIG)) {
             $data = fm_object_to_array(json_decode($CONFIG));
@@ -64,6 +66,30 @@ class FM_Config
     }
 
     /**
+     * Pick an existing writable per-user config directory or create one.
+     * Prefer project root, then legacy src/ location as fallback.
+     */
+    private function resolveWritableUserCfgDir()
+    {
+        $candidates = array($this->userCfgDir(), $this->legacyUserCfgDir());
+
+        foreach ($candidates as $dir) {
+            if (is_dir($dir)) {
+                if (is_writable($dir)) {
+                    return $dir;
+                }
+                continue;
+            }
+
+            if (@mkdir($dir, 0750, true) && is_dir($dir) && is_writable($dir)) {
+                return $dir;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Return the path to a user's settings JSON file.
      */
     private function userCfgPath($username)
@@ -103,9 +129,10 @@ class FM_Config
      */
     private function ensureUserCfgDir()
     {
-        $dir = $this->userCfgDir();
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0750, true);
+        $dir = $this->resolveWritableUserCfgDir();
+        if ($dir === false) {
+            $this->last_error = 'No writable profile settings directory is available.';
+            return false;
         }
         $htaccess = $dir . DIRECTORY_SEPARATOR . '.htaccess';
         if (!file_exists($htaccess)) {
@@ -114,14 +141,29 @@ class FM_Config
         return $dir;
     }
 
+    function getLastError()
+    {
+        return (string) $this->last_error;
+    }
+
     function save()
     {
+        $this->last_error = '';
         // If a user is logged in, save to their personal settings file only.
         $logged = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : null;
         if ($logged) {
-            $this->ensureUserCfgDir();
-            $path = $this->userCfgPath($logged);
-            return (@file_put_contents($path, json_encode($this->data)) !== false);
+            $dir = $this->ensureUserCfgDir();
+            if ($dir === false) {
+                return false;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . md5($logged) . '.json';
+            $result = @file_put_contents($path, json_encode($this->data));
+            if ($result === false) {
+                $this->last_error = 'Could not write profile settings file.';
+                return false;
+            }
+            return true;
         }
 
         // No user logged in – fall back to updating $CONFIG in config.php.
@@ -131,11 +173,13 @@ class FM_Config
         $new_line = '\$CONFIG = ' . $var_value . ';';
 
         if (!is_writable($fm_file)) {
+            $this->last_error = 'Main configuration file is not writable.';
             return false;
         }
 
         $content = @file_get_contents($fm_file);
         if ($content === false) {
+            $this->last_error = 'Could not read main configuration file.';
             return false;
         }
 
@@ -150,9 +194,17 @@ class FM_Config
         }
 
         if ($new_content === null || $new_content === $content) {
+            if ($new_content === null) {
+                $this->last_error = 'Failed to prepare updated configuration content.';
+            }
             return ($new_content !== null);
         }
 
-        return (@file_put_contents($fm_file, $new_content) !== false);
+        $result = @file_put_contents($fm_file, $new_content);
+        if ($result === false) {
+            $this->last_error = 'Could not write updated configuration file.';
+            return false;
+        }
+        return true;
     }
 }

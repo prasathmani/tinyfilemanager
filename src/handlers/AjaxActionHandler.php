@@ -163,10 +163,12 @@ class TFM_AjaxActionHandler {
             $theme = $te3;
         }
         $saved = $cfg->save();
+        $saveMessage = $saved ? 'Settings saved successfully' : ($cfg->getLastError() ? $cfg->getLastError() : 'Settings could not be saved.');
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(array(
             'success' => (bool) $saved,
             'theme' => $theme,
+            'msg' => $saveMessage,
         ));
         exit();
     }

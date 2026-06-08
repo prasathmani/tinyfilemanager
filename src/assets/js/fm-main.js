@@ -172,7 +172,7 @@
         }
 
         if (response && response.success) {
-          toast('Settings saved successfully');
+          toast(response.msg || 'Settings saved successfully');
           var url = new URL(window.location.href);
           url.searchParams.delete('settings');
           url.hash = '';
@@ -181,11 +181,11 @@
             window.location.assign(nextUrl);
           }, 450);
         } else {
-          toast('Settings could not be saved. Check write permissions for config.php');
+          toast(response && response.msg ? response.msg : 'Settings could not be saved.');
         }
       },
       error: function () {
-        toast('Settings could not be saved. Check write permissions for config.php');
+        toast('Settings could not be saved.');
       }
     });
 
