@@ -1786,9 +1786,9 @@ if (isset($_GET['help'])) {
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="?p=docs&amp;view=USER_GUIDE_SK.md"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=<?php echo urlencode('docs'); ?>&amp;view=<?php echo urlencode('USER_GUIDE_SK.md'); ?>"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
-                                <li class="list-group-item"><a href="?p=&amp;view=SECURITY.md"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=&amp;view=<?php echo urlencode('SECURITY.md'); ?>"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <?php if (!FM_READONLY) { ?>
                                     <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
