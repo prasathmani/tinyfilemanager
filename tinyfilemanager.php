@@ -1786,9 +1786,9 @@ if (isset($_GET['help'])) {
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=<?php echo urlencode('docs'); ?>&amp;view=<?php echo urlencode('USER_GUIDE_SK.md'); ?>"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=user-guide"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
-                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=&amp;view=<?php echo urlencode('SECURITY.md'); ?>"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=security"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <?php if (!FM_READONLY) { ?>
                                     <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
@@ -1813,6 +1813,58 @@ if (isset($_GET['help'])) {
                         <textarea class="form-control" rows="2" readonly id="js-pwd-result"></textarea>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+<?php
+    fm_show_footer();
+    exit;
+}
+
+if (isset($_GET['help_doc'])) {
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
+
+    $doc_key = isset($_GET['help_doc']) ? trim((string) $_GET['help_doc']) : '';
+    $doc_map = array(
+        'user-guide' => array(
+            'title' => 'Používateľská príručka (lokálna)',
+            'path' => __DIR__ . '/docs/USER_GUIDE_SK.md',
+        ),
+        'security' => array(
+            'title' => 'Bezpečnostné zásady',
+            'path' => __DIR__ . '/SECURITY.md',
+        ),
+    );
+
+    $doc_title = 'Dokument';
+    $doc_content = '';
+    $doc_error = '';
+
+    if (!isset($doc_map[$doc_key])) {
+        $doc_error = 'Požadovaný dokument nie je dostupný.';
+    } else {
+        $doc_title = $doc_map[$doc_key]['title'];
+        $doc_path = $doc_map[$doc_key]['path'];
+        if (!is_file($doc_path) || !is_readable($doc_path)) {
+            $doc_error = 'Dokument sa nepodarilo načítať.';
+        } else {
+            $doc_content = (string) file_get_contents($doc_path);
+        }
+    }
+?>
+    <div class="col-md-10 offset-md-1 pt-3">
+        <div class="card mb-2" data-bs-theme="<?php echo FM_THEME; ?>">
+            <h6 class="card-header d-flex justify-content-between">
+                <span><i class="fa fa-book"></i> <?php echo htmlspecialchars($doc_title, ENT_QUOTES, 'UTF-8'); ?></span>
+                <a href="<?php echo FM_SELF_URL; ?>?help=1" class="text-danger"><i class="fa fa-times-circle-o"></i> <?php echo lng('Cancel') ?></a>
+            </h6>
+            <div class="card-body">
+                <?php if ($doc_error !== ''): ?>
+                    <div class="alert alert-warning mb-0" role="alert"><?php echo htmlspecialchars($doc_error, ENT_QUOTES, 'UTF-8'); ?></div>
+                <?php else: ?>
+                    <pre class="mb-0" style="white-space: pre-wrap; word-break: break-word; font-family: inherit;"><?php echo htmlspecialchars($doc_content, ENT_QUOTES, 'UTF-8'); ?></pre>
+                <?php endif; ?>
             </div>
         </div>
     </div>
