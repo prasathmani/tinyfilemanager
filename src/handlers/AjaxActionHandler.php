@@ -35,6 +35,11 @@ class TFM_AjaxActionHandler {
             $this->handleChangePassword($post, $auth_users);
         }
 
+        // Profile/settings save must also work for any authenticated user.
+        if (isset($post['type']) && $post['type'] == 'settings') {
+            $this->handleSettings($post);
+        }
+
         if (isset($post['type']) && $post['type'] == 'search') {
             $dir = $post['path'] == '.' ? '' : $post['path'];
             $response = scan(fm_clean_path($dir), $post['content']);
@@ -52,10 +57,6 @@ class TFM_AjaxActionHandler {
 
         if (isset($post['type']) && $post['type'] == 'backup' && !empty($post['file'])) {
             $this->handleBackup($post);
-        }
-
-        if (isset($post['type']) && $post['type'] == 'settings') {
-            $this->handleSettings($post);
         }
 
         if (isset($post['type']) && $post['type'] == 'pwdhash') {
@@ -127,6 +128,16 @@ class TFM_AjaxActionHandler {
 
     private function handleSettings($post) {
         global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
+
+        if (!isset($_SESSION[FM_SESSION_ID]['logged']) || empty($_SESSION[FM_SESSION_ID]['logged'])) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array(
+                'success' => false,
+                'theme' => $theme,
+                'msg' => 'Not authenticated',
+            ));
+            exit();
+        }
 
         $newLng = $post['js-language'];
         fm_get_translations(array());
