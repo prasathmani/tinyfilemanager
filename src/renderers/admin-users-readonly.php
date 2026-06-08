@@ -120,7 +120,11 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                             <input id="audit-filter-text" type="text" class="form-control form-control-sm" placeholder="meno, IP, meta...">
                         </div>
                         <div class="col-md-4 text-md-end">
-                            <small id="audit-filter-count" class="text-muted"></small>
+                            <div class="d-flex gap-2 justify-content-md-end">
+                                <button type="button" id="audit-filter-clear" class="btn btn-sm btn-outline-secondary">Vyčistiť filtre</button>
+                                <button type="button" id="audit-export-csv" class="btn btn-sm btn-outline-primary">Export CSV</button>
+                            </div>
+                            <small id="audit-filter-count" class="text-muted d-block mt-1"></small>
                         </div>
                     </div>
                 </div>
@@ -181,6 +185,8 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             var auditAction = document.getElementById('audit-filter-action');
             var auditText = document.getElementById('audit-filter-text');
             var auditCount = document.getElementById('audit-filter-count');
+            var auditClear = document.getElementById('audit-filter-clear');
+            var auditExport = document.getElementById('audit-export-csv');
             var auditRows = document.querySelectorAll('#audit-table-body tr');
 
             function applyAuditFilters() {
@@ -213,6 +219,71 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             }
             if (auditText) {
                 auditText.addEventListener('input', applyAuditFilters);
+            }
+            if (auditClear) {
+                auditClear.addEventListener('click', function () {
+                    if (auditAction) {
+                        auditAction.value = '';
+                    }
+                    if (auditText) {
+                        auditText.value = '';
+                    }
+                    applyAuditFilters();
+                });
+            }
+
+            if (auditExport) {
+                auditExport.addEventListener('click', function () {
+                    if (!auditRows || !auditRows.length) {
+                        return;
+                    }
+
+                    function csvEscape(value) {
+                        var s = String(value == null ? '' : value);
+                        return '"' + s.replace(/"/g, '""') + '"';
+                    }
+
+                    var header = ['Cas', 'Akcia', 'Kto', 'Cielovy pouzivatel', 'IP', 'Meta'];
+                    var lines = [header.map(csvEscape).join(',')];
+
+                    auditRows.forEach(function (row) {
+                        if (row.style.display === 'none') {
+                            return;
+                        }
+                        var cells = row.querySelectorAll('td');
+                        if (!cells || cells.length < 6) {
+                            return;
+                        }
+                        var rowData = [];
+                        for (var i = 0; i < 6; i++) {
+                            rowData.push(csvEscape(cells[i].textContent || ''));
+                        }
+                        lines.push(rowData.join(','));
+                    });
+
+                    if (lines.length <= 1) {
+                        return;
+                    }
+
+                    var csv = lines.join('\n');
+                    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    var now = new Date();
+                    var stamp = now.getFullYear().toString()
+                        + String(now.getMonth() + 1).padStart(2, '0')
+                        + String(now.getDate()).padStart(2, '0')
+                        + '_'
+                        + String(now.getHours()).padStart(2, '0')
+                        + String(now.getMinutes()).padStart(2, '0')
+                        + String(now.getSeconds()).padStart(2, '0');
+                    a.href = url;
+                    a.download = 'admin_audit_' + stamp + '.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
             }
             applyAuditFilters();
 
