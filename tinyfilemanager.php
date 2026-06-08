@@ -379,7 +379,19 @@ $root_url = fm_clean_path($root_url);
 
 // abs path for site
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
-defined('FM_SELF_PATH') || define('FM_SELF_PATH', $_SERVER['PHP_SELF']);
+$fm_self_path = isset($_SERVER['SCRIPT_NAME']) ? (string) $_SERVER['SCRIPT_NAME'] : '';
+if ($fm_self_path === '') {
+    $fm_self_path = isset($_SERVER['PHP_SELF']) ? (string) $_SERVER['PHP_SELF'] : '';
+}
+// Some servers include PATH_INFO in PHP_SELF; keep only script path ending with .php.
+if (preg_match('#^(.+?\.php)(?:/.*)?$#i', $fm_self_path, $fm_self_match)) {
+    $fm_self_path = $fm_self_match[1];
+}
+if ($fm_self_path === '') {
+    $fm_self_path = '/tinyfilemanager.php';
+}
+
+defined('FM_SELF_PATH') || define('FM_SELF_PATH', $fm_self_path);
 defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . FM_SELF_PATH);
 
 // Lightweight PWA manifest endpoint (no service worker)
