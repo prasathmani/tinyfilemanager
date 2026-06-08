@@ -617,7 +617,10 @@ if ($use_auth) {
 
                                     <div class="mb-3">
                                         <label for="fm_pwd" class="pb-2"><?php echo lng('Password'); ?></label>
-                                        <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
+                                            <button type="button" class="btn btn-outline-secondary" id="fm_pwd_toggle" aria-label="Show password">Show</button>
+                                        </div>
                                     </div>
 
                                     <div class="mb-3">
@@ -630,6 +633,23 @@ if ($use_auth) {
                                         </button>
                                     </div>
                                 </form>
+                                <script>
+                                (function () {
+                                    var input = document.getElementById('fm_pwd');
+                                    var button = document.getElementById('fm_pwd_toggle');
+                                    if (!input || !button) {
+                                        return;
+                                    }
+
+                                    button.addEventListener('click', function () {
+                                        var isHidden = input.getAttribute('type') === 'password';
+                                        input.setAttribute('type', isHidden ? 'text' : 'password');
+                                        button.textContent = isHidden ? 'Hide' : 'Show';
+                                        button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                                        input.focus();
+                                    });
+                                })();
+                                </script>
                             </div>
                         </div>
                         <div class="footer text-center">
