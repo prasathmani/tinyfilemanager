@@ -771,6 +771,13 @@ if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID
 
     $chat_action = isset($_GET['chat_action']) ? (string) $_GET['chat_action'] : '';
     $chat_current_user = (string) $_SESSION[FM_SESSION_ID]['logged'];
+
+    if ($chat_action === 'inbox') {
+        $inbox = fm_chat_get_inbox($chat_current_user, 50);
+        echo json_encode(array('ok' => true, 'data' => array('inbox' => $inbox)));
+        exit;
+    }
+
     $chat_peer = isset($_REQUEST['with']) ? trim((string) $_REQUEST['with']) : '';
     if ($chat_peer === '' && isset($_REQUEST['to'])) {
         $chat_peer = trim((string) $_REQUEST['to']);
@@ -2511,6 +2518,57 @@ function fm_chat_get_conversation($user_a, $user_b, $limit = 100)
 
     $result->finalize();
     return array_reverse($messages);
+}
+
+function fm_chat_get_inbox($recipient, $limit = 50)
+{
+    $db = fm_chat_get_db();
+    if (!$db) {
+        return array();
+    }
+
+    $limit = (int) $limit;
+    if ($limit < 1) {
+        $limit = 1;
+    }
+    if ($limit > 200) {
+        $limit = 200;
+    }
+
+    $stmt = $db->prepare('SELECT m1.id, m1.sender, m1.message, m1.created_at
+        FROM fm_chat_messages m1
+        INNER JOIN (
+            SELECT sender, MAX(id) AS max_id
+            FROM fm_chat_messages
+            WHERE recipient = :recipient
+            GROUP BY sender
+        ) latest ON latest.max_id = m1.id
+        ORDER BY m1.id DESC
+        LIMIT :limit');
+    if (!$stmt) {
+        return array();
+    }
+
+    $stmt->bindValue(':recipient', (string) $recipient, SQLITE3_TEXT);
+    $stmt->bindValue(':limit', $limit, SQLITE3_INTEGER);
+
+    $result = $stmt->execute();
+    if (!$result) {
+        return array();
+    }
+
+    $items = array();
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $items[] = array(
+            'id' => isset($row['id']) ? (int) $row['id'] : 0,
+            'sender' => isset($row['sender']) ? (string) $row['sender'] : '',
+            'message' => isset($row['message']) ? (string) $row['message'] : '',
+            'created_at' => isset($row['created_at']) ? (int) $row['created_at'] : 0,
+        );
+    }
+
+    $result->finalize();
+    return $items;
 }
 
 /**

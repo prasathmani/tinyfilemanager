@@ -306,6 +306,20 @@
 </form>
 
 <?php if ($footerShowUserBadges): ?>
+    <style>
+        .fm-user-chat-badge.fm-chat-ringing {
+            background-color: #dc3545 !important;
+            color: #fff !important;
+            animation: fm-chat-ring-blink 0.85s steps(2, jump-none) infinite;
+        }
+
+        @keyframes fm-chat-ring-blink {
+            50% {
+                opacity: 0.35;
+            }
+        }
+    </style>
+
     <div class="modal fade" id="fm-chat-modal" tabindex="-1" aria-labelledby="fm-chat-modal-label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -349,7 +363,25 @@
             var state = {
                 peer: '',
                 timer: null,
+                inboxTimer: null,
+                inboxInitialized: false,
+                lastIncomingBySender: {},
             };
+
+            var badgeByUser = {};
+            badges.forEach(function (badge) {
+                var u = badge.getAttribute('data-chat-user') || '';
+                if (u) {
+                    badgeByUser[u] = badge;
+                }
+            });
+
+            function markBadgeRinging(user, ring) {
+                if (!user || !badgeByUser[user]) {
+                    return;
+                }
+                badgeByUser[user].classList[ring ? 'add' : 'remove']('fm-chat-ringing');
+            }
 
             function showModal() {
                 var hasBootstrap5Modal = !!(window.bootstrap && window.bootstrap.Modal);
@@ -503,6 +535,80 @@
                 }
             }
 
+            function pollInbox() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('chat_action', 'inbox');
+
+                fetch(url.toString(), {
+                    credentials: 'same-origin'
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (payload) {
+                        if (!payload || payload.ok !== true || !payload.data || !Array.isArray(payload.data.inbox)) {
+                            return;
+                        }
+
+                        var inbox = payload.data.inbox;
+                        var shouldAutoOpenSender = '';
+                        inbox.forEach(function (item) {
+                            var sender = item && item.sender ? String(item.sender) : '';
+                            var id = item && item.id ? Number(item.id) : 0;
+                            if (!sender || !id || sender === currentUser) {
+                                return;
+                            }
+
+                            var prev = Number(state.lastIncomingBySender[sender] || 0);
+                            if (!state.inboxInitialized) {
+                                state.lastIncomingBySender[sender] = id;
+                                return;
+                            }
+
+                            if (id > prev) {
+                                state.lastIncomingBySender[sender] = id;
+
+                                if (state.peer === sender) {
+                                    chatFetch();
+                                    markBadgeRinging(sender, false);
+                                } else {
+                                    markBadgeRinging(sender, true);
+                                    if (!state.peer && !shouldAutoOpenSender) {
+                                        shouldAutoOpenSender = sender;
+                                    }
+                                }
+                            }
+                        });
+
+                        state.inboxInitialized = true;
+
+                        if (shouldAutoOpenSender) {
+                            state.peer = shouldAutoOpenSender;
+                            titleEl.textContent = 'Chat with ' + shouldAutoOpenSender;
+                            historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
+                            showModal();
+                            markBadgeRinging(shouldAutoOpenSender, false);
+                            chatFetch();
+                            startPolling();
+                        }
+                    })
+                    .catch(function () {
+                    });
+            }
+
+            function startInboxPolling() {
+                if (state.inboxTimer) {
+                    window.clearInterval(state.inboxTimer);
+                }
+                pollInbox();
+                state.inboxTimer = window.setInterval(pollInbox, 4000);
+            }
+
+            function clearPeerNotification(peer) {
+                if (!peer) {
+                    return;
+                }
+                markBadgeRinging(peer, false);
+            }
+
             badges.forEach(function (badge) {
                 badge.addEventListener('click', function () {
                     var peer = badge.getAttribute('data-chat-user') || '';
@@ -510,6 +616,7 @@
                         return;
                     }
                     state.peer = peer;
+                    clearPeerNotification(peer);
                     titleEl.textContent = 'Chat with ' + peer;
                     historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
                     showModal();
@@ -535,11 +642,14 @@
 
                 chatSend(message).then(function (ok) {
                     if (ok) {
+                        clearPeerNotification(state.peer);
                         inputEl.value = '';
                         inputEl.focus();
                     }
                 });
             });
+
+            startInboxPolling();
         })();
     </script>
 <?php endif; ?>
