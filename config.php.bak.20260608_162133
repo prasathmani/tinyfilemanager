@@ -14,7 +14,7 @@ $auth_users = array(
     'admin' => '$2y$10$MDkNAqrsNXnWDpWSUe9po.luFRyHwfktNXEcX0/cqKsnq9NJqPmIG',
     'bilek' => '$2y$10$wC5xZkDTUuwHaaLOqe7pFufzs263KpAXb6CMDjUChfEetUHOOsz5i',
     'fero' => '$2y$10$CAp.GThS7P4/C7GtWCGM3O.WxICGFjSrV2Xxoi4RsXi4gOlMQvIlW',
-    'joyee' => '$2y$10$npAJkc9BGaVg.Wzyf0t/DuAKyk6nDwRWEBTV6YPH1LiokG4weQQm2',
+    'joyee' => '$2y$10$GOT/mqpHx.xEsTx.hzjAsuyWkigjdsWTl.QS8oiEE8Sixuyy6LP/i',
     'kristian' => '$2y$10$564SbNzU0Yxo180LKdobDOPQoAx8ETwdSyMp2meq5gSPtkmktfmEq',
     'marian' => '$2y$10$01c7A019ZigsppBmpnZ42OFL5T.Q44XXyO8yCVM0ufUSFoM.S6gcS',
     'rehak' => '$2y$10$WUikAfymhLzLrYe51kVC3.YlanYCZMb0ZO7ENhnigFEp3m3AgrzX.',
@@ -22,6 +22,44 @@ $auth_users = array(
     'supplier1' => '$2y$10$IyPHHkxanSnPh.LyI3gNxugUprkJfyBa6Rn6vkrYLO03Q8kFGBF22',
     'supplier2' => '$2y$10$oCZ3F1n6/Kzu7zoYGFbpNev4Fq2RzWGq3ydevru7RunYcKIC/JgT6',
     'znava' => '$2y$10$DQ3pvHPHxYp.5ehBn/M7AOOUn.56Ixkdl..0sEINquYopIA7Evhqy',
+);
+
+// --- ROLY ---
+
+// Readonly: môžu len prezerať a sťahovať (žiadny zápis)
+$readonly_users = array(
+    // sem patrí napr. hosť alebo audítor
+);
+
+// Upload-only: môžu nahrávať + sťahovať, nemôžu mazať/editovať/premenovávať
+$upload_only_users = array(
+    'sano',
+    'kristian',
+    'marian',
+    'fero',
+);
+
+// Manager: môžu všetko okrem mazania
+$manager_users = array(
+    'rehak',
+    'bilek',
+);
+
+// --- IZOLOVANÉ PRIEČINKY / PROJEKTY ---
+// Klienti a dodávatelia môžu mať prístup do jedného alebo viacerých projektových priečinkov.
+// Manažéri a admin tu nemajú záznam – vidia celý root_path.
+// Cesty musia existovať na disku a webserver musí mať práva na zápis.
+$directories_users = array(
+    'sano'   => __DIR__ . '/Mirko/BARMO',
+    'kristian'   => __DIR__ . '/Mirko/BARMO',
+    'supplier1' => __DIR__ . '/uploads/supplier1',
+    'supplier2' => __DIR__ . '/uploads/supplier2',
+    'joyee' => __DIR__ . '/Joyee',
+    // Príklad používateľa s viacerými projektmi:
+     'marian' => array(
+         __DIR__ . '/Mirko/Nemocnica PP',
+         __DIR__ . '/Mirko/free',
+     ),
 );
 
 // --- VŠEOBECNÉ NASTAVENIA ---
@@ -45,33 +83,3 @@ $CONFIG = '{"lang":"sk","error_reporting":false,"show_hidden":false,"hide_Cols":
 
 // Téma: 'light' alebo 'dark'
 // $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark"}';
-
-$readonly_users = array(
-);
-
-$upload_only_users = array(
-    'fero',
-    'kristian',
-    'marian',
-    'sano',
-);
-
-$manager_users = array(
-    'bilek',
-    'rehak',
-);
-
-$directories_users = array(
-    'joyee' => __DIR__ . '/Joyee',
-    'kristian' => __DIR__ . '/Mirko/BARMO',
-    'marian' => array(
-        __DIR__ . '/Mirko/Nemocnica PP',
-        __DIR__ . '/Mirko/free',
-    ),
-    'sano' => __DIR__ . '/Mirko/BARMO',
-    'supplier1' => __DIR__ . '/uploads/supplier1',
-    'supplier2' => __DIR__ . '/uploads/supplier2',
-);
-
-$user_notes = array(
-);
