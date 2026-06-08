@@ -1067,17 +1067,25 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_directories = '';
     $modal_note = '';
 
+    $modal_config_file = __DIR__ . '/config.php';
+    $modal_config = fm_admin_load_user_config_arrays($modal_config_file);
+    $modal_readonly_users = $modal_config['ok'] ? $modal_config['readonly_users'] : (isset($readonly_users) && is_array($readonly_users) ? $readonly_users : array());
+    $modal_upload_only_users = $modal_config['ok'] ? $modal_config['upload_only_users'] : (isset($upload_only_users) && is_array($upload_only_users) ? $upload_only_users : array());
+    $modal_manager_users = $modal_config['ok'] ? $modal_config['manager_users'] : (isset($manager_users) && is_array($manager_users) ? $manager_users : array());
+    $modal_directories_users = $modal_config['ok'] ? $modal_config['directories_users'] : (isset($directories_users) && is_array($directories_users) ? $directories_users : array());
+    $modal_user_notes = $modal_config['ok'] ? $modal_config['user_notes'] : (isset($user_notes) && is_array($user_notes) ? $user_notes : array());
+
     if ($modal_mode === 'edit' && $modal_username !== '') {
-        if (!empty($manager_users) && in_array($modal_username, $manager_users, true)) {
+        if (!empty($modal_manager_users) && in_array($modal_username, $modal_manager_users, true)) {
             $modal_access_type = 'manager';
-        } elseif (!empty($upload_only_users) && in_array($modal_username, $upload_only_users, true)) {
+        } elseif (!empty($modal_upload_only_users) && in_array($modal_username, $modal_upload_only_users, true)) {
             $modal_access_type = 'upload only';
-        } elseif (!empty($readonly_users) && in_array($modal_username, $readonly_users, true)) {
+        } elseif (!empty($modal_readonly_users) && in_array($modal_username, $modal_readonly_users, true)) {
             $modal_access_type = 'read only';
         }
 
-        if (!empty($directories_users) && array_key_exists($modal_username, $directories_users)) {
-            $dirs = $directories_users[$modal_username];
+        if (!empty($modal_directories_users) && array_key_exists($modal_username, $modal_directories_users)) {
+            $dirs = $modal_directories_users[$modal_username];
             if (is_array($dirs)) {
                 $modal_directories = implode("\n", array_map('strval', $dirs));
             } else {
@@ -1085,8 +1093,8 @@ if (isset($_GET['admin_users_modal'])) {
             }
         }
 
-        if (isset($user_notes) && is_array($user_notes) && array_key_exists($modal_username, $user_notes)) {
-            $modal_note = (string) $user_notes[$modal_username];
+        if (!empty($modal_user_notes) && array_key_exists($modal_username, $modal_user_notes)) {
+            $modal_note = (string) $modal_user_notes[$modal_username];
         }
     }
     require __DIR__ . '/src/renderers/admin-user-modal.php';
