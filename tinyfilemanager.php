@@ -1799,7 +1799,7 @@ if (isset($_GET['help'])) {
                         <div class="card">
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=user-guide"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
-                                <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/wiki" target="_blank"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=wiki-index"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
                                 <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=security"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <?php if (!FM_READONLY) { ?>
@@ -1846,6 +1846,58 @@ if (isset($_GET['help_doc'])) {
         'security' => array(
             'title' => 'Bezpečnostné zásady',
             'path' => __DIR__ . '/SECURITY.md',
+        ),
+        'wiki-index' => array(
+            'title' => 'Online dokumentácia (Wiki SK)',
+            'path' => __DIR__ . '/docs/wiki-sk/INDEX_SK.md',
+        ),
+        'wiki-home' => array(
+            'title' => 'Wiki SK: Home',
+            'path' => __DIR__ . '/docs/wiki-sk/Home.SK.md',
+        ),
+        'wiki-get-started' => array(
+            'title' => 'Wiki SK: Get Started',
+            'path' => __DIR__ . '/docs/wiki-sk/Get-Started.SK.md',
+        ),
+        'wiki-deploy-docker' => array(
+            'title' => 'Wiki SK: Deploy by Docker',
+            'path' => __DIR__ . '/docs/wiki-sk/Deploy-by-Docker.SK.md',
+        ),
+        'wiki-security-users' => array(
+            'title' => 'Wiki SK: Security and User Management',
+            'path' => __DIR__ . '/docs/wiki-sk/Security-and-User-Management.SK.md',
+        ),
+        'wiki-exclude' => array(
+            'title' => 'Wiki SK: Exclude Files & Folders',
+            'path' => __DIR__ . '/docs/wiki-sk/Exclude-Files-&-Folders.SK.md',
+        ),
+        'wiki-restriction-file-type' => array(
+            'title' => 'Wiki SK: Restriction by file type',
+            'path' => __DIR__ . '/docs/wiki-sk/Restriction-by-file-type.SK.md',
+        ),
+        'wiki-ip-rules' => array(
+            'title' => 'Wiki SK: IP Blacklist and Whitelist',
+            'path' => __DIR__ . '/docs/wiki-sk/IP-Blacklist-and-Whitelist.SK.md',
+        ),
+        'wiki-embedding' => array(
+            'title' => 'Wiki SK: Embedding',
+            'path' => __DIR__ . '/docs/wiki-sk/Embedding.SK.md',
+        ),
+        'wiki-config-flags' => array(
+            'title' => 'Wiki SK: Config Flags',
+            'path' => __DIR__ . '/docs/wiki-sk/Config-Flags.SK.md',
+        ),
+        'wiki-faq' => array(
+            'title' => 'Wiki SK: FAQ',
+            'path' => __DIR__ . '/docs/wiki-sk/FAQ.SK.md',
+        ),
+        'wiki-login-db' => array(
+            'title' => 'Wiki SK: Login using Database',
+            'path' => __DIR__ . '/docs/wiki-sk/Login-using-Database.SK.md',
+        ),
+        'wiki-authors' => array(
+            'title' => 'Wiki SK: Authors and Contributors',
+            'path' => __DIR__ . '/docs/wiki-sk/Authors-and-Contributors.SK.md',
         ),
     );
 

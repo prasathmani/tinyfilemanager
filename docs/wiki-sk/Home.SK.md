@@ -2,21 +2,21 @@
 
 ## Konfigurácia
 
-- [Get Started](https://github.com/prasathmani/tinyfilemanager/wiki/Get-Started)
-- [Security and User Management](https://github.com/prasathmani/tinyfilemanager/wiki/Security-and-User-Management)
-- [Exclude Files & Folders](https://github.com/prasathmani/tinyfilemanager/wiki/Exclude-Files-&-Folders)
-- [Restriction by file type](https://github.com/prasathmani/tinyfilemanager/wiki/Restriction-by-file-type)
-- [IP Blacklist and Whitelist](https://github.com/prasathmani/tinyfilemanager/wiki/IP-Blacklist-and-Whitelist)
-- [Embedding](https://github.com/prasathmani/tinyfilemanager/wiki/Embedding)
-- [Config Flags](https://github.com/prasathmani/tinyfilemanager/wiki/Config-Flags)
+- [Get Started](?help_doc=wiki-get-started)
+- [Security and User Management](?help_doc=wiki-security-users)
+- [Exclude Files & Folders](?help_doc=wiki-exclude)
+- [Restriction by file type](?help_doc=wiki-restriction-file-type)
+- [IP Blacklist and Whitelist](?help_doc=wiki-ip-rules)
+- [Embedding](?help_doc=wiki-embedding)
+- [Config Flags](?help_doc=wiki-config-flags)
 
 ## FAQ
 
-- [FAQ](https://github.com/prasathmani/tinyfilemanager/wiki/FAQ)
+- [FAQ](?help_doc=wiki-faq)
 
 ## O projekte
 
-- [Authors and Contributors](https://github.com/prasathmani/tinyfilemanager/wiki/Authors-and-Contributors)
+- [Authors and Contributors](?help_doc=wiki-authors)
 
 ## Poznámka pre tento fork
 

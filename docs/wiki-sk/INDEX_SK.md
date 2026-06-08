@@ -19,18 +19,18 @@ Tento adresár obsahuje preklad pôvodnej wiki od autora projektu.
 
 ## Preložené kapitoly
 
-- [Home](docs/wiki-sk/Home.SK.md)
-- [Get Started](docs/wiki-sk/Get-Started.SK.md)
-- [Deploy by Docker](docs/wiki-sk/Deploy-by-Docker.SK.md)
-- [Security and User Management](docs/wiki-sk/Security-and-User-Management.SK.md)
-- [Exclude Files & Folders](docs/wiki-sk/Exclude-Files-&-Folders.SK.md)
-- [Restriction by file type](docs/wiki-sk/Restriction-by-file-type.SK.md)
-- [IP Blacklist and Whitelist](docs/wiki-sk/IP-Blacklist-and-Whitelist.SK.md)
-- [Embedding](docs/wiki-sk/Embedding.SK.md)
-- [Config Flags](docs/wiki-sk/Config-Flags.SK.md)
-- [FAQ](docs/wiki-sk/FAQ.SK.md)
-- [Login using Database](docs/wiki-sk/Login-using-Database.SK.md)
-- [Authors and Contributors](docs/wiki-sk/Authors-and-Contributors.SK.md)
+- [Home](?help_doc=wiki-home)
+- [Get Started](?help_doc=wiki-get-started)
+- [Deploy by Docker](?help_doc=wiki-deploy-docker)
+- [Security and User Management](?help_doc=wiki-security-users)
+- [Exclude Files & Folders](?help_doc=wiki-exclude)
+- [Restriction by file type](?help_doc=wiki-restriction-file-type)
+- [IP Blacklist and Whitelist](?help_doc=wiki-ip-rules)
+- [Embedding](?help_doc=wiki-embedding)
+- [Config Flags](?help_doc=wiki-config-flags)
+- [FAQ](?help_doc=wiki-faq)
+- [Login using Database](?help_doc=wiki-login-db)
+- [Authors and Contributors](?help_doc=wiki-authors)
 
 ## Zdroj
 
