@@ -1875,7 +1875,15 @@ if (isset($_GET['help_doc'])) {
                 <?php if ($doc_error !== ''): ?>
                     <div class="alert alert-warning mb-0" role="alert"><?php echo htmlspecialchars($doc_error, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php else: ?>
-                    <pre class="mb-0" style="white-space: pre-wrap; word-break: break-word; font-family: inherit;"><?php echo htmlspecialchars($doc_content, ENT_QUOTES, 'UTF-8'); ?></pre>
+                    <style>
+                        .fm-help-markdown h1, .fm-help-markdown h2, .fm-help-markdown h3, .fm-help-markdown h4 { margin-top: 1.2rem; margin-bottom: 0.6rem; }
+                        .fm-help-markdown p { margin-bottom: 0.7rem; }
+                        .fm-help-markdown ul, .fm-help-markdown ol { margin-bottom: 0.8rem; padding-left: 1.3rem; }
+                        .fm-help-markdown pre { background: rgba(0, 0, 0, 0.06); padding: 0.75rem; border-radius: 6px; overflow-x: auto; }
+                        .fm-help-markdown code { background: rgba(0, 0, 0, 0.06); padding: 0.12rem 0.35rem; border-radius: 4px; }
+                        .fm-help-markdown pre code { background: transparent; padding: 0; }
+                    </style>
+                    <div class="fm-help-markdown"><?php echo fm_render_markdown_basic($doc_content); ?></div>
                 <?php endif; ?>
             </div>
         </div>
@@ -2639,6 +2647,134 @@ function fm_chat_get_inbox($recipient, $limit = 50)
 
     $result->finalize();
     return $items;
+}
+
+function fm_markdown_inline($text)
+{
+    $escaped = htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
+
+    // Inline code first to avoid formatting its content.
+    $escaped = preg_replace_callback('/`([^`]+)`/', static function ($m) {
+        return '<code>' . $m[1] . '</code>';
+    }, $escaped);
+
+    // Links: [label](https://example.com)
+    $escaped = preg_replace_callback('/\[([^\]]+)\]\(([^\)\s]+)\)/', static function ($m) {
+        $url = html_entity_decode($m[2], ENT_QUOTES, 'UTF-8');
+        if (!preg_match('#^https?://#i', $url)) {
+            return $m[1];
+        }
+        $safe_url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+        return '<a href="' . $safe_url . '" target="_blank" rel="noopener noreferrer">' . $m[1] . '</a>';
+    }, $escaped);
+
+    $escaped = preg_replace('/\*\*([^\*\n]+)\*\*/', '<strong>$1</strong>', $escaped);
+    $escaped = preg_replace('/\*([^\*\n]+)\*/', '<em>$1</em>', $escaped);
+
+    return $escaped;
+}
+
+function fm_render_markdown_basic($markdown)
+{
+    $lines = preg_split('/\r\n|\r|\n/', (string) $markdown);
+    $html = '';
+    $in_code = false;
+    $in_ul = false;
+    $in_ol = false;
+    $paragraph_lines = array();
+
+    $flush_paragraph = static function () use (&$paragraph_lines, &$html) {
+        if (!empty($paragraph_lines)) {
+            $paragraph = implode('<br>', $paragraph_lines);
+            $html .= '<p>' . $paragraph . '</p>';
+            $paragraph_lines = array();
+        }
+    };
+
+    $close_lists = static function () use (&$in_ul, &$in_ol, &$html) {
+        if ($in_ul) {
+            $html .= '</ul>';
+            $in_ul = false;
+        }
+        if ($in_ol) {
+            $html .= '</ol>';
+            $in_ol = false;
+        }
+    };
+
+    foreach ($lines as $line) {
+        $trim = trim($line);
+
+        if (preg_match('/^```/', $trim)) {
+            $flush_paragraph();
+            $close_lists();
+            if (!$in_code) {
+                $html .= '<pre><code>';
+                $in_code = true;
+            } else {
+                $html .= '</code></pre>';
+                $in_code = false;
+            }
+            continue;
+        }
+
+        if ($in_code) {
+            $html .= htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . "\n";
+            continue;
+        }
+
+        if ($trim === '') {
+            $flush_paragraph();
+            $close_lists();
+            continue;
+        }
+
+        if (preg_match('/^(#{1,4})\s+(.+)$/', $trim, $m)) {
+            $flush_paragraph();
+            $close_lists();
+            $level = strlen($m[1]);
+            $html .= '<h' . $level . '>' . fm_markdown_inline($m[2]) . '</h' . $level . '>';
+            continue;
+        }
+
+        if (preg_match('/^[-\*]\s+(.+)$/', $trim, $m)) {
+            $flush_paragraph();
+            if ($in_ol) {
+                $html .= '</ol>';
+                $in_ol = false;
+            }
+            if (!$in_ul) {
+                $html .= '<ul>';
+                $in_ul = true;
+            }
+            $html .= '<li>' . fm_markdown_inline($m[1]) . '</li>';
+            continue;
+        }
+
+        if (preg_match('/^[0-9]+\.\s+(.+)$/', $trim, $m)) {
+            $flush_paragraph();
+            if ($in_ul) {
+                $html .= '</ul>';
+                $in_ul = false;
+            }
+            if (!$in_ol) {
+                $html .= '<ol>';
+                $in_ol = true;
+            }
+            $html .= '<li>' . fm_markdown_inline($m[1]) . '</li>';
+            continue;
+        }
+
+        $paragraph_lines[] = fm_markdown_inline($trim);
+    }
+
+    if ($in_code) {
+        $html .= '</code></pre>';
+    }
+    $flush_paragraph();
+    $close_lists();
+
+    return $html;
 }
 
 /**
