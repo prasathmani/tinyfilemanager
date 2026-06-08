@@ -2710,14 +2710,28 @@ function fm_markdown_inline($text)
         return '<code>' . $m[1] . '</code>';
     }, $escaped);
 
-    // Links: [label](https://example.com)
+    // Links: [label](https://example.com) and local help links like [x](?help_doc=...)
     $escaped = preg_replace_callback('/\[([^\]]+)\]\(([^\)\s]+)\)/', static function ($m) {
         $url = html_entity_decode($m[2], ENT_QUOTES, 'UTF-8');
-        if (!preg_match('#^https?://#i', $url)) {
+
+        // Allow safe absolute URLs and safe local relative URLs.
+        $is_absolute = (bool) preg_match('#^https?://#i', $url);
+        $is_local = (bool) preg_match('#^(?:\?|/|\./|\.\./|#)#', $url);
+        if (!$is_absolute && !$is_local) {
             return $m[1];
         }
+
+        // Block dangerous schemes even if malformed input slips through.
+        if (preg_match('#^(?:javascript|data|vbscript):#i', $url)) {
+            return $m[1];
+        }
+
         $safe_url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-        return '<a href="' . $safe_url . '" target="_blank" rel="noopener noreferrer">' . $m[1] . '</a>';
+        if ($is_absolute) {
+            return '<a href="' . $safe_url . '" target="_blank" rel="noopener noreferrer">' . $m[1] . '</a>';
+        }
+
+        return '<a href="' . $safe_url . '">' . $m[1] . '</a>';
     }, $escaped);
 
     $escaped = preg_replace('/\*\*([^\*\n]+)\*\*/', '<strong>$1</strong>', $escaped);
