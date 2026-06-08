@@ -767,6 +767,7 @@ if (isset($_GET['admin_users_save'])) {
     }
 
     $mode = isset($_POST['mode']) && $_POST['mode'] === 'edit' ? 'edit' : 'new';
+    $actor = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
     $username = isset($_POST['username']) ? trim((string) $_POST['username']) : '';
     $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
     $password2 = isset($_POST['password2']) ? (string) $_POST['password2'] : '';
@@ -824,6 +825,20 @@ if (isset($_GET['admin_users_save'])) {
         exit;
     }
 
+    $old_access_type = 'standard';
+    if (in_array($username, $manager_users_local, true)) {
+        $old_access_type = 'manager';
+    } elseif (in_array($username, $upload_only_users_local, true)) {
+        $old_access_type = 'upload only';
+    } elseif (in_array($username, $readonly_users_local, true)) {
+        $old_access_type = 'read only';
+    }
+    $old_dirs_count = 0;
+    if (array_key_exists($username, $directories_users_local)) {
+        $old_dirs_count = is_array($directories_users_local[$username]) ? count($directories_users_local[$username]) : 1;
+    }
+
+    $password_changed = false;
     if ($password !== '' || $password2 !== '') {
         if ($password !== $password2) {
             http_response_code(400);
@@ -842,6 +857,7 @@ if (isset($_GET['admin_users_save'])) {
             exit;
         }
         $auth_users_local[$username] = password_hash($password, PASSWORD_DEFAULT);
+        $password_changed = true;
     } elseif ($mode === 'new') {
         http_response_code(400);
         echo json_encode(array('ok' => false, 'error' => 'Password is required for new user'));
@@ -865,6 +881,7 @@ if (isset($_GET['admin_users_save'])) {
     $manager_users_local = array_values(array_unique($manager_users_local));
 
     $parsed_dirs = fm_admin_parse_directories_input($directories_raw);
+    $new_dirs_count = count($parsed_dirs);
     if (count($parsed_dirs) === 0) {
         unset($directories_users_local[$username]);
     } elseif (count($parsed_dirs) === 1) {
@@ -887,6 +904,15 @@ if (isset($_GET['admin_users_save'])) {
         echo json_encode(array('ok' => false, 'error' => $write_ok['error']));
         exit;
     }
+
+    fm_admin_write_audit_event('user_save', $actor, $username, array(
+        'mode' => $mode,
+        'access_type_old' => $old_access_type,
+        'access_type_new' => $access_type,
+        'directories_old_count' => $old_dirs_count,
+        'directories_new_count' => $new_dirs_count,
+        'password_changed' => $password_changed,
+    ));
 
     echo json_encode(array('ok' => true));
     exit;
@@ -915,6 +941,7 @@ if (isset($_GET['admin_users_delete'])) {
         exit;
     }
 
+    $actor = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
     $username = isset($_POST['username']) ? trim((string) $_POST['username']) : '';
     if ($username === '') {
         http_response_code(400);
@@ -954,6 +981,16 @@ if (isset($_GET['admin_users_delete'])) {
         exit;
     }
 
+    $deleted_access_type = 'standard';
+    if (in_array($username, $manager_users_local, true)) {
+        $deleted_access_type = 'manager';
+    } elseif (in_array($username, $upload_only_users_local, true)) {
+        $deleted_access_type = 'upload only';
+    } elseif (in_array($username, $readonly_users_local, true)) {
+        $deleted_access_type = 'read only';
+    }
+    $deleted_had_dirs = array_key_exists($username, $directories_users_local);
+
     unset($auth_users_local[$username]);
     unset($directories_users_local[$username]);
     $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
@@ -974,6 +1011,11 @@ if (isset($_GET['admin_users_delete'])) {
         echo json_encode(array('ok' => false, 'error' => $write_ok['error']));
         exit;
     }
+
+    fm_admin_write_audit_event('user_delete', $actor, $username, array(
+        'access_type' => $deleted_access_type,
+        'had_directories' => $deleted_had_dirs,
+    ));
 
     echo json_encode(array('ok' => true));
     exit;
@@ -3029,6 +3071,57 @@ function fm_chat_db_path()
         @mkdir($dir, 0755, true);
     }
     return $dir . '/chat.sqlite';
+}
+
+function fm_admin_audit_log_path()
+{
+    $dir = __DIR__ . '/.fm_usercfg';
+    if (!@is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $htaccess = $dir . '/.htaccess';
+    if (!@file_exists($htaccess)) {
+        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
+    }
+    return $dir . '/admin-users-audit.log';
+}
+
+/**
+ * Write one admin user management audit event as JSON line.
+ * @param string $action
+ * @param string $actor
+ * @param string $target
+ * @param array $meta
+ * @return void
+ */
+function fm_admin_write_audit_event($action, $actor, $target, array $meta = array())
+{
+    $record = array(
+        'ts' => date('c'),
+        'action' => (string) $action,
+        'actor' => (string) $actor,
+        'target' => (string) $target,
+        'ip' => isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '',
+        'meta' => $meta,
+    );
+
+    $line = json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (!is_string($line) || $line === '') {
+        return;
+    }
+
+    $fh = @fopen(fm_admin_audit_log_path(), 'ab');
+    if ($fh === false) {
+        return;
+    }
+
+    if (@flock($fh, LOCK_EX)) {
+        @fwrite($fh, $line . "\n");
+        @fflush($fh);
+        @flock($fh, LOCK_UN);
+    }
+
+    @fclose($fh);
 }
 
 function fm_chat_get_db()
