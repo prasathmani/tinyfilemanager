@@ -2669,8 +2669,16 @@ function fm_admin_replace_config_array_assignment($content, $var_name, $new_code
 
     foreach ($patterns as $pattern) {
         $count = 0;
-        $updated = preg_replace($pattern, $new_code, $content, 1, $count);
-        if ($updated !== null && $count === 1) {
+        $updated = preg_replace_callback(
+            $pattern,
+            static function () use ($new_code) {
+                return $new_code;
+            },
+            $content,
+            1,
+            $count
+        );
+        if (is_string($updated) && $count === 1) {
             return array('ok' => true, 'content' => $updated, 'mode' => 'replaced');
         }
     }
