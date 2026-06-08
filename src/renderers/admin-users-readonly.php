@@ -190,12 +190,43 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
     <div id="admin-user-modal-container"></div>
         <script>
         document.addEventListener('DOMContentLoaded', function () {
+            function forEachNode(list, cb) {
+                if (!list || typeof cb !== 'function') {
+                    return;
+                }
+                for (var i = 0; i < list.length; i++) {
+                    cb(list[i], i);
+                }
+            }
+
+            function hasClass(el, className) {
+                if (!el || !className) {
+                    return false;
+                }
+                if (el.classList && typeof el.classList.contains === 'function') {
+                    return el.classList.contains(className);
+                }
+                var cls = ' ' + String(el.className || '') + ' ';
+                return cls.indexOf(' ' + className + ' ') !== -1;
+            }
+
+            function findByIdOrAncestorId(startEl, targetId) {
+                var el = startEl;
+                while (el && el !== document) {
+                    if (el.id === targetId) {
+                        return el;
+                    }
+                    el = el.parentNode;
+                }
+                return null;
+            }
+
             function executeInjectedScripts(rootEl) {
                 if (!rootEl) {
                     return;
                 }
                 var scripts = rootEl.querySelectorAll('script');
-                scripts.forEach(function (oldScript) {
+                forEachNode(scripts, function (oldScript) {
                     var newScript = document.createElement('script');
                     if (oldScript.src) {
                         newScript.src = oldScript.src;
@@ -221,7 +252,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                 var textVal = auditText ? String(auditText.value || '').trim().toLowerCase() : '';
                 var shown = 0;
 
-                auditRows.forEach(function (row) {
+                forEachNode(auditRows, function (row) {
                     var rowAction = row.getAttribute('data-audit-action') || '';
                     var rowSearch = row.getAttribute('data-audit-search') || '';
                     var matchAction = !actionVal || rowAction === actionVal;
@@ -270,7 +301,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                     var header = ['Cas', 'Akcia', 'Kto', 'Cielovy pouzivatel', 'IP', 'Meta'];
                     var lines = [header.map(csvEscape).join(',')];
 
-                    auditRows.forEach(function (row) {
+                    forEachNode(auditRows, function (row) {
                         if (row.style.display === 'none') {
                             return;
                         }
@@ -336,8 +367,31 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             }
 
             function getCurrentPath() {
-                var url = new URL(window.location.href);
-                return url.searchParams.get('p') || '';
+                try {
+                    if (typeof URL === 'function') {
+                        var url = new URL(window.location.href);
+                        if (url.searchParams && typeof url.searchParams.get === 'function') {
+                            return url.searchParams.get('p') || '';
+                        }
+                    }
+                } catch (e) {
+                }
+
+                var query = String(window.location.search || '');
+                if (query.indexOf('?') === 0) {
+                    query = query.substring(1);
+                }
+                if (!query) {
+                    return '';
+                }
+                var parts = query.split('&');
+                for (var i = 0; i < parts.length; i++) {
+                    var kv = parts[i].split('=');
+                    if (decodeURIComponent(kv[0] || '') === 'p') {
+                        return decodeURIComponent((kv[1] || '').replace(/\+/g, ' '));
+                    }
+                }
+                return '';
             }
 
             document.addEventListener('submit', function (e) {
@@ -386,7 +440,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                     return;
                 }
 
-                var deleteBtn = btn.closest ? btn.closest('#admin-user-delete-btn') : null;
+                var deleteBtn = findByIdOrAncestorId(btn, 'admin-user-delete-btn');
                 if (!deleteBtn) {
                     return;
                 }
@@ -480,7 +534,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                     });
             }
             var buttons = document.querySelectorAll('[data-admin-user-action]');
-            buttons.forEach(function (btn) {
+            forEachNode(buttons, function (btn) {
                 btn.addEventListener('click', handleModalAction);
             });
         });
