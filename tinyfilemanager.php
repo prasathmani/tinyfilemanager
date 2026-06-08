@@ -1774,13 +1774,14 @@ if (isset($_GET['help'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     global $cfg, $lang;
+    $help_path_param = urlencode(FM_PATH);
 ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
         <div class="card mb-2" data-bs-theme="<?php echo FM_THEME; ?>">
             <h6 class="card-header d-flex justify-content-between">
                 <span><i class="fa fa-exclamation-circle"></i> <?php echo lng('Help') ?></span>
-                <a href="?p=<?php echo FM_PATH ?>" class="text-danger"><i class="fa fa-times-circle-o"></i> <?php echo lng('Cancel') ?></a>
+                <a href="<?php echo FM_SELF_URL; ?>?p=<?php echo $help_path_param; ?>" class="text-danger"><i class="fa fa-times-circle-o"></i> <?php echo lng('Cancel') ?></a>
             </h6>
             <div class="card-body">
                 <div class="row">
@@ -1798,9 +1799,9 @@ if (isset($_GET['help'])) {
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=user-guide"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
-                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=wiki-index"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
-                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?help_doc=security"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=<?php echo $help_path_param; ?>&help_doc=user-guide"><i class="fa fa-book"></i> Používateľská príručka (lokálna)</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=<?php echo $help_path_param; ?>&help_doc=wiki-index"><i class="fa fa-question-circle"></i> Online dokumentácia (Wiki)</a></li>
+                                <li class="list-group-item"><a href="<?php echo FM_SELF_URL; ?>?p=<?php echo $help_path_param; ?>&help_doc=security"><i class="fa fa-shield"></i> Bezpečnostné zásady</a></li>
                                 <li class="list-group-item"><a href="https://github.com/prasathmani/tinyfilemanager/issues" target="_blank"><i class="fa fa-bug"></i> <?php echo lng('Report Issue') ?></a></li>
                                 <?php if (!FM_READONLY) { ?>
                                     <li class="list-group-item"><a href="javascript:show_new_pwd();"><i class="fa fa-lock"></i> <?php echo lng('Generate new password hash') ?></a></li>
@@ -1838,6 +1839,7 @@ if (isset($_GET['help_doc'])) {
     fm_show_nav_path(FM_PATH);
 
     $doc_key = isset($_GET['help_doc']) ? trim((string) $_GET['help_doc']) : '';
+    $help_path_param = urlencode(FM_PATH);
     $doc_map = array(
         'user-guide' => array(
             'title' => 'Používateľská príručka (lokálna)',
@@ -1921,7 +1923,7 @@ if (isset($_GET['help_doc'])) {
         <div class="card mb-2" data-bs-theme="<?php echo FM_THEME; ?>">
             <h6 class="card-header d-flex justify-content-between">
                 <span><i class="fa fa-book"></i> <?php echo htmlspecialchars($doc_title, ENT_QUOTES, 'UTF-8'); ?></span>
-                <a href="<?php echo FM_SELF_URL; ?>?help=1" class="text-danger"><i class="fa fa-times-circle-o"></i> <?php echo lng('Cancel') ?></a>
+                <a href="<?php echo FM_SELF_URL; ?>?p=<?php echo $help_path_param; ?>&help=1" class="text-danger"><i class="fa fa-times-circle-o"></i> <?php echo lng('Cancel') ?></a>
             </h6>
             <div class="card-body">
                 <?php if ($doc_error !== ''): ?>
@@ -2724,6 +2726,11 @@ function fm_markdown_inline($text)
         // Block dangerous schemes even if malformed input slips through.
         if (preg_match('#^(?:javascript|data|vbscript):#i', $url)) {
             return $m[1];
+        }
+
+        // Preserve current folder when navigating local help docs.
+        if (preg_match('/^\?help_doc=/', $url) && defined('FM_PATH')) {
+            $url = '?p=' . urlencode((string) FM_PATH) . '&' . ltrim($url, '?');
         }
 
         $safe_url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
