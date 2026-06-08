@@ -316,10 +316,124 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                 console.error('Missing modal container: #admin-user-modal-container');
                 return;
             }
+
+            function showModalError(message) {
+                var err = document.getElementById('admin-user-modal-error');
+                if (!err) {
+                    return;
+                }
+                err.textContent = message || 'Operation failed.';
+                err.classList.remove('d-none');
+            }
+
+            function clearModalError() {
+                var err = document.getElementById('admin-user-modal-error');
+                if (!err) {
+                    return;
+                }
+                err.textContent = '';
+                err.classList.add('d-none');
+            }
+
             function getCurrentPath() {
                 var url = new URL(window.location.href);
                 return url.searchParams.get('p') || '';
             }
+
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (!form || form.id !== 'admin-user-modal-form') {
+                    return;
+                }
+
+                e.preventDefault();
+                clearModalError();
+
+                var fd = new FormData(form);
+                var pwd = String(fd.get('password') || '');
+                var pwd2 = String(fd.get('password2') || '');
+                if (pwd !== pwd2) {
+                    showModalError('Passwords do not match.');
+                    return;
+                }
+
+                var saveUrl = window.location.pathname + '?p=' + encodeURIComponent(getCurrentPath()) + '&admin_users_save=1';
+                fetch(saveUrl, {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                })
+                    .then(function (resp) {
+                        return resp.json().catch(function () {
+                            return { ok: false, error: 'Unexpected server response' };
+                        });
+                    })
+                    .then(function (data) {
+                        if (!data || !data.ok) {
+                            showModalError((data && data.error) ? data.error : 'Save failed.');
+                            return;
+                        }
+                        window.location.reload();
+                    })
+                    .catch(function () {
+                        showModalError('Save request failed.');
+                    });
+            });
+
+            document.addEventListener('click', function (e) {
+                var btn = e.target;
+                if (!btn) {
+                    return;
+                }
+
+                var deleteBtn = btn.closest ? btn.closest('#admin-user-delete-btn') : null;
+                if (!deleteBtn) {
+                    return;
+                }
+
+                e.preventDefault();
+                clearModalError();
+
+                var usernameInput = document.getElementById('admin-username');
+                var tokenInput = document.querySelector('#admin-user-modal-form input[name="token"]');
+                var username = usernameInput ? String(usernameInput.value || '') : '';
+                var token = tokenInput ? String(tokenInput.value || '') : '';
+                if (!username || !token) {
+                    showModalError('Missing username or token.');
+                    return;
+                }
+
+                if (!window.confirm('Naozaj chceš vymazať užívateľa "' + username + '"?')) {
+                    return;
+                }
+
+                var fd = new FormData();
+                fd.append('username', username);
+                fd.append('token', token);
+
+                var deleteUrl = window.location.pathname + '?p=' + encodeURIComponent(getCurrentPath()) + '&admin_users_delete=1';
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                })
+                    .then(function (resp) {
+                        return resp.json().catch(function () {
+                            return { ok: false, error: 'Unexpected server response' };
+                        });
+                    })
+                    .then(function (data) {
+                        if (!data || !data.ok) {
+                            showModalError((data && data.error) ? data.error : 'Delete failed.');
+                            return;
+                        }
+                        window.location.reload();
+                    })
+                    .catch(function () {
+                        showModalError('Delete request failed.');
+                    });
+            });
+
             function handleModalAction(e) {
                 var btn = e.currentTarget;
                 var action = btn.getAttribute('data-admin-user-action');
