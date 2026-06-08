@@ -2602,6 +2602,45 @@ function fm_admin_export_list_array_code($name, array $arr)
 }
 
 /**
+ * Replace a config array assignment by variable name.
+ * Supports both array(...) and [...] syntax. If variable is not found,
+ * appends a new assignment near the end of config.php so save can proceed.
+ * @param string $content
+ * @param string $var_name
+ * @param string $new_code
+ * @return array
+ */
+function fm_admin_replace_config_array_assignment($content, $var_name, $new_code)
+{
+    $quoted_name = preg_quote((string) $var_name, '/');
+    $patterns = array(
+        '/\$' . $quoted_name . '\s*=\s*array\s*\((?:.|[\r\n])*?\)\s*;/U',
+        '/\$' . $quoted_name . '\s*=\s*\[(?:.|[\r\n])*?\]\s*;/U',
+    );
+
+    foreach ($patterns as $pattern) {
+        $count = 0;
+        $updated = preg_replace($pattern, $new_code, $content, 1, $count);
+        if ($updated !== null && $count === 1) {
+            return array('ok' => true, 'content' => $updated, 'mode' => 'replaced');
+        }
+    }
+
+    // Fallback for non-standard config formatting: append assignment.
+    if (preg_match('/\?>\s*$/', $content) === 1) {
+        $updated = preg_replace('/\?>\s*$/', "\n\n" . $new_code . "\n?>", $content, 1);
+    } else {
+        $updated = rtrim($content) . "\n\n" . $new_code . "\n";
+    }
+
+    if (!is_string($updated) || $updated === '') {
+        return array('ok' => false, 'error' => 'Failed to append $' . $var_name . ' in config.php');
+    }
+
+    return array('ok' => true, 'content' => $updated, 'mode' => 'appended');
+}
+
+/**
  * Persist user arrays to config.php by replacing known array declarations.
  * @param string $config_file
  * @param array $auth_users
@@ -2630,12 +2669,14 @@ function fm_admin_persist_user_config_arrays($config_file, array $auth_users, ar
     );
 
     foreach ($replacements as $var_name => $new_code) {
-        $pattern = '/\$' . preg_quote($var_name, '/') . '\s*=\s*array\s*\((?:.|[\r\n])*?\);/U';
-        $updated = preg_replace($pattern, $new_code, $content, 1, $count);
-        if ($count !== 1 || $updated === null) {
-            return array('ok' => false, 'error' => 'Failed to update $' . $var_name . ' in config.php');
+        $replace_result = fm_admin_replace_config_array_assignment($content, $var_name, $new_code);
+        if (empty($replace_result['ok'])) {
+            return array(
+                'ok' => false,
+                'error' => isset($replace_result['error']) ? $replace_result['error'] : ('Failed to update $' . $var_name . ' in config.php')
+            );
         }
-        $content = $updated;
+        $content = isset($replace_result['content']) ? (string) $replace_result['content'] : $content;
     }
 
     $backup_file = $config_file . '.bak.' . date('Ymd_His');
