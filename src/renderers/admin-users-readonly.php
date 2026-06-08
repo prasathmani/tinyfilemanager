@@ -105,6 +105,25 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             <?php if (empty($audit_events)): ?>
                 <div class="p-3 text-muted">Zatiaľ nie sú dostupné žiadne audit záznamy.</div>
             <?php else: ?>
+                <div class="p-3 border-bottom bg-light-subtle">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-sm-4 col-md-3">
+                            <label for="audit-filter-action" class="form-label mb-1">Akcia</label>
+                            <select id="audit-filter-action" class="form-select form-select-sm">
+                                <option value="">Všetky</option>
+                                <option value="user_save">user_save</option>
+                                <option value="user_delete">user_delete</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-8 col-md-5">
+                            <label for="audit-filter-text" class="form-label mb-1">Hľadať</label>
+                            <input id="audit-filter-text" type="text" class="form-control form-control-sm" placeholder="meno, IP, meta...">
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <small id="audit-filter-count" class="text-muted"></small>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped mb-0 align-middle">
                         <thead class="table-light">
@@ -117,7 +136,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                                 <th>Meta</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="audit-table-body">
                             <?php foreach ($audit_events as $ev): ?>
                                 <?php
                                 $ev_ts = isset($ev['ts']) ? (string) $ev['ts'] : '';
@@ -140,7 +159,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                                     $ev_meta_text = implode('; ', $meta_parts);
                                 }
                                 ?>
-                                <tr>
+                                <tr data-audit-action="<?php echo fm_enc($ev_action); ?>" data-audit-search="<?php echo fm_enc(strtolower($ev_ts . ' ' . $ev_action . ' ' . $ev_actor . ' ' . $ev_target . ' ' . $ev_ip . ' ' . $ev_meta_text)); ?>">
                                     <td><?php echo fm_enc($ev_ts); ?></td>
                                     <td><?php echo fm_enc($ev_action); ?></td>
                                     <td><?php echo fm_enc($ev_actor); ?></td>
@@ -159,6 +178,44 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
     <div id="admin-user-modal-container"></div>
         <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var auditAction = document.getElementById('audit-filter-action');
+            var auditText = document.getElementById('audit-filter-text');
+            var auditCount = document.getElementById('audit-filter-count');
+            var auditRows = document.querySelectorAll('#audit-table-body tr');
+
+            function applyAuditFilters() {
+                if (!auditRows || !auditRows.length) {
+                    return;
+                }
+                var actionVal = auditAction ? String(auditAction.value || '') : '';
+                var textVal = auditText ? String(auditText.value || '').trim().toLowerCase() : '';
+                var shown = 0;
+
+                auditRows.forEach(function (row) {
+                    var rowAction = row.getAttribute('data-audit-action') || '';
+                    var rowSearch = row.getAttribute('data-audit-search') || '';
+                    var matchAction = !actionVal || rowAction === actionVal;
+                    var matchText = !textVal || rowSearch.indexOf(textVal) !== -1;
+                    var visible = matchAction && matchText;
+                    row.style.display = visible ? '' : 'none';
+                    if (visible) {
+                        shown++;
+                    }
+                });
+
+                if (auditCount) {
+                    auditCount.textContent = 'Zobrazené: ' + shown + ' / ' + auditRows.length;
+                }
+            }
+
+            if (auditAction) {
+                auditAction.addEventListener('change', applyAuditFilters);
+            }
+            if (auditText) {
+                auditText.addEventListener('input', applyAuditFilters);
+            }
+            applyAuditFilters();
+
             var container = document.getElementById('admin-user-modal-container');
             if (!container) {
                 console.error('Missing modal container: #admin-user-modal-container');
