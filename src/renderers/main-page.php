@@ -341,15 +341,38 @@
             var tokenEl = document.querySelector('input[name="token"]');
             var badges = document.querySelectorAll('.fm-user-chat-badge[data-chat-user]');
 
-            if (!modalEl || !historyEl || !formEl || !inputEl || !titleEl || !tokenEl || !window.bootstrap || !window.bootstrap.Modal) {
+            if (!modalEl || !historyEl || !formEl || !inputEl || !titleEl || !tokenEl) {
                 return;
             }
 
-            var modal = new window.bootstrap.Modal(modalEl);
+            var hasBootstrap5Modal = !!(window.bootstrap && window.bootstrap.Modal);
+            var hasJQueryModal = !!(window.jQuery && window.jQuery.fn && window.jQuery.fn.modal);
+            if (!hasBootstrap5Modal && !hasJQueryModal) {
+                return;
+            }
+
+            var modal = hasBootstrap5Modal ? new window.bootstrap.Modal(modalEl) : null;
             var state = {
                 peer: '',
                 timer: null,
             };
+
+            function showModal() {
+                if (modal) {
+                    modal.show();
+                    return;
+                }
+                window.jQuery(modalEl).modal('show');
+            }
+
+            function bindModalHidden(handler) {
+                if (modalEl.addEventListener) {
+                    modalEl.addEventListener('hidden.bs.modal', handler);
+                }
+                if (!hasBootstrap5Modal && hasJQueryModal) {
+                    window.jQuery(modalEl).on('hidden.bs.modal', handler);
+                }
+            }
 
             function esc(value) {
                 return String(value)
@@ -466,13 +489,13 @@
                     state.peer = peer;
                     titleEl.textContent = 'Chat with ' + peer;
                     historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
-                    modal.show();
+                    showModal();
                     chatFetch();
                     startPolling();
                 });
             });
 
-            modalEl.addEventListener('hidden.bs.modal', function () {
+            bindModalHidden(function () {
                 stopPolling();
                 state.peer = '';
                 formEl.reset();
