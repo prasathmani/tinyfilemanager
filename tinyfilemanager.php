@@ -720,9 +720,12 @@ if (!in_array($docx_preview_mode, array('auto', 'local', 'microsoft'), true)) {
     $docx_preview_mode = 'auto';
 }
 defined('FM_DOCX_PREVIEW_MODE') || define('FM_DOCX_PREVIEW_MODE', $docx_preview_mode);
-define('FM_READONLY', $global_readonly || ($use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users)));
-define('FM_UPLOAD_ONLY', $use_auth && !empty($upload_only_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $upload_only_users));
-define('FM_MANAGER', $use_auth && !empty($manager_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $manager_users));
+$fm_logged_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+$fm_is_super_admin = ($fm_logged_user === 'admin');
+define('FM_IS_ADMIN', $fm_is_super_admin);
+define('FM_READONLY', $global_readonly || (!$fm_is_super_admin && $use_auth && !empty($readonly_users) && in_array($fm_logged_user, $readonly_users, true)));
+define('FM_UPLOAD_ONLY', !$fm_is_super_admin && $use_auth && !empty($upload_only_users) && in_array($fm_logged_user, $upload_only_users, true));
+define('FM_MANAGER', !$fm_is_super_admin && $use_auth && !empty($manager_users) && in_array($fm_logged_user, $manager_users, true));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 // always use ?p=
@@ -773,7 +776,7 @@ if (isset($_GET['admin_users_save'])) {
         exit;
     };
 
-    if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
+    if (!FM_IS_ADMIN) {
         $admin_users_respond_error(403, 'Forbidden');
     }
 
@@ -946,7 +949,7 @@ if (isset($_GET['admin_users_save'])) {
 if (isset($_GET['admin_users_delete'])) {
     header('Content-Type: application/json; charset=utf-8');
 
-    if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
+    if (!FM_IS_ADMIN) {
         http_response_code(403);
         echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
         exit;
@@ -1050,7 +1053,7 @@ if (isset($_GET['admin_users_delete'])) {
 
 // --- ADMIN USERS MODAL (admin only, AJAX load) ---
 if (isset($_GET['admin_users_modal'])) {
-    if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
+    if (!FM_IS_ADMIN) {
         http_response_code(403);
         header('Content-Type: text/plain; charset=utf-8');
         echo 'Forbidden';
@@ -2461,7 +2464,7 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_IS_WIN && FM
 }
 
 // --- ADMIN USERS PAGE (admin only) ---
-if (isset($_GET['admin_users']) && isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === 'admin') {
+if (isset($_GET['admin_users']) && FM_IS_ADMIN) {
     fm_show_header();
     fm_show_nav_path(FM_PATH);
     require __DIR__ . '/src/renderers/admin-users.php';
