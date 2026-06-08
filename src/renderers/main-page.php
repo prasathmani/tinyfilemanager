@@ -345,33 +345,56 @@
                 return;
             }
 
-            var hasBootstrap5Modal = !!(window.bootstrap && window.bootstrap.Modal);
-            var hasJQueryModal = !!(window.jQuery && window.jQuery.fn && window.jQuery.fn.modal);
-            if (!hasBootstrap5Modal && !hasJQueryModal) {
-                return;
-            }
-
-            var modal = hasBootstrap5Modal ? new window.bootstrap.Modal(modalEl) : null;
+            var modal = null;
             var state = {
                 peer: '',
                 timer: null,
             };
 
             function showModal() {
-                if (modal) {
+                var hasBootstrap5Modal = !!(window.bootstrap && window.bootstrap.Modal);
+                var hasJQueryModal = !!(window.jQuery && window.jQuery.fn && window.jQuery.fn.modal);
+
+                if (hasBootstrap5Modal) {
+                    if (!modal) {
+                        modal = new window.bootstrap.Modal(modalEl);
+                    }
                     modal.show();
                     return;
                 }
-                window.jQuery(modalEl).modal('show');
+
+                if (hasJQueryModal) {
+                    window.jQuery(modalEl).modal('show');
+                    return;
+                }
+
+                // Last-resort fallback when Bootstrap JS is not available.
+                modalEl.style.display = 'block';
+                modalEl.classList.add('show');
+                modalEl.removeAttribute('aria-hidden');
             }
 
             function bindModalHidden(handler) {
                 if (modalEl.addEventListener) {
                     modalEl.addEventListener('hidden.bs.modal', handler);
                 }
-                if (!hasBootstrap5Modal && hasJQueryModal) {
+                if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
                     window.jQuery(modalEl).on('hidden.bs.modal', handler);
                 }
+            }
+
+            function bindFallbackClose() {
+                var closeEls = modalEl.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+                closeEls.forEach(function (closeEl) {
+                    closeEl.addEventListener('click', function () {
+                        modalEl.classList.remove('show');
+                        modalEl.style.display = 'none';
+                        modalEl.setAttribute('aria-hidden', 'true');
+                        stopPolling();
+                        state.peer = '';
+                        formEl.reset();
+                    });
+                });
             }
 
             function esc(value) {
@@ -500,6 +523,8 @@
                 state.peer = '';
                 formEl.reset();
             });
+
+            bindFallbackClose();
 
             formEl.addEventListener('submit', function (event) {
                 event.preventDefault();
