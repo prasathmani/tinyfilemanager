@@ -179,14 +179,9 @@ class TFM_AjaxActionHandler {
             exit;
         }
 
-        $currentPwd = isset($post['current_password']) ? $post['current_password'] : '';
         $newPwd = isset($post['new_password']) ? $post['new_password'] : '';
         $confirmPwd = isset($post['confirm_password']) ? $post['confirm_password'] : '';
 
-        if (!isset($auth_users[$username]) || !password_verify($currentPwd, $auth_users[$username])) {
-            echo json_encode(array('success' => false, 'msg' => 'Current password is incorrect'));
-            exit;
-        }
         if (strlen($newPwd) < 6) {
             echo json_encode(array('success' => false, 'msg' => 'New password must be at least 6 characters'));
             exit;

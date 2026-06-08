@@ -2100,12 +2100,6 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
                 <form id="js-changepwd-form" action="" method="post" onsubmit="return change_password(this)">
                     <input type="hidden" name="type" value="changepwd" aria-label="hidden" aria-hidden="true">
                     <div class="mb-2 row">
-                        <label class="col-sm-3 col-form-label"><?php echo lng('Current password') ?></label>
-                        <div class="col-sm-5">
-                            <input type="password" class="form-control" name="current_password" autocomplete="current-password" required>
-                        </div>
-                    </div>
-                    <div class="mb-2 row">
                         <label class="col-sm-3 col-form-label"><?php echo lng('New password') ?></label>
                         <div class="col-sm-5">
                             <input type="password" class="form-control" name="new_password" autocomplete="new-password" minlength="6" required>
