@@ -3,7 +3,7 @@
 ## Autori
 
 - [Prasath Mani](https://github.com/prasathmani)
-- [Slavomír Piar] (https://github.com/slapiar)
+- [Slavomír Piar](https://github.com/slapiar/tinyfilemanager)
 
 ## Bezpečnosť
 
@@ -33,7 +33,7 @@
 - Russian: [Prasath Mani](https://github.com/prasathmani)
 - Thai: [Wan](https://github.com/mrwan200)
 - Spanish: [Joaquín](https://github.com/jopiortiz)
-- Slovak: [Jakub ADAMEC](https://github.com/jadamec)
+- Slovak: [Jakub ADAMEC](https://github.com/jadamec); - [Slavomír Piar](https://github.com/slapiar)
 - Korean: [Shoyu Vanilla](https://github.com/ShoyuVanilla)
 - Japanese: [Rinoshiyo](https://github.com/rinoshiyo)
 
