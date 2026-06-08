@@ -585,7 +585,6 @@
                             titleEl.textContent = 'Chat with ' + shouldAutoOpenSender;
                             historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
                             showModal();
-                            markBadgeRinging(shouldAutoOpenSender, false);
                             chatFetch();
                             startPolling();
                         }
