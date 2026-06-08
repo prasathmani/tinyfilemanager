@@ -3,6 +3,7 @@
 ## Autori
 
 - [Prasath Mani](https://github.com/prasathmani)
+- [Slavomír Piar] (https://github.com/slapiar)
 
 ## Bezpečnosť
 
