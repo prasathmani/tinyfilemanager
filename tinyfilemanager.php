@@ -743,6 +743,242 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 // instead globals vars
 define('FM_PATH', $p);
 
+// --- ADMIN USERS SAVE (admin only, AJAX POST) ---
+if (isset($_GET['admin_users_save'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
+        http_response_code(403);
+        echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(array('ok' => false, 'error' => 'Method not allowed'));
+        exit;
+    }
+
+    $token = isset($_POST['token']) ? (string) $_POST['token'] : '';
+    if (!verifyToken($token)) {
+        http_response_code(401);
+        echo json_encode(array('ok' => false, 'error' => 'Invalid token'));
+        exit;
+    }
+
+    $mode = isset($_POST['mode']) && $_POST['mode'] === 'edit' ? 'edit' : 'new';
+    $username = isset($_POST['username']) ? trim((string) $_POST['username']) : '';
+    $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
+    $password2 = isset($_POST['password2']) ? (string) $_POST['password2'] : '';
+    $access_type = isset($_POST['access_type']) ? trim((string) $_POST['access_type']) : 'standard';
+    $directories_raw = isset($_POST['directories']) ? (string) $_POST['directories'] : '';
+
+    if ($username === '' || !preg_match('/^[A-Za-z0-9._-]{2,64}$/', $username)) {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Invalid username format. Use 2-64 chars: letters, digits, dot, underscore, hyphen.'));
+        exit;
+    }
+
+    $allowed_access_types = array('standard', 'read only', 'upload only', 'manager');
+    if (!in_array($access_type, $allowed_access_types, true)) {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Invalid access type'));
+        exit;
+    }
+
+    $config_file = __DIR__ . '/config.php';
+    $config_data = fm_admin_load_user_config_arrays($config_file);
+    if (!$config_data['ok']) {
+        http_response_code(500);
+        echo json_encode(array('ok' => false, 'error' => $config_data['error']));
+        exit;
+    }
+
+    $auth_users_local = $config_data['auth_users'];
+    $readonly_users_local = $config_data['readonly_users'];
+    $upload_only_users_local = $config_data['upload_only_users'];
+    $manager_users_local = $config_data['manager_users'];
+    $directories_users_local = $config_data['directories_users'];
+
+    $exists = array_key_exists($username, $auth_users_local)
+        || in_array($username, $readonly_users_local, true)
+        || in_array($username, $upload_only_users_local, true)
+        || in_array($username, $manager_users_local, true)
+        || array_key_exists($username, $directories_users_local);
+
+    if ($mode === 'new' && $exists) {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'User already exists'));
+        exit;
+    }
+
+    if ($mode === 'edit' && !$exists) {
+        http_response_code(404);
+        echo json_encode(array('ok' => false, 'error' => 'User not found'));
+        exit;
+    }
+
+    if ($mode === 'new' && trim($password) === '') {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Password is required for new user'));
+        exit;
+    }
+
+    if ($password !== '' || $password2 !== '') {
+        if ($password !== $password2) {
+            http_response_code(400);
+            echo json_encode(array('ok' => false, 'error' => 'Passwords do not match'));
+            exit;
+        }
+        if (function_exists('mb_strlen')) {
+            if (mb_strlen($password, 'UTF-8') < 6) {
+                http_response_code(400);
+                echo json_encode(array('ok' => false, 'error' => 'Password must be at least 6 characters long'));
+                exit;
+            }
+        } elseif (strlen($password) < 6) {
+            http_response_code(400);
+            echo json_encode(array('ok' => false, 'error' => 'Password must be at least 6 characters long'));
+            exit;
+        }
+        $auth_users_local[$username] = password_hash($password, PASSWORD_DEFAULT);
+    } elseif ($mode === 'new') {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Password is required for new user'));
+        exit;
+    }
+
+    $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
+    $upload_only_users_local = array_values(array_diff($upload_only_users_local, array($username)));
+    $manager_users_local = array_values(array_diff($manager_users_local, array($username)));
+
+    if ($access_type === 'read only') {
+        $readonly_users_local[] = $username;
+    } elseif ($access_type === 'upload only') {
+        $upload_only_users_local[] = $username;
+    } elseif ($access_type === 'manager') {
+        $manager_users_local[] = $username;
+    }
+
+    $readonly_users_local = array_values(array_unique($readonly_users_local));
+    $upload_only_users_local = array_values(array_unique($upload_only_users_local));
+    $manager_users_local = array_values(array_unique($manager_users_local));
+
+    $parsed_dirs = fm_admin_parse_directories_input($directories_raw);
+    if (count($parsed_dirs) === 0) {
+        unset($directories_users_local[$username]);
+    } elseif (count($parsed_dirs) === 1) {
+        $directories_users_local[$username] = $parsed_dirs[0];
+    } else {
+        $directories_users_local[$username] = $parsed_dirs;
+    }
+
+    $write_ok = fm_admin_persist_user_config_arrays(
+        $config_file,
+        $auth_users_local,
+        $readonly_users_local,
+        $upload_only_users_local,
+        $manager_users_local,
+        $directories_users_local
+    );
+
+    if (!$write_ok['ok']) {
+        http_response_code(500);
+        echo json_encode(array('ok' => false, 'error' => $write_ok['error']));
+        exit;
+    }
+
+    echo json_encode(array('ok' => true));
+    exit;
+}
+
+// --- ADMIN USERS DELETE (admin only, AJAX POST) ---
+if (isset($_GET['admin_users_delete'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
+        http_response_code(403);
+        echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(array('ok' => false, 'error' => 'Method not allowed'));
+        exit;
+    }
+
+    $token = isset($_POST['token']) ? (string) $_POST['token'] : '';
+    if (!verifyToken($token)) {
+        http_response_code(401);
+        echo json_encode(array('ok' => false, 'error' => 'Invalid token'));
+        exit;
+    }
+
+    $username = isset($_POST['username']) ? trim((string) $_POST['username']) : '';
+    if ($username === '') {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Username is required'));
+        exit;
+    }
+
+    if (isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $username) {
+        http_response_code(400);
+        echo json_encode(array('ok' => false, 'error' => 'Cannot delete currently logged-in user'));
+        exit;
+    }
+
+    $config_file = __DIR__ . '/config.php';
+    $config_data = fm_admin_load_user_config_arrays($config_file);
+    if (!$config_data['ok']) {
+        http_response_code(500);
+        echo json_encode(array('ok' => false, 'error' => $config_data['error']));
+        exit;
+    }
+
+    $auth_users_local = $config_data['auth_users'];
+    $readonly_users_local = $config_data['readonly_users'];
+    $upload_only_users_local = $config_data['upload_only_users'];
+    $manager_users_local = $config_data['manager_users'];
+    $directories_users_local = $config_data['directories_users'];
+
+    $exists = array_key_exists($username, $auth_users_local)
+        || in_array($username, $readonly_users_local, true)
+        || in_array($username, $upload_only_users_local, true)
+        || in_array($username, $manager_users_local, true)
+        || array_key_exists($username, $directories_users_local);
+
+    if (!$exists) {
+        http_response_code(404);
+        echo json_encode(array('ok' => false, 'error' => 'User not found'));
+        exit;
+    }
+
+    unset($auth_users_local[$username]);
+    unset($directories_users_local[$username]);
+    $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
+    $upload_only_users_local = array_values(array_diff($upload_only_users_local, array($username)));
+    $manager_users_local = array_values(array_diff($manager_users_local, array($username)));
+
+    $write_ok = fm_admin_persist_user_config_arrays(
+        $config_file,
+        $auth_users_local,
+        $readonly_users_local,
+        $upload_only_users_local,
+        $manager_users_local,
+        $directories_users_local
+    );
+
+    if (!$write_ok['ok']) {
+        http_response_code(500);
+        echo json_encode(array('ok' => false, 'error' => $write_ok['error']));
+        exit;
+    }
+
+    echo json_encode(array('ok' => true));
+    exit;
+}
+
 // --- ADMIN USERS MODAL (admin only, AJAX load) ---
 if (isset($_GET['admin_users_modal'])) {
     if (!isset($_SESSION[FM_SESSION_ID]['logged']) || $_SESSION[FM_SESSION_ID]['logged'] !== 'admin') {
@@ -755,6 +991,27 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_mode = ($_GET['admin_users_modal'] === 'edit') ? 'edit' : 'new';
     $modal_username = isset($_GET['user']) ? $_GET['user'] : '';
     $modal_token = isset($_SESSION['token']) ? $_SESSION['token'] : '';
+    $modal_access_type = 'standard';
+    $modal_directories = '';
+
+    if ($modal_mode === 'edit' && $modal_username !== '') {
+        if (!empty($manager_users) && in_array($modal_username, $manager_users, true)) {
+            $modal_access_type = 'manager';
+        } elseif (!empty($upload_only_users) && in_array($modal_username, $upload_only_users, true)) {
+            $modal_access_type = 'upload only';
+        } elseif (!empty($readonly_users) && in_array($modal_username, $readonly_users, true)) {
+            $modal_access_type = 'read only';
+        }
+
+        if (!empty($directories_users) && array_key_exists($modal_username, $directories_users)) {
+            $dirs = $directories_users[$modal_username];
+            if (is_array($dirs)) {
+                $modal_directories = implode("\n", array_map('strval', $dirs));
+            } else {
+                $modal_directories = (string) $dirs;
+            }
+        }
+    }
     require __DIR__ . '/src/renderers/admin-user-modal.php';
     exit;
 }
@@ -2165,6 +2422,174 @@ function verifyToken($token)
         return true;
     }
     return false;
+}
+
+/**
+ * Parse textarea directories input into normalized list.
+ * @param string $input
+ * @return array
+ */
+function fm_admin_parse_directories_input($input)
+{
+    $input = str_replace("\r", "\n", (string) $input);
+    $chunks = preg_split('/[\n,]+/', $input);
+    $out = array();
+    foreach ($chunks as $chunk) {
+        $dir = trim((string) $chunk);
+        if ($dir !== '') {
+            $out[] = $dir;
+        }
+    }
+    return array_values(array_unique($out));
+}
+
+/**
+ * Load user-related arrays from config.php in isolated scope.
+ * @param string $config_file
+ * @return array
+ */
+function fm_admin_load_user_config_arrays($config_file)
+{
+    if (!is_file($config_file) || !is_readable($config_file)) {
+        return array('ok' => false, 'error' => 'Configuration file is not readable.');
+    }
+
+    $loader = static function ($__config_file) {
+        $auth_users = array();
+        $readonly_users = array();
+        $upload_only_users = array();
+        $manager_users = array();
+        $directories_users = array();
+        include $__config_file;
+        return array(
+            'auth_users' => is_array($auth_users) ? $auth_users : array(),
+            'readonly_users' => is_array($readonly_users) ? $readonly_users : array(),
+            'upload_only_users' => is_array($upload_only_users) ? $upload_only_users : array(),
+            'manager_users' => is_array($manager_users) ? $manager_users : array(),
+            'directories_users' => is_array($directories_users) ? $directories_users : array(),
+        );
+    };
+
+    $data = $loader($config_file);
+    $data['ok'] = true;
+    return $data;
+}
+
+/**
+ * Export scalar config value, preferring __DIR__ paths when possible.
+ * @param mixed $value
+ * @param string $config_dir
+ * @return string
+ */
+function fm_admin_export_config_scalar($value, $config_dir)
+{
+    if (!is_string($value)) {
+        return var_export($value, true);
+    }
+
+    $config_dir_norm = rtrim(str_replace('\\', '/', (string) $config_dir), '/');
+    $val_norm = str_replace('\\', '/', $value);
+    if ($config_dir_norm !== '' && strpos($val_norm, $config_dir_norm . '/') === 0) {
+        $rel = substr($val_norm, strlen($config_dir_norm));
+        $rel = str_replace("'", "\\'", $rel);
+        return "__DIR__ . '" . $rel . "'";
+    }
+
+    return "'" . str_replace(array('\\', "'"), array('\\\\', "\\'"), $value) . "'";
+}
+
+/**
+ * Export associative array as PHP array(...) code block.
+ * @param string $name
+ * @param array $arr
+ * @param string $config_dir
+ * @return string
+ */
+function fm_admin_export_assoc_array_code($name, array $arr, $config_dir)
+{
+    ksort($arr);
+    $code = '$' . $name . ' = array(' . "\n";
+    foreach ($arr as $k => $v) {
+        $key = "'" . str_replace(array('\\', "'"), array('\\\\', "\\'"), (string) $k) . "'";
+        if (is_array($v)) {
+            $code .= '    ' . $key . ' => array(' . "\n";
+            foreach ($v as $item) {
+                $code .= '        ' . fm_admin_export_config_scalar($item, $config_dir) . ',' . "\n";
+            }
+            $code .= '    ),' . "\n";
+        } else {
+            $code .= '    ' . $key . ' => ' . fm_admin_export_config_scalar($v, $config_dir) . ',' . "\n";
+        }
+    }
+    $code .= ');';
+    return $code;
+}
+
+/**
+ * Export list array as PHP array(...) code block.
+ * @param string $name
+ * @param array $arr
+ * @return string
+ */
+function fm_admin_export_list_array_code($name, array $arr)
+{
+    $arr = array_values(array_unique(array_map('strval', $arr)));
+    sort($arr);
+    $code = '$' . $name . ' = array(' . "\n";
+    foreach ($arr as $v) {
+        $code .= "    '" . str_replace(array('\\', "'"), array('\\\\', "\\'"), $v) . "'," . "\n";
+    }
+    $code .= ');';
+    return $code;
+}
+
+/**
+ * Persist user arrays to config.php by replacing known array declarations.
+ * @param string $config_file
+ * @param array $auth_users
+ * @param array $readonly_users
+ * @param array $upload_only_users
+ * @param array $manager_users
+ * @param array $directories_users
+ * @return array
+ */
+function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users)
+{
+    $original_content = @file_get_contents($config_file);
+    if ($original_content === false) {
+        return array('ok' => false, 'error' => 'Failed to read configuration file.');
+    }
+
+    $content = $original_content;
+
+    $config_dir = dirname($config_file);
+    $replacements = array(
+        'auth_users' => fm_admin_export_assoc_array_code('auth_users', $auth_users, $config_dir),
+        'readonly_users' => fm_admin_export_list_array_code('readonly_users', $readonly_users),
+        'upload_only_users' => fm_admin_export_list_array_code('upload_only_users', $upload_only_users),
+        'manager_users' => fm_admin_export_list_array_code('manager_users', $manager_users),
+        'directories_users' => fm_admin_export_assoc_array_code('directories_users', $directories_users, $config_dir),
+    );
+
+    foreach ($replacements as $var_name => $new_code) {
+        $pattern = '/\$' . preg_quote($var_name, '/') . '\s*=\s*array\s*\((?:.|[\r\n])*?\);/U';
+        $updated = preg_replace($pattern, $new_code, $content, 1, $count);
+        if ($count !== 1 || $updated === null) {
+            return array('ok' => false, 'error' => 'Failed to update $' . $var_name . ' in config.php');
+        }
+        $content = $updated;
+    }
+
+    $backup_file = $config_file . '.bak.' . date('Ymd_His');
+    if (@file_put_contents($backup_file, $original_content) === false) {
+        return array('ok' => false, 'error' => 'Failed to create config backup.');
+    }
+
+    if (@file_put_contents($config_file, $content) === false) {
+        return array('ok' => false, 'error' => 'Failed to write updated config.php');
+    }
+
+    return array('ok' => true);
 }
 
 /**

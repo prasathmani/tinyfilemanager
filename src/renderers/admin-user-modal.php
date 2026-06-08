@@ -6,11 +6,14 @@
 if (!isset($modal_mode)) $modal_mode = 'new';
 if (!isset($modal_username)) $modal_username = '';
 if (!isset($modal_token)) $modal_token = '';
+if (!isset($modal_access_type)) $modal_access_type = 'standard';
+if (!isset($modal_directories)) $modal_directories = '';
 
 $readonly = $modal_mode === 'edit' ? 'readonly' : '';
 $now = date('Y-m-d\TH:i');
 $title = $modal_mode === 'edit' ? 'Edit user' : 'New user';
 $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
+$directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
 
 ?>
 <div class="modal fade" id="adminUserModal" tabindex="-1" aria-labelledby="adminUserModalLabel" aria-hidden="true">
@@ -22,6 +25,7 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
       </div>
       <form id="admin-user-modal-form" autocomplete="off">
         <div class="modal-body">
+          <div id="admin-user-modal-error" class="alert alert-danger d-none" role="alert"></div>
           <div class="mb-3">
             <label for="admin-username" class="form-label">Username</label>
             <input type="text" class="form-control" id="admin-username" name="username" value="<?php echo $username_value; ?>" <?php echo $readonly; ?> required>
@@ -37,15 +41,15 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
           <div class="mb-3">
             <label for="admin-access-type" class="form-label">Access type</label>
             <select class="form-select" id="admin-access-type" name="access_type">
-              <option value="standard">Standard</option>
-              <option value="read only">Read only</option>
-              <option value="upload only">Upload only</option>
-              <option value="manager">Manager</option>
+              <option value="standard" <?php echo $modal_access_type === 'standard' ? 'selected' : ''; ?>>Standard</option>
+              <option value="read only" <?php echo $modal_access_type === 'read only' ? 'selected' : ''; ?>>Read only</option>
+              <option value="upload only" <?php echo $modal_access_type === 'upload only' ? 'selected' : ''; ?>>Upload only</option>
+              <option value="manager" <?php echo $modal_access_type === 'manager' ? 'selected' : ''; ?>>Manager</option>
             </select>
           </div>
           <div class="mb-3">
             <label for="admin-dirs" class="form-label">Assigned directories</label>
-            <textarea class="form-control" id="admin-dirs" name="directories" rows="2"></textarea>
+            <textarea class="form-control" id="admin-dirs" name="directories" rows="3"><?php echo $directories_value; ?></textarea>
           </div>
           <div class="mb-3">
             <label for="admin-date" class="form-label">Dátum vloženia / zmeny</label>
@@ -55,6 +59,7 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
             <label for="admin-note" class="form-label">Poznámka</label>
             <textarea class="form-control" id="admin-note" name="note" rows="3"></textarea>
           </div>
+          <input type="hidden" name="mode" value="<?php echo htmlspecialchars($modal_mode, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="token" value="<?php echo htmlspecialchars($modal_token, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
         <div class="modal-footer">
@@ -71,10 +76,60 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
 <script>
 (function() {
   var form = document.getElementById('admin-user-modal-form');
+  var errorBox = document.getElementById('admin-user-modal-error');
+
+  function showError(message) {
+    if (!errorBox) return;
+    errorBox.textContent = message || 'Unable to save user.';
+    errorBox.classList.remove('d-none');
+  }
+
+  function clearError() {
+    if (!errorBox) return;
+    errorBox.textContent = '';
+    errorBox.classList.add('d-none');
+  }
+
+  function currentPath() {
+    try {
+      var url = new URL(window.location.href);
+      return url.searchParams.get('p') || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   if (form) {
     form.onsubmit = function(e) {
       e.preventDefault();
-      alert('Saving users will be implemented in the next phase.');
+      clearError();
+      var fd = new FormData(form);
+      var pwd = String(fd.get('password') || '');
+      var pwd2 = String(fd.get('password2') || '');
+      if (pwd !== pwd2) {
+        showError('Passwords do not match.');
+        return;
+      }
+
+      var saveUrl = window.location.pathname + '?p=' + encodeURIComponent(currentPath()) + '&admin_users_save=1';
+      fetch(saveUrl, {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin'
+      })
+        .then(function(resp) {
+          return resp.json().catch(function() { return { ok: false, error: 'Unexpected server response' }; });
+        })
+        .then(function(data) {
+          if (!data || !data.ok) {
+            showError((data && data.error) ? data.error : 'Save failed.');
+            return;
+          }
+          window.location.reload();
+        })
+        .catch(function() {
+          showError('Save request failed.');
+        });
     };
   }
   var deleteBtn = document.getElementById('admin-user-delete-btn');
@@ -108,8 +163,30 @@ $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
         bsModal.hide();
       });
       confirmBox.querySelector('#admin-user-delete-yes').addEventListener('click', function() {
-        alert('Delete handler will be implemented in the next phase.');
-        bsModal.hide();
+        var formData = new FormData();
+        formData.append('username', username);
+        formData.append('token', '<?php echo htmlspecialchars($modal_token, ENT_QUOTES, 'UTF-8'); ?>');
+
+        fetch(window.location.pathname + '?p=' + encodeURIComponent(currentPath()) + '&admin_users_delete=1', {
+          method: 'POST',
+          body: formData,
+          credentials: 'same-origin'
+        })
+          .then(function(resp) {
+            return resp.json().catch(function() { return { ok: false, error: 'Unexpected server response' }; });
+          })
+          .then(function(data) {
+            if (!data || !data.ok) {
+              showError((data && data.error) ? data.error : 'Delete failed.');
+              bsModal.hide();
+              return;
+            }
+            window.location.reload();
+          })
+          .catch(function() {
+            showError('Delete request failed.');
+            bsModal.hide();
+          });
       });
     });
   }
