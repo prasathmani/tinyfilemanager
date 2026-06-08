@@ -2,21 +2,6 @@
 
 Tento adresár obsahuje preklad pôvodnej wiki od autora projektu.
 
-## Stav migrácie
-
-- [x] Home
-- [x] Get Started
-- [x] Deploy by Docker
-- [x] Security and User Management
-- [x] Exclude Files & Folders
-- [x] Restriction by file type
-- [x] IP Blacklist and Whitelist
-- [x] Embedding
-- [x] Config Flags
-- [x] FAQ
-- [x] Login using Database
-- [x] Authors and Contributors
-
 ## Preložené kapitoly
 
 - [Home](?help_doc=wiki-home)
@@ -35,3 +20,18 @@ Tento adresár obsahuje preklad pôvodnej wiki od autora projektu.
 ## Zdroj
 
 Pôvodná wiki: https://github.com/prasathmani/tinyfilemanager/wiki
+
+## Stav migrácie
+
+- [x] Home
+- [x] Get Started
+- [x] Deploy by Docker
+- [x] Security and User Management
+- [x] Exclude Files & Folders
+- [x] Restriction by file type
+- [x] IP Blacklist and Whitelist
+- [x] Embedding
+- [x] Config Flags
+- [x] FAQ
+- [x] Login using Database
+- [x] Authors and Contributors
