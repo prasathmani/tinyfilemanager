@@ -726,7 +726,7 @@ define('FM_MANAGER', $use_auth && !empty($manager_users) && isset($_SESSION[FM_S
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 // always use ?p=
-if (!isset($_GET['p']) && empty($_FILES)) {
+if (!isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
     fm_redirect(FM_SELF_URL . '?p=');
 }
 
