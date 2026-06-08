@@ -10,7 +10,7 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  */
 
 //TFM version
-define('VERSION', '2.6.13');
+define('VERSION', '2.11.04');
 
 //Application Title
 define('APP_TITLE', 'Správca súborov');
