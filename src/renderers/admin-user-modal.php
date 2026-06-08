@@ -8,12 +8,14 @@ if (!isset($modal_username)) $modal_username = '';
 if (!isset($modal_token)) $modal_token = '';
 if (!isset($modal_access_type)) $modal_access_type = 'standard';
 if (!isset($modal_directories)) $modal_directories = '';
+if (!isset($modal_note)) $modal_note = '';
 
 $readonly = $modal_mode === 'edit' ? 'readonly' : '';
 $now = date('Y-m-d\TH:i');
 $title = $modal_mode === 'edit' ? 'Edit user' : 'New user';
 $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
 $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
+$note_value = htmlspecialchars($modal_note, ENT_QUOTES, 'UTF-8');
 
 ?>
 <div class="modal fade" id="adminUserModal" tabindex="-1" aria-labelledby="adminUserModalLabel" aria-hidden="true">
@@ -57,7 +59,7 @@ $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
           </div>
           <div class="mb-3">
             <label for="admin-note" class="form-label">Poznámka</label>
-            <textarea class="form-control" id="admin-note" name="note" rows="3"></textarea>
+            <textarea class="form-control" id="admin-note" name="note" rows="3"><?php echo $note_value; ?></textarea>
           </div>
           <input type="hidden" name="mode" value="<?php echo htmlspecialchars($modal_mode, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="token" value="<?php echo htmlspecialchars($modal_token, ENT_QUOTES, 'UTF-8'); ?>">

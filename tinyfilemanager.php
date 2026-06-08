@@ -816,6 +816,7 @@ if (isset($_GET['admin_users_save'])) {
     $upload_only_users_local = $config_data['upload_only_users'];
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
+    $user_notes_local = $config_data['user_notes'];
 
     $exists = array_key_exists($username, $auth_users_local)
         || in_array($username, $readonly_users_local, true)
@@ -892,13 +893,20 @@ if (isset($_GET['admin_users_save'])) {
         $directories_users_local[$username] = $parsed_dirs;
     }
 
+    if ($note === '') {
+        unset($user_notes_local[$username]);
+    } else {
+        $user_notes_local[$username] = $note;
+    }
+
     $write_ok = fm_admin_persist_user_config_arrays(
         $config_file,
         $auth_users_local,
         $readonly_users_local,
         $upload_only_users_local,
         $manager_users_local,
-        $directories_users_local
+        $directories_users_local,
+        $user_notes_local
     );
 
     if (!$write_ok['ok']) {
@@ -984,6 +992,7 @@ if (isset($_GET['admin_users_delete'])) {
     $upload_only_users_local = $config_data['upload_only_users'];
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
+    $user_notes_local = $config_data['user_notes'];
 
     $exists = array_key_exists($username, $auth_users_local)
         || in_array($username, $readonly_users_local, true)
@@ -1009,6 +1018,7 @@ if (isset($_GET['admin_users_delete'])) {
 
     unset($auth_users_local[$username]);
     unset($directories_users_local[$username]);
+    unset($user_notes_local[$username]);
     $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
     $upload_only_users_local = array_values(array_diff($upload_only_users_local, array($username)));
     $manager_users_local = array_values(array_diff($manager_users_local, array($username)));
@@ -1019,7 +1029,8 @@ if (isset($_GET['admin_users_delete'])) {
         $readonly_users_local,
         $upload_only_users_local,
         $manager_users_local,
-        $directories_users_local
+        $directories_users_local,
+        $user_notes_local
     );
 
     if (!$write_ok['ok']) {
@@ -1051,6 +1062,7 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_token = isset($_SESSION['token']) ? $_SESSION['token'] : '';
     $modal_access_type = 'standard';
     $modal_directories = '';
+    $modal_note = '';
 
     if ($modal_mode === 'edit' && $modal_username !== '') {
         if (!empty($manager_users) && in_array($modal_username, $manager_users, true)) {
@@ -1068,6 +1080,10 @@ if (isset($_GET['admin_users_modal'])) {
             } else {
                 $modal_directories = (string) $dirs;
             }
+        }
+
+        if (isset($user_notes) && is_array($user_notes) && array_key_exists($modal_username, $user_notes)) {
+            $modal_note = (string) $user_notes[$modal_username];
         }
     }
     require __DIR__ . '/src/renderers/admin-user-modal.php';
@@ -2518,6 +2534,7 @@ function fm_admin_load_user_config_arrays($config_file)
         $upload_only_users = array();
         $manager_users = array();
         $directories_users = array();
+        $user_notes = array();
         include $__config_file;
         return array(
             'auth_users' => is_array($auth_users) ? $auth_users : array(),
@@ -2525,6 +2542,7 @@ function fm_admin_load_user_config_arrays($config_file)
             'upload_only_users' => is_array($upload_only_users) ? $upload_only_users : array(),
             'manager_users' => is_array($manager_users) ? $manager_users : array(),
             'directories_users' => is_array($directories_users) ? $directories_users : array(),
+            'user_notes' => is_array($user_notes) ? $user_notes : array(),
         );
     };
 
@@ -2650,7 +2668,7 @@ function fm_admin_replace_config_array_assignment($content, $var_name, $new_code
  * @param array $directories_users
  * @return array
  */
-function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users)
+function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array())
 {
     $original_content = @file_get_contents($config_file);
     if ($original_content === false) {
@@ -2666,6 +2684,7 @@ function fm_admin_persist_user_config_arrays($config_file, array $auth_users, ar
         'upload_only_users' => fm_admin_export_list_array_code('upload_only_users', $upload_only_users),
         'manager_users' => fm_admin_export_list_array_code('manager_users', $manager_users),
         'directories_users' => fm_admin_export_assoc_array_code('directories_users', $directories_users, $config_dir),
+        'user_notes' => fm_admin_export_assoc_array_code('user_notes', $user_notes, $config_dir),
     );
 
     foreach ($replacements as $var_name => $new_code) {
