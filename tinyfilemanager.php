@@ -1897,6 +1897,10 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
     if ($fm_assets_base === '/' || $fm_assets_base === '.') {
         $fm_assets_base = '';
     }
+    $fm_assets_version = fm_get_release_version();
+    if ($fm_assets_version === 'dev') {
+        $fm_assets_version = (string) VERSION;
+    }
     $fm_upload_config = array(
         'chunkSize' => UPLOAD_CHUNK_SIZE,
         'maxFileSize' => MAX_UPLOAD_SIZE,
@@ -1904,7 +1908,7 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
     );
     ?>
     <script type="application/json" id="fm-upload-config"><?php echo fm_enc(json_encode($fm_upload_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
-    <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-upload.js?v=' . rawurlencode((string) VERSION)); ?>"></script>
+    <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-upload.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
 <?php
     fm_show_footer();
     exit;
@@ -5494,6 +5498,10 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         if ($fm_assets_base === '/' || $fm_assets_base === '.') {
             $fm_assets_base = '';
         }
+        $fm_assets_version = fm_get_release_version();
+        if ($fm_assets_version === 'dev') {
+            $fm_assets_version = (string) VERSION;
+        }
         $fm_runtime_config = array(
             'csrfToken' => $_SESSION['token'],
             'highlightCurrentView' => FM_USE_HIGHLIGHTJS && isset($_GET['view']),
@@ -5506,7 +5514,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
             <?php print_external('js-highlightjs'); ?>
         <?php endif; ?>
         <script type="application/json" id="fm-runtime-config"><?php echo fm_enc(json_encode($fm_runtime_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
-        <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-main.js?v=' . rawurlencode((string) VERSION)); ?>"></script>
+        <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-main.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
 
         <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
             $ext = pathinfo($_GET['edit'], PATHINFO_EXTENSION);
@@ -5517,7 +5525,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         ?>
             <?php print_external('js-ace'); ?>
             <script type="application/json" id="fm-ace-config"><?php echo fm_enc(json_encode($fm_ace_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
-            <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-ace.js?v=' . rawurlencode((string) VERSION)); ?>"></script>
+            <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-ace.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
         <?php endif; ?>
         <div id="snackbar"></div>
     </body>
