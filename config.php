@@ -11,24 +11,17 @@
 // --- POUŽÍVATELIA A HESLÁ ---
 // Formát: 'meno' => 'bcrypt_hash_hesla'
 $auth_users = array(
-    // Admin – plný prístup (upload, download, rename, copy, zip, delete)
-    'admin'     => '$2y$10$MDkNAqrsNXnWDpWSUe9po.luFRyHwfktNXEcX0/cqKsnq9NJqPmIG', // Spdlhé
-
-    // Manažéri – vidia a upravujú všetko, nemôžu mazať
-    'rehak'  => '$2y$10$MDqH4vvwosCqjePZo60nHeucpxRrN30Vu/HNHjvW04wTnS.GgoiDG', //Rehak01
-    'bilek'  => '$2y$10$aAkrv/JD3fD9Fq0UWZlkk.vCioO7UAlByO9H6jyfa7pyTdBSkJwPq', // Bilek01
-    'znava'  => '$2y$10$255.N7QKQ/tgfFkcW6Wzwu7NimvvoOIn5Y0MqsRgb2e5jnbY0FDCS', // Znava01
-
-    // Klienti – môžu nahrávať a sťahovať, len svoj priečinok
-    'sano'   => '$2y$10$m9ONc6v2Cro9GvhcPunBLOzL4tjQmxj/d6uosb4fEF6gGc5SrHko6', //Sano01
-    'kristian'   => '$2y$10$UGPcbNMYVQv5p66bhyvQeuH6..JmXmdkF7fdpOqdTwKAluBywKyDC',//Kristian01
-    'fero'   => '$2y$10$teczMBSCU4mhIBoQSJBhSeMCrrNdY0LJxP1w51EMqIIK6XZsehDLy', //Fero01
-    'marian'   => '$2y$10$1bqqSfV0RrNerti7upxoOui77TBWQZQTVnxHbvCxqjhQ.JTNvFzSG', //Marian01    
-    'joyee'    => '$2y$10$xNI0mSWtiduj8l0.fb4wJe5ybaFxLP7BlqwFhYPTs5.34QLUO.yai',
-
-    // Dodávatelia – môžu len sťahovať/prezerať, len svoj priečinok
-    'supplier1' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
-    'supplier2' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO',
+    'admin' => '$2y$10$MDkNAqrsNXnWDpWSUe9po.luFRyHwfktNXEcX0/cqKsnq9NJqPmIG',
+    'bilek' => '$2y$10$wC5xZkDTUuwHaaLOqe7pFufzs263KpAXb6CMDjUChfEetUHOOsz5i',
+    'fero' => '$2y$10$CAp.GThS7P4/C7GtWCGM3O.WxICGFjSrV2Xxoi4RsXi4gOlMQvIlW',
+    'joyee' => '$2y$10$GOT/mqpHx.xEsTx.hzjAsuyWkigjdsWTl.QS8oiEE8Sixuyy6LP/i',
+    'kristian' => '$2y$10$564SbNzU0Yxo180LKdobDOPQoAx8ETwdSyMp2meq5gSPtkmktfmEq',
+    'marian' => '$2y$10$01c7A019ZigsppBmpnZ42OFL5T.Q44XXyO8yCVM0ufUSFoM.S6gcS',
+    'rehak' => '$2y$10$WUikAfymhLzLrYe51kVC3.YlanYCZMb0ZO7ENhnigFEp3m3AgrzX.',
+    'sano' => '$2y$10$.lkxOvPFDOiTG5/sAqe8JeE/JzrkWeqLyJ39uD6VL.go18g4UpNYa',
+    'supplier1' => '$2y$10$IyPHHkxanSnPh.LyI3gNxugUprkJfyBa6Rn6vkrYLO03Q8kFGBF22',
+    'supplier2' => '$2y$10$oCZ3F1n6/Kzu7zoYGFbpNev4Fq2RzWGq3ydevru7RunYcKIC/JgT6',
+    'znava' => '$2y$10$DQ3pvHPHxYp.5ehBn/M7AOOUn.56Ixkdl..0sEINquYopIA7Evhqy',
 );
 
 // --- ROLY ---
