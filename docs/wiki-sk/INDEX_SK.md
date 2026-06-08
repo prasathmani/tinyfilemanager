@@ -4,18 +4,18 @@ Tento adresár obsahuje preklad pôvodnej wiki od autora projektu.
 
 ## Preložené kapitoly
 
-- [Home](?help_doc=wiki-home)
-- [Get Started](?help_doc=wiki-get-started)
-- [Deploy by Docker](?help_doc=wiki-deploy-docker)
-- [Security and User Management](?help_doc=wiki-security-users)
-- [Exclude Files & Folders](?help_doc=wiki-exclude)
-- [Restriction by file type](?help_doc=wiki-restriction-file-type)
-- [IP Blacklist and Whitelist](?help_doc=wiki-ip-rules)
-- [Embedding](?help_doc=wiki-embedding)
-- [Config Flags](?help_doc=wiki-config-flags)
+- [Domov](?help_doc=wiki-home)
+- [Začíname](?help_doc=wiki-get-started)
+- [Nasadenie cez Docker](?help_doc=wiki-deploy-docker)
+- [Bezpečnosť a správa používateľov](?help_doc=wiki-security-users)
+- [Vylúčenie súborov a priečinkov](?help_doc=wiki-exclude)
+- [Obmedzenie podľa typu súboru](?help_doc=wiki-restriction-file-type)
+- [IP blacklist a whitelist](?help_doc=wiki-ip-rules)
+- [Vloženie do iného skriptu](?help_doc=wiki-embedding)
+- [Konfiguračné prepínače](?help_doc=wiki-config-flags)
 - [FAQ](?help_doc=wiki-faq)
-- [Login using Database](?help_doc=wiki-login-db)
-- [Authors and Contributors](?help_doc=wiki-authors)
+- [Prihlásenie pomocou databázy](?help_doc=wiki-login-db)
+- [Autori a prispievatelia](?help_doc=wiki-authors)
 
 ## Naše rozšírenia
 
