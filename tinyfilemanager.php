@@ -2716,7 +2716,7 @@ function fm_markdown_inline($text)
 
         // Allow safe absolute URLs and safe local relative URLs.
         $is_absolute = (bool) preg_match('#^https?://#i', $url);
-        $is_local = (bool) preg_match('#^(?:\?|/|\./|\.\./|#)#', $url);
+        $is_local = (bool) preg_match('~^(?:\?|/|\./|\.\./|#)~', $url);
         if (!$is_absolute && !$is_local) {
             return $m[1];
         }
