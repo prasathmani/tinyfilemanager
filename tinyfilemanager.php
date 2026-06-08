@@ -1840,6 +1840,21 @@ if (isset($_GET['help_doc'])) {
 
     $doc_key = isset($_GET['help_doc']) ? trim((string) $_GET['help_doc']) : '';
     $help_path_param = urlencode(FM_PATH);
+    $wiki_chapters = array(
+        'wiki-index' => 'Index',
+        'wiki-home' => 'Home',
+        'wiki-get-started' => 'Get Started',
+        'wiki-deploy-docker' => 'Deploy by Docker',
+        'wiki-security-users' => 'Security and User Management',
+        'wiki-exclude' => 'Exclude Files & Folders',
+        'wiki-restriction-file-type' => 'Restriction by file type',
+        'wiki-ip-rules' => 'IP Blacklist and Whitelist',
+        'wiki-embedding' => 'Embedding',
+        'wiki-config-flags' => 'Config Flags',
+        'wiki-faq' => 'FAQ',
+        'wiki-login-db' => 'Login using Database',
+        'wiki-authors' => 'Authors and Contributors',
+    );
     $doc_map = array(
         'user-guide' => array(
             'title' => 'Používateľská príručka (lokálna)',
@@ -1906,6 +1921,14 @@ if (isset($_GET['help_doc'])) {
     $doc_title = 'Dokument';
     $doc_content = '';
     $doc_error = '';
+    $wiki_order_keys = array_keys($wiki_chapters);
+    $wiki_current_index = array_search($doc_key, $wiki_order_keys, true);
+    $wiki_prev_key = false;
+    $wiki_next_key = false;
+    if ($wiki_current_index !== false) {
+        $wiki_prev_key = ($wiki_current_index > 0) ? $wiki_order_keys[$wiki_current_index - 1] : false;
+        $wiki_next_key = ($wiki_current_index < count($wiki_order_keys) - 1) ? $wiki_order_keys[$wiki_current_index + 1] : false;
+    }
 
     if (!isset($doc_map[$doc_key])) {
         $doc_error = 'Požadovaný dokument nie je dostupný.';
@@ -1930,6 +1953,12 @@ if (isset($_GET['help_doc'])) {
                     <div class="alert alert-warning mb-0" role="alert"><?php echo htmlspecialchars($doc_error, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php else: ?>
                     <style>
+                        .fm-wiki-chapter-nav { margin-bottom: 0.9rem; }
+                        .fm-wiki-chapter-nav .fm-wiki-link { display: inline-block; margin: 0 0.35rem 0.35rem 0; padding: 0.2rem 0.45rem; border: 1px solid rgba(0, 0, 0, 0.14); border-radius: 6px; text-decoration: none; }
+                        .fm-wiki-chapter-nav .fm-wiki-link.is-active { font-weight: 600; border-color: rgba(13, 110, 253, 0.55); }
+                        .fm-wiki-pager { border-top: 1px solid rgba(0, 0, 0, 0.12); margin-top: 1rem; padding-top: 0.8rem; display: flex; justify-content: space-between; gap: 1rem; }
+                        .fm-wiki-pager .fm-wiki-prev, .fm-wiki-pager .fm-wiki-next { flex: 1 1 50%; }
+                        .fm-wiki-pager .fm-wiki-next { text-align: right; }
                         .fm-help-markdown h1, .fm-help-markdown h2, .fm-help-markdown h3, .fm-help-markdown h4 { margin-top: 1.2rem; margin-bottom: 0.6rem; }
                         .fm-help-markdown p { margin-bottom: 0.7rem; }
                         .fm-help-markdown ul, .fm-help-markdown ol { margin-bottom: 0.8rem; padding-left: 1.3rem; }
@@ -1937,7 +1966,29 @@ if (isset($_GET['help_doc'])) {
                         .fm-help-markdown code { background: rgba(0, 0, 0, 0.06); padding: 0.12rem 0.35rem; border-radius: 4px; }
                         .fm-help-markdown pre code { background: transparent; padding: 0; }
                     </style>
+                    <?php if ($wiki_current_index !== false): ?>
+                        <div class="fm-wiki-chapter-nav">
+                            <?php foreach ($wiki_chapters as $wiki_key => $wiki_label): ?>
+                                <?php $wiki_link = FM_SELF_URL . '?p=' . $help_path_param . '&help_doc=' . urlencode($wiki_key); ?>
+                                <a class="fm-wiki-link<?php echo ($wiki_key === $doc_key) ? ' is-active' : ''; ?>" href="<?php echo $wiki_link; ?>"><?php echo htmlspecialchars($wiki_label, ENT_QUOTES, 'UTF-8'); ?></a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                     <div class="fm-help-markdown"><?php echo fm_render_markdown_basic($doc_content); ?></div>
+                    <?php if ($wiki_current_index !== false): ?>
+                        <div class="fm-wiki-pager">
+                            <div class="fm-wiki-prev">
+                                <?php if ($wiki_prev_key !== false): ?>
+                                    <a href="<?php echo FM_SELF_URL . '?p=' . $help_path_param . '&help_doc=' . urlencode($wiki_prev_key); ?>">&larr; Predošlá kapitola</a>
+                                <?php endif; ?>
+                            </div>
+                            <div class="fm-wiki-next">
+                                <?php if ($wiki_next_key !== false): ?>
+                                    <a href="<?php echo FM_SELF_URL . '?p=' . $help_path_param . '&help_doc=' . urlencode($wiki_next_key); ?>">Nasledujúca kapitola &rarr;</a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
