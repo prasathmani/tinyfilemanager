@@ -48,11 +48,36 @@ class FM_Config
     }
 
     /**
+     * Return the preferred per-user config directory in project root.
+     */
+    private function userCfgDir()
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . self::USER_CFG_DIR;
+    }
+
+    /**
+     * Return the legacy per-user config directory under src/.
+     */
+    private function legacyUserCfgDir()
+    {
+        return __DIR__ . DIRECTORY_SEPARATOR . self::USER_CFG_DIR;
+    }
+
+    /**
      * Return the path to a user's settings JSON file.
      */
     private function userCfgPath($username)
     {
-        return __DIR__ . DIRECTORY_SEPARATOR . self::USER_CFG_DIR
+        return $this->userCfgDir()
+             . DIRECTORY_SEPARATOR . md5($username) . '.json';
+    }
+
+    /**
+     * Return the legacy path to a user's settings JSON file under src/.
+     */
+    private function legacyUserCfgPath($username)
+    {
+        return $this->legacyUserCfgDir()
              . DIRECTORY_SEPARATOR . md5($username) . '.json';
     }
 
@@ -63,7 +88,11 @@ class FM_Config
     {
         $path = $this->userCfgPath($username);
         if (!is_readable($path)) {
-            return false;
+            $legacyPath = $this->legacyUserCfgPath($username);
+            if (!is_readable($legacyPath)) {
+                return false;
+            }
+            $path = $legacyPath;
         }
         $decoded = json_decode(@file_get_contents($path), true);
         return is_array($decoded) ? $decoded : false;
@@ -74,7 +103,7 @@ class FM_Config
      */
     private function ensureUserCfgDir()
     {
-        $dir = __DIR__ . DIRECTORY_SEPARATOR . self::USER_CFG_DIR;
+        $dir = $this->userCfgDir();
         if (!is_dir($dir)) {
             @mkdir($dir, 0750, true);
         }
