@@ -145,7 +145,7 @@ class TFM_AjaxActionHandler {
     }
 
     private function handleSettings($post) {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
+        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme, $list_density;
 
         if (!isset($_SESSION[FM_SESSION_ID]['logged']) || empty($_SESSION[FM_SESSION_ID]['logged'])) {
             header('Content-Type: application/json; charset=utf-8');
@@ -167,6 +167,10 @@ class TFM_AjaxActionHandler {
         $shf = isset($post['js-show-hidden']) && $post['js-show-hidden'] == 'true' ? true : false;
         $hco = isset($post['js-hide-cols']) && $post['js-hide-cols'] == 'true' ? true : false;
         $te3 = $post['js-theme-3'];
+        $listDensity = isset($post['js-list-density']) ? strtolower(trim((string) $post['js-list-density'])) : 'compact';
+        if ($listDensity !== 'normal' && $listDensity !== 'compact') {
+            $listDensity = 'compact';
+        }
         $fallbackLoggingEnabled = isset($post['js-fallback-log-enabled']) && $post['js-fallback-log-enabled'] == 'true' ? true : false;
         $canChangeInternalFlags = !FM_UPLOAD_ONLY;
 
@@ -192,6 +196,10 @@ class TFM_AjaxActionHandler {
             $cfg->data['theme'] = $te3;
             $theme = $te3;
         }
+        if (!isset($cfg->data['list_density']) || $cfg->data['list_density'] !== $listDensity) {
+            $cfg->data['list_density'] = $listDensity;
+            $list_density = $listDensity;
+        }
         if (!isset($cfg->data['fallback_logging']) || (bool) $cfg->data['fallback_logging'] !== $fallbackLoggingEnabled) {
             $cfg->data['fallback_logging'] = $fallbackLoggingEnabled;
         }
@@ -210,6 +218,7 @@ class TFM_AjaxActionHandler {
                 'show_hidden' => isset($cfg->data['show_hidden']) ? (bool) $cfg->data['show_hidden'] : (bool) $show_hidden_files,
                 'hide_Cols' => isset($cfg->data['hide_Cols']) ? (bool) $cfg->data['hide_Cols'] : (bool) $hide_Cols,
                 'theme' => isset($cfg->data['theme']) ? $cfg->data['theme'] : $theme,
+                'list_density' => isset($cfg->data['list_density']) ? (string) $cfg->data['list_density'] : $listDensity,
                 'fallback_logging' => isset($cfg->data['fallback_logging']) ? (bool) $cfg->data['fallback_logging'] : $fallbackLoggingEnabled,
             );
 

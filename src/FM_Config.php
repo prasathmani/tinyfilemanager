@@ -18,6 +18,7 @@ class FM_Config
             'lang' => 'en',
             'error_reporting' => true,
             'show_hidden' => true,
+            'list_density' => 'compact',
             'fallback_logging' => false
         );
         $this->last_error = '';

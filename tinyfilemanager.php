@@ -273,6 +273,12 @@ $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 // Theme
 $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
 
+// List density mode for file table rows.
+$list_density = isset($cfg->data['list_density']) ? strtolower((string) $cfg->data['list_density']) : 'compact';
+if ($list_density !== 'normal' && $list_density !== 'compact') {
+    $list_density = 'compact';
+}
+
 define('FM_THEME', $theme);
 
 //available languages
@@ -2138,6 +2144,16 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
                                                         } ?>>
                                     <?php echo lng('dark') ?>
                                 </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label for="js-list-density" class="col-sm-3 col-form-label">Hustota zoznamu</label>
+                        <div class="col-sm-5">
+                            <select class="form-select w-100" id="js-list-density" name="js-list-density">
+                                <option value="normal" <?php echo ($list_density === 'normal') ? 'selected' : ''; ?>>Normal</option>
+                                <option value="compact" <?php echo ($list_density !== 'normal') ? 'selected' : ''; ?>>Compact</option>
                             </select>
                         </div>
                     </div>
@@ -5245,8 +5261,9 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
         header("Pragma: no-cache");
 
-        global $sticky_navbar, $favicon_path;
+        global $sticky_navbar, $favicon_path, $list_density;
         $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
+        $densityClass = ($list_density === 'normal') ? 'fm-density-normal' : 'fm-density-compact';
         $pwa_icon = LOGIN_LOGO_PATH ? LOGIN_LOGO_PATH : $favicon_path;
 ?>
     <!DOCTYPE html>
@@ -6296,7 +6313,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         <link rel="stylesheet" href="src/assets/css/fm-modern-theme.css?v=<?php echo rawurlencode((string) VERSION); ?>">
     </head>
 
-    <body class="<?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?>">
+    <body class="<?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?> <?php echo $densityClass; ?>">
         <div id="wrapper" class="container-fluid">
             <!-- New Item creation -->
             <div class="modal fade" id="createNewItem" tabindex="-1" role="dialog" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="newItemModalLabel" aria-hidden="true" data-bs-theme="<?php echo FM_THEME; ?>">
