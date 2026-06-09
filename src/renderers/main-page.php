@@ -490,8 +490,10 @@
                     <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Zip') ?> </a>
                     <input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
                     <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a>
+                    <input type="hidden" id="fm-bulk-move-flag" value="1">
                     <input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
-                    <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
+                    <a href="javascript:(function(){var f=document.getElementById('fm-bulk-move-flag');if(f){f.removeAttribute('name');}document.getElementById('a-copy').click();})();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
+                    <a href="javascript:(function(){var f=document.getElementById('fm-bulk-move-flag');if(f){f.setAttribute('name','move');}document.getElementById('a-copy').click();})();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-arrows"></i> <?php echo lng('Move') ?> </a>
                 </div>
             </div>
             <div class="fm-footer-online-col">

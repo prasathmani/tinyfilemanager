@@ -1937,6 +1937,7 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
 // copy form POST
 if (isset($_POST['copy']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) {
     $copy_files = isset($_POST['file']) ? $_POST['file'] : null;
+    $mass_move_requested = isset($_POST['move']);
     if (!is_array($copy_files) || empty($copy_files)) {
         fm_set_msg(lng('Nothing selected'), 'alert');
         $FM_PATH = FM_PATH;
@@ -1949,7 +1950,7 @@ if (isset($_POST['copy']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_
     <div class="path">
         <div class="card" data-bs-theme="<?php echo FM_THEME; ?>">
             <div class="card-header">
-                <h6><?php echo lng('Copying') ?></h6>
+                <h6><?php echo $mass_move_requested ? lng('Move') : lng('Copying'); ?></h6>
             </div>
             <div class="card-body">
                 <form action="" method="post">
@@ -1965,13 +1966,13 @@ if (isset($_POST['copy']) && !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_
                         <label for="inp_copy_to"><strong><?php echo lng('DestinationFolder') ?></strong>:</label>
                         <?php echo FM_ROOT_PATH ?>/<input type="text" name="copy_to" id="inp_copy_to" value="<?php echo fm_enc(FM_PATH) ?>">
                     </p>
-                    <p class="custom-checkbox custom-control"><input type="checkbox" name="move" value="1" id="js-move-files" class="custom-control-input">
+                    <p class="custom-checkbox custom-control"><input type="checkbox" name="move" value="1" id="js-move-files" class="custom-control-input" <?php echo $mass_move_requested ? 'checked' : ''; ?>>
                         <label for="js-move-files" class="custom-control-label ms-2"><?php echo lng('Move') ?></label>
                     </p>
                     <p>
                         <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-danger"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>&nbsp;
                         <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
-                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Copy') ?></button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo $mass_move_requested ? lng('Move') : lng('Copy'); ?></button>
                     </p>
                 </form>
             </div>
