@@ -3,6 +3,10 @@
 ## Purpose
 This roadmap defines the phased development plan for DREMONT File Manager after stabilization version 2.9.18. It is the primary planning reference for all future development prompts and is designed to prevent uncontrolled refactoring.
 
+## Binding UI Policy
+For all UI/UX work, the mandatory source of truth is `UI_MODERNIZATION_MANDATE.md`.
+If any roadmap note conflicts with that document, `UI_MODERNIZATION_MANDATE.md` takes priority.
+
 ---
 
 ## Phases

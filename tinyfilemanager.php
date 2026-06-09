@@ -2035,13 +2035,13 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
         }
     }
     $fallback_log_updated = $fallback_log_exists && @filemtime($fallback_log_path) ? date('Y-m-d H:i:s', (int) @filemtime($fallback_log_path)) : '';
-    $fallback_log_status_text = 'OK';
+    $fallback_log_status_text = 'NIZKE';
     $fallback_log_status_class = 'success';
     if ($fallback_log_bytes >= 220000 || $fallback_log_lines >= 900) {
-        $fallback_log_status_text = 'HIGH';
+        $fallback_log_status_text = 'VYSOKE';
         $fallback_log_status_class = 'danger';
     } elseif ($fallback_log_bytes >= 131072 || $fallback_log_lines >= 600) {
-        $fallback_log_status_text = 'MEDIUM';
+        $fallback_log_status_text = 'STREDNE';
         $fallback_log_status_class = 'warning';
     }
 ?>
@@ -2122,19 +2122,19 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
                     </div>
 
                     <div class="mb-3 row">
-                        <label for="js-fallback-log-enabled" class="col-sm-3 col-form-label">Fallback event logging</label>
+                        <label for="js-fallback-log-enabled" class="col-sm-3 col-form-label">Logovanie fallback udalosti</label>
                         <div class="col-sm-9">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="js-fallback-log-enabled" name="js-fallback-log-enabled" value="true" <?php echo $fallback_log_enabled ? 'checked' : ''; ?> />
                             </div>
-                            <small class="text-body-secondary">Logs only self-service fallback events. Bounded automatically (max 256KB / 1000 lines, keeps newest 500).</small>
+                            <small class="text-body-secondary">Loguje len self-service fallback udalosti. Automaticky orezane (max 256KB / 1000 riadkov, ponecha najnovsich 500).</small>
                             <div id="js-fallback-log-stats" class="mt-2 small text-body-secondary">
-                                <strong>Live log info:</strong>
+                                <strong>Zive info logu:</strong>
                                 <span class="ms-1 badge bg-<?php echo fm_enc($fallback_log_status_class); ?>" id="js-fallback-log-status"><?php echo fm_enc($fallback_log_status_text); ?></span>
-                                <span>exists: <span id="js-fallback-log-exists"><?php echo $fallback_log_exists ? 'yes' : 'no'; ?></span></span>,
-                                <span>size: <span id="js-fallback-log-bytes"><?php echo (int) $fallback_log_bytes; ?></span> B</span>,
-                                <span>lines: <span id="js-fallback-log-lines"><?php echo (int) $fallback_log_lines; ?></span></span>,
-                                <span>updated: <span id="js-fallback-log-updated"><?php echo fm_enc($fallback_log_updated); ?></span></span>
+                                <span>existuje: <span id="js-fallback-log-exists"><?php echo $fallback_log_exists ? 'ano' : 'nie'; ?></span></span>,
+                                <span>velkost: <span id="js-fallback-log-bytes"><?php echo (int) $fallback_log_bytes; ?></span> B</span>,
+                                <span>riadky: <span id="js-fallback-log-lines"><?php echo (int) $fallback_log_lines; ?></span></span>,
+                                <span>aktualizovane: <span id="js-fallback-log-updated"><?php echo fm_enc($fallback_log_updated); ?></span></span>
                             </div>
                         </div>
                     </div>

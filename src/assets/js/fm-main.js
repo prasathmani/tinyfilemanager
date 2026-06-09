@@ -272,7 +272,7 @@
   }
 
   function clearFallbackLog() {
-    if (!window.confirm('Clear fallback event log?')) {
+    if (!window.confirm('Vymazat fallback log udalosti?')) {
       return false;
     }
 
@@ -290,19 +290,19 @@
           try {
             response = JSON.parse(data);
           } catch (e) {
-            response = { success: false, msg: 'Unknown response' };
+            response = { success: false, msg: 'Neznama odpoved' };
           }
         }
 
         if (response && response.success) {
-          toast(response.msg || 'Fallback log cleared');
+          toast(response.msg || 'Fallback log bol vycisteny');
           refreshFallbackLogStats();
         } else {
-          toast(response && response.msg ? response.msg : 'Could not clear fallback log');
+          toast(response && response.msg ? response.msg : 'Fallback log sa nepodarilo vycistit');
         }
       },
       error: function () {
-        toast(extractAjaxErrorMessage(arguments[0], 'Could not clear fallback log'));
+        toast(extractAjaxErrorMessage(arguments[0], 'Fallback log sa nepodarilo vycistit'));
       }
     });
 
@@ -346,17 +346,17 @@
 
         var bytes = Number(stats.bytes || 0);
         var lines = Number(stats.lines || 0);
-        var statusText = 'OK';
+        var statusText = 'NIZKE';
         var statusClass = 'bg-success';
         if (bytes >= 220000 || lines >= 900) {
-          statusText = 'HIGH';
+          statusText = 'VYSOKE';
           statusClass = 'bg-danger';
         } else if (bytes >= 131072 || lines >= 600) {
-          statusText = 'MEDIUM';
+          statusText = 'STREDNE';
           statusClass = 'bg-warning';
         }
 
-        if (existsEl) existsEl.textContent = stats.exists ? 'yes' : 'no';
+        if (existsEl) existsEl.textContent = stats.exists ? 'ano' : 'nie';
         if (bytesEl) bytesEl.textContent = String(bytes);
         if (linesEl) linesEl.textContent = String(lines);
         if (updatedEl) updatedEl.textContent = stats.updated_at || '';

@@ -204,7 +204,7 @@ class TFM_AjaxActionHandler {
             );
 
             $saved = true;
-            $saveMessage = 'Settings saved for current session only. Persistent storage is not writable.';
+            $saveMessage = 'Nastavenia ulozene len pre aktualnu session. Trvale ulozisko nie je zapisovatelne.';
             $this->writeFallbackLog('settings_session_fallback', 'Profile settings persisted to session because profile storage is not writable.');
         }
 
@@ -290,20 +290,20 @@ class TFM_AjaxActionHandler {
 
         $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
         if ($username === '') {
-            echo json_encode(array('success' => false, 'msg' => 'Not authenticated'));
+            echo json_encode(array('success' => false, 'msg' => 'Neautorizovane'));
             exit;
         }
 
         if ($username !== 'admin') {
-            echo json_encode(array('success' => false, 'msg' => 'Only admin can clear fallback log.'));
+            echo json_encode(array('success' => false, 'msg' => 'Fallback log moze vycistit iba admin.'));
             exit;
         }
 
         $result = $this->clearFallbackLog();
         if (!empty($result['ok'])) {
-            echo json_encode(array('success' => true, 'msg' => 'Fallback log cleared.'));
+            echo json_encode(array('success' => true, 'msg' => 'Fallback log bol vycisteny.'));
         } else {
-            echo json_encode(array('success' => false, 'msg' => isset($result['error']) ? $result['error'] : 'Could not clear fallback log.'));
+            echo json_encode(array('success' => false, 'msg' => isset($result['error']) ? $result['error'] : 'Fallback log sa nepodarilo vycistit.'));
         }
         exit;
     }
@@ -313,7 +313,7 @@ class TFM_AjaxActionHandler {
 
         $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
         if ($username === '') {
-            echo json_encode(array('success' => false, 'msg' => 'Not authenticated'));
+            echo json_encode(array('success' => false, 'msg' => 'Neautorizovane'));
             exit;
         }
 
@@ -416,7 +416,7 @@ class TFM_AjaxActionHandler {
         }
 
         if (@file_put_contents($logPath, '', LOCK_EX) === false) {
-            return array('ok' => false, 'error' => 'Fallback log file is not writable.');
+            return array('ok' => false, 'error' => 'Subor fallback logu nie je zapisovatelny.');
         }
 
         return array('ok' => true);
