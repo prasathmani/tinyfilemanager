@@ -111,15 +111,33 @@
                             <?php
                             $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
                             $groupName = isset($group['name']) ? (string) $group['name'] : '?';
-                            $ownerLabel = $ownerName;
-                            if (!empty($owner['gecos'])) {
-                                $ownerGecos = trim((string) $owner['gecos']);
-                                if ($ownerGecos !== '') {
-                                    $ownerLabel = $ownerGecos;
+                            $ownerTitle = $ownerName . ':' . $groupName;
+                            $hasAppOwner = false;
+                            $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
+                            if (is_array($appOwnerMeta)) {
+                                $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
+                                $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
+                                if ($appCreatedBy !== '') {
+                                    $hasAppOwner = true;
+                                    $ownerName = $appCreatedBy;
+                                    $ownerLabel = $appCreatedBy;
+                                    $ownerTitle = 'App owner: ' . $appCreatedBy;
+                                    if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
+                                        $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
+                                    }
                                 }
                             }
-                            if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
-                                $ownerLabel = 'System';
+                            $ownerLabel = $ownerName;
+                            if (!$hasAppOwner) {
+                                if (!empty($owner['gecos'])) {
+                                    $ownerGecos = trim((string) $owner['gecos']);
+                                    if ($ownerGecos !== '') {
+                                        $ownerLabel = $ownerGecos;
+                                    }
+                                }
+                                if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
+                                    $ownerLabel = 'System';
+                                }
                             }
                             $canChatWithOwner = FM_USE_AUTH
                                 && !empty($_SESSION[FM_SESSION_ID]['logged'])
@@ -132,7 +150,7 @@
                                 type="button"
                                 class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
                                 data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
-                                title="<?php echo fm_enc($ownerName . ':' . $groupName); ?>"
+                                title="<?php echo fm_enc($ownerTitle); ?>"
                                 <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
                             >
                                 <i class="fa fa-user" aria-hidden="true"></i>
@@ -230,15 +248,33 @@
                             <?php
                             $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
                             $groupName = isset($group['name']) ? (string) $group['name'] : '?';
-                            $ownerLabel = $ownerName;
-                            if (!empty($owner['gecos'])) {
-                                $ownerGecos = trim((string) $owner['gecos']);
-                                if ($ownerGecos !== '') {
-                                    $ownerLabel = $ownerGecos;
+                            $ownerTitle = $ownerName . ':' . $groupName;
+                            $hasAppOwner = false;
+                            $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
+                            if (is_array($appOwnerMeta)) {
+                                $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
+                                $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
+                                if ($appCreatedBy !== '') {
+                                    $hasAppOwner = true;
+                                    $ownerName = $appCreatedBy;
+                                    $ownerLabel = $appCreatedBy;
+                                    $ownerTitle = 'App owner: ' . $appCreatedBy;
+                                    if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
+                                        $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
+                                    }
                                 }
                             }
-                            if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
-                                $ownerLabel = 'System';
+                            $ownerLabel = $ownerName;
+                            if (!$hasAppOwner) {
+                                if (!empty($owner['gecos'])) {
+                                    $ownerGecos = trim((string) $owner['gecos']);
+                                    if ($ownerGecos !== '') {
+                                        $ownerLabel = $ownerGecos;
+                                    }
+                                }
+                                if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
+                                    $ownerLabel = 'System';
+                                }
                             }
                             $canChatWithOwner = FM_USE_AUTH
                                 && !empty($_SESSION[FM_SESSION_ID]['logged'])
@@ -251,7 +287,7 @@
                                 type="button"
                                 class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
                                 data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
-                                title="<?php echo fm_enc($ownerName . ':' . $groupName); ?>"
+                                title="<?php echo fm_enc($ownerTitle); ?>"
                                 <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
                             >
                                 <i class="fa fa-user" aria-hidden="true"></i>
@@ -333,6 +369,9 @@
                 <?php if ($footerShowUserBadges): ?>
                     <div class="float-right d-flex gap-2 align-items-center flex-wrap justify-content-end">
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
+                        <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
+                            Neprecitane: <span class="fm-chat-unread-count">0</span>
+                        </span>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
                                 type="button"
@@ -353,6 +392,9 @@
                 <?php if ($footerShowUserBadges): ?>
                     <div class="float-right d-flex gap-2 align-items-center flex-wrap">
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
+                        <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
+                            Neprecitane: <span class="fm-chat-unread-count">0</span>
+                        </span>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
                                 type="button"
@@ -421,6 +463,8 @@
             var titleEl = document.getElementById('fm-chat-modal-label');
             var tokenEl = document.querySelector('input[name="token"]');
             var badges = document.querySelectorAll('.fm-user-chat-badge[data-chat-user]');
+            var unreadCountEls = document.querySelectorAll('.fm-chat-unread-count');
+            var unreadBadgeEls = document.querySelectorAll('.fm-chat-unread-badge');
 
             if (!modalEl || !historyEl || !formEl || !inputEl || !titleEl || !tokenEl) {
                 return;
@@ -433,7 +477,11 @@
                 inboxTimer: null,
                 inboxInitialized: false,
                 lastIncomingBySender: {},
+                unreadBySender: {},
+                lastReadBySender: {},
             };
+
+            var readStateStorageKey = 'tfm-chat-read:' + currentUser;
 
             var badgeByUser = {};
             badges.forEach(function (badge) {
@@ -442,6 +490,61 @@
                     badgeByUser[u] = badge;
                 }
             });
+
+            function loadReadState() {
+                try {
+                    var raw = window.localStorage ? window.localStorage.getItem(readStateStorageKey) : '';
+                    if (!raw) {
+                        return;
+                    }
+                    var data = JSON.parse(raw);
+                    if (data && typeof data === 'object') {
+                        state.lastReadBySender = data;
+                    }
+                } catch (e) {
+                }
+            }
+
+            function saveReadState() {
+                try {
+                    if (window.localStorage) {
+                        window.localStorage.setItem(readStateStorageKey, JSON.stringify(state.lastReadBySender));
+                    }
+                } catch (e) {
+                }
+            }
+
+            function setUnreadCount(total) {
+                unreadCountEls.forEach(function (el) {
+                    el.textContent = String(total);
+                });
+                unreadBadgeEls.forEach(function (el) {
+                    el.style.display = total > 0 ? '' : 'none';
+                });
+            }
+
+            function recomputeUnreadCount() {
+                var total = 0;
+                Object.keys(state.unreadBySender).forEach(function (sender) {
+                    if (state.unreadBySender[sender] > 0) {
+                        total++;
+                    }
+                });
+                setUnreadCount(total);
+            }
+
+            function markSenderRead(sender, id) {
+                if (!sender || !id) {
+                    return;
+                }
+                var readId = Number(state.lastReadBySender[sender] || 0);
+                if (id > readId) {
+                    state.lastReadBySender[sender] = id;
+                    saveReadState();
+                }
+                delete state.unreadBySender[sender];
+                recomputeUnreadCount();
+            }
 
             function markBadgeRinging(user, ring) {
                 if (!user || !badgeByUser[user]) {
@@ -490,6 +593,7 @@
                         modalEl.style.display = 'none';
                         modalEl.setAttribute('aria-hidden', 'true');
                         stopPolling();
+                        clearPeerNotification(state.peer);
                         state.peer = '';
                         formEl.reset();
                     });
@@ -552,7 +656,21 @@
                         if (!payload || payload.ok !== true || !payload.data) {
                             return;
                         }
-                        renderMessages(payload.data.messages || []);
+                        var messages = payload.data.messages || [];
+                        renderMessages(messages);
+
+                        var maxIncomingId = 0;
+                        messages.forEach(function (msg) {
+                            if ((msg.sender || '') === state.peer) {
+                                var mid = Number(msg.id || 0);
+                                if (mid > maxIncomingId) {
+                                    maxIncomingId = mid;
+                                }
+                            }
+                        });
+                        if (maxIncomingId > 0) {
+                            markSenderRead(state.peer, maxIncomingId);
+                        }
                     })
                     .catch(function () {
                     });
@@ -625,27 +743,34 @@
                             }
 
                             var prev = Number(state.lastIncomingBySender[sender] || 0);
-                            if (!state.inboxInitialized) {
-                                state.lastIncomingBySender[sender] = id;
-                                return;
-                            }
-
                             if (id > prev) {
                                 state.lastIncomingBySender[sender] = id;
 
                                 if (state.peer === sender) {
                                     chatFetch();
                                     markBadgeRinging(sender, false);
+                                    markSenderRead(sender, id);
                                 } else {
-                                    markBadgeRinging(sender, true);
-                                    if (!state.peer && !shouldAutoOpenSender) {
+                                    if (state.inboxInitialized && !state.peer && !shouldAutoOpenSender) {
                                         shouldAutoOpenSender = sender;
                                     }
+                                }
+                            }
+
+                            if (state.peer !== sender) {
+                                var currentReadId = Number(state.lastReadBySender[sender] || 0);
+                                if (id > currentReadId) {
+                                    state.unreadBySender[sender] = id;
+                                    markBadgeRinging(sender, true);
+                                } else {
+                                    delete state.unreadBySender[sender];
+                                    markBadgeRinging(sender, false);
                                 }
                             }
                         });
 
                         state.inboxInitialized = true;
+                        recomputeUnreadCount();
 
                         if (shouldAutoOpenSender) {
                             state.peer = shouldAutoOpenSender;
@@ -673,6 +798,10 @@
                     return;
                 }
                 markBadgeRinging(peer, false);
+                var lastIncoming = Number(state.lastIncomingBySender[peer] || 0);
+                if (lastIncoming > 0) {
+                    markSenderRead(peer, lastIncoming);
+                }
             }
 
             badges.forEach(function (badge) {
@@ -693,6 +822,7 @@
 
             bindModalHidden(function () {
                 stopPolling();
+                clearPeerNotification(state.peer);
                 state.peer = '';
                 formEl.reset();
             });
@@ -715,6 +845,8 @@
                 });
             });
 
+            loadReadState();
+            setUnreadCount(0);
             startInboxPolling();
         })();
     </script>

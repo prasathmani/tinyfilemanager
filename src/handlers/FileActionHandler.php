@@ -35,6 +35,9 @@ class TFM_FileActionHandler {
             }
 
             if (fm_rdelete($path . '/' . $del)) {
+                if (function_exists('fm_owner_meta_remove')) {
+                    fm_owner_meta_remove($path . '/' . $del);
+                }
                 $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
                 fm_set_msg(sprintf($msg, fm_enc($del)));
             } else {
@@ -65,6 +68,9 @@ class TFM_FileActionHandler {
                 if (!file_exists($path . '/' . $new)) {
                     if (fm_is_valid_ext($new)) {
                         @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
+                        if (function_exists('fm_owner_meta_touch')) {
+                            fm_owner_meta_touch($path . '/' . $new, 'create');
+                        }
                         fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
                     } else {
                         fm_set_msg(lng('File extension is not allowed'), 'error');
@@ -74,6 +80,9 @@ class TFM_FileActionHandler {
                 }
             } else {
                 if (fm_mkdir($path . '/' . $new, false) === true) {
+                    if (function_exists('fm_owner_meta_touch')) {
+                        fm_owner_meta_touch($path . '/' . $new, 'mkdir');
+                    }
                     fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
                 } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
                     fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
@@ -116,6 +125,9 @@ class TFM_FileActionHandler {
         // rename
         if (fm_isvalid_filename($new) && $old != '' && $new != '') {
             if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
+                    if (function_exists('fm_owner_meta_move')) {
+                        fm_owner_meta_move($path . '/' . $old, $path . '/' . $new);
+                    }
                 fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
             } else {
                 fm_set_msg(sprintf(lng('Error while renaming from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');
@@ -149,6 +161,8 @@ class TFM_FileActionHandler {
                     $new_path = $path . '/' . $f;
                     if (!fm_rdelete($new_path)) {
                         $errors++;
+                    } elseif (function_exists('fm_owner_meta_remove')) {
+                        fm_owner_meta_remove($new_path);
                     }
                 }
             }

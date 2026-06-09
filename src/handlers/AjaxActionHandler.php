@@ -106,6 +106,9 @@ class TFM_AjaxActionHandler {
             header('HTTP/1.1 500 Internal Server Error');
             die('Could Not Write File! - Check Permissions / Ownership');
         }
+        if (function_exists('fm_owner_meta_touch')) {
+            fm_owner_meta_touch($file_path, 'edit');
+        }
         die(true);
     }
 

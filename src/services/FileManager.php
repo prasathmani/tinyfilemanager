@@ -212,6 +212,9 @@ class TFM_FileManager {
         }
         
         @chmod($full_path, 0644);
+        if (function_exists('fm_owner_meta_touch')) {
+            fm_owner_meta_touch($full_path, 'write');
+        }
         $this->log('file_write', "File written: $filename");
         return true;
     }

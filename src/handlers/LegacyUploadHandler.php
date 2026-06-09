@@ -155,10 +155,15 @@ class TFM_LegacyUploadHandler {
                         } else {
                             $fullPathTarget = $fullPath;
                         }
-                        rename("{$fullPath}.part", $fullPathTarget);
+                        if (rename("{$fullPath}.part", $fullPathTarget) && function_exists('fm_owner_meta_touch')) {
+                            fm_owner_meta_touch($fullPathTarget, 'upload');
+                        }
                     }
                 } else if (move_uploaded_file($tmp_name, $fullPath)) {
                     if (file_exists($fullPath)) {
+                        if (function_exists('fm_owner_meta_touch')) {
+                            fm_owner_meta_touch($fullPath, 'upload');
+                        }
                         $response = array(
                             'status' => 'success',
                             'info'   => 'file upload successful'
@@ -248,11 +253,15 @@ class TFM_LegacyUploadHandler {
             }
         }
 
+        $urlTargetPath = strtok($this->urlUploadTargetPath($path, $fileinfo, $temp_file), '?');
         if ($success) {
-            $success = rename($temp_file, strtok($this->urlUploadTargetPath($path, $fileinfo, $temp_file), '?'));
+            $success = rename($temp_file, $urlTargetPath);
         }
 
         if ($success) {
+            if (function_exists('fm_owner_meta_touch')) {
+                fm_owner_meta_touch($urlTargetPath, 'upload_url');
+            }
             $this->emitUrlUploadEvent(array('done' => $fileinfo));
         } else {
             unlink($temp_file);

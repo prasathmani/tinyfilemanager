@@ -3328,6 +3328,302 @@ function fm_admin_read_audit_events($limit = 50)
     return $events;
 }
 
+function fm_owner_meta_store_path()
+{
+    $dir = __DIR__ . '/.fm_usercfg';
+    if (!@is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $htaccess = $dir . '/.htaccess';
+    if (!@file_exists($htaccess)) {
+        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
+    }
+    return $dir . '/owner-meta.json';
+}
+
+function fm_owner_meta_normalize_path($path)
+{
+    $path = str_replace('\\', '/', (string) $path);
+    $path = preg_replace('#/+#', '/', $path);
+    if ($path === null) {
+        $path = '';
+    }
+    if ($path !== '/' && $path !== '') {
+        $path = rtrim($path, '/');
+    }
+    return $path;
+}
+
+function fm_owner_meta_rel_path($absolutePath)
+{
+    if (!defined('FM_ROOT_PATH')) {
+        return '';
+    }
+
+    $root = fm_owner_meta_normalize_path(FM_ROOT_PATH);
+    $path = fm_owner_meta_normalize_path($absolutePath);
+
+    if ($root === '' || $path === '') {
+        return '';
+    }
+
+    if ($path === $root) {
+        return '';
+    }
+
+    $prefix = $root . '/';
+    if (strpos($path, $prefix) !== 0) {
+        return '';
+    }
+
+    return ltrim(substr($path, strlen($prefix)), '/');
+}
+
+function fm_owner_meta_scope_key()
+{
+    if (!defined('FM_ROOT_PATH')) {
+        return 'default';
+    }
+    return sha1((string) FM_ROOT_PATH);
+}
+
+function fm_owner_meta_read_all()
+{
+    if (isset($GLOBALS['_fm_owner_meta_cache']) && is_array($GLOBALS['_fm_owner_meta_cache'])) {
+        return $GLOBALS['_fm_owner_meta_cache'];
+    }
+
+    $file = fm_owner_meta_store_path();
+    if (!@is_file($file)) {
+        $GLOBALS['_fm_owner_meta_cache'] = array('version' => 1, 'scopes' => array());
+        return $GLOBALS['_fm_owner_meta_cache'];
+    }
+
+    $raw = @file_get_contents($file);
+    $data = json_decode((string) $raw, true);
+    if (!is_array($data)) {
+        $data = array('version' => 1, 'scopes' => array());
+    }
+    if (!isset($data['scopes']) || !is_array($data['scopes'])) {
+        $data['scopes'] = array();
+    }
+
+    $GLOBALS['_fm_owner_meta_cache'] = $data;
+    return $GLOBALS['_fm_owner_meta_cache'];
+}
+
+function fm_owner_meta_write_all(array $data)
+{
+    $file = fm_owner_meta_store_path();
+    $dir = dirname($file);
+    if (!@is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+
+    $fh = @fopen($file, 'c+');
+    if ($fh === false) {
+        return false;
+    }
+
+    if (!@flock($fh, LOCK_EX)) {
+        @fclose($fh);
+        return false;
+    }
+
+    ftruncate($fh, 0);
+    rewind($fh);
+    $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (!is_string($json) || $json === '') {
+        $json = '{"version":1,"scopes":{}}';
+    }
+    @fwrite($fh, $json);
+    @fflush($fh);
+    @flock($fh, LOCK_UN);
+    @fclose($fh);
+
+    $GLOBALS['_fm_owner_meta_cache'] = $data;
+    return true;
+}
+
+function fm_owner_meta_current_user()
+{
+    if (defined('FM_USE_AUTH') && FM_USE_AUTH && isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] !== '') {
+        return (string) $_SESSION[FM_SESSION_ID]['logged'];
+    }
+    return '';
+}
+
+function fm_owner_meta_get($absolutePath)
+{
+    $rel = fm_owner_meta_rel_path($absolutePath);
+    if ($rel === '') {
+        return null;
+    }
+
+    $data = fm_owner_meta_read_all();
+    $scope = fm_owner_meta_scope_key();
+    if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
+        return null;
+    }
+
+    return isset($data['scopes'][$scope][$rel]) && is_array($data['scopes'][$scope][$rel])
+        ? $data['scopes'][$scope][$rel]
+        : null;
+}
+
+function fm_owner_meta_touch($absolutePath, $action = 'update', $actor = '')
+{
+    $rel = fm_owner_meta_rel_path($absolutePath);
+    if ($rel === '') {
+        return false;
+    }
+
+    if ($actor === '') {
+        $actor = fm_owner_meta_current_user();
+    }
+
+    $data = fm_owner_meta_read_all();
+    $scope = fm_owner_meta_scope_key();
+    if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
+        $data['scopes'][$scope] = array();
+    }
+
+    $record = isset($data['scopes'][$scope][$rel]) && is_array($data['scopes'][$scope][$rel])
+        ? $data['scopes'][$scope][$rel]
+        : array();
+
+    $now = time();
+    if (!isset($record['created_at']) || !is_numeric($record['created_at'])) {
+        $record['created_at'] = $now;
+    }
+    if (!isset($record['created_by']) || $record['created_by'] === '') {
+        $record['created_by'] = $actor !== '' ? $actor : 'system';
+    }
+
+    $record['updated_at'] = $now;
+    $record['updated_by'] = $actor !== '' ? $actor : $record['created_by'];
+    $record['last_action'] = (string) $action;
+
+    $data['scopes'][$scope][$rel] = $record;
+    return fm_owner_meta_write_all($data);
+}
+
+function fm_owner_meta_move($oldAbsolutePath, $newAbsolutePath, $actor = '')
+{
+    $oldRel = fm_owner_meta_rel_path($oldAbsolutePath);
+    $newRel = fm_owner_meta_rel_path($newAbsolutePath);
+    if ($oldRel === '' || $newRel === '') {
+        return false;
+    }
+
+    if ($actor === '') {
+        $actor = fm_owner_meta_current_user();
+    }
+
+    $data = fm_owner_meta_read_all();
+    $scope = fm_owner_meta_scope_key();
+    if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
+        $data['scopes'][$scope] = array();
+    }
+
+    $scopeData = $data['scopes'][$scope];
+    $now = time();
+
+    $record = isset($scopeData[$oldRel]) && is_array($scopeData[$oldRel])
+        ? $scopeData[$oldRel]
+        : array(
+            'created_at' => $now,
+            'created_by' => $actor !== '' ? $actor : 'system',
+        );
+
+    $record['updated_at'] = $now;
+    $record['updated_by'] = $actor !== '' ? $actor : (isset($record['created_by']) ? $record['created_by'] : 'system');
+    $record['last_action'] = 'move';
+    $scopeData[$newRel] = $record;
+
+    foreach ($scopeData as $key => $value) {
+        if ($key === $oldRel || strpos($key, $oldRel . '/') === 0) {
+            unset($scopeData[$key]);
+            if ($key !== $oldRel) {
+                $suffix = substr($key, strlen($oldRel));
+                $scopeData[$newRel . $suffix] = $value;
+            }
+        }
+    }
+
+    $data['scopes'][$scope] = $scopeData;
+    return fm_owner_meta_write_all($data);
+}
+
+function fm_owner_meta_copy($srcAbsolutePath, $destAbsolutePath, $actor = '')
+{
+    $srcRel = fm_owner_meta_rel_path($srcAbsolutePath);
+    $destRel = fm_owner_meta_rel_path($destAbsolutePath);
+    if ($srcRel === '' || $destRel === '') {
+        return false;
+    }
+
+    if ($actor === '') {
+        $actor = fm_owner_meta_current_user();
+    }
+
+    $data = fm_owner_meta_read_all();
+    $scope = fm_owner_meta_scope_key();
+    if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
+        $data['scopes'][$scope] = array();
+    }
+
+    $scopeData = $data['scopes'][$scope];
+    $sourceRecord = isset($scopeData[$srcRel]) && is_array($scopeData[$srcRel]) ? $scopeData[$srcRel] : array();
+    $now = time();
+
+    $newRecord = $sourceRecord;
+    $newRecord['created_at'] = $now;
+    $newRecord['created_by'] = $actor !== '' ? $actor : (isset($sourceRecord['created_by']) ? $sourceRecord['created_by'] : 'system');
+    $newRecord['updated_at'] = $now;
+    $newRecord['updated_by'] = $newRecord['created_by'];
+    $newRecord['last_action'] = 'copy';
+    $scopeData[$destRel] = $newRecord;
+
+    foreach ($scopeData as $key => $value) {
+        if ($key !== $srcRel && strpos($key, $srcRel . '/') === 0) {
+            $suffix = substr($key, strlen($srcRel));
+            $child = is_array($value) ? $value : array();
+            $child['created_at'] = $now;
+            $child['created_by'] = $newRecord['created_by'];
+            $child['updated_at'] = $now;
+            $child['updated_by'] = $newRecord['created_by'];
+            $child['last_action'] = 'copy';
+            $scopeData[$destRel . $suffix] = $child;
+        }
+    }
+
+    $data['scopes'][$scope] = $scopeData;
+    return fm_owner_meta_write_all($data);
+}
+
+function fm_owner_meta_remove($absolutePath)
+{
+    $rel = fm_owner_meta_rel_path($absolutePath);
+    if ($rel === '') {
+        return false;
+    }
+
+    $data = fm_owner_meta_read_all();
+    $scope = fm_owner_meta_scope_key();
+    if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
+        return true;
+    }
+
+    foreach ($data['scopes'][$scope] as $key => $value) {
+        if ($key === $rel || strpos($key, $rel . '/') === 0) {
+            unset($data['scopes'][$scope][$key]);
+        }
+    }
+
+    return fm_owner_meta_write_all($data);
+}
+
 function fm_chat_get_db()
 {
     static $db = null;

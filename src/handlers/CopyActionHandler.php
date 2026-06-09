@@ -39,6 +39,9 @@ class TFM_CopyActionHandler {
             if ($move) {
                 $rename = fm_rename($from, $dest);
                 if ($rename) {
+                    if (function_exists('fm_owner_meta_move')) {
+                        fm_owner_meta_move($from, $dest);
+                    }
                     fm_set_msg(sprintf(lng('Moved from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
                 } elseif ($rename === null) {
                     fm_set_msg(lng('File or folder with this path already exists'), 'alert');
@@ -47,6 +50,9 @@ class TFM_CopyActionHandler {
                 }
             } else {
                 if (fm_rcopy($from, $dest)) {
+                    if (function_exists('fm_owner_meta_copy')) {
+                        fm_owner_meta_copy($from, $dest);
+                    }
                     fm_set_msg(sprintf(lng('Copied from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
                 } else {
                     fm_set_msg(sprintf(lng('Error while copying from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)), 'error');
@@ -71,6 +77,9 @@ class TFM_CopyActionHandler {
                 }
 
                 if (fm_rcopy($from, $fn_duplicate, false)) {
+                    if (function_exists('fm_owner_meta_copy')) {
+                        fm_owner_meta_copy($from, $fn_duplicate);
+                    }
                     fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
                 } else {
                     fm_set_msg(sprintf('Error while copying from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)), 'error');
@@ -130,10 +139,14 @@ class TFM_CopyActionHandler {
                         $rename = fm_rename($from, $dest);
                         if ($rename === false) {
                             $errors++;
+                        } elseif (function_exists('fm_owner_meta_move')) {
+                            fm_owner_meta_move($from, $dest);
                         }
                     } else {
                         if (!fm_rcopy($from, $dest)) {
                             $errors++;
+                        } elseif (function_exists('fm_owner_meta_copy')) {
+                            fm_owner_meta_copy($from, $dest);
                         }
                     }
                 }
