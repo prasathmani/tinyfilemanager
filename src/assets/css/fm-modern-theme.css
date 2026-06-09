@@ -97,26 +97,43 @@ body.theme-dark .main-nav .fm-brand-logo-dark {
 #main-table thead th {
   background: linear-gradient(180deg, rgba(36, 99, 235, 0.1), rgba(36, 99, 235, 0.02));
   color: var(--fmx-text);
-  border-bottom: 1px solid var(--fmx-border);
-  font-weight: 600;
+  border-bottom: 0;
+  font-weight: 400;
+  font-size: 0.78rem;
 }
 
 #main-table tbody td {
-  border-color: var(--fmx-border);
+  border-color: transparent;
 }
 
-/* Remove horizontal row framing in listing body (keep vertical separators). */
+/* Remove row/cell framing in listing body. */
 #main-table.fm-modern-table tbody td {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
   border-top-width: 0 !important;
   border-bottom-width: 0 !important;
+  border-left-style: none !important;
+  border-right-style: none !important;
   border-top-style: none !important;
   border-bottom-style: none !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
   border-top-color: transparent !important;
   border-bottom-color: transparent !important;
 }
 
 #main-table .filename a {
   color: var(--fmx-text);
+  font-family: 'Noto Sans', 'Segoe UI', 'Trebuchet MS', Tahoma, sans-serif;
+  font-weight: 400 !important;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#main-table .filename a:hover,
+#main-table .filename a:focus-visible {
+  font-weight: 600 !important;
 }
 
 .inline-actions > a > i {
@@ -298,13 +315,14 @@ html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:focus-visible {
 .fm-table-wrap,
 .fm-main-table-wrap {
   border-radius: 14px;
-  border: 1px solid var(--fmx-border);
+  border: 0;
   background: var(--fmx-surface);
   padding: 4px;
 }
 
 #main-table.fm-modern-table {
   margin-bottom: 0;
+  border: 0 !important;
 }
 
 /*
@@ -313,12 +331,23 @@ html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:focus-visible {
  * Force-disable only horizontal lines for main listing table.
  */
 #main-table.fm-modern-table.table > :not(caption) > * > * {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
   border-top-width: 0 !important;
   border-bottom-width: 0 !important;
+  border-left-style: none !important;
+  border-right-style: none !important;
   border-top-style: none !important;
   border-bottom-style: none !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
   border-top-color: transparent !important;
   border-bottom-color: transparent !important;
+}
+
+.table-responsive.fm-table-wrap,
+.table-responsive.fm-main-table-wrap {
+  border: 0 !important;
 }
 
 #main-table.fm-modern-table thead th,
@@ -880,4 +909,50 @@ html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.t
   border-bottom-style: none !important;
   border-top-color: transparent !important;
   border-bottom-color: transparent !important;
+}
+
+/*
+ * Phase 3: isolated clean listing class.
+ * This block is intentionally scoped so we can validate behavior before
+ * removing older overlapping rules.
+ */
+.table-responsive.fm-list-clean-wrap,
+.fm-table-wrap.fm-list-clean-wrap,
+.fm-main-table-wrap.fm-list-clean-wrap {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#main-table.fm-modern-table.fm-list-clean {
+  border: 0 !important;
+}
+
+#main-table.fm-modern-table.fm-list-clean > :not(caption) > * > * {
+  border: 0 !important;
+  border-color: transparent !important;
+}
+
+#main-table.fm-modern-table.fm-list-clean thead th {
+  font-weight: 400 !important;
+  font-size: 0.76rem !important;
+  letter-spacing: 0;
+  border: 0 !important;
+}
+
+#main-table.fm-modern-table.fm-list-clean tbody td {
+  border: 0 !important;
+  border-color: transparent !important;
+}
+
+#main-table.fm-modern-table.fm-list-clean .filename a {
+  font-family: "Segoe UI Variable", "Segoe UI", "Noto Sans", "Trebuchet MS", Tahoma, sans-serif;
+  font-weight: 400 !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#main-table.fm-modern-table.fm-list-clean .filename a:hover,
+#main-table.fm-modern-table.fm-list-clean .filename a:focus-visible {
+  font-weight: 600 !important;
 }
