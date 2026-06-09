@@ -5400,7 +5400,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 transition: transform .25s cubic-bezier(0.4, 0.5, 0, 1), width 0s .25s;
             }
 
-            #main-table .filename a {
+            #main-table:not(.fm-list-clean) .filename a {
                 color: #222222;
                 font-weight: bold;
             }
@@ -6254,7 +6254,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 a:hover,
                 a:visited,
                 a:active,
-                #main-table .filename a,
+                #main-table:not(.fm-list-clean) .filename a,
                 i.fa.fa-folder-o,
                 i.go-back {
                     color: var(--bg-color);
