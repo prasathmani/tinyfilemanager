@@ -181,6 +181,36 @@ body {
   white-space: nowrap;
 }
 
+#main-table.fm-modern-table .fm-col-owner {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.fm-owner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 122px;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--fmx-border);
+  background: var(--fmx-accent-weak);
+  color: var(--fmx-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.fm-owner-badge i {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.fm-owner-badge span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .inline-actions > a > i.fa-trash-o {
   background: var(--fmx-danger);
 }
@@ -192,13 +222,13 @@ body {
 .inline-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
 .inline-actions > a > i {
-  min-width: 26px;
-  min-height: 26px;
+  min-width: 24px;
+  min-height: 24px;
   line-height: 14px;
 }
 
@@ -245,6 +275,11 @@ body {
 
   #main-table.fm-modern-table .fm-col-name .filename {
     max-width: 48vw;
+  }
+
+  .fm-owner-badge {
+    max-width: 88px;
+    padding: 0.16rem 0.4rem;
   }
 }
 

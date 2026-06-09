@@ -107,7 +107,12 @@
                     <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
                         <td class="fm-col-perms"><?php echo $perms ?></td>
-                        <td class="fm-col-owner"><?php echo $owner['name'] . ':' . $group['name'] ?></td>
+                        <td class="fm-col-owner">
+                            <span class="fm-owner-badge" title="<?php echo fm_enc($owner['name'] . ':' . $group['name']); ?>">
+                                <i class="fa fa-user" aria-hidden="true"></i>
+                                <span><?php echo fm_enc($owner['name']); ?></span>
+                            </span>
+                        </td>
                     <?php } ?>
                     <td class="inline-actions fm-col-actions">
                         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
@@ -195,7 +200,12 @@
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td class="fm-col-owner"><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
+                        <td class="fm-col-owner">
+                            <span class="fm-owner-badge" title="<?php echo fm_enc($owner['name'] . ':' . $group['name']); ?>">
+                                <i class="fa fa-user" aria-hidden="true"></i>
+                                <span><?php echo fm_enc($owner['name']); ?></span>
+                            </span>
+                        </td>
                     <?php endif; ?>
                     <td class="inline-actions fm-col-actions">
                         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
