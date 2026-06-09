@@ -184,9 +184,24 @@
     $('.js-new-pwd').toggleClass('hidden');
   }
 
+  function buildAjaxPayloadWithToken(form) {
+    var serialized = form.serialize();
+    var hasToken = /(^|&)token=/.test(serialized);
+    var formToken = String(form.find('input[name="token"]').val() || '');
+    var tokenValue = formToken || String(window.csrf || '');
+
+    if (!hasToken) {
+      serialized += (serialized ? '&' : '') + 'token=' + encodeURIComponent(tokenValue);
+    }
+
+    serialized += (serialized ? '&' : '') + 'ajax=true';
+    return serialized;
+  }
+
   function saveSettings(el) {
     var form = $(el);
     var selectedTheme = form.find('select[name="js-theme-3"]').val() || 'light';
+    var payload = buildAjaxPayloadWithToken(form);
 
     document.documentElement.setAttribute('data-bs-theme', selectedTheme);
     $('body').toggleClass('theme-dark', selectedTheme === 'dark');
@@ -194,7 +209,7 @@
     $.ajax({
       type: form.attr('method'),
       url: form.attr('action'),
-      data: form.serialize() + '&token=' + window.csrf + '&ajax=true',
+      data: payload,
       success: function (data) {
         var response = data;
         if (typeof data === 'string') {
@@ -228,10 +243,11 @@
 
   function changePassword(el) {
     var form = $(el);
+    var payload = buildAjaxPayloadWithToken(form);
     $.ajax({
       type: 'post',
       url: '',
-      data: form.serialize() + '&token=' + window.csrf + '&ajax=true',
+      data: payload,
       success: function (data) {
         var response = data;
         if (typeof data === 'string') {

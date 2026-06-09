@@ -2055,6 +2055,7 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
             <div class="card-body">
                 <form id="js-settings-form" action="" method="post" data-type="ajax" onsubmit="return save_settings(this)">
                     <input type="hidden" name="type" value="settings" aria-label="hidden" aria-hidden="true">
+                    <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>" aria-label="hidden" aria-hidden="true">
                     <div class="form-group row">
                         <label for="js-language" class="col-sm-3 col-form-label"><?php echo lng('Language') ?></label>
                         <div class="col-sm-5">
@@ -2155,6 +2156,7 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
                 <h6 class="mt-3 mb-3"><i class="fa fa-lock"></i> <?php echo lng('Change Password') ?></h6>
                 <form id="js-changepwd-form" action="" method="post" onsubmit="return change_password(this)">
                     <input type="hidden" name="type" value="changepwd" aria-label="hidden" aria-hidden="true">
+                    <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>" aria-label="hidden" aria-hidden="true">
                     <div class="mb-2 row">
                         <label class="col-sm-3 col-form-label"><?php echo lng('New password') ?></label>
                         <div class="col-sm-5">
