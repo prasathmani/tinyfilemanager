@@ -9,8 +9,16 @@ $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":
  * @link https://tinyfilemanager.github.io
  */
 
-//TFM version
-define('VERSION', '2.11.04');
+// TFM version
+$tfmVersion = '2.11.04';
+$releaseVersionPath = __DIR__ . '/RELEASE_VERSION';
+if (@is_file($releaseVersionPath) && @is_readable($releaseVersionPath)) {
+    $releaseVersion = trim((string) @file_get_contents($releaseVersionPath));
+    if ($releaseVersion !== '' && preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/', $releaseVersion)) {
+        $tfmVersion = $releaseVersion;
+    }
+}
+define('VERSION', $tfmVersion);
 
 //Application Title
 define('APP_TITLE', 'Správca súborov');
