@@ -18,6 +18,19 @@
 ### Removed
 - Removed operational dependency on app-local `.fm_usercfg` as the primary runtime state location.
 
+### Breaking changes
+- Visual baseline is now aligned with the modern theme layer.
+- Some legacy CSS override rules were narrowed or removed to reduce cascade conflicts.
+- Custom theme overrides may need revalidation after deploy.
+
+### Migration notes
+- Back up `config.php`, `api.config.php`, custom assets, and local patches before deploy.
+- Deploy the new release package and verify file ownership/permissions in the target environment.
+- Clear browser cache and any reverse proxy or CDN cache.
+- Run smoke tests for login/logout, theme switch, listing density, selection/bulk move, upload, rename, copy/move, delete, and file preview/editor.
+- Verify path-boundary behavior for move/copy operations and confirm readonly/upload-only modes.
+- Review PHP and web server logs after deploy and check browser console for front-end regressions.
+
 ### Notes
 - User listing remains read-only; modal content is loaded only on admin action.
 - No `config.php` write is performed in user administration phase.
