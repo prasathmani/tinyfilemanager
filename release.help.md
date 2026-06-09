@@ -36,3 +36,13 @@
 - `./release.sh patch --auto-commit`
 - `./release.sh patch --auto-commit --commit-message="Release 2.10.06"`
 - `./release.sh mini --auto-push`
+
+## Pred release/deploy (runtime state)
+
+- Over, ze `config.php` obsahuje perzistentnu cestu pre runtime data:
+  - `$state_storage_path = __DIR__ . '/uploads/.tfm-state';`
+- Spusti migraciu legacy state dat (bezpecny dry-run -> apply):
+  - `php scripts/migrate-legacy-state.php`
+  - `php scripts/migrate-legacy-state.php --apply`
+- Skontroluj cielovy adresar:
+  - `ls -la uploads/.tfm-state`

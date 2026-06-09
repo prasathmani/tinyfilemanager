@@ -323,6 +323,9 @@ if ($use_auth && isset($_GET['machine_token'])) {
     }
 
     if ($machine_login_valid) {
+        if (isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] !== $machine_login_user) {
+            fm_online_remove_user($_SESSION[FM_SESSION_ID]['logged']);
+        }
         $_SESSION[FM_SESSION_ID]['logged'] = $machine_login_user;
         fm_online_touch_user($machine_login_user);
 
@@ -561,6 +564,9 @@ if ($use_auth) {
         if (function_exists('password_verify')) {
             if ($username && isset($auth_users[$username]) && password_verify($password, $auth_users[$username]) && verifyToken($token)) {
                 // Successful login
+                if (isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] !== $username) {
+                    fm_online_remove_user($_SESSION[FM_SESSION_ID]['logged']);
+                }
                 $_SESSION[FM_SESSION_ID]['logged'] = $username;
                 fm_online_touch_user($username);
                 
@@ -587,6 +593,9 @@ if ($use_auth) {
                     $rate_limiter->record_attempt('login');
                 }
                 
+                if (isset($_SESSION[FM_SESSION_ID]['logged'])) {
+                    fm_online_remove_user($_SESSION[FM_SESSION_ID]['logged']);
+                }
                 unset($_SESSION[FM_SESSION_ID]['logged']);
                 fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
                 fm_redirect(FM_SELF_URL);
@@ -596,6 +605,9 @@ if ($use_auth) {
         }
     } else {
         // Form
+        if (isset($_SESSION[FM_SESSION_ID]['logged'])) {
+            fm_online_remove_user($_SESSION[FM_SESSION_ID]['logged']);
+        }
         unset($_SESSION[FM_SESSION_ID]['logged']);
         fm_show_header_login();
 ?>
@@ -2023,7 +2035,7 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
     global $cfg, $lang, $lang_list;
     $settings_current_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
     $fallback_log_enabled = !empty($cfg->data['fallback_logging']);
-    $fallback_log_path = __DIR__ . '/.fm_usercfg/fallback-events.log';
+    $fallback_log_path = fm_runtime_state_dir() . '/fallback-events.log';
     $fallback_log_exists = is_file($fallback_log_path);
     $fallback_log_bytes = $fallback_log_exists ? (int) @filesize($fallback_log_path) : 0;
     if ($fallback_log_bytes < 0) {
@@ -3098,6 +3110,78 @@ function fm_get_mime_type($file_path)
 }
 
 /**
+ * Resolve runtime state directory used for internal app metadata.
+ * Can be overridden from config.php via $state_storage_path.
+ *
+ * @return string
+ */
+function fm_runtime_state_dir()
+{
+    static $resolved = null;
+    if (is_string($resolved) && $resolved !== '') {
+        return $resolved;
+    }
+
+    global $state_storage_path;
+
+    $candidate = '';
+    $configured = false;
+    if (isset($state_storage_path) && is_string($state_storage_path)) {
+        $candidate = trim($state_storage_path);
+        $configured = ($candidate !== '');
+    }
+
+    if ($candidate === '') {
+        $candidate = __DIR__ . '/.fm_usercfg';
+    }
+
+    // Relative configured paths are anchored to app directory.
+    if (!preg_match('/^(?:[a-zA-Z]:[\\\\\/]|\/)/', $candidate)) {
+        $candidate = __DIR__ . '/' . ltrim($candidate, '/\\');
+    }
+
+    $candidate = rtrim(str_replace('\\', '/', $candidate), '/');
+    if ($candidate === '') {
+        $candidate = __DIR__ . '/.fm_usercfg';
+    }
+
+    if (!@is_dir($candidate)) {
+        @mkdir($candidate, 0750, true);
+    }
+
+    // Optional one-way migration from legacy app-local directory.
+    if ($configured) {
+        $legacyDir = __DIR__ . '/.fm_usercfg';
+        if (@is_dir($legacyDir)) {
+            $stateFiles = array(
+                'online_users.json',
+                'chat.sqlite',
+                'owner-meta.json',
+                'owner-meta.sqlite',
+                'admin-users-audit.log',
+                'fallback-events.log',
+            );
+
+            foreach ($stateFiles as $fileName) {
+                $from = $legacyDir . '/' . $fileName;
+                $to = $candidate . '/' . $fileName;
+                if (@is_file($from) && !@file_exists($to)) {
+                    @copy($from, $to);
+                }
+            }
+        }
+    }
+
+    $htaccess = $candidate . '/.htaccess';
+    if (!@file_exists($htaccess)) {
+        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
+    }
+
+    $resolved = $candidate;
+    return $resolved;
+}
+
+/**
  * Check whether MIME type is an image MIME.
  * @param mixed $mime_type
  * @return bool
@@ -3126,14 +3210,7 @@ function fm_redirect($url, $code = 302)
  */
 function fm_online_state_file()
 {
-    $dir = __DIR__ . '/.fm_usercfg';
-    if (!@is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    $htaccess = $dir . '/.htaccess';
-    if (!@file_exists($htaccess)) {
-        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
-    }
+    $dir = fm_runtime_state_dir();
     return $dir . '/online_users.json';
 }
 
@@ -3146,6 +3223,7 @@ function fm_online_touch_user($username)
     $file = fm_online_state_file();
     $now = time();
     $ttl = 900;
+    $current_session_id = (string) session_id();
 
     $fh = @fopen($file, 'c+');
     if ($fh === false) {
@@ -3163,13 +3241,32 @@ function fm_online_touch_user($username)
         $data = array();
     }
 
-    foreach ($data as $user => $ts) {
-        if (!is_numeric($ts) || ((int)$ts < ($now - $ttl))) {
+    foreach ($data as $user => $entry) {
+        $ts = null;
+        $sid = '';
+
+        if (is_numeric($entry)) {
+            $ts = (int) $entry;
+        } elseif (is_array($entry) && isset($entry['ts']) && is_numeric($entry['ts'])) {
+            $ts = (int) $entry['ts'];
+            $sid = isset($entry['sid']) && is_string($entry['sid']) ? $entry['sid'] : '';
+        }
+
+        if ($ts === null || $ts < ($now - $ttl)) {
+            unset($data[$user]);
+            continue;
+        }
+
+        // Same browser session can only represent one active account.
+        if ($current_session_id !== '' && $sid !== '' && $sid === $current_session_id && $user !== $username) {
             unset($data[$user]);
         }
     }
 
-    $data[$username] = $now;
+    $data[$username] = array(
+        'ts' => $now,
+        'sid' => $current_session_id,
+    );
     ksort($data);
 
     ftruncate($fh, 0);
@@ -3229,8 +3326,15 @@ function fm_online_get_users()
     $now = time();
     $ttl = 900;
     $users = array();
-    foreach ($data as $user => $ts) {
-        if (is_string($user) && $user !== '' && is_numeric($ts) && ((int)$ts >= ($now - $ttl))) {
+    foreach ($data as $user => $entry) {
+        $ts = null;
+        if (is_numeric($entry)) {
+            $ts = (int) $entry;
+        } elseif (is_array($entry) && isset($entry['ts']) && is_numeric($entry['ts'])) {
+            $ts = (int) $entry['ts'];
+        }
+
+        if (is_string($user) && $user !== '' && $ts !== null && $ts >= ($now - $ttl)) {
             $users[] = $user;
         }
     }
@@ -3241,23 +3345,13 @@ function fm_online_get_users()
 
 function fm_chat_db_path()
 {
-    $dir = __DIR__ . '/.fm_usercfg';
-    if (!@is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
+    $dir = fm_runtime_state_dir();
     return $dir . '/chat.sqlite';
 }
 
 function fm_admin_audit_log_path()
 {
-    $dir = __DIR__ . '/.fm_usercfg';
-    if (!@is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    $htaccess = $dir . '/.htaccess';
-    if (!@file_exists($htaccess)) {
-        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
-    }
+    $dir = fm_runtime_state_dir();
     return $dir . '/admin-users-audit.log';
 }
 
@@ -3338,14 +3432,7 @@ function fm_admin_read_audit_events($limit = 50)
 
 function fm_owner_meta_store_path()
 {
-    $dir = __DIR__ . '/.fm_usercfg';
-    if (!@is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    $htaccess = $dir . '/.htaccess';
-    if (!@file_exists($htaccess)) {
-        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
-    }
+    $dir = fm_runtime_state_dir();
     return $dir . '/owner-meta.json';
 }
 
@@ -3455,14 +3542,7 @@ function fm_owner_meta_write_all(array $data)
 
 function fm_owner_meta_db_path()
 {
-    $dir = __DIR__ . '/.fm_usercfg';
-    if (!@is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    $htaccess = $dir . '/.htaccess';
-    if (!@file_exists($htaccess)) {
-        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
-    }
+    $dir = fm_runtime_state_dir();
     return $dir . '/owner-meta.sqlite';
 }
 

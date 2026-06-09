@@ -19,6 +19,7 @@ Prehľad najdôležitejších konfiguračných premenných:
 - `$favicon_path` - predvolene prázdne; môže byť úplná URL na PNG alebo cesta od document root
 - `MAX_UPLOAD_SIZE` - predvolene `5GB`
 - `$ip_ruleset` - predvolene `OFF`
+- `$state_storage_path` - predvolene vnútorný `.fm_usercfg`; odporúčané nastaviť na perzistentnú cestu mimo release balíka (napr. `uploads/.tfm-state`), aby chat/online/audit/metadata prežili deploy
 
 ## Poznámka
 

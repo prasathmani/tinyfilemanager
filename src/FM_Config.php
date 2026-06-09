@@ -56,11 +56,49 @@ class FM_Config
     }
 
     /**
+     * Return optional custom state directory from config.php.
+     */
+    private function configuredStateDir()
+    {
+        global $state_storage_path;
+
+        if (!isset($state_storage_path) || !is_string($state_storage_path)) {
+            return '';
+        }
+
+        $candidate = trim($state_storage_path);
+        if ($candidate === '') {
+            return '';
+        }
+
+        // Relative configured paths are anchored to app root.
+        if (!preg_match('/^(?:[a-zA-Z]:[\\\\\/]|\/)/', $candidate)) {
+            $candidate = dirname(__DIR__) . DIRECTORY_SEPARATOR . ltrim($candidate, '/\\');
+        }
+
+        $candidate = rtrim($candidate, '/\\');
+        return $candidate;
+    }
+
+    /**
+     * Return default per-user config directory in project root.
+     */
+    private function defaultUserCfgDir()
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . self::USER_CFG_DIR;
+    }
+
+    /**
      * Return the preferred per-user config directory in project root.
      */
     private function userCfgDir()
     {
-        return dirname(__DIR__) . DIRECTORY_SEPARATOR . self::USER_CFG_DIR;
+        $configured = $this->configuredStateDir();
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        return $this->defaultUserCfgDir();
     }
 
     /**
@@ -77,7 +115,14 @@ class FM_Config
      */
     private function resolveWritableUserCfgDir()
     {
-        $candidates = array($this->userCfgDir(), $this->legacyUserCfgDir());
+        $configured = $this->configuredStateDir();
+        $candidates = array();
+        if ($configured !== '') {
+            $candidates[] = $configured;
+        }
+        $candidates[] = $this->userCfgDir();
+        $candidates[] = $this->legacyUserCfgDir();
+        $candidates = array_values(array_unique($candidates));
 
         foreach ($candidates as $dir) {
             if (is_dir($dir)) {
@@ -120,11 +165,16 @@ class FM_Config
     {
         $path = $this->userCfgPath($username);
         if (!is_readable($path)) {
+            $defaultPath = $this->defaultUserCfgDir() . DIRECTORY_SEPARATOR . md5($username) . '.json';
+            if (is_readable($defaultPath)) {
+                $path = $defaultPath;
+            } else {
             $legacyPath = $this->legacyUserCfgPath($username);
             if (!is_readable($legacyPath)) {
                 return false;
             }
             $path = $legacyPath;
+            }
         }
         $decoded = json_decode(@file_get_contents($path), true);
         return is_array($decoded) ? $decoded : false;

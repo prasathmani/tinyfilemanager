@@ -29,6 +29,10 @@ $auth_users = array(
 // Koreňový priečinok pre admin a manažérov
 $root_path = __DIR__ . '/Mirko';
 
+// Perzistentne interne data aplikacie (chat, online users, owner-meta, fallback log, user profile settings)
+// Ulozene mimo release-sensitive casti, aby ich deploy neprepisal.
+$state_storage_path = __DIR__ . '/uploads/.tfm-state';
+
 // Machine/API login cez URL token (napr. ?machine_token=...)
 // Token držte iba v tomto lokálnom configu; prázdne = vypnuté.
 $machine_login_user = 'joyee';

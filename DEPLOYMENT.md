@@ -56,3 +56,8 @@ docker compose up -d --build
 - Smoke and health checks pass
 - Configured credentials are not defaults
 - Data backup completed before rollout
+- Runtime state path is persistent (`$state_storage_path` in `config.php`)
+- Legacy runtime data migration script executed when needed:
+	- `php scripts/migrate-legacy-state.php`
+	- `php scripts/migrate-legacy-state.php --apply`
+- Runtime state files verified in target directory (`uploads/.tfm-state`)

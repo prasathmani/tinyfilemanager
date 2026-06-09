@@ -466,7 +466,7 @@
     </div>
     <div id="fm-grid-view" class="hidden"></div>
 
-    <div class="row">
+    <div class="row fm-footer-tools-row">
         <?php
         $footerLoggedUser = (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
         $footerShowUserBadges = !empty($footerLoggedUser) && (FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY));
@@ -476,7 +476,7 @@
         }
         ?>
         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
-            <div class="col-xs-12 col-sm-9">
+            <div class="fm-footer-actions-col">
                 <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
                     <span id="fm-selection-count" class="btn btn-small btn-outline-secondary btn-2 pe-none" style="display:none;">0</span>
                     <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a>
@@ -494,10 +494,18 @@
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
                 </div>
             </div>
-            <div class="col-3 d-none d-sm-block">
+            <div class="fm-footer-online-col">
                 <?php if ($footerShowUserBadges): ?>
-                    <div class="float-right d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                    <div class="d-flex gap-2 align-items-center flex-wrap justify-content-sm-end justify-content-start fm-online-users-wrap">
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
+                        <?php if ($footerLoggedUser === 'admin'): ?>
+                            <button
+                                type="button"
+                                class="badge border-0 text-bg-danger js-reset-runtime-state"
+                            >
+                                Reset cache + pripojenia
+                            </button>
+                        <?php endif; ?>
                         <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
                             Neprecitane: <span class="fm-chat-unread-count">0</span>
                         </span>
@@ -513,7 +521,7 @@
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a>
+                    <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted d-inline-block text-sm-end w-100">Tiny File Manager <?php echo VERSION; ?></a>
                 <?php endif; ?>
             </div>
         <?php else: ?>
@@ -521,6 +529,14 @@
                 <?php if ($footerShowUserBadges): ?>
                     <div class="float-right d-flex gap-2 align-items-center flex-wrap">
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
+                        <?php if ($footerLoggedUser === 'admin'): ?>
+                            <button
+                                type="button"
+                                class="badge border-0 text-bg-danger js-reset-runtime-state"
+                            >
+                                Reset cache + pripojenia
+                            </button>
+                        <?php endif; ?>
                         <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
                             Neprecitane: <span class="fm-chat-unread-count">0</span>
                         </span>
@@ -542,6 +558,111 @@
         <?php endif; ?>
     </div>
 </form>
+
+<script>
+    (function () {
+        var resetButtons = document.querySelectorAll('.js-reset-runtime-state');
+        if (!resetButtons.length) {
+            return;
+        }
+
+        var token = <?php echo json_encode($_SESSION['token']); ?>;
+        var requestInFlight = false;
+
+        function setBusyState(isBusy) {
+            for (var i = 0; i < resetButtons.length; i++) {
+                resetButtons[i].disabled = isBusy;
+                if (isBusy) {
+                    resetButtons[i].setAttribute('aria-busy', 'true');
+                } else {
+                    resetButtons[i].removeAttribute('aria-busy');
+                }
+            }
+        }
+
+        function onResetClick(event) {
+            event.preventDefault();
+            if (requestInFlight) {
+                return;
+            }
+
+            if (!window.confirm('Resetovat cache a vsetky pripojenia?')) {
+                return;
+            }
+
+            requestInFlight = true;
+            setBusyState(true);
+
+            var body = new URLSearchParams();
+            body.append('ajax', '1');
+            body.append('type', 'reset_runtime_state');
+            body.append('token', token);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: body.toString(),
+                credentials: 'same-origin'
+            }).then(function (response) {
+                return response.json();
+            }).then(function (payload) {
+                if (!payload || payload.success !== true) {
+                    throw new Error((payload && payload.msg) ? payload.msg : 'Reset zlyhal.');
+                }
+                window.location.reload();
+            }).catch(function (error) {
+                window.alert(error && error.message ? error.message : 'Reset zlyhal.');
+            }).finally(function () {
+                requestInFlight = false;
+                setBusyState(false);
+            });
+        }
+
+        for (var i = 0; i < resetButtons.length; i++) {
+            resetButtons[i].addEventListener('click', onResetClick);
+        }
+    })();
+</script>
+
+<style>
+    .fm-footer-tools-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        row-gap: .5rem;
+    }
+
+    .fm-footer-actions-col {
+        flex: 1 1 58%;
+        min-width: 320px;
+    }
+
+    .fm-footer-online-col {
+        flex: 1 1 42%;
+        min-width: 300px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .fm-online-users-wrap {
+        width: 100%;
+    }
+
+    @media (max-width: 991.98px) {
+        .fm-footer-actions-col,
+        .fm-footer-online-col {
+            flex-basis: 100%;
+            min-width: 100%;
+        }
+
+        .fm-footer-online-col {
+            justify-content: flex-start;
+        }
+    }
+</style>
 
 <script>
     (function () {

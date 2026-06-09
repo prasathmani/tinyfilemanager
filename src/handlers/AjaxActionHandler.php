@@ -48,6 +48,10 @@ class TFM_AjaxActionHandler {
             $this->handleFallbackLogStats();
         }
 
+        if (isset($post['type']) && $post['type'] == 'reset_runtime_state') {
+            $this->handleResetRuntimeState();
+        }
+
         if (isset($post['type']) && $post['type'] == 'search') {
             $dir = $post['path'] == '.' ? '' : $post['path'];
             $response = scan(fm_clean_path($dir), $post['content']);
@@ -329,7 +333,60 @@ class TFM_AjaxActionHandler {
     }
 
     private function fallbackLogPath() {
+        if (function_exists('fm_runtime_state_dir')) {
+            return fm_runtime_state_dir() . '/fallback-events.log';
+        }
         return $this->app_root . '/.fm_usercfg/fallback-events.log';
+    }
+
+    private function runtimeStatePath($fileName) {
+        $dir = $this->app_root . '/.fm_usercfg';
+        if (function_exists('fm_runtime_state_dir')) {
+            $dir = fm_runtime_state_dir();
+        }
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0750, true);
+        }
+        return rtrim($dir, '/\\') . '/' . ltrim((string) $fileName, '/\\');
+    }
+
+    private function handleResetRuntimeState() {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+        if ($username === '') {
+            echo json_encode(array('success' => false, 'msg' => 'Neautorizovane'));
+            exit;
+        }
+
+        if ($username !== 'admin') {
+            echo json_encode(array('success' => false, 'msg' => 'Tato akcia je dostupna iba pre admina.'));
+            exit;
+        }
+
+        $onlinePath = $this->runtimeStatePath('online_users.json');
+        @file_put_contents($onlinePath, '{}', LOCK_EX);
+
+        $fallbackPath = $this->runtimeStatePath('fallback-events.log');
+        if (is_file($fallbackPath)) {
+            @file_put_contents($fallbackPath, '', LOCK_EX);
+        }
+
+        if (function_exists('apcu_clear_cache')) {
+            @apcu_clear_cache();
+        }
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+        clearstatcache(true);
+
+        if (isset($_SESSION[FM_SESSION_ID]) && is_array($_SESSION[FM_SESSION_ID])) {
+            unset($_SESSION[FM_SESSION_ID]['user_settings']);
+            $_SESSION[FM_SESSION_ID]['runtime_reset_at'] = time();
+        }
+
+        echo json_encode(array('success' => true, 'msg' => 'Cache a pripojenia boli resetovane.'));
+        exit;
     }
 
     private function isFallbackLoggingEnabled() {
