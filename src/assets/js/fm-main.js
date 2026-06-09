@@ -573,12 +573,37 @@
     return false;
   }
 
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function searchTemplate(data) {
-    var response = '';
+    var rows = '';
     $.each(data, function (key, val) {
-      response += '<li><a href="?p=' + val.path + '&view=' + val.name + '">' + val.path + '/' + val.name + '</a></li>';
+      var rawPath = String(val.path || '').replace(/^\/+/, '');
+      var rawName = String(val.name || '');
+      var fullPath = (rawPath ? rawPath + '/' : '') + rawName;
+      var href = '?p=' + encodeURIComponent(rawPath) + '&view=' + encodeURIComponent(rawName);
+
+      rows += '<tr>' +
+        '<td class="text-nowrap"><a href="' + href + '">' + escapeHtml(rawName) + '</a></td>' +
+        '<td><code>' + escapeHtml(rawPath || '/') + '</code></td>' +
+        '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="' + href + '"><i class="fa fa-external-link"></i> Open</a></td>' +
+        '</tr>';
     });
-    return response;
+
+    return '' +
+      '<div class="table-responsive fm-search-results-table-wrap">' +
+      '<table class="table table-sm table-striped align-middle mb-0 fm-search-results-table">' +
+      '<thead><tr><th>File</th><th>Path</th><th>Action</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+      '</div>';
   }
 
   function resolveSearchPath() {
@@ -600,7 +625,7 @@
 
   function fmSearch() {
     var searchTxt = $('input#advanced-search').val();
-    var searchWrapper = $('ul#search-wrapper');
+    var searchWrapper = $('#search-wrapper');
     var path = resolveSearchPath();
     var html = '';
     var loader = $('div.lds-facebook');

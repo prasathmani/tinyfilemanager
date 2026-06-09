@@ -5962,19 +5962,32 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 }
             }
 
-            ul#search-wrapper {
-                padding-left: 0;
+            #search-wrapper {
                 border: 1px solid #ecececcc;
+                border-radius: 6px;
+                min-height: 60px;
+                padding: 6px;
             }
 
-            ul#search-wrapper li {
-                list-style: none;
-                padding: 5px;
-                border-bottom: 1px solid #ecececcc;
+            .fm-search-results-table-wrap {
+                max-height: 56vh;
+                overflow: auto;
             }
 
-            ul#search-wrapper li:nth-child(odd) {
-                background: #f9f9f9cc;
+            .fm-search-results-table thead th {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                background: #f8f9fa;
+            }
+
+            .fm-search-results-table code {
+                font-size: 0.75rem;
+                color: #495057;
+            }
+
+            .fm-search-results-table td {
+                vertical-align: middle;
             }
 
             .c-preview-img {
@@ -6333,8 +6346,12 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                     color: var(--bg-color);
                 }
 
-                ul#search-wrapper li:nth-child(odd) {
-                    background: #212a2f;
+                .theme-dark .fm-search-results-table thead th {
+                    background: #2a3339;
+                }
+
+                .theme-dark .fm-search-results-table code {
+                    color: #cfd8dc;
                 }
 
                 .theme-dark .btn-outline-primary {
@@ -6439,9 +6456,9 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                                     <div></div>
                                     <div></div>
                                 </div>
-                                <ul id="search-wrapper">
+                                <div id="search-wrapper">
                                     <p class="m-2"><?php echo lng('Search file in folder and subfolders...') ?></p>
-                                </ul>
+                                </div>
                             </form>
                         </div>
                     </div>
