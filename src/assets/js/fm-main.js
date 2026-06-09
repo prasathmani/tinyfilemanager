@@ -624,7 +624,14 @@
         },
         success: function (payload) {
           loader.removeClass('show-me');
-          payload = JSON.parse(payload);
+          if (typeof payload === 'string') {
+            try {
+              payload = JSON.parse(payload);
+            } catch (e) {
+              searchWrapper.html('<p class="m-2">ERROR: Invalid search response.</p>');
+              return;
+            }
+          }
           if (payload && payload.length) {
             html = searchTemplate(payload);
             searchWrapper.html(html);
@@ -795,13 +802,31 @@
 
   function bindMainTableSearch() {
     var input = document.getElementById('search-addon');
-    if (!input) {
-      return;
-    }
-
     var iconPrimary = document.getElementById('search-addon2');
     var iconSecondary = document.getElementById('search-addon3');
     var mobileFocus = document.getElementById('js-mobile-focus-search');
+    var advancedInput = document.getElementById('advanced-search');
+
+    if (!input) {
+      // Even without navbar search field, advanced modal search must keep working.
+      if (iconSecondary) {
+        iconSecondary.style.cursor = 'pointer';
+        iconSecondary.addEventListener('click', function (event) {
+          event.preventDefault();
+          fmSearch();
+        });
+      }
+
+      if (advancedInput) {
+        advancedInput.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            fmSearch();
+          }
+        });
+      }
+      return;
+    }
 
     if (iconPrimary) {
       iconPrimary.style.cursor = 'pointer';
@@ -816,6 +841,15 @@
       iconSecondary.addEventListener('click', function (event) {
         event.preventDefault();
         fmSearch();
+      });
+    }
+
+    if (advancedInput) {
+      advancedInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          fmSearch();
+        }
       });
     }
 
