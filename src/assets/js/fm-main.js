@@ -56,15 +56,157 @@
   function getCheckboxes() {
     var e = document.getElementsByName('file[]');
     var t = [];
-    for (var n = e.length - 1; n >= 0; n--) {
-      (e[n].type = 'checkbox') && t.push(e[n]);
+    for (var n = 0; n < e.length; n++) {
+      if (e[n] && e[n].type === 'checkbox') {
+        t.push(e[n]);
+      }
     }
     return t;
+  }
+
+  var selectionAnchor = null;
+
+  function updateSelectionAnchor(checkbox) {
+    if (!checkbox || checkbox.type !== 'checkbox') {
+      return;
+    }
+
+    if (checkbox.checked) {
+      selectionAnchor = checkbox;
+      return;
+    }
+
+    if (selectionAnchor === checkbox) {
+      selectionAnchor = null;
+    }
+  }
+
+  function applyRangeSelection(anchor, current, checked) {
+    var checkboxes = getCheckboxes();
+    var anchorIndex = checkboxes.indexOf(anchor);
+    var currentIndex = checkboxes.indexOf(current);
+
+    if (anchorIndex === -1 || currentIndex === -1) {
+      current.checked = checked;
+      return;
+    }
+
+    var startIndex = Math.min(anchorIndex, currentIndex);
+    var endIndex = Math.max(anchorIndex, currentIndex);
+    for (var i = startIndex; i <= endIndex; i++) {
+      checkboxes[i].checked = checked;
+    }
+  }
+
+  function isSelectionModifiedEvent(event) {
+    return !!(event && (event.shiftKey || event.ctrlKey || event.metaKey));
+  }
+
+  function handleSelectionToggle(checkbox, event) {
+    if (!checkbox || checkbox.type !== 'checkbox') {
+      return;
+    }
+
+    if (event && event.shiftKey && selectionAnchor) {
+      event.preventDefault();
+      event.stopPropagation();
+      applyRangeSelection(selectionAnchor, checkbox, !checkbox.checked);
+      updateSelectionAnchor(checkbox);
+      if (typeof window.fmUpdateSelectionBar === 'function') {
+        window.fmUpdateSelectionBar();
+      }
+      return;
+    }
+
+    var shouldUpdateAnchor = true;
+    if (event && isSelectionModifiedEvent(event)) {
+      shouldUpdateAnchor = true;
+    }
+
+    window.setTimeout(function () {
+      if (shouldUpdateAnchor) {
+        updateSelectionAnchor(checkbox);
+      }
+      if (typeof window.fmUpdateSelectionBar === 'function') {
+        window.fmUpdateSelectionBar();
+      }
+    }, 0);
+  }
+
+  function isInteractiveElement(node) {
+    if (!node || !node.tagName) {
+      return false;
+    }
+
+    var tagName = String(node.tagName).toUpperCase();
+    if (tagName === 'A' || tagName === 'BUTTON' || tagName === 'INPUT' || tagName === 'LABEL' || tagName === 'SELECT' || tagName === 'TEXTAREA') {
+      return true;
+    }
+
+    return !!node.closest && !!node.closest('a, button, input, label, select, textarea');
+  }
+
+  function bindRowClickSelection() {
+    var rows = document.querySelectorAll('#main-table tbody tr');
+
+    rows.forEach(function (row) {
+      if (row.dataset && row.dataset.rowSelectionBound === '1') {
+        return;
+      }
+
+      if (row.dataset) {
+        row.dataset.rowSelectionBound = '1';
+      }
+
+      row.addEventListener('click', function (event) {
+        if (isInteractiveElement(event.target)) {
+          return;
+        }
+
+        var checkbox = row.querySelector('input[name="file[]"]');
+        if (!checkbox) {
+          return;
+        }
+
+        if (event.shiftKey && selectionAnchor) {
+          handleSelectionToggle(checkbox, event);
+          return;
+        }
+
+        checkbox.checked = !checkbox.checked;
+        handleSelectionToggle(checkbox, event);
+      });
+    });
+  }
+
+  function bindSelectionModifiers() {
+    var checkboxes = getCheckboxes();
+
+    checkboxes.forEach(function (checkbox) {
+      if (checkbox.dataset && checkbox.dataset.selectionBound === '1') {
+        return;
+      }
+
+      if (checkbox.dataset) {
+        checkbox.dataset.selectionBound = '1';
+      }
+
+      checkbox.addEventListener('click', function (event) {
+        handleSelectionToggle(checkbox, event);
+      }, true);
+    });
   }
 
   function changeCheckboxes(e, t) {
     for (var n = e.length - 1; n >= 0; n--) {
       e[n].checked = typeof t === 'boolean' ? t : !e[n].checked;
+    }
+    selectionAnchor = null;
+    for (var i = 0; i < e.length; i++) {
+      if (e[i].checked) {
+        selectionAnchor = e[i];
+        break;
+      }
     }
     if (typeof window.fmUpdateSelectionBar === 'function') {
       window.fmUpdateSelectionBar();
@@ -574,6 +716,8 @@
     }
 
     initMainTableDataTable();
+    bindSelectionModifiers();
+    bindRowClickSelection();
     var hasMainTable = !!window.mainTable;
     function adjustNavbarOffset() {
       if ($('body').hasClass('navbar-fixed')) {
