@@ -69,12 +69,12 @@ body.theme-dark .main-nav.navbar {
 }
 
 .main-nav .navbar-nav .input-group {
-  width: clamp(22rem, 42vw, 38rem);
-  min-width: 30ch;
+  width: clamp(11rem, 21vw, 19rem);
+  min-width: 14ch;
 }
 
 .main-nav #search-addon {
-  min-width: 28ch;
+  min-width: 12ch;
 }
 
 .main-nav .fm-brand-logo {

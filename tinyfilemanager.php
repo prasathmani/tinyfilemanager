@@ -5388,13 +5388,13 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
             }
 
             .main-nav .fm-nav-search-group {
-                width: clamp(22rem, 42vw, 38rem) !important;
-                min-width: 30ch !important;
+                width: clamp(11rem, 21vw, 19rem) !important;
+                min-width: 14ch !important;
             }
 
             .main-nav #search-addon,
             .main-nav .fm-nav-search-input {
-                min-width: 28ch !important;
+                min-width: 12ch !important;
             }
 
             .brl-0 {
