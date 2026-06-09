@@ -320,8 +320,13 @@ class TFM_Router {
             $copy_name = $this->generateCopyName($this->request['file']);
             
             // Copy file
-            if (!copy($source_path, $fm->getFullPath($copy_name))) {
+            $destination_path = $fm->getFullPath($copy_name);
+            if (!copy($source_path, $destination_path)) {
                 throw new Exception('Failed to copy file');
+            }
+
+            if (function_exists('fm_owner_meta_copy')) {
+                fm_owner_meta_copy($source_path, $destination_path);
             }
             
             $this->log('file_copy', "Copied: {$this->request['file']} -> {$copy_name}");

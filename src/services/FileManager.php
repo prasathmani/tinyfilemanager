@@ -240,6 +240,10 @@ class TFM_FileManager {
         if (!@mkdir($full_path, 0755, true)) {
             throw new Exception("Failed to create directory");
         }
+
+        if (function_exists('fm_owner_meta_touch')) {
+            fm_owner_meta_touch($full_path, 'mkdir');
+        }
         
         $this->log('dir_create', "Directory created: $dirname");
         return true;

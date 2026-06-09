@@ -127,6 +127,9 @@ class TFM_AjaxActionHandler {
                 throw new Exception('File ' . $fileName . ' not found');
             }
             if (copy($fullyQualifiedFileName, $fullPath . $newFileName)) {
+                if (function_exists('fm_owner_meta_touch')) {
+                    fm_owner_meta_touch($fullPath . $newFileName, 'copy');
+                }
                 echo 'Backup ' . $newFileName . ' created';
             } else {
                 throw new Exception('Could not copy file ' . $fileName);

@@ -136,6 +136,10 @@ class TFM_UploadHandler {
             
             // Set proper permissions
             @chmod($target_file, 0644);
+
+            if (function_exists('fm_owner_meta_touch')) {
+                fm_owner_meta_touch($target_file, 'upload');
+            }
             
             // Log successful upload
             $this->log('upload_success', "File uploaded: $filename");

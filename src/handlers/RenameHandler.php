@@ -89,6 +89,12 @@ class TFM_RenameHandler {
             $success = @rename($full_path_old, $full_path_new);
             
             if ($success) {
+                if (function_exists('fm_owner_meta_move')) {
+                    fm_owner_meta_move($full_path_old, $full_path_new);
+                }
+                if (function_exists('fm_owner_meta_touch')) {
+                    fm_owner_meta_touch($full_path_new, 'rename');
+                }
                 $msg = "Renamed: $old_name -> $new_name";
                 $this->log('rename_success', $msg);
                 return ['success' => true, 'message' => $msg];

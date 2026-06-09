@@ -61,6 +61,9 @@ class TFM_DeleteHandler {
             }
             
             if ($success) {
+                if (function_exists('fm_owner_meta_remove')) {
+                    fm_owner_meta_remove($full_path);
+                }
                 $this->log('delete_success', $msg);
                 return ['success' => true, 'message' => $msg];
             } else {

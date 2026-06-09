@@ -47,6 +47,9 @@ class TFM_FileEditorContextService {
             $fd = fopen($file_path, 'w');
             @fwrite($fd, $writedata);
             fclose($fd);
+            if (function_exists('fm_owner_meta_touch')) {
+                fm_owner_meta_touch($file_path, 'edit');
+            }
             fm_set_msg(lng('File Saved Successfully'));
         }
 
