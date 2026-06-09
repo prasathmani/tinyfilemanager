@@ -17,7 +17,8 @@ class FM_Config
         $this->data = array(
             'lang' => 'en',
             'error_reporting' => true,
-            'show_hidden' => true
+            'show_hidden' => true,
+            'fallback_logging' => false
         );
         $this->last_error = '';
         $data = false;
@@ -45,6 +46,11 @@ class FM_Config
             $user_data = $this->loadUserSettings($logged);
             if ($user_data) {
                 $this->data = array_merge($this->data, $user_data);
+            }
+
+            // Fallback source when profile settings cannot be persisted to disk.
+            if (isset($_SESSION[FM_SESSION_ID]['user_settings']) && is_array($_SESSION[FM_SESSION_ID]['user_settings'])) {
+                $this->data = array_merge($this->data, $_SESSION[FM_SESSION_ID]['user_settings']);
             }
         }
     }

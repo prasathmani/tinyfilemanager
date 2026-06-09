@@ -40,6 +40,14 @@ class TFM_AjaxActionHandler {
             $this->handleSettings($post);
         }
 
+        if (isset($post['type']) && $post['type'] == 'settings_clear_fallback_log') {
+            $this->handleClearFallbackLog();
+        }
+
+        if (isset($post['type']) && $post['type'] == 'settings_fallback_log_stats') {
+            $this->handleFallbackLogStats();
+        }
+
         if (isset($post['type']) && $post['type'] == 'search') {
             $dir = $post['path'] == '.' ? '' : $post['path'];
             $response = scan(fm_clean_path($dir), $post['content']);
@@ -149,6 +157,7 @@ class TFM_AjaxActionHandler {
         $shf = isset($post['js-show-hidden']) && $post['js-show-hidden'] == 'true' ? true : false;
         $hco = isset($post['js-hide-cols']) && $post['js-hide-cols'] == 'true' ? true : false;
         $te3 = $post['js-theme-3'];
+        $fallbackLoggingEnabled = isset($post['js-fallback-log-enabled']) && $post['js-fallback-log-enabled'] == 'true' ? true : false;
         $canChangeInternalFlags = !FM_UPLOAD_ONLY;
 
         if ($cfg->data['lang'] != $newLng) {
@@ -173,8 +182,32 @@ class TFM_AjaxActionHandler {
             $cfg->data['theme'] = $te3;
             $theme = $te3;
         }
+        if (!isset($cfg->data['fallback_logging']) || (bool) $cfg->data['fallback_logging'] !== $fallbackLoggingEnabled) {
+            $cfg->data['fallback_logging'] = $fallbackLoggingEnabled;
+        }
         $saved = $cfg->save();
         $saveMessage = $saved ? 'Settings saved successfully' : ($cfg->getLastError() ? $cfg->getLastError() : 'Settings could not be saved.');
+
+        if (!$saved && session_status() === PHP_SESSION_ACTIVE) {
+            if (!isset($_SESSION[FM_SESSION_ID]) || !is_array($_SESSION[FM_SESSION_ID])) {
+                $_SESSION[FM_SESSION_ID] = array();
+            }
+
+            // Safe fallback: keep user settings in session when disk persistence is unavailable.
+            $_SESSION[FM_SESSION_ID]['user_settings'] = array(
+                'lang' => isset($cfg->data['lang']) ? $cfg->data['lang'] : $lang,
+                'error_reporting' => isset($cfg->data['error_reporting']) ? (bool) $cfg->data['error_reporting'] : (bool) $report_errors,
+                'show_hidden' => isset($cfg->data['show_hidden']) ? (bool) $cfg->data['show_hidden'] : (bool) $show_hidden_files,
+                'hide_Cols' => isset($cfg->data['hide_Cols']) ? (bool) $cfg->data['hide_Cols'] : (bool) $hide_Cols,
+                'theme' => isset($cfg->data['theme']) ? $cfg->data['theme'] : $theme,
+                'fallback_logging' => isset($cfg->data['fallback_logging']) ? (bool) $cfg->data['fallback_logging'] : $fallbackLoggingEnabled,
+            );
+
+            $saved = true;
+            $saveMessage = 'Settings saved for current session only. Persistent storage is not writable.';
+            $this->writeFallbackLog('settings_session_fallback', 'Profile settings persisted to session because profile storage is not writable.');
+        }
+
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(array(
             'success' => (bool) $saved,
@@ -208,17 +241,20 @@ class TFM_AjaxActionHandler {
 
         $cfgFile = file_exists($this->app_root . '/config.php') ? $this->app_root . '/config.php' : '';
         if ($cfgFile === '' || !is_file($cfgFile) || !is_writable($cfgFile)) {
+            $this->writeFallbackLog('changepwd_persist_failed', 'Password change failed: config.php is missing or not writable.');
             echo json_encode(array('success' => false, 'msg' => 'Could not update config file. Check write permissions.'));
             exit;
         }
 
         if (!function_exists('fm_admin_load_user_config_arrays') || !function_exists('fm_admin_persist_user_config_arrays')) {
+            $this->writeFallbackLog('changepwd_persist_failed', 'Password change failed: helper functions are unavailable.');
             echo json_encode(array('success' => false, 'msg' => 'Password update helper is not available.'));
             exit;
         }
 
         $configData = fm_admin_load_user_config_arrays($cfgFile);
         if (empty($configData['ok'])) {
+            $this->writeFallbackLog('changepwd_persist_failed', 'Password change failed: config read failed.');
             echo json_encode(array('success' => false, 'msg' => 'Could not read config file.'));
             exit;
         }
@@ -243,9 +279,186 @@ class TFM_AjaxActionHandler {
         if (!empty($persistResult['ok'])) {
             echo json_encode(array('success' => true, 'msg' => 'Password changed successfully'));
         } else {
+            $this->writeFallbackLog('changepwd_persist_failed', 'Password change failed: config write failed.');
             echo json_encode(array('success' => false, 'msg' => 'Could not update config file. Check write permissions.'));
         }
         exit;
+    }
+
+    private function handleClearFallbackLog() {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+        if ($username === '') {
+            echo json_encode(array('success' => false, 'msg' => 'Not authenticated'));
+            exit;
+        }
+
+        if ($username !== 'admin') {
+            echo json_encode(array('success' => false, 'msg' => 'Only admin can clear fallback log.'));
+            exit;
+        }
+
+        $result = $this->clearFallbackLog();
+        if (!empty($result['ok'])) {
+            echo json_encode(array('success' => true, 'msg' => 'Fallback log cleared.'));
+        } else {
+            echo json_encode(array('success' => false, 'msg' => isset($result['error']) ? $result['error'] : 'Could not clear fallback log.'));
+        }
+        exit;
+    }
+
+    private function handleFallbackLogStats() {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+        if ($username === '') {
+            echo json_encode(array('success' => false, 'msg' => 'Not authenticated'));
+            exit;
+        }
+
+        $stats = $this->getFallbackLogStats();
+        echo json_encode(array('success' => true, 'stats' => $stats));
+        exit;
+    }
+
+    private function fallbackLogPath() {
+        return $this->app_root . '/.fm_usercfg/fallback-events.log';
+    }
+
+    private function isFallbackLoggingEnabled() {
+        global $cfg;
+
+        if (isset($_SESSION[FM_SESSION_ID]['user_settings']) && is_array($_SESSION[FM_SESSION_ID]['user_settings']) && array_key_exists('fallback_logging', $_SESSION[FM_SESSION_ID]['user_settings'])) {
+            return (bool) $_SESSION[FM_SESSION_ID]['user_settings']['fallback_logging'];
+        }
+
+        if (isset($cfg) && is_object($cfg) && isset($cfg->data) && is_array($cfg->data) && array_key_exists('fallback_logging', $cfg->data)) {
+            return (bool) $cfg->data['fallback_logging'];
+        }
+
+        return false;
+    }
+
+    private function writeFallbackLog($event, $details) {
+        if (!$this->isFallbackLoggingEnabled()) {
+            return;
+        }
+
+        $logDir = dirname($this->fallbackLogPath());
+        if (!is_dir($logDir) && !@mkdir($logDir, 0750, true)) {
+            return;
+        }
+
+        $username = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : 'anonymous';
+        $entry = array(
+            'timestamp' => date('c'),
+            'user' => $username,
+            'event' => (string) $event,
+            'details' => (string) $details,
+        );
+
+        $line = json_encode($entry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+        @file_put_contents($this->fallbackLogPath(), $line, FILE_APPEND | LOCK_EX);
+
+        $this->trimFallbackLog();
+    }
+
+    private function trimFallbackLog() {
+        $logPath = $this->fallbackLogPath();
+        if (!is_file($logPath)) {
+            return;
+        }
+
+        $maxBytes = 262144; // 256KB hard cap
+        $maxLines = 1000;
+        $keepLines = 500;
+        $fileSize = @filesize($logPath);
+
+        if (($fileSize !== false && $fileSize <= $maxBytes)) {
+            $lineCount = 0;
+            $handle = @fopen($logPath, 'r');
+            if ($handle) {
+                while (!feof($handle)) {
+                    $chunk = fgets($handle);
+                    if ($chunk !== false) {
+                        $lineCount++;
+                    }
+                    if ($lineCount > $maxLines) {
+                        break;
+                    }
+                }
+                fclose($handle);
+            }
+
+            if ($lineCount <= $maxLines) {
+                return;
+            }
+        }
+
+        $lines = @file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (!is_array($lines) || empty($lines)) {
+            return;
+        }
+
+        if (count($lines) > $keepLines) {
+            $lines = array_slice($lines, -$keepLines);
+        }
+
+        $content = implode("\n", $lines) . "\n";
+        @file_put_contents($logPath, $content, LOCK_EX);
+    }
+
+    private function clearFallbackLog() {
+        $logPath = $this->fallbackLogPath();
+        if (!file_exists($logPath)) {
+            return array('ok' => true);
+        }
+
+        if (@file_put_contents($logPath, '', LOCK_EX) === false) {
+            return array('ok' => false, 'error' => 'Fallback log file is not writable.');
+        }
+
+        return array('ok' => true);
+    }
+
+    private function getFallbackLogStats() {
+        $logPath = $this->fallbackLogPath();
+        if (!is_file($logPath)) {
+            return array(
+                'exists' => false,
+                'bytes' => 0,
+                'lines' => 0,
+                'updated_at' => '',
+            );
+        }
+
+        $bytes = @filesize($logPath);
+        if ($bytes === false) {
+            $bytes = 0;
+        }
+
+        $lines = 0;
+        $handle = @fopen($logPath, 'r');
+        if ($handle) {
+            while (!feof($handle)) {
+                $line = fgets($handle);
+                if ($line !== false) {
+                    $lines++;
+                }
+            }
+            fclose($handle);
+        }
+
+        $mtime = @filemtime($logPath);
+        $updatedAt = $mtime ? date('Y-m-d H:i:s', $mtime) : '';
+
+        return array(
+            'exists' => true,
+            'bytes' => (int) $bytes,
+            'lines' => (int) $lines,
+            'updated_at' => $updatedAt,
+        );
     }
 
     private function basePath() {

@@ -101,6 +101,40 @@
     }, 3000);
   }
 
+  function extractAjaxErrorMessage(xhr, fallback) {
+    var fb = fallback || 'Request failed';
+    if (!xhr) {
+      return fb;
+    }
+
+    var raw = '';
+    if (typeof xhr.responseText === 'string' && xhr.responseText.trim() !== '') {
+      raw = xhr.responseText.trim();
+    }
+
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.msg) {
+            return String(parsed.msg);
+          }
+          if (parsed.error) {
+            return String(parsed.error);
+          }
+        }
+      } catch (e) {
+      }
+      return raw;
+    }
+
+    if (xhr.status) {
+      return fb + ' (HTTP ' + xhr.status + ')';
+    }
+
+    return fb;
+  }
+
   function backup(path, file) {
     var xhr = new XMLHttpRequest();
     var payload = 'path=' + path + '&file=' + file + '&token=' + window.csrf + '&type=backup&ajax=true';
@@ -185,7 +219,7 @@
         }
       },
       error: function () {
-        toast('Settings could not be saved.');
+        toast(extractAjaxErrorMessage(arguments[0], 'Settings could not be saved.'));
       }
     });
 
@@ -215,10 +249,108 @@
         }
       },
       error: function () {
-        toast('Password change failed');
+        toast(extractAjaxErrorMessage(arguments[0], 'Password change failed'));
       }
     });
     return false;
+  }
+
+  function clearFallbackLog() {
+    if (!window.confirm('Clear fallback event log?')) {
+      return false;
+    }
+
+    $.ajax({
+      type: 'post',
+      url: '',
+      data: {
+        ajax: true,
+        type: 'settings_clear_fallback_log',
+        token: window.csrf
+      },
+      success: function (data) {
+        var response = data;
+        if (typeof data === 'string') {
+          try {
+            response = JSON.parse(data);
+          } catch (e) {
+            response = { success: false, msg: 'Unknown response' };
+          }
+        }
+
+        if (response && response.success) {
+          toast(response.msg || 'Fallback log cleared');
+          refreshFallbackLogStats();
+        } else {
+          toast(response && response.msg ? response.msg : 'Could not clear fallback log');
+        }
+      },
+      error: function () {
+        toast(extractAjaxErrorMessage(arguments[0], 'Could not clear fallback log'));
+      }
+    });
+
+    return false;
+  }
+
+  function refreshFallbackLogStats() {
+    var root = document.getElementById('js-fallback-log-stats');
+    if (!root) {
+      return;
+    }
+
+    $.ajax({
+      type: 'post',
+      url: '',
+      data: {
+        ajax: true,
+        type: 'settings_fallback_log_stats',
+        token: window.csrf
+      },
+      success: function (data) {
+        var response = data;
+        if (typeof data === 'string') {
+          try {
+            response = JSON.parse(data);
+          } catch (e) {
+            return;
+          }
+        }
+
+        if (!response || !response.success || !response.stats) {
+          return;
+        }
+
+        var stats = response.stats;
+        var existsEl = document.getElementById('js-fallback-log-exists');
+        var bytesEl = document.getElementById('js-fallback-log-bytes');
+        var linesEl = document.getElementById('js-fallback-log-lines');
+        var updatedEl = document.getElementById('js-fallback-log-updated');
+        var statusEl = document.getElementById('js-fallback-log-status');
+
+        var bytes = Number(stats.bytes || 0);
+        var lines = Number(stats.lines || 0);
+        var statusText = 'OK';
+        var statusClass = 'bg-success';
+        if (bytes >= 220000 || lines >= 900) {
+          statusText = 'HIGH';
+          statusClass = 'bg-danger';
+        } else if (bytes >= 131072 || lines >= 600) {
+          statusText = 'MEDIUM';
+          statusClass = 'bg-warning';
+        }
+
+        if (existsEl) existsEl.textContent = stats.exists ? 'yes' : 'no';
+        if (bytesEl) bytesEl.textContent = String(bytes);
+        if (linesEl) linesEl.textContent = String(lines);
+        if (updatedEl) updatedEl.textContent = stats.updated_at || '';
+        if (statusEl) {
+          statusEl.textContent = statusText;
+          statusEl.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+          statusEl.classList.add(statusClass);
+        }
+      }
+    });
   }
 
   function newPasswordHash(el) {
@@ -420,6 +552,11 @@
   }
 
   $(document).ready(function () {
+    if (document.getElementById('js-fallback-log-stats')) {
+      refreshFallbackLogStats();
+      window.setInterval(refreshFallbackLogStats, 15000);
+    }
+
     initMainTableDataTable();
     var hasMainTable = !!window.mainTable;
     function adjustNavbarOffset() {
@@ -451,6 +588,7 @@
   window.show_new_pwd = showNewPwd;
   window.save_settings = saveSettings;
   window.change_password = changePassword;
+  window.clear_fallback_log = clearFallbackLog;
   window.new_password_hash = newPasswordHash;
   window.upload_from_url = uploadFromUrl;
   window.search_template = searchTemplate;

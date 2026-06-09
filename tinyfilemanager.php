@@ -1213,7 +1213,7 @@ if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID
 }
 
 // Handle all AJAX Request
-if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) || !FM_USE_AUTH) && isset($_POST['ajax'], $_POST['token'])) {
+if ((((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) || !FM_USE_AUTH)) && isset($_POST['ajax'], $_POST['token'])) {
     $ajax_action_handler = new TFM_AjaxActionHandler(FM_ROOT_PATH, FM_PATH, __DIR__);
     $ajax_action_handler->handle($_POST, $_GET, $_REQUEST, $auth_users);
 }
@@ -2013,6 +2013,37 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     global $cfg, $lang, $lang_list;
+    $settings_current_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+    $fallback_log_enabled = !empty($cfg->data['fallback_logging']);
+    $fallback_log_path = __DIR__ . '/.fm_usercfg/fallback-events.log';
+    $fallback_log_exists = is_file($fallback_log_path);
+    $fallback_log_bytes = $fallback_log_exists ? (int) @filesize($fallback_log_path) : 0;
+    if ($fallback_log_bytes < 0) {
+        $fallback_log_bytes = 0;
+    }
+    $fallback_log_lines = 0;
+    if ($fallback_log_exists) {
+        $fallback_log_handle = @fopen($fallback_log_path, 'r');
+        if ($fallback_log_handle) {
+            while (!feof($fallback_log_handle)) {
+                $fallback_log_line = fgets($fallback_log_handle);
+                if ($fallback_log_line !== false) {
+                    $fallback_log_lines++;
+                }
+            }
+            fclose($fallback_log_handle);
+        }
+    }
+    $fallback_log_updated = $fallback_log_exists && @filemtime($fallback_log_path) ? date('Y-m-d H:i:s', (int) @filemtime($fallback_log_path)) : '';
+    $fallback_log_status_text = 'OK';
+    $fallback_log_status_class = 'success';
+    if ($fallback_log_bytes >= 220000 || $fallback_log_lines >= 900) {
+        $fallback_log_status_text = 'HIGH';
+        $fallback_log_status_class = 'danger';
+    } elseif ($fallback_log_bytes >= 131072 || $fallback_log_lines >= 600) {
+        $fallback_log_status_text = 'MEDIUM';
+        $fallback_log_status_class = 'warning';
+    }
 ?>
 
     <div class="col-md-8 offset-md-2 pt-3">
@@ -2090,8 +2121,29 @@ if (isset($_GET['settings']) && ((FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]
                     </div>
 
                     <div class="mb-3 row">
+                        <label for="js-fallback-log-enabled" class="col-sm-3 col-form-label">Fallback event logging</label>
+                        <div class="col-sm-9">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="js-fallback-log-enabled" name="js-fallback-log-enabled" value="true" <?php echo $fallback_log_enabled ? 'checked' : ''; ?> />
+                            </div>
+                            <small class="text-body-secondary">Logs only self-service fallback events. Bounded automatically (max 256KB / 1000 lines, keeps newest 500).</small>
+                            <div id="js-fallback-log-stats" class="mt-2 small text-body-secondary">
+                                <strong>Live log info:</strong>
+                                <span class="ms-1 badge bg-<?php echo fm_enc($fallback_log_status_class); ?>" id="js-fallback-log-status"><?php echo fm_enc($fallback_log_status_text); ?></span>
+                                <span>exists: <span id="js-fallback-log-exists"><?php echo $fallback_log_exists ? 'yes' : 'no'; ?></span></span>,
+                                <span>size: <span id="js-fallback-log-bytes"><?php echo (int) $fallback_log_bytes; ?></span> B</span>,
+                                <span>lines: <span id="js-fallback-log-lines"><?php echo (int) $fallback_log_lines; ?></span></span>,
+                                <span>updated: <span id="js-fallback-log-updated"><?php echo fm_enc($fallback_log_updated); ?></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
                         <div class="col-sm-10">
                             <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?></button>
+                            <?php if ($settings_current_user === 'admin'): ?>
+                            <button type="button" class="btn btn-outline-danger ms-2" onclick="return clear_fallback_log()"><i class="fa fa-trash"></i> Clear fallback log</button>
+                            <?php endif; ?>
                         </div>
                     </div>
 
