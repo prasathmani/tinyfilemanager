@@ -12,3 +12,6 @@ joyee-bridge.config.php
 
 # Generated ChatGPT source manifest with live machine token
 chatgpt-source-joyee.md
+
+# Local VS Code user settings (machine-specific)
+.vscode/settings.json
