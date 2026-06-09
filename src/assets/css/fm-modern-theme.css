@@ -245,6 +245,22 @@ body {
   cursor: default;
 }
 
+.fm-owner-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fm-owner-last-editor-badge {
+  background: #fff7e6;
+  border-color: #ead3a1;
+}
+
+html[data-bs-theme="dark"] .fm-owner-last-editor-badge {
+  background: #3a321f;
+  border-color: #6b5a31;
+}
+
 .fm-owner-badge[data-chat-user]:not([data-chat-user=""]) {
   cursor: pointer;
 }
@@ -364,6 +380,10 @@ body {
   .fm-owner-badge {
     max-width: 84px;
     padding: 0.16rem 0.4rem;
+  }
+
+  .fm-owner-stack {
+    gap: 3px;
   }
 }
 

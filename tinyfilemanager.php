@@ -3471,6 +3471,26 @@ function fm_owner_meta_get($absolutePath)
         : null;
 }
 
+function fm_owner_meta_is_app_creation_action($action)
+{
+    $action = strtolower((string) $action);
+    return in_array($action, array('create', 'mkdir', 'upload', 'upload_url', 'copy'), true);
+}
+
+function fm_owner_meta_infer_source(array $record)
+{
+    if (isset($record['owner_source']) && ($record['owner_source'] === 'app' || $record['owner_source'] === 'system')) {
+        return (string) $record['owner_source'];
+    }
+
+    $createdBy = isset($record['created_by']) ? trim((string) $record['created_by']) : '';
+    if ($createdBy !== '' && strtolower($createdBy) !== 'system') {
+        return 'app';
+    }
+
+    return 'system';
+}
+
 function fm_owner_meta_touch($absolutePath, $action = 'update', $actor = '')
 {
     $rel = fm_owner_meta_rel_path($absolutePath);
@@ -3488,6 +3508,7 @@ function fm_owner_meta_touch($absolutePath, $action = 'update', $actor = '')
         $data['scopes'][$scope] = array();
     }
 
+    $action = (string) $action;
     $record = isset($data['scopes'][$scope][$rel]) && is_array($data['scopes'][$scope][$rel])
         ? $data['scopes'][$scope][$rel]
         : array();
@@ -3496,13 +3517,27 @@ function fm_owner_meta_touch($absolutePath, $action = 'update', $actor = '')
     if (!isset($record['created_at']) || !is_numeric($record['created_at'])) {
         $record['created_at'] = $now;
     }
-    if (!isset($record['created_by']) || $record['created_by'] === '') {
-        $record['created_by'] = $actor !== '' ? $actor : 'system';
+
+    $isNewRecord = empty($record) || (!isset($record['updated_at']) && !isset($record['updated_by']) && !isset($record['created_by']));
+    $ownerSource = fm_owner_meta_infer_source($record);
+
+    if ($isNewRecord) {
+        if (fm_owner_meta_is_app_creation_action($action)) {
+            $ownerSource = 'app';
+            $record['created_by'] = $actor !== '' ? $actor : '';
+        } else {
+            // Existing filesystem object edited by app: keep system ownership, track last editor separately.
+            $ownerSource = 'system';
+            $record['created_by'] = '';
+        }
+    } elseif ($ownerSource === 'app' && (!isset($record['created_by']) || trim((string) $record['created_by']) === '') && $actor !== '') {
+        $record['created_by'] = $actor;
     }
 
+    $record['owner_source'] = $ownerSource;
     $record['updated_at'] = $now;
-    $record['updated_by'] = $actor !== '' ? $actor : $record['created_by'];
-    $record['last_action'] = (string) $action;
+    $record['updated_by'] = $actor !== '' ? $actor : (isset($record['updated_by']) && trim((string) $record['updated_by']) !== '' ? (string) $record['updated_by'] : (isset($record['created_by']) ? (string) $record['created_by'] : 'system'));
+    $record['last_action'] = $action;
 
     $data['scopes'][$scope][$rel] = $record;
     return fm_owner_meta_write_all($data);
@@ -3533,11 +3568,13 @@ function fm_owner_meta_move($oldAbsolutePath, $newAbsolutePath, $actor = '')
         ? $scopeData[$oldRel]
         : array(
             'created_at' => $now,
-            'created_by' => $actor !== '' ? $actor : 'system',
+            'created_by' => '',
+            'owner_source' => 'system',
         );
 
+    $record['owner_source'] = fm_owner_meta_infer_source($record);
     $record['updated_at'] = $now;
-    $record['updated_by'] = $actor !== '' ? $actor : (isset($record['created_by']) ? $record['created_by'] : 'system');
+    $record['updated_by'] = $actor !== '' ? $actor : (isset($record['updated_by']) && trim((string) $record['updated_by']) !== '' ? (string) $record['updated_by'] : (isset($record['created_by']) ? (string) $record['created_by'] : 'system'));
     $record['last_action'] = 'move';
     $scopeData[$newRel] = $record;
 
@@ -3579,7 +3616,11 @@ function fm_owner_meta_copy($srcAbsolutePath, $destAbsolutePath, $actor = '')
 
     $newRecord = $sourceRecord;
     $newRecord['created_at'] = $now;
-    $newRecord['created_by'] = $actor !== '' ? $actor : (isset($sourceRecord['created_by']) ? $sourceRecord['created_by'] : 'system');
+    $newRecord['owner_source'] = 'app';
+    $newRecord['created_by'] = $actor !== '' ? $actor : (isset($sourceRecord['created_by']) ? (string) $sourceRecord['created_by'] : '');
+    if (trim((string) $newRecord['created_by']) === '') {
+        $newRecord['created_by'] = 'system';
+    }
     $newRecord['updated_at'] = $now;
     $newRecord['updated_by'] = $newRecord['created_by'];
     $newRecord['last_action'] = 'copy';
@@ -3589,6 +3630,7 @@ function fm_owner_meta_copy($srcAbsolutePath, $destAbsolutePath, $actor = '')
         if ($key !== $srcRel && strpos($key, $srcRel . '/') === 0) {
             $suffix = substr($key, strlen($srcRel));
             $child = is_array($value) ? $value : array();
+            $child['owner_source'] = 'app';
             $child['created_at'] = $now;
             $child['created_by'] = $newRecord['created_by'];
             $child['updated_at'] = $now;

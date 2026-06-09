@@ -33,6 +33,8 @@ Aplikacia teraz rozlisuje 2 vrstvy vlastnictva:
   - `App owner: <user>`
   - `Last update: <user>` ked sa lisi od ownera
 - Ak app metadata neexistuju, zobrazi sa fallback na systemoveho ownera.
+- Nove pravidlo: pre povodne systemove polozky sa po editacii zachova owner `System`, ale zobrazi sa druhy badge posledneho editora (`updated_by`).
+- Badge posledneho editora je klikatelny pre chat, ak ide o interneho app usera.
 - Toolbar obsahuje filter `Vlastnik` s volbami `Vsetko / App / System`.
   - `App`: zobrazi len polozky s app metadata (`created_by`).
   - `System`: zobrazi len fallback system owner polozky.

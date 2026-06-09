@@ -123,11 +123,18 @@
                         $groupName = isset($group['name']) ? (string) $group['name'] : '?';
                         $ownerTitle = $ownerName . ':' . $groupName;
                         $hasAppOwner = false;
+                        $ownerSource = 'system';
+                        $lastEditorName = '';
+                        $lastEditorTitle = '';
                         $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
                         if (is_array($appOwnerMeta)) {
                             $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
                             $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
-                            if ($appCreatedBy !== '') {
+                            $ownerSource = isset($appOwnerMeta['owner_source']) ? strtolower(trim((string) $appOwnerMeta['owner_source'])) : '';
+                            if ($ownerSource !== 'app' && $ownerSource !== 'system') {
+                                $ownerSource = ($appCreatedBy !== '' && strtolower($appCreatedBy) !== 'system') ? 'app' : 'system';
+                            }
+                            if ($ownerSource === 'app' && $appCreatedBy !== '') {
                                 $hasAppOwner = true;
                                 $ownerName = $appCreatedBy;
                                 $ownerLabel = $appCreatedBy;
@@ -135,6 +142,9 @@
                                 if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
                                     $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
                                 }
+                            } elseif ($ownerSource === 'system' && $appUpdatedBy !== '' && strtolower($appUpdatedBy) !== 'system') {
+                                $lastEditorName = $appUpdatedBy;
+                                $lastEditorTitle = 'Last update: ' . $appUpdatedBy;
                             }
                         }
                         $ownerLabel = $ownerName;
@@ -155,19 +165,40 @@
                             && is_array($auth_users)
                             && isset($auth_users[$ownerName]);
                         $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
+                        $canChatWithLastEditor = FM_USE_AUTH
+                            && !empty($_SESSION[FM_SESSION_ID]['logged'])
+                            && $lastEditorName !== ''
+                            && isset($auth_users)
+                            && is_array($auth_users)
+                            && isset($auth_users[$lastEditorName]);
+                        $isSelfLastEditorBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $lastEditorName;
                         ?>
                         <td class="fm-col-perms"><?php echo $perms ?></td>
-                        <td class="fm-col-owner" data-owner-source="<?php echo $hasAppOwner ? 'app' : 'system'; ?>">
-                            <button
-                                type="button"
-                                class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
-                                data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
-                                title="<?php echo fm_enc($ownerTitle); ?>"
-                                <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
-                            >
-                                <i class="fa fa-user" aria-hidden="true"></i>
-                                <span><?php echo fm_enc($ownerLabel); ?></span>
-                            </button>
+                        <td class="fm-col-owner" data-owner-source="<?php echo $ownerSource === 'app' ? 'app' : 'system'; ?>">
+                            <div class="fm-owner-stack">
+                                <button
+                                    type="button"
+                                    class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
+                                    data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
+                                    title="<?php echo fm_enc($ownerTitle); ?>"
+                                    <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
+                                >
+                                    <i class="fa fa-user" aria-hidden="true"></i>
+                                    <span><?php echo fm_enc($ownerLabel); ?></span>
+                                </button>
+                                <?php if ($lastEditorName !== ''): ?>
+                                    <button
+                                        type="button"
+                                        class="badge border-0 fm-user-chat-badge fm-owner-badge fm-owner-last-editor-badge <?php echo ($canChatWithLastEditor && !$isSelfLastEditorBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
+                                        data-chat-user="<?php echo ($canChatWithLastEditor && !$isSelfLastEditorBadge) ? fm_enc($lastEditorName) : ''; ?>"
+                                        title="<?php echo fm_enc($lastEditorTitle); ?>"
+                                        <?php echo (!$canChatWithLastEditor || $isSelfLastEditorBadge) ? 'disabled' : ''; ?>
+                                    >
+                                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                                        <span><?php echo fm_enc($lastEditorName); ?></span>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     <?php } ?>
                     <td class="fm-col-actions">
@@ -261,11 +292,18 @@
                         $groupName = isset($group['name']) ? (string) $group['name'] : '?';
                         $ownerTitle = $ownerName . ':' . $groupName;
                         $hasAppOwner = false;
+                        $ownerSource = 'system';
+                        $lastEditorName = '';
+                        $lastEditorTitle = '';
                         $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
                         if (is_array($appOwnerMeta)) {
                             $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
                             $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
-                            if ($appCreatedBy !== '') {
+                            $ownerSource = isset($appOwnerMeta['owner_source']) ? strtolower(trim((string) $appOwnerMeta['owner_source'])) : '';
+                            if ($ownerSource !== 'app' && $ownerSource !== 'system') {
+                                $ownerSource = ($appCreatedBy !== '' && strtolower($appCreatedBy) !== 'system') ? 'app' : 'system';
+                            }
+                            if ($ownerSource === 'app' && $appCreatedBy !== '') {
                                 $hasAppOwner = true;
                                 $ownerName = $appCreatedBy;
                                 $ownerLabel = $appCreatedBy;
@@ -273,6 +311,9 @@
                                 if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
                                     $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
                                 }
+                            } elseif ($ownerSource === 'system' && $appUpdatedBy !== '' && strtolower($appUpdatedBy) !== 'system') {
+                                $lastEditorName = $appUpdatedBy;
+                                $lastEditorTitle = 'Last update: ' . $appUpdatedBy;
                             }
                         }
                         $ownerLabel = $ownerName;
@@ -293,20 +334,41 @@
                             && is_array($auth_users)
                             && isset($auth_users[$ownerName]);
                         $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
+                        $canChatWithLastEditor = FM_USE_AUTH
+                            && !empty($_SESSION[FM_SESSION_ID]['logged'])
+                            && $lastEditorName !== ''
+                            && isset($auth_users)
+                            && is_array($auth_users)
+                            && isset($auth_users[$lastEditorName]);
+                        $isSelfLastEditorBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $lastEditorName;
                         ?>
                         <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td class="fm-col-owner" data-owner-source="<?php echo $hasAppOwner ? 'app' : 'system'; ?>">
-                            <button
-                                type="button"
-                                class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
-                                data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
-                                title="<?php echo fm_enc($ownerTitle); ?>"
-                                <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
-                            >
-                                <i class="fa fa-user" aria-hidden="true"></i>
-                                <span><?php echo fm_enc($ownerLabel); ?></span>
-                            </button>
+                        <td class="fm-col-owner" data-owner-source="<?php echo $ownerSource === 'app' ? 'app' : 'system'; ?>">
+                            <div class="fm-owner-stack">
+                                <button
+                                    type="button"
+                                    class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
+                                    data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
+                                    title="<?php echo fm_enc($ownerTitle); ?>"
+                                    <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
+                                >
+                                    <i class="fa fa-user" aria-hidden="true"></i>
+                                    <span><?php echo fm_enc($ownerLabel); ?></span>
+                                </button>
+                                <?php if ($lastEditorName !== ''): ?>
+                                    <button
+                                        type="button"
+                                        class="badge border-0 fm-user-chat-badge fm-owner-badge fm-owner-last-editor-badge <?php echo ($canChatWithLastEditor && !$isSelfLastEditorBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
+                                        data-chat-user="<?php echo ($canChatWithLastEditor && !$isSelfLastEditorBadge) ? fm_enc($lastEditorName) : ''; ?>"
+                                        title="<?php echo fm_enc($lastEditorTitle); ?>"
+                                        <?php echo (!$canChatWithLastEditor || $isSelfLastEditorBadge) ? 'disabled' : ''; ?>
+                                    >
+                                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                                        <span><?php echo fm_enc($lastEditorName); ?></span>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     <?php endif; ?>
                     <td class="fm-col-actions">
