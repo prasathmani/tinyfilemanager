@@ -5432,6 +5432,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 }
             </style>
         <?php endif; ?>
+        <link rel="stylesheet" href="src/assets/css/fm-modern-theme.css?v=<?php echo rawurlencode((string) VERSION); ?>">
     </head>
 
     <body class="<?php echo (FM_THEME == "dark") ? 'theme-dark' : ''; ?> <?php echo $isStickyNavBar; ?>">

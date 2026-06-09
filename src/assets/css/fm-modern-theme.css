@@ -1,0 +1,117 @@
+/*
+ * TinyFileManager modern visual baseline.
+ * Phase 1: safe facelift only, no behavior changes.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --fmx-bg: radial-gradient(1200px 500px at 12% -15%, #d8e8ff 0%, rgba(216, 232, 255, 0) 65%),
+            radial-gradient(1100px 450px at 95% 0%, #ffe7ce 0%, rgba(255, 231, 206, 0) 62%),
+            #f5f7fb;
+  --fmx-surface: #ffffff;
+  --fmx-border: #dfe5ef;
+  --fmx-text: #1f2a3a;
+  --fmx-subtle: #607087;
+  --fmx-accent: #2463eb;
+  --fmx-accent-weak: #e8efff;
+  --fmx-success: #1f9d68;
+  --fmx-warning: #c98017;
+  --fmx-danger: #d03a3a;
+}
+
+html[data-bs-theme="dark"] {
+  --fmx-bg: radial-gradient(1200px 500px at 12% -15%, rgba(56, 106, 179, 0.5) 0%, rgba(56, 106, 179, 0) 65%),
+            radial-gradient(1100px 450px at 95% 0%, rgba(159, 111, 59, 0.35) 0%, rgba(159, 111, 59, 0) 62%),
+            #111821;
+  --fmx-surface: #17202c;
+  --fmx-border: #2b3a4d;
+  --fmx-text: #dce5f1;
+  --fmx-subtle: #9fb0c8;
+  --fmx-accent: #6ea2ff;
+  --fmx-accent-weak: #213250;
+}
+
+body {
+  font-family: 'Space Grotesk', 'Trebuchet MS', Tahoma, sans-serif;
+  background: var(--fmx-bg);
+  color: var(--fmx-text);
+}
+
+.main-nav {
+  border: 1px solid var(--fmx-border);
+  border-radius: 14px;
+  margin: 10px 10px 14px;
+  backdrop-filter: blur(8px);
+}
+
+#wrapper {
+  padding-bottom: 18px;
+}
+
+.path,
+.card,
+.table-responsive,
+.modal-content {
+  border: 1px solid var(--fmx-border);
+  border-radius: 14px;
+  background: var(--fmx-surface);
+}
+
+.path {
+  padding: 10px 12px;
+}
+
+#main-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#main-table thead th {
+  background: linear-gradient(180deg, rgba(36, 99, 235, 0.1), rgba(36, 99, 235, 0.02));
+  color: var(--fmx-text);
+  border-bottom: 1px solid var(--fmx-border);
+  font-weight: 600;
+}
+
+#main-table tbody td {
+  border-color: var(--fmx-border);
+}
+
+#main-table .filename a {
+  color: var(--fmx-text);
+}
+
+.inline-actions > a > i {
+  background: var(--fmx-accent);
+  border-radius: 8px;
+  padding: 6px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.message.ok {
+  border-color: var(--fmx-success);
+  color: var(--fmx-success);
+}
+
+.message.alert {
+  border-color: var(--fmx-warning);
+  color: var(--fmx-warning);
+}
+
+.message.error {
+  border-color: var(--fmx-danger);
+  color: var(--fmx-danger);
+}
+
+#snackbar {
+  border-radius: 12px;
+}
+
+@media (max-width: 767.98px) {
+  .main-nav {
+    border-radius: 12px;
+    margin: 8px 6px 12px;
+  }
+}
