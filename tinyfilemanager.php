@@ -5975,7 +5975,6 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 position: relative;
                 cursor: pointer;
             }
-            }
 
             .fm-grid-thumb {
                 height: 122px;
@@ -6250,10 +6249,9 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                     color: #CFD8DC;
                 }
 
-                a,
-                a:hover,
-                a:visited,
-                a:active,
+                .theme-dark .navbar-nav a,
+                .theme-dark .break-word a,
+                .theme-dark .path a,
                 #main-table:not(.fm-list-clean) .filename a,
                 i.fa.fa-folder-o,
                 i.go-back {

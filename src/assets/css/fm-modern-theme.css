@@ -109,7 +109,10 @@ body.theme-dark .main-nav .fm-brand-logo-dark {
   background: var(--fmx-accent);
   border-radius: 8px;
   padding: 6px;
-  min-width: 24px;
+  min-width: 22px;
+  min-height: 22px;
+  line-height: 12px;
+  margin-left: 0 !important;
   text-align: center;
 }
 
@@ -313,7 +316,7 @@ body.fm-density-normal #main-table.fm-modern-table tbody td {
 }
 
 #main-table.fm-modern-table .fm-col-actions {
-  width: 168px;
+  width: 152px;
   white-space: normal;
 }
 
@@ -487,9 +490,9 @@ body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions 
   max-width: 100%;
   border: 1px dashed var(--fmx-border);
   border-radius: 999px;
-  padding: 0.2rem 0.42rem;
+  padding: 0.12rem 0.3rem;
   color: var(--fmx-subtle);
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 600;
   line-height: 1.05;
   white-space: nowrap;
@@ -579,13 +582,6 @@ html[data-bs-theme="dark"] #fm-row-actions-float {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
 }
 
-.inline-actions > a > i {
-  min-width: 22px;
-  min-height: 22px;
-  line-height: 12px;
-  margin-left: 0 !important;
-}
-
 body.fm-density-compact .inline-actions > a > i {
   min-width: 17px;
   min-height: 17px;
@@ -593,14 +589,7 @@ body.fm-density-compact .inline-actions > a > i {
   padding: 3px;
 }
 
-#main-table.fm-modern-table .fm-col-actions {
-  width: 152px;
-}
 
-.fm-action-note {
-  font-size: 0.58rem;
-  padding: 0.12rem 0.3rem;
-}
 
 body.fm-density-compact .fm-action-note {
   font-size: 0.5rem;
