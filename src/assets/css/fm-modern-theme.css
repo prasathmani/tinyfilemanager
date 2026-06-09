@@ -178,6 +178,7 @@ body {
 }
 
 #main-table.fm-modern-table .fm-col-actions {
+  width: 1%;
   white-space: nowrap;
 }
 
@@ -190,7 +191,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 122px;
+  max-width: 116px;
   padding: 0.2rem 0.45rem;
   border-radius: 999px;
   border: 1px solid var(--fmx-border);
@@ -199,6 +200,16 @@ body {
   font-size: 0.78rem;
   font-weight: 600;
   vertical-align: middle;
+  line-height: 1.1;
+  cursor: default;
+}
+
+.fm-owner-badge[data-chat-user]:not([data-chat-user=""]) {
+  cursor: pointer;
+}
+
+.fm-owner-badge:disabled {
+  opacity: 1;
 }
 
 .fm-owner-badge i {
@@ -220,10 +231,12 @@ body {
 }
 
 .inline-actions {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 2px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  white-space: nowrap;
 }
 
 .inline-actions > a > i {
@@ -278,7 +291,7 @@ body {
   }
 
   .fm-owner-badge {
-    max-width: 88px;
+    max-width: 84px;
     padding: 0.16rem 0.4rem;
   }
 }

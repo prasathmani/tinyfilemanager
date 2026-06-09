@@ -108,10 +108,36 @@
                     <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
                         <td class="fm-col-perms"><?php echo $perms ?></td>
                         <td class="fm-col-owner">
-                            <span class="fm-owner-badge" title="<?php echo fm_enc($owner['name'] . ':' . $group['name']); ?>">
+                            <?php
+                            $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
+                            $groupName = isset($group['name']) ? (string) $group['name'] : '?';
+                            $ownerLabel = $ownerName;
+                            if (!empty($owner['gecos'])) {
+                                $ownerGecos = trim((string) $owner['gecos']);
+                                if ($ownerGecos !== '') {
+                                    $ownerLabel = $ownerGecos;
+                                }
+                            }
+                            if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
+                                $ownerLabel = 'System';
+                            }
+                            $canChatWithOwner = FM_USE_AUTH
+                                && !empty($_SESSION[FM_SESSION_ID]['logged'])
+                                && isset($auth_users)
+                                && is_array($auth_users)
+                                && isset($auth_users[$ownerName]);
+                            $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
+                            ?>
+                            <button
+                                type="button"
+                                class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
+                                data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
+                                title="<?php echo fm_enc($ownerName . ':' . $groupName); ?>"
+                                <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
+                            >
                                 <i class="fa fa-user" aria-hidden="true"></i>
-                                <span><?php echo fm_enc($owner['name']); ?></span>
-                            </span>
+                                <span><?php echo fm_enc($ownerLabel); ?></span>
+                            </button>
                         </td>
                     <?php } ?>
                     <td class="inline-actions fm-col-actions">
@@ -201,10 +227,36 @@
                         <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
                         <td class="fm-col-owner">
-                            <span class="fm-owner-badge" title="<?php echo fm_enc($owner['name'] . ':' . $group['name']); ?>">
+                            <?php
+                            $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
+                            $groupName = isset($group['name']) ? (string) $group['name'] : '?';
+                            $ownerLabel = $ownerName;
+                            if (!empty($owner['gecos'])) {
+                                $ownerGecos = trim((string) $owner['gecos']);
+                                if ($ownerGecos !== '') {
+                                    $ownerLabel = $ownerGecos;
+                                }
+                            }
+                            if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
+                                $ownerLabel = 'System';
+                            }
+                            $canChatWithOwner = FM_USE_AUTH
+                                && !empty($_SESSION[FM_SESSION_ID]['logged'])
+                                && isset($auth_users)
+                                && is_array($auth_users)
+                                && isset($auth_users[$ownerName]);
+                            $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
+                            ?>
+                            <button
+                                type="button"
+                                class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
+                                data-chat-user="<?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? fm_enc($ownerName) : ''; ?>"
+                                title="<?php echo fm_enc($ownerName . ':' . $groupName); ?>"
+                                <?php echo (!$canChatWithOwner || $isSelfOwnerBadge) ? 'disabled' : ''; ?>
+                            >
                                 <i class="fa fa-user" aria-hidden="true"></i>
-                                <span><?php echo fm_enc($owner['name']); ?></span>
-                            </span>
+                                <span><?php echo fm_enc($ownerLabel); ?></span>
+                            </button>
                         </td>
                     <?php endif; ?>
                     <td class="inline-actions fm-col-actions">
