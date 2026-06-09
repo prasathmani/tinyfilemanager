@@ -67,6 +67,55 @@
                 </tr>
             <?php
             }
+
+            $fmBuildActionNote = static function ($meta, $fallbackModified) {
+                $label = 'Bez app zaznamu';
+                $title = 'Bez zaznamu o poslednom app ukone';
+
+                if (is_array($meta)) {
+                    $lastActionRaw = isset($meta['last_action']) ? strtolower(trim((string) $meta['last_action'])) : '';
+                    $actionMap = array(
+                        'create' => 'Vytvorene',
+                        'mkdir' => 'Priecinok',
+                        'upload' => 'Upload',
+                        'upload_url' => 'Upload URL',
+                        'copy' => 'Kopia',
+                        'move' => 'Presun',
+                        'rename' => 'Premenovane',
+                        'edit' => 'Editacia',
+                        'update' => 'Uprava',
+                        'write' => 'Zapis',
+                        'delete' => 'Zmazanie',
+                        'remove' => 'Odstranenie',
+                    );
+
+                    if ($lastActionRaw !== '') {
+                        $label = isset($actionMap[$lastActionRaw])
+                            ? $actionMap[$lastActionRaw]
+                            : ucfirst(str_replace('_', ' ', $lastActionRaw));
+                    } else {
+                        $label = 'Uprava';
+                    }
+
+                    $updatedBy = isset($meta['updated_by']) ? trim((string) $meta['updated_by']) : '';
+                    $updatedAt = isset($meta['updated_at']) && is_numeric($meta['updated_at']) ? (int) $meta['updated_at'] : 0;
+
+                    if ($updatedBy !== '' && strtolower($updatedBy) !== 'system') {
+                        $label .= ' · ' . $updatedBy;
+                    }
+
+                    $title = $label;
+                    if ($updatedAt > 0) {
+                        $title .= ' @ ' . date(FM_DATETIME_FORMAT, $updatedAt);
+                    }
+                } elseif ($fallbackModified !== '') {
+                    $label = 'System · ' . (string) $fallbackModified;
+                    $title = 'Posledna systemova zmena podla mtime: ' . (string) $fallbackModified;
+                }
+
+                return array('label' => $label, 'title' => $title);
+            };
+
             $ii = 3399;
             foreach ($folders as $f) {
                 $is_link = is_link($path . '/' . $f);
@@ -172,6 +221,7 @@
                             && is_array($auth_users)
                             && isset($auth_users[$lastEditorName]);
                         $isSelfLastEditorBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $lastEditorName;
+                        $actionNote = $fmBuildActionNote($appOwnerMeta, $modif);
                         ?>
                         <td class="fm-col-perms"><?php echo $perms ?></td>
                         <td class="fm-col-owner" data-owner-source="<?php echo $ownerSource === 'app' ? 'app' : 'system'; ?>">
@@ -202,6 +252,10 @@
                         </td>
                     <?php } ?>
                     <td class="fm-col-actions">
+                        <div class="fm-action-note" title="<?php echo fm_enc($actionNote['title']); ?>">
+                            <i class="fa fa-history" aria-hidden="true"></i>
+                            <span><?php echo fm_enc($actionNote['label']); ?></span>
+                        </div>
                         <div class="inline-actions">
                             <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                                 <?php if (!FM_MANAGER): ?>
@@ -341,6 +395,7 @@
                             && is_array($auth_users)
                             && isset($auth_users[$lastEditorName]);
                         $isSelfLastEditorBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $lastEditorName;
+                        $actionNote = $fmBuildActionNote($appOwnerMeta, $modif);
                         ?>
                         <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
@@ -372,6 +427,10 @@
                         </td>
                     <?php endif; ?>
                     <td class="fm-col-actions">
+                        <div class="fm-action-note" title="<?php echo fm_enc($actionNote['title']); ?>">
+                            <i class="fa fa-history" aria-hidden="true"></i>
+                            <span><?php echo fm_enc($actionNote['label']); ?></span>
+                        </div>
                         <div class="inline-actions">
                             <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                                 <?php if (!FM_MANAGER): ?>
@@ -502,6 +561,7 @@
         var countAppEl = document.getElementById('fm-owner-count-app');
         var countSystemEl = document.getElementById('fm-owner-count-system');
         var countBadgeEls = document.querySelectorAll('.fm-owner-source-count[data-owner-filter-target]');
+        var canCreateNewItem = <?php echo (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) ? 'true' : 'false'; ?>;
         if (!tableEl) {
             return;
         }
@@ -722,6 +782,26 @@
             gridViewEl.innerHTML = '<div class="fm-grid">' + cards + '</div>';
         }
 
+        function openCreateNewItemModal() {
+            if (!canCreateNewItem) {
+                return;
+            }
+
+            var modalEl = document.getElementById('createNewItem');
+            if (!modalEl) {
+                return;
+            }
+
+            if (window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                return;
+            }
+
+            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.modal === 'function') {
+                window.jQuery(modalEl).modal('show');
+            }
+        }
+
         function ensureFloatingPanel() {
             if (floatingPanelEl) {
                 return;
@@ -733,6 +813,7 @@
             floatingPanelEl.innerHTML = ''
                 + '<div class="fm-row-actions-float__header">'
                 + '  <span class="fm-row-actions-float__title"></span>'
+                + '  <button type="button" class="btn btn-sm btn-outline-primary fm-row-actions-float__new" title="<?php echo fm_enc(lng('NewItem')); ?>" aria-label="<?php echo fm_enc(lng('NewItem')); ?>"><i class="fa fa-plus-square" aria-hidden="true"></i></button>'
                 + '  <button type="button" class="btn-close btn-close-sm fm-row-actions-float__close" aria-label="Close"></button>'
                 + '</div>'
                 + '<div class="inline-actions fm-row-actions-float__actions"></div>';
@@ -742,6 +823,17 @@
             floatingPanelActionsEl = floatingPanelEl.querySelector('.fm-row-actions-float__actions');
 
             var closeBtn = floatingPanelEl.querySelector('.fm-row-actions-float__close');
+            var newBtn = floatingPanelEl.querySelector('.fm-row-actions-float__new');
+            if (newBtn) {
+                if (!canCreateNewItem) {
+                    newBtn.classList.add('hidden');
+                    newBtn.setAttribute('disabled', 'disabled');
+                } else {
+                    newBtn.addEventListener('click', function () {
+                        openCreateNewItemModal();
+                    });
+                }
+            }
             if (closeBtn) {
                 closeBtn.addEventListener('click', function () {
                     hideFloatingPanel();

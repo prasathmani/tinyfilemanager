@@ -219,8 +219,8 @@ body {
 }
 
 #main-table.fm-modern-table .fm-col-actions {
-  width: 1%;
-  white-space: nowrap;
+  width: 168px;
+  white-space: normal;
 }
 
 #main-table.fm-modern-table .fm-col-owner {
@@ -322,6 +322,32 @@ body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions 
   pointer-events: none;
 }
 
+.fm-action-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  border: 1px dashed var(--fmx-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.42rem;
+  color: var(--fmx-subtle);
+  font-size: 0.69rem;
+  font-weight: 600;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fm-action-note i {
+  opacity: 0.85;
+}
+
+.fm-action-note span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #fm-row-actions-float {
   position: absolute;
   z-index: 1095;
@@ -338,7 +364,7 @@ body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions 
 #fm-row-actions-float .fm-row-actions-float__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   margin-bottom: 7px;
 }
@@ -354,6 +380,17 @@ body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions 
 
 #fm-row-actions-float .fm-row-actions-float__close {
   display: none;
+}
+
+#fm-row-actions-float .fm-row-actions-float__new {
+  margin-left: auto;
+  border-radius: 999px;
+  line-height: 1;
+  padding: 0.2rem 0.44rem;
+}
+
+#fm-row-actions-float .fm-row-actions-float__new i {
+  font-size: 0.84rem;
 }
 
 #fm-row-actions-float .fm-row-actions-float__actions {
@@ -440,6 +477,10 @@ html[data-bs-theme="dark"] #fm-row-actions-float {
     display: inline-block;
   }
 
+  #fm-row-actions-float .fm-row-actions-float__new {
+    padding: 0.22rem 0.48rem;
+  }
+
   #main-table.fm-modern-table thead th,
   #main-table.fm-modern-table tbody td {
     padding: 0.5rem 0.44rem;
@@ -447,6 +488,16 @@ html[data-bs-theme="dark"] #fm-row-actions-float {
 
   #main-table.fm-modern-table .fm-col-name .filename {
     max-width: 48vw;
+  }
+
+  #main-table.fm-modern-table .fm-col-actions {
+    width: 146px;
+  }
+
+  .fm-action-note {
+    font-size: 0.64rem;
+    padding: 0.16rem 0.34rem;
+    gap: 3px;
   }
 
   .fm-owner-badge {
