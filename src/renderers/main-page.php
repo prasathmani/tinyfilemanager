@@ -26,8 +26,8 @@
                     <option value="app">App</option>
                     <option value="system">System</option>
                 </select>
-                <span class="badge text-bg-light fm-owner-source-count" id="fm-owner-count-app" title="Pocet App owner poloziek">App: 0</span>
-                <span class="badge text-bg-light fm-owner-source-count" id="fm-owner-count-system" title="Pocet System owner poloziek">System: 0</span>
+                <span class="badge text-bg-light fm-owner-source-count" id="fm-owner-count-app" data-owner-filter-target="app" tabindex="0" role="button" title="Pocet App owner poloziek (klik pre filter)">App: 0</span>
+                <span class="badge text-bg-light fm-owner-source-count" id="fm-owner-count-system" data-owner-filter-target="system" tabindex="0" role="button" title="Pocet System owner poloziek (klik pre filter)">System: 0</span>
             </div>
         <?php endif; ?>
     </div>
@@ -432,6 +432,7 @@
         var tableEl = document.getElementById('main-table');
         var countAppEl = document.getElementById('fm-owner-count-app');
         var countSystemEl = document.getElementById('fm-owner-count-system');
+        var countBadgeEls = document.querySelectorAll('.fm-owner-source-count[data-owner-filter-target]');
         if (!filterEl || !tableEl) {
             return;
         }
@@ -487,6 +488,16 @@
             if (countSystemEl) {
                 countSystemEl.textContent = 'System: ' + systemCount;
             }
+
+            var selected = getSelectedSource();
+            countBadgeEls.forEach(function (el) {
+                var target = String(el.getAttribute('data-owner-filter-target') || '').toLowerCase();
+                if (target && target === selected) {
+                    el.classList.add('is-active');
+                } else {
+                    el.classList.remove('is-active');
+                }
+            });
         }
 
         function ensureDataTableFilter() {
@@ -537,6 +548,24 @@
         }
 
         filterEl.addEventListener('change', applyFilter);
+        countBadgeEls.forEach(function (badge) {
+            function applyTargetFilter() {
+                var target = String(badge.getAttribute('data-owner-filter-target') || '').toLowerCase();
+                if (!target) {
+                    return;
+                }
+                filterEl.value = target;
+                applyFilter();
+            }
+
+            badge.addEventListener('click', applyTargetFilter);
+            badge.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    applyTargetFilter();
+                }
+            });
+        });
         refreshOwnerSourceCounts();
         window.setTimeout(applyFilter, 0);
     })();

@@ -191,6 +191,14 @@ body {
   font-size: 0.7rem;
   font-weight: 700;
   padding: 0.28rem 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fm-owner-source-count.is-active {
+  border-color: var(--fmx-accent);
+  background: var(--fmx-accent-weak) !important;
+  color: var(--fmx-accent) !important;
 }
 
 .fm-table-wrap,

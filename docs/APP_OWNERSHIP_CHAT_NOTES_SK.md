@@ -37,6 +37,7 @@ Aplikacia teraz rozlisuje 2 vrstvy vlastnictva:
   - `App`: zobrazi len polozky s app metadata (`created_by`).
   - `System`: zobrazi len fallback system owner polozky.
 - Vedla filtra su badge pocty `App: N` a `System: N` pre rychly audit rozlozenia vlastnictva.
+- Badge `App` a `System` su klikatelne skratky filtra (aj klavesovo cez Enter/Space).
 
 ## 5) Chat a offline spravy
 
