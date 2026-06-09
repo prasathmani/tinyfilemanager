@@ -5144,28 +5144,71 @@ function fm_get_file_mimes($extension)
  */
 function scan($dir = '', $filter = '')
 {
-    $path = FM_ROOT_PATH . '/' . $dir;
-    if ($path) {
-        $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-        $rii = new RegexIterator($ite, "/(" . $filter . ")/i");
+    $dir = fm_clean_path((string) $dir);
+    $base = rtrim((string) FM_ROOT_PATH, '/\\');
+    $path = $base . ($dir !== '' ? '/' . ltrim($dir, '/') : '');
 
-        $files = array();
-        foreach ($rii as $file) {
-            if (!$file->isDir()) {
-                if (!fm_user_can_access_path($file->getPathname(), false)) {
+    if (!is_dir($path) || !fm_user_can_access_path($path, true)) {
+        return array();
+    }
+
+    $needle = trim((string) $filter);
+    $needle = function_exists('mb_strtolower') ? mb_strtolower($needle, 'UTF-8') : strtolower($needle);
+
+    $files = array();
+    $stack = array(array($path, ''));
+
+    while (!empty($stack)) {
+        $current = array_pop($stack);
+        $currentAbs = $current[0];
+        $currentRel = $current[1];
+
+        $entries = @scandir($currentAbs);
+        if ($entries === false) {
+            // Skip unreadable directories and continue traversal.
+            continue;
+        }
+
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            $abs = $currentAbs . '/' . $entry;
+            $rel = ltrim(($currentRel !== '' ? $currentRel . '/' : '') . $entry, '/');
+
+            if (is_dir($abs)) {
+                if (fm_user_can_access_path($abs, true)) {
+                    $stack[] = array($abs, $rel);
+                }
+                continue;
+            }
+
+            if (!is_file($abs)) {
+                continue;
+            }
+
+            if (!fm_user_can_access_path($abs, false)) {
+                continue;
+            }
+
+            if ($needle !== '') {
+                $haystack = function_exists('mb_strtolower') ? mb_strtolower($rel, 'UTF-8') : strtolower($rel);
+                if (strpos($haystack, $needle) === false) {
                     continue;
                 }
-                $fileName = $file->getFilename();
-                $location = str_replace(FM_ROOT_PATH, '', $file->getPath());
-                $files[] = array(
-                    "name" => $fileName,
-                    "type" => "file",
-                    "path" => $location,
-                );
             }
+
+            $location = str_replace($base, '', dirname($abs));
+            $files[] = array(
+                "name" => basename($abs),
+                "type" => "file",
+                "path" => $location,
+            );
         }
-        return $files;
     }
+
+    return $files;
 }
 
 /**
