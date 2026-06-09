@@ -134,7 +134,16 @@
   }
 
   function isInteractiveElement(node) {
-    if (!node || !node.tagName) {
+    if (!node) {
+      return false;
+    }
+
+    // Clicking link text can produce a Text node target; normalize to element.
+    if (node.nodeType === 3 && node.parentElement) {
+      node = node.parentElement;
+    }
+
+    if (!node.tagName) {
       return false;
     }
 
@@ -143,7 +152,7 @@
       return true;
     }
 
-    return !!node.closest && !!node.closest('a, button, input, label, select, textarea');
+    return !!node.closest && !!node.closest('a, button, input, label, select, textarea, .filename');
   }
 
   function bindRowClickSelection() {

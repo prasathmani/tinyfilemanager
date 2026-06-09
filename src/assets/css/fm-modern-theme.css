@@ -80,8 +80,12 @@ body {
 
 /* Remove horizontal row framing in listing body (keep vertical separators). */
 #main-table.fm-modern-table tbody td {
-  border-top: 0 !important;
-  border-bottom: 0 !important;
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+  border-top-style: none !important;
+  border-bottom-style: none !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
 }
 
 #main-table .filename a {
@@ -276,6 +280,20 @@ html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:focus-visible {
   margin-bottom: 0;
 }
 
+/*
+ * Bootstrap baseline adds horizontal separators via
+ * .table > :not(caption) > * > * border-bottom.
+ * Force-disable only horizontal lines for main listing table.
+ */
+#main-table.fm-modern-table.table > :not(caption) > * > * {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+  border-top-style: none !important;
+  border-bottom-style: none !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
 #main-table.fm-modern-table thead th,
 #main-table.fm-modern-table tbody td {
   padding: 0.32rem 0.38rem;
@@ -448,6 +466,20 @@ html[data-bs-theme="dark"] .fm-owner-last-editor-badge {
   margin: 0 !important;
 }
 
+#main-table.fm-modern-table .fm-col-actions > .inline-actions > a > i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  line-height: 1;
+  font-size: 0.84rem;
+  border-radius: 8px;
+}
+
 body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions {
   visibility: hidden;
   pointer-events: none;
@@ -532,6 +564,20 @@ body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions 
 
 #fm-row-actions-float .inline-actions > a {
   display: inline-flex !important;
+}
+
+#fm-row-actions-float .inline-actions > a > i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  line-height: 1;
+  font-size: 0.95rem;
+  border-radius: 9px;
 }
 
 html[data-bs-theme="dark"] #fm-row-actions-float {
@@ -751,4 +797,60 @@ body.fm-density-normal .inline-actions > a > i {
 html[data-bs-theme="dark"] .fm-view-switch .btn.active,
 html[data-bs-theme="dark"] .fm-view-switch .btn:active {
   color: #0f1620;
+}
+
+/*
+ * Final density overrides (must stay at file end).
+ * They intentionally use stronger selectors + !important to beat legacy
+ * table-sm/table-bordered/theme rules from inline header styles.
+ */
+body.fm-density-compact #main-table.fm-modern-table.table-sm > :not(caption) > * > * {
+  padding: 0.14rem 0.24rem !important;
+  line-height: 1 !important;
+}
+
+body.fm-density-compact #main-table.fm-modern-table.table-sm tbody > tr > td {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  font-size: 0.84rem !important;
+}
+
+body.fm-density-compact #main-table.fm-modern-table .fm-owner-badge {
+  max-width: 82px !important;
+  padding: 0.04rem 0.18rem !important;
+  font-size: 0.6rem !important;
+  line-height: 1 !important;
+}
+
+body.fm-density-compact #main-table.fm-modern-table .inline-actions > a > i {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  font-size: 0.76rem !important;
+  border-radius: 7px !important;
+}
+
+body.fm-density-compact #main-table.fm-modern-table .fm-action-note {
+  font-size: 0.48rem !important;
+  padding: 0.04rem 0.14rem !important;
+  line-height: 1 !important;
+}
+
+html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.table-sm > :not(caption) > * > * {
+  padding: 0.14rem 0.24rem !important;
+  line-height: 1 !important;
+}
+
+html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.table-sm tbody > tr > td {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+  border-top-style: none !important;
+  border-bottom-style: none !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
 }
