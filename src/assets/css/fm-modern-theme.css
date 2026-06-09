@@ -160,6 +160,31 @@ body {
   margin-left: 6px;
 }
 
+.fm-owner-filter-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fm-owner-filter-label {
+  margin: 0;
+  color: var(--fmx-subtle);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.fm-owner-filter {
+  min-width: 108px;
+  border-radius: 999px;
+  border-color: var(--fmx-border);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding-top: 0.22rem;
+  padding-bottom: 0.22rem;
+  background-color: var(--fmx-surface);
+  color: var(--fmx-text);
+}
+
 .fm-table-wrap,
 .fm-main-table-wrap {
   border-radius: 14px;
@@ -273,6 +298,15 @@ body {
   .fm-view-switch {
     width: 100%;
     display: flex;
+  }
+
+  .fm-owner-filter-wrap {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .fm-owner-filter {
+    min-width: 98px;
   }
 
   .fm-view-switch .btn {

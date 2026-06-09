@@ -18,6 +18,16 @@
                 <i class="fa fa-th-large" aria-hidden="true"></i> Mriežka
             </button>
         </div>
+        <?php if (!FM_IS_WIN && !$hide_Cols): ?>
+            <div class="fm-owner-filter-wrap">
+                <label for="fm-owner-source-filter" class="fm-owner-filter-label">Vlastnik:</label>
+                <select id="fm-owner-source-filter" class="form-select form-select-sm fm-owner-filter" aria-label="Filter owner source">
+                    <option value="all">Vsetko</option>
+                    <option value="app">App</option>
+                    <option value="system">System</option>
+                </select>
+            </div>
+        <?php endif; ?>
     </div>
     <div class="table-responsive fm-table-wrap">
         <table class="table table-bordered table-hover table-sm align-middle fm-modern-table" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
@@ -106,46 +116,46 @@
                     </td>
                     <td class="fm-col-modified" data-order="a-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
+                        <?php
+                        $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
+                        $groupName = isset($group['name']) ? (string) $group['name'] : '?';
+                        $ownerTitle = $ownerName . ':' . $groupName;
+                        $hasAppOwner = false;
+                        $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
+                        if (is_array($appOwnerMeta)) {
+                            $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
+                            $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
+                            if ($appCreatedBy !== '') {
+                                $hasAppOwner = true;
+                                $ownerName = $appCreatedBy;
+                                $ownerLabel = $appCreatedBy;
+                                $ownerTitle = 'App owner: ' . $appCreatedBy;
+                                if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
+                                    $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
+                                }
+                            }
+                        }
+                        $ownerLabel = $ownerName;
+                        if (!$hasAppOwner) {
+                            if (!empty($owner['gecos'])) {
+                                $ownerGecos = trim((string) $owner['gecos']);
+                                if ($ownerGecos !== '') {
+                                    $ownerLabel = $ownerGecos;
+                                }
+                            }
+                            if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
+                                $ownerLabel = 'System';
+                            }
+                        }
+                        $canChatWithOwner = FM_USE_AUTH
+                            && !empty($_SESSION[FM_SESSION_ID]['logged'])
+                            && isset($auth_users)
+                            && is_array($auth_users)
+                            && isset($auth_users[$ownerName]);
+                        $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
+                        ?>
                         <td class="fm-col-perms"><?php echo $perms ?></td>
-                        <td class="fm-col-owner">
-                            <?php
-                            $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
-                            $groupName = isset($group['name']) ? (string) $group['name'] : '?';
-                            $ownerTitle = $ownerName . ':' . $groupName;
-                            $hasAppOwner = false;
-                            $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
-                            if (is_array($appOwnerMeta)) {
-                                $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
-                                $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
-                                if ($appCreatedBy !== '') {
-                                    $hasAppOwner = true;
-                                    $ownerName = $appCreatedBy;
-                                    $ownerLabel = $appCreatedBy;
-                                    $ownerTitle = 'App owner: ' . $appCreatedBy;
-                                    if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
-                                        $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
-                                    }
-                                }
-                            }
-                            $ownerLabel = $ownerName;
-                            if (!$hasAppOwner) {
-                                if (!empty($owner['gecos'])) {
-                                    $ownerGecos = trim((string) $owner['gecos']);
-                                    if ($ownerGecos !== '') {
-                                        $ownerLabel = $ownerGecos;
-                                    }
-                                }
-                                if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
-                                    $ownerLabel = 'System';
-                                }
-                            }
-                            $canChatWithOwner = FM_USE_AUTH
-                                && !empty($_SESSION[FM_SESSION_ID]['logged'])
-                                && isset($auth_users)
-                                && is_array($auth_users)
-                                && isset($auth_users[$ownerName]);
-                            $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
-                            ?>
+                        <td class="fm-col-owner" data-owner-source="<?php echo $hasAppOwner ? 'app' : 'system'; ?>">
                             <button
                                 type="button"
                                 class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
@@ -242,47 +252,47 @@
                         </span></td>
                     <td class="fm-col-modified" data-order="b-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
+                        <?php
+                        $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
+                        $groupName = isset($group['name']) ? (string) $group['name'] : '?';
+                        $ownerTitle = $ownerName . ':' . $groupName;
+                        $hasAppOwner = false;
+                        $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
+                        if (is_array($appOwnerMeta)) {
+                            $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
+                            $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
+                            if ($appCreatedBy !== '') {
+                                $hasAppOwner = true;
+                                $ownerName = $appCreatedBy;
+                                $ownerLabel = $appCreatedBy;
+                                $ownerTitle = 'App owner: ' . $appCreatedBy;
+                                if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
+                                    $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
+                                }
+                            }
+                        }
+                        $ownerLabel = $ownerName;
+                        if (!$hasAppOwner) {
+                            if (!empty($owner['gecos'])) {
+                                $ownerGecos = trim((string) $owner['gecos']);
+                                if ($ownerGecos !== '') {
+                                    $ownerLabel = $ownerGecos;
+                                }
+                            }
+                            if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
+                                $ownerLabel = 'System';
+                            }
+                        }
+                        $canChatWithOwner = FM_USE_AUTH
+                            && !empty($_SESSION[FM_SESSION_ID]['logged'])
+                            && isset($auth_users)
+                            && is_array($auth_users)
+                            && isset($auth_users[$ownerName]);
+                        $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
+                        ?>
                         <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td class="fm-col-owner">
-                            <?php
-                            $ownerName = isset($owner['name']) ? (string) $owner['name'] : '?';
-                            $groupName = isset($group['name']) ? (string) $group['name'] : '?';
-                            $ownerTitle = $ownerName . ':' . $groupName;
-                            $hasAppOwner = false;
-                            $appOwnerMeta = function_exists('fm_owner_meta_get') ? fm_owner_meta_get($path . '/' . $f) : null;
-                            if (is_array($appOwnerMeta)) {
-                                $appCreatedBy = isset($appOwnerMeta['created_by']) ? trim((string) $appOwnerMeta['created_by']) : '';
-                                $appUpdatedBy = isset($appOwnerMeta['updated_by']) ? trim((string) $appOwnerMeta['updated_by']) : '';
-                                if ($appCreatedBy !== '') {
-                                    $hasAppOwner = true;
-                                    $ownerName = $appCreatedBy;
-                                    $ownerLabel = $appCreatedBy;
-                                    $ownerTitle = 'App owner: ' . $appCreatedBy;
-                                    if ($appUpdatedBy !== '' && $appUpdatedBy !== $appCreatedBy) {
-                                        $ownerTitle .= ' | Last update: ' . $appUpdatedBy;
-                                    }
-                                }
-                            }
-                            $ownerLabel = $ownerName;
-                            if (!$hasAppOwner) {
-                                if (!empty($owner['gecos'])) {
-                                    $ownerGecos = trim((string) $owner['gecos']);
-                                    if ($ownerGecos !== '') {
-                                        $ownerLabel = $ownerGecos;
-                                    }
-                                }
-                                if (preg_match('/^u[0-9]{5,}$/', $ownerLabel)) {
-                                    $ownerLabel = 'System';
-                                }
-                            }
-                            $canChatWithOwner = FM_USE_AUTH
-                                && !empty($_SESSION[FM_SESSION_ID]['logged'])
-                                && isset($auth_users)
-                                && is_array($auth_users)
-                                && isset($auth_users[$ownerName]);
-                            $isSelfOwnerBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $ownerName;
-                            ?>
+                        <td class="fm-col-owner" data-owner-source="<?php echo $hasAppOwner ? 'app' : 'system'; ?>">
                             <button
                                 type="button"
                                 class="badge border-0 fm-user-chat-badge fm-owner-badge <?php echo ($canChatWithOwner && !$isSelfOwnerBadge) ? 'text-bg-secondary' : 'text-bg-light'; ?>"
@@ -413,6 +423,96 @@
         <?php endif; ?>
     </div>
 </form>
+
+<script>
+    (function () {
+        var filterEl = document.getElementById('fm-owner-source-filter');
+        var tableEl = document.getElementById('main-table');
+        if (!filterEl || !tableEl) {
+            return;
+        }
+
+        var dataTableFilterInstalled = false;
+
+        function getSelectedSource() {
+            return (filterEl.value || 'all').toLowerCase();
+        }
+
+        function rowMatchesFilter(row) {
+            var selected = getSelectedSource();
+            if (selected === 'all') {
+                return true;
+            }
+
+            var ownerCell = row.querySelector('td.fm-col-owner[data-owner-source]');
+            if (!ownerCell) {
+                return true;
+            }
+
+            return String(ownerCell.getAttribute('data-owner-source') || 'system').toLowerCase() === selected;
+        }
+
+        function applyPlainFilter() {
+            var rows = tableEl.querySelectorAll('tbody tr');
+            rows.forEach(function (row) {
+                if (row.classList.contains('fm-parent-row')) {
+                    row.style.display = '';
+                    return;
+                }
+                row.style.display = rowMatchesFilter(row) ? '' : 'none';
+            });
+        }
+
+        function ensureDataTableFilter() {
+            if (!(window.jQuery && window.jQuery.fn && window.jQuery.fn.dataTable && window.jQuery.fn.dataTable.ext && window.jQuery.fn.dataTable.ext.search)) {
+                return false;
+            }
+
+            if (!dataTableFilterInstalled) {
+                window.jQuery.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                    if (!settings || !settings.nTable || settings.nTable.id !== 'main-table') {
+                        return true;
+                    }
+
+                    var api = new window.jQuery.fn.dataTable.Api(settings);
+                    var rowNode = api.row(dataIndex).node();
+                    if (!rowNode) {
+                        return true;
+                    }
+
+                    if (rowNode.classList && rowNode.classList.contains('fm-parent-row')) {
+                        return true;
+                    }
+
+                    return rowMatchesFilter(rowNode);
+                });
+                dataTableFilterInstalled = true;
+            }
+
+            if (window.mainTable && typeof window.mainTable.draw === 'function') {
+                window.mainTable.draw();
+                return true;
+            }
+
+            if (window.jQuery.fn.dataTable.isDataTable('#main-table')) {
+                window.mainTable = window.jQuery('#main-table').DataTable();
+                window.mainTable.draw();
+                return true;
+            }
+
+            return false;
+        }
+
+        function applyFilter() {
+            if (!ensureDataTableFilter()) {
+                applyPlainFilter();
+            }
+        }
+
+        filterEl.addEventListener('change', applyFilter);
+        window.setTimeout(applyFilter, 0);
+    })();
+</script>
 
 <?php if ($footerShowUserBadges): ?>
     <style>

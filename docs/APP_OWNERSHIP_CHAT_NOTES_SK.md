@@ -33,6 +33,9 @@ Aplikacia teraz rozlisuje 2 vrstvy vlastnictva:
   - `App owner: <user>`
   - `Last update: <user>` ked sa lisi od ownera
 - Ak app metadata neexistuju, zobrazi sa fallback na systemoveho ownera.
+- Toolbar obsahuje filter `Vlastnik` s volbami `Vsetko / App / System`.
+  - `App`: zobrazi len polozky s app metadata (`created_by`).
+  - `System`: zobrazi len fallback system owner polozky.
 
 ## 5) Chat a offline spravy
 
