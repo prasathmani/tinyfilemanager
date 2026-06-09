@@ -110,12 +110,14 @@ class TFM_FileActionHandler {
         }
 
         // old name
-        $old = urldecode($post['rename_from']);
+        // POST payload is already URL-decoded by PHP for form-urlencoded data.
+        $old = (string) $post['rename_from'];
         $old = fm_clean_path($old);
         $old = str_replace('/', '', $old);
 
         // new name
-        $new = urldecode($post['rename_to']);
+        // Avoid double-decoding that can mangle names containing '+' or percent sequences.
+        $new = (string) $post['rename_to'];
         $new = fm_clean_path(strip_tags($new));
         $new = str_replace('/', '', $new);
 
@@ -124,12 +126,19 @@ class TFM_FileActionHandler {
 
         // rename
         if (fm_isvalid_filename($new) && $old != '' && $new != '') {
-            if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
+            $full_old = $path . '/' . $old;
+            $full_new = $path . '/' . $new;
+
+            if (!file_exists($full_old) && !is_dir($full_old)) {
+                fm_set_msg(sprintf(lng('File not found') . ': <b>%s</b>', fm_enc($old)), 'error');
+            } elseif (file_exists($full_new) || is_dir($full_new)) {
+                fm_set_msg(sprintf(lng('File or folder with this path already exists') . ': <b>%s</b>', fm_enc($new)), 'error');
+            } elseif (fm_rename($full_old, $full_new)) {
                     if (function_exists('fm_owner_meta_move')) {
-                        fm_owner_meta_move($path . '/' . $old, $path . '/' . $new);
+                        fm_owner_meta_move($full_old, $full_new);
                     }
                     if (function_exists('fm_owner_meta_touch')) {
-                        fm_owner_meta_touch($path . '/' . $new, 'rename');
+                        fm_owner_meta_touch($full_new, 'rename');
                     }
                 fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
             } else {
