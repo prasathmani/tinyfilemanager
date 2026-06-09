@@ -280,6 +280,22 @@ body {
   white-space: nowrap;
 }
 
+#main-table.fm-modern-table .fm-col-actions > .inline-actions,
+.fm-grid-actions .inline-actions {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+}
+
+#main-table.fm-modern-table .fm-col-actions > .inline-actions > a,
+.fm-grid-actions .inline-actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .inline-actions > a > i {
   min-width: 24px;
   min-height: 24px;

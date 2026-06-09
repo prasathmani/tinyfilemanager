@@ -170,15 +170,17 @@
                             </button>
                         </td>
                     <?php } ?>
-                    <td class="inline-actions fm-col-actions">
-                        <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
-                            <?php if (!FM_MANAGER): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                    <td class="fm-col-actions">
+                        <div class="inline-actions">
+                            <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+                                <?php if (!FM_MANAGER): ?>
+                                <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                                <?php endif; ?>
+                                <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                                <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                             <?php endif; ?>
-                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                            <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
-                        <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        </div>
                     </td>
                 </tr>
             <?php
@@ -307,17 +309,19 @@
                             </button>
                         </td>
                     <?php endif; ?>
-                    <td class="inline-actions fm-col-actions">
-                        <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
-                            <?php if (!FM_MANAGER): ?>
-                            <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($f); ?>', this.href);"> <i class="fa fa-trash-o"></i></a>
+                    <td class="fm-col-actions">
+                        <div class="inline-actions">
+                            <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+                                <?php if (!FM_MANAGER): ?>
+                                <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($f); ?>', this.href);"> <i class="fa fa-trash-o"></i></a>
+                                <?php endif; ?>
+                                <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
+                                <a title="<?php echo lng('CopyTo') ?>..."
+                                    href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
                             <?php endif; ?>
-                            <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
-                            <a title="<?php echo lng('CopyTo') ?>..."
-                                href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
-                        <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
-                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
+                            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
+                            <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
+                        </div>
                     </td>
                 </tr>
             <?php
@@ -430,12 +434,17 @@
     (function () {
         var filterEl = document.getElementById('fm-owner-source-filter');
         var tableEl = document.getElementById('main-table');
+        var tableWrapEl = document.querySelector('.fm-table-wrap');
+        var gridViewEl = document.getElementById('fm-grid-view');
+        var viewButtons = document.querySelectorAll('.js-view-mode');
         var countAppEl = document.getElementById('fm-owner-count-app');
         var countSystemEl = document.getElementById('fm-owner-count-system');
         var countBadgeEls = document.querySelectorAll('.fm-owner-source-count[data-owner-filter-target]');
-        if (!filterEl || !tableEl) {
+        if (!tableEl) {
             return;
         }
+
+        var currentViewMode = 'list';
 
         var dataTableFilterInstalled = false;
 
@@ -444,6 +453,9 @@
         }
 
         function rowMatchesFilter(row) {
+            if (!filterEl) {
+                return true;
+            }
             var selected = getSelectedSource();
             if (selected === 'all') {
                 return true;
@@ -469,6 +481,9 @@
         }
 
         function refreshOwnerSourceCounts() {
+            if (!countAppEl && !countSystemEl) {
+                return;
+            }
             var appCount = 0;
             var systemCount = 0;
             var ownerCells = tableEl.querySelectorAll('tbody td.fm-col-owner[data-owner-source]');
@@ -489,7 +504,7 @@
                 countSystemEl.textContent = 'System: ' + systemCount;
             }
 
-            var selected = getSelectedSource();
+            var selected = filterEl ? getSelectedSource() : 'all';
             countBadgeEls.forEach(function (el) {
                 var target = String(el.getAttribute('data-owner-filter-target') || '').toLowerCase();
                 if (target && target === selected) {
@@ -541,17 +556,130 @@
         }
 
         function applyFilter() {
-            if (!ensureDataTableFilter()) {
+            var dataTableApplied = false;
+            if (filterEl) {
+                dataTableApplied = ensureDataTableFilter();
+            }
+            if (!dataTableApplied) {
                 applyPlainFilter();
             }
             refreshOwnerSourceCounts();
+            if (currentViewMode === 'grid') {
+                renderGridFromVisibleRows();
+            }
         }
 
-        filterEl.addEventListener('change', applyFilter);
+        function htmlEscape(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function collectVisibleRows() {
+            var rows = tableEl.querySelectorAll('tbody tr');
+            var items = [];
+            rows.forEach(function (row) {
+                if (row.classList.contains('fm-parent-row')) {
+                    return;
+                }
+
+                if (!rowMatchesFilter(row)) {
+                    return;
+                }
+
+                var display = window.getComputedStyle(row).display;
+                if (display === 'none') {
+                    return;
+                }
+
+                var nameCell = row.querySelector('td.fm-col-name .filename');
+                if (!nameCell) {
+                    return;
+                }
+
+                var nameLink = nameCell.querySelector('a');
+                if (!nameLink) {
+                    return;
+                }
+
+                var iconEl = nameLink.querySelector('i');
+                var sizeCell = row.querySelector('td.fm-col-size');
+                var modCell = row.querySelector('td.fm-col-modified');
+                var ownerCell = row.querySelector('td.fm-col-owner');
+                var actionsWrap = row.querySelector('td.fm-col-actions .inline-actions');
+                var ownerSource = ownerCell ? String(ownerCell.getAttribute('data-owner-source') || 'system').toLowerCase() : 'system';
+
+                items.push({
+                    nameHtml: nameLink.outerHTML,
+                    iconClass: iconEl ? iconEl.className : 'fa fa-file-o',
+                    sizeText: sizeCell ? (sizeCell.textContent || '').trim() : '',
+                    modText: modCell ? (modCell.textContent || '').trim() : '',
+                    ownerHtml: ownerCell ? ownerCell.innerHTML : '',
+                    ownerSource: ownerSource,
+                    actionsHtml: actionsWrap ? actionsWrap.innerHTML : '',
+                });
+            });
+            return items;
+        }
+
+        function renderGridFromVisibleRows() {
+            if (!gridViewEl) {
+                return;
+            }
+
+            var items = collectVisibleRows();
+            if (!items.length) {
+                gridViewEl.innerHTML = '<div class="alert alert-light border mb-0">Ziadne polozky pre aktualny filter.</div>';
+                return;
+            }
+
+            var cards = items.map(function (item) {
+                var ownerSourceBadge = item.ownerSource === 'app' ? '<span class="badge text-bg-primary">App</span>' : '<span class="badge text-bg-secondary">System</span>';
+                return '<div class="card fm-grid-item">'
+                    + '<div class="fm-grid-thumb"><i class="' + htmlEscape(item.iconClass) + '"></i></div>'
+                    + '<div class="fm-grid-body">'
+                    + '<div class="fm-grid-name">' + item.nameHtml + '</div>'
+                    + '<div class="fm-grid-meta"><span>' + htmlEscape(item.sizeText) + '</span><span>' + htmlEscape(item.modText) + '</span></div>'
+                    + '<div class="d-flex align-items-center justify-content-between mt-2"><div class="small">' + item.ownerHtml + '</div>' + ownerSourceBadge + '</div>'
+                    + '</div>'
+                    + '<div class="fm-grid-actions"><div class="inline-actions">' + item.actionsHtml + '</div></div>'
+                    + '</div>';
+            }).join('');
+
+            gridViewEl.innerHTML = '<div class="fm-grid">' + cards + '</div>';
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode === 'grid' ? 'grid' : 'list';
+
+            viewButtons.forEach(function (btn) {
+                var btnMode = String(btn.getAttribute('data-view-mode') || 'list');
+                var active = btnMode === currentViewMode;
+                btn.classList.toggle('active', active);
+            });
+
+            if (tableWrapEl) {
+                tableWrapEl.classList.toggle('hidden', currentViewMode === 'grid');
+            }
+            if (gridViewEl) {
+                gridViewEl.classList.toggle('hidden', currentViewMode !== 'grid');
+            }
+
+            if (currentViewMode === 'grid') {
+                renderGridFromVisibleRows();
+            }
+        }
+
+        if (filterEl) {
+            filterEl.addEventListener('change', applyFilter);
+        }
         countBadgeEls.forEach(function (badge) {
             function applyTargetFilter() {
                 var target = String(badge.getAttribute('data-owner-filter-target') || '').toLowerCase();
-                if (!target) {
+                if (!target || !filterEl) {
                     return;
                 }
                 filterEl.value = target;
@@ -566,8 +694,17 @@
                 }
             });
         });
+        viewButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var mode = String(btn.getAttribute('data-view-mode') || 'list');
+                setViewMode(mode);
+            });
+        });
         refreshOwnerSourceCounts();
-        window.setTimeout(applyFilter, 0);
+        window.setTimeout(function () {
+            applyFilter();
+            setViewMode('list');
+        }, 0);
     })();
 </script>
 
