@@ -60,6 +60,23 @@ body.theme-dark .main-nav.navbar {
   gap: 8px;
 }
 
+.main-nav .navbar-brand,
+.main-nav .navbar-nav .nav-link,
+.main-nav .navbar-nav .dropdown-toggle,
+.main-nav .navbar-nav .dropdown-item {
+  font-size: 0.5rem;
+  line-height: 1.2;
+}
+
+.main-nav .navbar-nav .input-group {
+  width: clamp(22rem, 42vw, 38rem);
+  min-width: 30ch;
+}
+
+.main-nav #search-addon {
+  min-width: 28ch;
+}
+
 .main-nav .fm-brand-logo {
   height: 32px;
   width: auto;
@@ -607,6 +624,19 @@ body.fm-density-normal .inline-actions > a > i {
   .main-nav {
     border-radius: 12px;
     margin: 8px 6px 12px;
+  }
+
+  .main-nav .navbar-brand,
+  .main-nav .navbar-nav .nav-link,
+  .main-nav .navbar-nav .dropdown-toggle,
+  .main-nav .navbar-nav .dropdown-item {
+    font-size: 0.75rem;
+  }
+
+  .main-nav .navbar-nav .input-group,
+  .main-nav #search-addon {
+    width: 100%;
+    min-width: 0;
   }
 
   .fm-shell {
