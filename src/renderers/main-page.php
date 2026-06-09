@@ -68,31 +68,19 @@
             <?php
             }
 
-            $fmBuildActionNote = static function ($meta, $fallbackModified) {
+            $fmBuildActionNote = static function ($meta, $fallbackModified, $isDirectory = false) {
                 $label = 'Bez app zaznamu';
                 $title = 'Bez zaznamu o poslednom app ukone';
 
                 if (is_array($meta)) {
                     $lastActionRaw = isset($meta['last_action']) ? strtolower(trim((string) $meta['last_action'])) : '';
-                    $actionMap = array(
-                        'create' => 'Vytvorene',
-                        'mkdir' => 'Priecinok',
-                        'upload' => 'Upload',
-                        'upload_url' => 'Upload URL',
-                        'copy' => 'Kopia',
-                        'move' => 'Presun',
-                        'rename' => 'Premenovanie',
-                        'edit' => 'Editacia',
-                        'update' => 'Uprava',
-                        'write' => 'Zapis',
-                        'delete' => 'Zmazanie',
-                        'remove' => 'Odstranenie',
-                    );
 
                     if ($lastActionRaw !== '') {
-                        $label = isset($actionMap[$lastActionRaw])
-                            ? $actionMap[$lastActionRaw]
-                            : ucfirst(str_replace('_', ' ', $lastActionRaw));
+                        if (function_exists('fm_owner_meta_action_label')) {
+                            $label = fm_owner_meta_action_label($lastActionRaw, $isDirectory);
+                        } else {
+                            $label = ucfirst(str_replace('_', ' ', $lastActionRaw));
+                        }
                     } else {
                         $label = 'Uprava';
                     }
@@ -225,7 +213,7 @@
                             && is_array($auth_users)
                             && isset($auth_users[$lastEditorName]);
                         $isSelfLastEditorBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $lastEditorName;
-                        $actionNote = $fmBuildActionNote($appOwnerMeta, $modif);
+                        $actionNote = $fmBuildActionNote($appOwnerMeta, $modif, true);
                         ?>
                         <td class="fm-col-perms"><?php echo $perms ?></td>
                         <td class="fm-col-owner" data-owner-source="<?php echo $ownerSource === 'app' ? 'app' : 'system'; ?>">
@@ -399,7 +387,7 @@
                             && is_array($auth_users)
                             && isset($auth_users[$lastEditorName]);
                         $isSelfLastEditorBadge = !empty($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] === $lastEditorName;
-                        $actionNote = $fmBuildActionNote($appOwnerMeta, $modif);
+                        $actionNote = $fmBuildActionNote($appOwnerMeta, $modif, false);
                         ?>
                         <td class="fm-col-perms"><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>

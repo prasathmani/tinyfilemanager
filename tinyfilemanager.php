@@ -3655,6 +3655,77 @@ function fm_owner_meta_infer_source(array $record)
     return 'system';
 }
 
+function fm_lng_plain($key)
+{
+    return html_entity_decode((string) lng((string) $key), ENT_QUOTES, 'UTF-8');
+}
+
+function fm_owner_meta_action_label($action, $isDirectory = false)
+{
+    $action = strtolower(trim((string) $action));
+    $isDirectory = (bool) $isDirectory;
+
+    $actionLabelKeyMap = array(
+        'create_file' => 'ActionCreateFile',
+        'create_folder' => 'ActionCreateFolder',
+        'mkdir' => 'ActionMkdir',
+        'upload' => 'ActionUpload',
+        'upload_url' => 'ActionUploadUrl',
+        'copy' => 'ActionCopy',
+        'move' => 'ActionMove',
+        'rename' => 'ActionRename',
+        'edit' => 'ActionEdit',
+        'update' => 'ActionUpdate',
+        'write' => 'ActionWrite',
+        'delete' => 'ActionDelete',
+        'remove' => 'ActionRemove',
+    );
+
+    if ($action === 'create') {
+        $key = $isDirectory ? $actionLabelKeyMap['create_folder'] : $actionLabelKeyMap['create_file'];
+        $translated = fm_lng_plain($key);
+        if ($translated !== $key) {
+            return $translated;
+        }
+        return fm_lng_plain('Created') . ' ' . fm_lng_plain($isDirectory ? 'Folder' : 'File');
+    }
+
+    if (!isset($actionLabelKeyMap[$action])) {
+        return ucfirst(str_replace('_', ' ', $action));
+    }
+
+    $actionLabelKey = $actionLabelKeyMap[$action];
+    $translated = fm_lng_plain($actionLabelKey);
+    if ($translated !== $actionLabelKey) {
+        return $translated;
+    }
+
+    // Backward-compatible fallback for older translation packs without Action* keys.
+    $fallbackMap = array(
+        'mkdir' => array('Created', 'Folder'),
+        'upload' => array('Upload'),
+        'upload_url' => array('Upload'),
+        'copy' => array('Copy'),
+        'move' => array('Move'),
+        'rename' => array('Rename'),
+        'edit' => array('Edit'),
+        'update' => array('Edit'),
+        'write' => array('Save'),
+        'delete' => array('Delete'),
+        'remove' => array('Delete'),
+    );
+
+    if (!isset($fallbackMap[$action])) {
+        return ucfirst(str_replace('_', ' ', $action));
+    }
+
+    $parts = array();
+    foreach ($fallbackMap[$action] as $key) {
+        $parts[] = fm_lng_plain($key);
+    }
+    return trim(implode(' ', $parts));
+}
+
 function fm_owner_meta_touch($absolutePath, $action = 'update', $actor = '')
 {
     $rel = fm_owner_meta_rel_path($absolutePath);

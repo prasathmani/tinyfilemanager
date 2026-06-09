@@ -163,6 +163,19 @@ function lng($txt)
     $tr['en']['OfficeRenderError']                              = 'Rendering failed';
     $tr['en']['OfficeLibraryLoadErrorDocx']                     = 'docx-preview library could not be loaded.';
     $tr['en']['OfficeLibraryLoadErrorXlsx']                     = 'SheetJS library could not be loaded.';
+    $tr['en']['ActionCreateFile']                                = 'Created File';
+    $tr['en']['ActionCreateFolder']                              = 'Created Folder';
+    $tr['en']['ActionMkdir']                                     = 'Created Folder';
+    $tr['en']['ActionUpload']                                    = 'Upload';
+    $tr['en']['ActionUploadUrl']                                 = 'Upload URL';
+    $tr['en']['ActionCopy']                                      = 'Copy';
+    $tr['en']['ActionMove']                                      = 'Move';
+    $tr['en']['ActionRename']                                    = 'Rename';
+    $tr['en']['ActionEdit']                                      = 'Edit';
+    $tr['en']['ActionUpdate']                                    = 'Update';
+    $tr['en']['ActionWrite']                                     = 'Save';
+    $tr['en']['ActionDelete']                                    = 'Delete';
+    $tr['en']['ActionRemove']                                    = 'Remove';
 
     $i18n = fm_get_translations($tr);
     $tr = $i18n ? $i18n : $tr;
