@@ -38,11 +38,20 @@ body {
   color: var(--fmx-text);
 }
 
-.main-nav {
+.main-nav,
+.main-nav.navbar {
   border: 1px solid var(--fmx-border);
   border-radius: 14px;
   margin: 10px 10px 14px;
+  background: rgba(255, 255, 255, 0.82) !important;
   backdrop-filter: blur(8px);
+}
+
+html[data-bs-theme="dark"] .main-nav,
+html[data-bs-theme="dark"] .main-nav.navbar,
+body.theme-dark .main-nav,
+body.theme-dark .main-nav.navbar {
+  background: rgba(23, 32, 44, 0.82) !important;
 }
 
 .main-nav .navbar-brand {
@@ -63,13 +72,15 @@ body {
 }
 
 html[data-bs-theme="dark"] .main-nav .fm-brand-logo-light,
+ .main-nav[data-bs-theme="dark"] .fm-brand-logo-light,
 body.theme-dark .main-nav .fm-brand-logo-light {
-  display: none;
+  display: none !important;
 }
 
 html[data-bs-theme="dark"] .main-nav .fm-brand-logo-dark,
+ .main-nav[data-bs-theme="dark"] .fm-brand-logo-dark,
 body.theme-dark .main-nav .fm-brand-logo-dark {
-  display: inline-block;
+  display: inline-block !important;
 }
 
 #wrapper {
@@ -865,6 +876,7 @@ html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.t
 }
 
 #main-table.fm-modern-table.fm-list-clean thead th {
+  background: linear-gradient(180deg, rgba(52, 106, 223, 0.82), rgba(124, 150, 206, 0.82));
   font-weight: 400 !important;
   font-size: 0.76rem !important;
   letter-spacing: 0;

@@ -30,7 +30,7 @@ function fm_show_nav_path($path)
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
     $fm_dark_logo_src = 'https://dremont.sk/wp-content/uploads/2024/04/logoWh-e1712400013803.png';
 ?>
-    <nav class="navbar navbar-expand-lg mb-4 main-nav <?php echo $isStickyNavBar ?> bg-body-tertiary" data-bs-theme="<?php echo FM_THEME; ?>">
+    <nav class="navbar navbar-expand-lg mb-4 main-nav <?php echo $isStickyNavBar ?>" data-bs-theme="<?php echo FM_THEME; ?>">
         <a class="navbar-brand" href="https://dremont.sk">
             <img class="fm-brand-logo fm-brand-logo-light" src="https://dremont.sk/wp-content/uploads/2024/04/logo-DREMONTMA_3_11_10izak-e1714296077460.png" alt="DREMONT logo" loading="lazy">
             <img class="fm-brand-logo fm-brand-logo-dark" src="<?php echo fm_enc($fm_dark_logo_src); ?>" alt="DREMONT logo dark" loading="lazy">
