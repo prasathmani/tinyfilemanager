@@ -45,6 +45,33 @@ body {
   backdrop-filter: blur(8px);
 }
 
+.main-nav .navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-nav .fm-brand-logo {
+  height: 32px;
+  width: auto;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+
+.main-nav .fm-brand-logo-dark {
+  display: none;
+}
+
+html[data-bs-theme="dark"] .main-nav .fm-brand-logo-light,
+body.theme-dark .main-nav .fm-brand-logo-light {
+  display: none;
+}
+
+html[data-bs-theme="dark"] .main-nav .fm-brand-logo-dark,
+body.theme-dark .main-nav .fm-brand-logo-dark {
+  display: inline-block;
+}
+
 #wrapper {
   padding-bottom: 18px;
 }
