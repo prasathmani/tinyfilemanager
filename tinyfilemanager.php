@@ -6384,7 +6384,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                             <h5 class="modal-title col-10" id="searchModalLabel">
                                 <div class="input-group mb-3">
                                     <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> <?php echo lng('a files') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
-                                    <span class="input-group-text" id="search-addon3"><i class="fa fa-search"></i></span>
+                                    <button type="button" class="input-group-text" id="search-addon3" aria-label="<?php echo lng('Search') ?>"><i class="fa fa-search"></i></button>
                                 </div>
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

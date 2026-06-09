@@ -720,11 +720,31 @@
 
   function applyMainTableSearch() {
     var input = document.getElementById('search-addon');
-    if (!input || !window.mainTable || typeof window.mainTable.search !== 'function') {
+    if (!input) {
       return;
     }
     var query = String(input.value || '');
-    window.mainTable.search(query).draw();
+
+    if (window.mainTable && typeof window.mainTable.search === 'function') {
+      window.mainTable.search(query).draw();
+      return;
+    }
+
+    var table = document.getElementById('main-table');
+    if (!table) {
+      return;
+    }
+
+    var rows = table.querySelectorAll('tbody tr');
+    var needle = query.trim().toLowerCase();
+    rows.forEach(function (row) {
+      if (!needle) {
+        row.style.display = '';
+        return;
+      }
+      var text = String(row.textContent || '').toLowerCase();
+      row.style.display = text.indexOf(needle) !== -1 ? '' : 'none';
+    });
   }
 
   function bindMainTableSearch() {
@@ -749,7 +769,7 @@
       iconSecondary.style.cursor = 'pointer';
       iconSecondary.addEventListener('click', function (event) {
         event.preventDefault();
-        applyMainTableSearch();
+        fmSearch();
       });
     }
 

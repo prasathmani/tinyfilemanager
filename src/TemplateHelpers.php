@@ -75,7 +75,7 @@ function fm_show_nav_path($path)
                         <div class="input-group input-group-sm mr-1 fm-nav-search-group" style="margin-top:4px;">
                             <input type="text" class="form-control fm-nav-search-input" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
                             <div class="input-group-append">
-                                <span class="input-group-text brl-0 brr-0" id="search-addon2"><i class="fa fa-search"></i></span>
+                                <button type="button" class="input-group-text brl-0 brr-0" id="search-addon2" aria-label="<?php echo lng('Search') ?>"><i class="fa fa-search"></i></button>
                             </div>
                             <div class="input-group-append btn-group">
                                 <span class="input-group-text dropdown-toggle brl-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
