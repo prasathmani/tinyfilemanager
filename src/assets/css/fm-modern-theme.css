@@ -1,6 +1,6 @@
 /*
  * TinyFileManager modern visual baseline.
- * Phase 1: safe facelift only, no behavior changes.
+ * Phase 1 + Phase 2.2: safe facelift only, no behavior changes.
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -49,48 +49,6 @@ body {
   padding-bottom: 18px;
 }
 
-.fm-listing-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--fmx-border);
-  border-radius: 12px;
-  background: var(--fmx-surface);
-}
-
-.fm-listing-toolbar__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.fm-toolbar-badge {
-  border: 1px solid var(--fmx-border);
-  border-radius: 999px;
-  color: var(--fmx-subtle) !important;
-  font-weight: 600;
-  padding: 6px 10px;
-}
-
-.fm-view-switch .btn {
-  border-radius: 9px !important;
-  font-weight: 600;
-  padding: 6px 12px;
-}
-
-.fm-view-switch .btn + .btn {
-  margin-left: 4px;
-}
-
-.fm-main-table-wrap {
-  border-radius: 12px;
-  border: 1px solid var(--fmx-border);
-  background: var(--fmx-surface);
-  padding: 2px;
-}
-
 .path,
 .card,
 .table-responsive,
@@ -114,17 +72,6 @@ body {
   color: var(--fmx-text);
   border-bottom: 1px solid var(--fmx-border);
   font-weight: 600;
-}
-
-#main-table td,
-#main-table th {
-  padding-top: 9px;
-  padding-bottom: 9px;
-}
-
-#main-table .fm-parent-row td {
-  background: transparent !important;
-  border-top: 0;
 }
 
 #main-table tbody td {
@@ -162,22 +109,146 @@ body {
   border-radius: 12px;
 }
 
+/* Phase 2.2: Listing toolbar and table shell modernization */
+
+.fm-shell {
+  padding: 6px 2px 0;
+}
+
+.fm-listing-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--fmx-border);
+  border-radius: 12px;
+  background: var(--fmx-surface);
+}
+
+.fm-listing-toolbar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fm-toolbar-badge {
+  border: 1px solid var(--fmx-border);
+  background: var(--fmx-accent-weak) !important;
+  color: var(--fmx-text) !important;
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+}
+
+.fm-view-switch .btn {
+  border-radius: 999px !important;
+  font-weight: 600;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.fm-view-switch .btn.active,
+.fm-view-switch .btn:active {
+  background: var(--fmx-accent);
+  border-color: var(--fmx-accent);
+  color: #fff;
+}
+
+.fm-view-switch .btn + .btn {
+  margin-left: 6px;
+}
+
+.fm-table-wrap,
+.fm-main-table-wrap {
+  border-radius: 14px;
+  border: 1px solid var(--fmx-border);
+  background: var(--fmx-surface);
+  padding: 4px;
+}
+
+#main-table.fm-modern-table {
+  margin-bottom: 0;
+}
+
+#main-table.fm-modern-table thead th,
+#main-table.fm-modern-table tbody td {
+  padding: 0.52rem 0.56rem;
+}
+
+#main-table.fm-modern-table .fm-col-actions {
+  white-space: nowrap;
+}
+
+.inline-actions > a > i.fa-trash-o {
+  background: var(--fmx-danger);
+}
+
+.inline-actions > a > i.fa-download {
+  background: var(--fmx-success);
+}
+
+.inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.inline-actions > a > i {
+  min-width: 26px;
+  min-height: 26px;
+  line-height: 14px;
+}
+
 @media (max-width: 767.98px) {
-  .fm-listing-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .fm-listing-toolbar__meta {
-    justify-content: center;
-  }
-
-  .fm-view-switch {
-    justify-content: center;
-  }
-
   .main-nav {
     border-radius: 12px;
     margin: 8px 6px 12px;
   }
+
+  .fm-shell {
+    padding-top: 2px;
+  }
+
+  .fm-listing-toolbar {
+    padding: 9px 10px;
+    gap: 8px;
+  }
+
+  .fm-listing-toolbar__meta {
+    width: 100%;
+    gap: 5px;
+  }
+
+  .fm-toolbar-badge {
+    font-size: 0.72rem;
+    padding: 0.34rem 0.56rem;
+  }
+
+  .fm-view-switch {
+    width: 100%;
+    display: flex;
+  }
+
+  .fm-view-switch .btn {
+    flex: 1 1 50%;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+
+  #main-table.fm-modern-table thead th,
+  #main-table.fm-modern-table tbody td {
+    padding: 0.5rem 0.44rem;
+  }
+
+  #main-table.fm-modern-table .fm-col-name .filename {
+    max-width: 48vw;
+  }
+}
+
+html[data-bs-theme="dark"] .fm-view-switch .btn.active,
+html[data-bs-theme="dark"] .fm-view-switch .btn:active {
+  color: #0f1620;
 }

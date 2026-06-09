@@ -1,6 +1,6 @@
 <?php $all_files_size = 0; ?>
 <script src="src/assets/js/navbar-padding-fix.js?v=<?php echo rawurlencode((string) VERSION); ?>"></script>
-<form action="" method="post" class="pt-3">
+<form action="" method="post" class="pt-3 fm-shell">
     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
     <input type="hidden" name="group" value="1">
     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
@@ -19,7 +19,7 @@
             </button>
         </div>
     </div>
-    <div class="table-responsive fm-main-table-wrap">
+    <div class="table-responsive fm-table-wrap">
         <table class="table table-bordered table-hover table-sm align-middle fm-modern-table" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
             <thead class="thead-white">
                 <tr>
