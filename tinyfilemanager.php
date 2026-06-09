@@ -5379,6 +5379,24 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 border-right-width: 0;
             }
 
+            .main-nav .navbar-brand,
+            .main-nav .navbar-nav .nav-link,
+            .main-nav .navbar-nav .dropdown-toggle,
+            .main-nav .navbar-nav .dropdown-item {
+                font-size: 0.5rem !important;
+                line-height: 1.2 !important;
+            }
+
+            .main-nav .fm-nav-search-group {
+                width: clamp(22rem, 42vw, 38rem) !important;
+                min-width: 30ch !important;
+            }
+
+            .main-nav #search-addon,
+            .main-nav .fm-nav-search-input {
+                min-width: 28ch !important;
+            }
+
             .brl-0 {
                 background: transparent;
                 border-left: 0;
@@ -6152,6 +6170,20 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                }
+
+                .main-nav .navbar-brand,
+                .main-nav .navbar-nav .nav-link,
+                .main-nav .navbar-nav .dropdown-toggle,
+                .main-nav .navbar-nav .dropdown-item {
+                    font-size: 0.75rem !important;
+                }
+
+                .main-nav .fm-nav-search-group,
+                .main-nav #search-addon,
+                .main-nav .fm-nav-search-input {
+                    width: 100% !important;
+                    min-width: 0 !important;
                 }
 
                 .navbar-collapse .col-xs-6 {
