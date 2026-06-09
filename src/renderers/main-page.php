@@ -4,8 +4,13 @@
     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
     <input type="hidden" name="group" value="1">
     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
-    <div class="d-flex justify-content-end mb-2">
-        <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+    <div class="fm-listing-toolbar mb-3">
+        <div class="fm-listing-toolbar__meta">
+            <span class="badge text-bg-light fm-toolbar-badge"><?php echo lng('File') ?>: <?php echo (int) $num_files; ?></span>
+            <span class="badge text-bg-light fm-toolbar-badge"><?php echo lng('Folder') ?>: <?php echo (int) $num_folders; ?></span>
+            <span class="badge text-bg-light fm-toolbar-badge"><?php echo lng('FullSize') ?>: <?php echo fm_get_filesize($all_files_size); ?></span>
+        </div>
+        <div class="btn-group btn-group-sm fm-view-switch" role="group" aria-label="View mode">
             <button type="button" class="btn btn-outline-primary js-view-mode active" data-view-mode="list">
                 <i class="fa fa-list" aria-hidden="true"></i> Zoznam
             </button>
@@ -14,8 +19,8 @@
             </button>
         </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
+    <div class="table-responsive fm-main-table-wrap">
+        <table class="table table-bordered table-hover table-sm align-middle fm-modern-table" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
             <thead class="thead-white">
                 <tr>
                     <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
@@ -37,7 +42,7 @@
             <?php
             if ($parent !== false) {
             ?>
-                <tr><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+                <tr class="fm-parent-row"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                         <td class="nosort"></td><?php endif; ?>
                     <td class="border-0 fm-col-name" data-sort><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
                     <td class="border-0 fm-col-size" data-order></td>
