@@ -718,6 +718,60 @@
     }
   }
 
+  function applyMainTableSearch() {
+    var input = document.getElementById('search-addon');
+    if (!input || !window.mainTable || typeof window.mainTable.search !== 'function') {
+      return;
+    }
+    var query = String(input.value || '');
+    window.mainTable.search(query).draw();
+  }
+
+  function bindMainTableSearch() {
+    var input = document.getElementById('search-addon');
+    if (!input) {
+      return;
+    }
+
+    var iconPrimary = document.getElementById('search-addon2');
+    var iconSecondary = document.getElementById('search-addon3');
+    var mobileFocus = document.getElementById('js-mobile-focus-search');
+
+    if (iconPrimary) {
+      iconPrimary.style.cursor = 'pointer';
+      iconPrimary.addEventListener('click', function (event) {
+        event.preventDefault();
+        applyMainTableSearch();
+      });
+    }
+
+    if (iconSecondary) {
+      iconSecondary.style.cursor = 'pointer';
+      iconSecondary.addEventListener('click', function (event) {
+        event.preventDefault();
+        applyMainTableSearch();
+      });
+    }
+
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyMainTableSearch();
+      }
+    });
+
+    input.addEventListener('input', function () {
+      applyMainTableSearch();
+    });
+
+    if (mobileFocus) {
+      mobileFocus.addEventListener('click', function (event) {
+        event.preventDefault();
+        input.focus();
+      });
+    }
+  }
+
   $(document).ready(function () {
     if (document.getElementById('js-fallback-log-stats')) {
       refreshFallbackLogStats();
@@ -725,6 +779,7 @@
     }
 
     initMainTableDataTable();
+    bindMainTableSearch();
     bindSelectionModifiers();
     bindRowClickSelection();
     var hasMainTable = !!window.mainTable;
