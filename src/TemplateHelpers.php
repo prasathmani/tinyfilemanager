@@ -28,11 +28,16 @@ function fm_show_nav_path($path)
 {
     global $lang, $sticky_navbar, $editFile;
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
+    $fm_assets_base = rtrim(str_replace('\\', '/', dirname(FM_SELF_PATH)), '/');
+    if ($fm_assets_base === '/' || $fm_assets_base === '.') {
+        $fm_assets_base = '';
+    }
+    $fm_dark_logo_src = $fm_assets_base . '/src/assets/img/logo-dremont-dark.png';
 ?>
     <nav class="navbar navbar-expand-lg mb-4 main-nav <?php echo $isStickyNavBar ?> bg-body-tertiary" data-bs-theme="<?php echo FM_THEME; ?>">
         <a class="navbar-brand" href="https://dremont.sk">
             <img class="fm-brand-logo fm-brand-logo-light" src="https://dremont.sk/wp-content/uploads/2024/04/logo-DREMONTMA_3_11_10izak-e1714296077460.png" alt="DREMONT logo" loading="lazy">
-            <img class="fm-brand-logo fm-brand-logo-dark" src="src/assets/img/logo-dremont-dark.png" alt="DREMONT logo dark" loading="lazy">
+            <img class="fm-brand-logo fm-brand-logo-dark" src="<?php echo fm_enc($fm_dark_logo_src); ?>" alt="DREMONT logo dark" loading="lazy">
             <?php echo lng('AppTitle') ?>
         </a>
         <div class="fm-mobile-quickbar d-flex d-lg-none ms-auto me-2">

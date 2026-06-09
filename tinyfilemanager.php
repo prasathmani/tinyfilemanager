@@ -5418,13 +5418,13 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 justify-content: center;
             }
 
-            .table-sm td,
-            .table-sm th {
+            .table-sm:not(#main-table) td,
+            .table-sm:not(#main-table) th {
                 padding: .4rem;
             }
 
-            .table-bordered td,
-            .table-bordered th {
+            .table-bordered:not(#main-table) td,
+            .table-bordered:not(#main-table) th {
                 border: 1px solid #f1f1f1;
             }
 
@@ -6169,8 +6169,8 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                     align-items: center;
                 }
 
-                #main-table td,
-                #main-table th {
+                #main-table:not(.fm-modern-table) td,
+                #main-table:not(.fm-modern-table) th {
                     padding-top: .55rem;
                     padding-bottom: .55rem;
                 }
@@ -6291,8 +6291,8 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                     color: #CFD8DC !important;
                 }
 
-                .theme-dark .table-bordered td,
-                .table-bordered th {
+                .theme-dark .table-bordered:not(#main-table) td,
+                .theme-dark .table-bordered:not(#main-table) th {
                     border-color: #343434;
                 }
 
