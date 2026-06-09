@@ -507,6 +507,10 @@
         }
 
         var currentViewMode = 'list';
+        var floatingPanelEl = null;
+        var floatingPanelTitleEl = null;
+        var floatingPanelActionsEl = null;
+        var activeFloatingRow = null;
 
         var dataTableFilterInstalled = false;
 
@@ -714,6 +718,145 @@
             gridViewEl.innerHTML = '<div class="fm-grid">' + cards + '</div>';
         }
 
+        function ensureFloatingPanel() {
+            if (floatingPanelEl) {
+                return;
+            }
+
+            floatingPanelEl = document.createElement('div');
+            floatingPanelEl.id = 'fm-row-actions-float';
+            floatingPanelEl.className = 'fm-row-actions-float hidden';
+            floatingPanelEl.innerHTML = ''
+                + '<div class="fm-row-actions-float__header">'
+                + '  <span class="fm-row-actions-float__title"></span>'
+                + '  <button type="button" class="btn-close btn-close-sm fm-row-actions-float__close" aria-label="Close"></button>'
+                + '</div>'
+                + '<div class="inline-actions fm-row-actions-float__actions"></div>';
+
+            document.body.appendChild(floatingPanelEl);
+            floatingPanelTitleEl = floatingPanelEl.querySelector('.fm-row-actions-float__title');
+            floatingPanelActionsEl = floatingPanelEl.querySelector('.fm-row-actions-float__actions');
+
+            var closeBtn = floatingPanelEl.querySelector('.fm-row-actions-float__close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function () {
+                    hideFloatingPanel();
+                });
+            }
+        }
+
+        function hideFloatingPanel() {
+            if (!floatingPanelEl) {
+                return;
+            }
+            floatingPanelEl.classList.add('hidden');
+            activeFloatingRow = null;
+        }
+
+        function isNarrowViewport() {
+            return window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches;
+        }
+
+        function positionFloatingPanel(row) {
+            if (!floatingPanelEl || !row) {
+                return;
+            }
+
+            if (isNarrowViewport()) {
+                floatingPanelEl.style.top = 'auto';
+                floatingPanelEl.style.bottom = '12px';
+                floatingPanelEl.style.right = '10px';
+                return;
+            }
+
+            var rect = row.getBoundingClientRect();
+            var panelRect = floatingPanelEl.getBoundingClientRect();
+            var top = window.scrollY + rect.top + (rect.height / 2) - (panelRect.height / 2);
+            var minTop = window.scrollY + 10;
+            var maxTop = window.scrollY + window.innerHeight - panelRect.height - 10;
+            if (top < minTop) {
+                top = minTop;
+            }
+            if (top > maxTop) {
+                top = maxTop;
+            }
+
+            floatingPanelEl.style.top = Math.round(top) + 'px';
+            floatingPanelEl.style.bottom = 'auto';
+            floatingPanelEl.style.right = '12px';
+        }
+
+        function showFloatingActionsForRow(row) {
+            if (currentViewMode !== 'list' || !row || row.classList.contains('fm-parent-row')) {
+                return;
+            }
+
+            var actionWrap = row.querySelector('td.fm-col-actions .inline-actions');
+            if (!actionWrap || !floatingPanelActionsEl || !floatingPanelTitleEl) {
+                return;
+            }
+
+            var titleEl = row.querySelector('td.fm-col-name .filename a');
+            var titleText = titleEl ? (titleEl.textContent || '').trim() : 'Akcie';
+            floatingPanelTitleEl.textContent = titleText;
+            floatingPanelActionsEl.innerHTML = actionWrap.innerHTML;
+            floatingPanelEl.classList.remove('hidden');
+            activeFloatingRow = row;
+            positionFloatingPanel(row);
+        }
+
+        function bindFloatingRowActions() {
+            ensureFloatingPanel();
+
+            tableEl.addEventListener('mouseover', function (event) {
+                if (currentViewMode !== 'list' || isNarrowViewport()) {
+                    return;
+                }
+                var row = event.target.closest('tbody tr');
+                if (!row || row === activeFloatingRow) {
+                    return;
+                }
+                showFloatingActionsForRow(row);
+            });
+
+            tableEl.addEventListener('click', function (event) {
+                if (currentViewMode !== 'list' || !isNarrowViewport()) {
+                    return;
+                }
+
+                if (event.target.closest('a,button,input,label')) {
+                    return;
+                }
+
+                var row = event.target.closest('tbody tr');
+                if (!row || row.classList.contains('fm-parent-row')) {
+                    return;
+                }
+
+                showFloatingActionsForRow(row);
+            });
+
+            if (tableWrapEl) {
+                tableWrapEl.addEventListener('mouseleave', function () {
+                    if (!isNarrowViewport()) {
+                        hideFloatingPanel();
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', function () {
+                if (floatingPanelEl && !floatingPanelEl.classList.contains('hidden') && activeFloatingRow) {
+                    positionFloatingPanel(activeFloatingRow);
+                }
+            }, { passive: true });
+
+            window.addEventListener('resize', function () {
+                if (floatingPanelEl && !floatingPanelEl.classList.contains('hidden') && activeFloatingRow) {
+                    positionFloatingPanel(activeFloatingRow);
+                }
+            });
+        }
+
         function setViewMode(mode) {
             currentViewMode = mode === 'grid' ? 'grid' : 'list';
 
@@ -730,7 +873,11 @@
                 gridViewEl.classList.toggle('hidden', currentViewMode !== 'grid');
             }
 
+            document.body.classList.toggle('fm-list-mode', currentViewMode === 'list');
+            document.body.classList.toggle('fm-grid-mode', currentViewMode === 'grid');
+
             if (currentViewMode === 'grid') {
+                hideFloatingPanel();
                 renderGridFromVisibleRows();
             }
         }
@@ -762,6 +909,7 @@
                 setViewMode(mode);
             });
         });
+        bindFloatingRowActions();
         refreshOwnerSourceCounts();
         window.setTimeout(function () {
             applyFilter();
