@@ -185,6 +185,14 @@ body {
   color: var(--fmx-text);
 }
 
+.fm-owner-source-count {
+  border: 1px solid var(--fmx-border);
+  color: var(--fmx-subtle) !important;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.28rem 0.5rem;
+}
+
 .fm-table-wrap,
 .fm-main-table-wrap {
   border-radius: 14px;
@@ -307,6 +315,11 @@ body {
 
   .fm-owner-filter {
     min-width: 98px;
+  }
+
+  .fm-owner-source-count {
+    font-size: 0.66rem;
+    padding: 0.22rem 0.42rem;
   }
 
   .fm-view-switch .btn {

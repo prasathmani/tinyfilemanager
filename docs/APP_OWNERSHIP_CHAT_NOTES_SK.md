@@ -36,6 +36,7 @@ Aplikacia teraz rozlisuje 2 vrstvy vlastnictva:
 - Toolbar obsahuje filter `Vlastnik` s volbami `Vsetko / App / System`.
   - `App`: zobrazi len polozky s app metadata (`created_by`).
   - `System`: zobrazi len fallback system owner polozky.
+- Vedla filtra su badge pocty `App: N` a `System: N` pre rychly audit rozlozenia vlastnictva.
 
 ## 5) Chat a offline spravy
 

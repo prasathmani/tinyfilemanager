@@ -26,6 +26,8 @@
                     <option value="app">App</option>
                     <option value="system">System</option>
                 </select>
+                <span class="badge text-bg-light fm-owner-source-count" id="fm-owner-count-app" title="Pocet App owner poloziek">App: 0</span>
+                <span class="badge text-bg-light fm-owner-source-count" id="fm-owner-count-system" title="Pocet System owner poloziek">System: 0</span>
             </div>
         <?php endif; ?>
     </div>
@@ -428,6 +430,8 @@
     (function () {
         var filterEl = document.getElementById('fm-owner-source-filter');
         var tableEl = document.getElementById('main-table');
+        var countAppEl = document.getElementById('fm-owner-count-app');
+        var countSystemEl = document.getElementById('fm-owner-count-system');
         if (!filterEl || !tableEl) {
             return;
         }
@@ -461,6 +465,28 @@
                 }
                 row.style.display = rowMatchesFilter(row) ? '' : 'none';
             });
+        }
+
+        function refreshOwnerSourceCounts() {
+            var appCount = 0;
+            var systemCount = 0;
+            var ownerCells = tableEl.querySelectorAll('tbody td.fm-col-owner[data-owner-source]');
+
+            ownerCells.forEach(function (cell) {
+                var src = String(cell.getAttribute('data-owner-source') || 'system').toLowerCase();
+                if (src === 'app') {
+                    appCount++;
+                } else {
+                    systemCount++;
+                }
+            });
+
+            if (countAppEl) {
+                countAppEl.textContent = 'App: ' + appCount;
+            }
+            if (countSystemEl) {
+                countSystemEl.textContent = 'System: ' + systemCount;
+            }
         }
 
         function ensureDataTableFilter() {
@@ -507,9 +533,11 @@
             if (!ensureDataTableFilter()) {
                 applyPlainFilter();
             }
+            refreshOwnerSourceCounts();
         }
 
         filterEl.addEventListener('change', applyFilter);
+        refreshOwnerSourceCounts();
         window.setTimeout(applyFilter, 0);
     })();
 </script>
