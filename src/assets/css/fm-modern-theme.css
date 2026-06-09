@@ -78,6 +78,12 @@ body {
   border-color: var(--fmx-border);
 }
 
+/* Remove horizontal row framing in listing body (keep vertical separators). */
+#main-table.fm-modern-table tbody td {
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
 #main-table .filename a {
   color: var(--fmx-text);
 }
@@ -272,8 +278,19 @@ html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:focus-visible {
 
 #main-table.fm-modern-table thead th,
 #main-table.fm-modern-table tbody td {
-  padding: 0.38rem 0.5rem;
-  line-height: 1.15;
+  padding: 0.32rem 0.38rem;
+  line-height: 1.12;
+}
+
+body.fm-density-compact #main-table.fm-modern-table thead th,
+body.fm-density-compact #main-table.fm-modern-table tbody td {
+  padding: 0.16rem 0.26rem !important;
+  line-height: 1;
+}
+
+/* Keep compact body rows visually as low as header row. */
+body.fm-density-compact #main-table.fm-modern-table tbody td {
+  font-size: 0.86rem;
 }
 
 body.fm-density-normal #main-table.fm-modern-table thead th,
@@ -333,13 +350,13 @@ body.fm-density-normal #main-table.fm-modern-table tbody td {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 108px;
-  padding: 0.16rem 0.4rem;
+  max-width: 98px;
+  padding: 0.13rem 0.34rem;
   border-radius: 999px;
   border: 1px solid var(--fmx-border);
   background: var(--fmx-accent-weak);
   color: var(--fmx-text);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 600;
   vertical-align: middle;
   line-height: 1.1;
@@ -350,6 +367,13 @@ body.fm-density-normal .fm-owner-badge {
   max-width: 116px;
   padding: 0.2rem 0.45rem;
   font-size: 0.78rem;
+}
+
+body.fm-density-compact .fm-owner-badge {
+  max-width: 86px;
+  padding: 0.06rem 0.22rem;
+  font-size: 0.62rem;
+  line-height: 1;
 }
 
 .fm-owner-stack {
@@ -519,6 +543,28 @@ html[data-bs-theme="dark"] #fm-row-actions-float {
   min-height: 22px;
   line-height: 12px;
   margin-left: 0 !important;
+}
+
+body.fm-density-compact .inline-actions > a > i {
+  min-width: 17px;
+  min-height: 17px;
+  line-height: 8px;
+  padding: 3px;
+}
+
+#main-table.fm-modern-table .fm-col-actions {
+  width: 152px;
+}
+
+.fm-action-note {
+  font-size: 0.58rem;
+  padding: 0.12rem 0.3rem;
+}
+
+body.fm-density-compact .fm-action-note {
+  font-size: 0.5rem;
+  padding: 0.05rem 0.18rem;
+  line-height: 1;
 }
 
 body.fm-density-normal .inline-actions > a > i {
