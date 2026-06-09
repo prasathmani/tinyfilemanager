@@ -920,16 +920,20 @@ html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.t
 .fm-table-wrap.fm-list-clean-wrap,
 .fm-main-table-wrap.fm-list-clean-wrap {
   border: 0 !important;
+  outline: 0 !important;
   box-shadow: none !important;
 }
 
 #main-table.fm-modern-table.fm-list-clean {
   border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
 }
 
 #main-table.fm-modern-table.fm-list-clean > :not(caption) > * > * {
   border: 0 !important;
   border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 #main-table.fm-modern-table.fm-list-clean thead th {
@@ -944,15 +948,21 @@ html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.t
   border-color: transparent !important;
 }
 
-#main-table.fm-modern-table.fm-list-clean .filename a {
+#main-table.fm-modern-table.fm-list-clean .filename a,
+#main-table.fm-modern-table.fm-list-clean .filename a:visited,
+#main-table.fm-modern-table.fm-list-clean .filename a:active,
+#main-table.fm-modern-table.fm-list-clean .filename a:focus {
+  color: var(--fmx-text) !important;
   font-family: "Segoe UI Variable", "Segoe UI", "Noto Sans", "Trebuchet MS", Tahoma, sans-serif;
   font-weight: 400 !important;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-shadow: none !important;
 }
 
 #main-table.fm-modern-table.fm-list-clean .filename a:hover,
 #main-table.fm-modern-table.fm-list-clean .filename a:focus-visible {
+  color: var(--fmx-text) !important;
   font-weight: 600 !important;
 }

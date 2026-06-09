@@ -32,7 +32,7 @@
         <?php endif; ?>
     </div>
     <div class="table-responsive fm-table-wrap fm-list-clean-wrap">
-        <table class="table table-bordered table-hover table-sm align-middle fm-modern-table fm-list-clean" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
+        <table class="table table-hover table-sm align-middle fm-modern-table fm-list-clean" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
             <thead class="thead-white">
                 <tr>
                     <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
