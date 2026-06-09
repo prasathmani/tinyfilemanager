@@ -511,6 +511,10 @@
         var floatingPanelTitleEl = null;
         var floatingPanelActionsEl = null;
         var activeFloatingRow = null;
+        var hoverShowTimer = null;
+        var hoverHideTimer = null;
+        var HOVER_SHOW_DELAY_MS = 120;
+        var HOVER_HIDE_DELAY_MS = 180;
 
         var dataTableFilterInstalled = false;
 
@@ -743,6 +747,19 @@
                     hideFloatingPanel();
                 });
             }
+
+            floatingPanelEl.addEventListener('mouseenter', function () {
+                if (hoverHideTimer) {
+                    window.clearTimeout(hoverHideTimer);
+                    hoverHideTimer = null;
+                }
+            });
+
+            floatingPanelEl.addEventListener('mouseleave', function () {
+                if (currentViewMode === 'list' && !isNarrowViewport()) {
+                    scheduleHideFloatingPanel();
+                }
+            });
         }
 
         function hideFloatingPanel() {
@@ -751,6 +768,34 @@
             }
             floatingPanelEl.classList.add('hidden');
             activeFloatingRow = null;
+        }
+
+        function scheduleShowFloatingPanel(row) {
+            if (hoverHideTimer) {
+                window.clearTimeout(hoverHideTimer);
+                hoverHideTimer = null;
+            }
+            if (hoverShowTimer) {
+                window.clearTimeout(hoverShowTimer);
+            }
+            hoverShowTimer = window.setTimeout(function () {
+                showFloatingActionsForRow(row);
+                hoverShowTimer = null;
+            }, HOVER_SHOW_DELAY_MS);
+        }
+
+        function scheduleHideFloatingPanel() {
+            if (hoverShowTimer) {
+                window.clearTimeout(hoverShowTimer);
+                hoverShowTimer = null;
+            }
+            if (hoverHideTimer) {
+                window.clearTimeout(hoverHideTimer);
+            }
+            hoverHideTimer = window.setTimeout(function () {
+                hideFloatingPanel();
+                hoverHideTimer = null;
+            }, HOVER_HIDE_DELAY_MS);
         }
 
         function isNarrowViewport() {
@@ -816,7 +861,7 @@
                 if (!row || row === activeFloatingRow) {
                     return;
                 }
-                showFloatingActionsForRow(row);
+                scheduleShowFloatingPanel(row);
             });
 
             tableEl.addEventListener('click', function (event) {
@@ -837,9 +882,16 @@
             });
 
             if (tableWrapEl) {
+                tableWrapEl.addEventListener('mouseenter', function () {
+                    if (hoverHideTimer) {
+                        window.clearTimeout(hoverHideTimer);
+                        hoverHideTimer = null;
+                    }
+                });
+
                 tableWrapEl.addEventListener('mouseleave', function () {
                     if (!isNarrowViewport()) {
-                        hideFloatingPanel();
+                        scheduleHideFloatingPanel();
                     }
                 });
             }
@@ -877,6 +929,14 @@
             document.body.classList.toggle('fm-grid-mode', currentViewMode === 'grid');
 
             if (currentViewMode === 'grid') {
+                if (hoverShowTimer) {
+                    window.clearTimeout(hoverShowTimer);
+                    hoverShowTimer = null;
+                }
+                if (hoverHideTimer) {
+                    window.clearTimeout(hoverHideTimer);
+                    hoverHideTimer = null;
+                }
                 hideFloatingPanel();
                 renderGridFromVisibleRows();
             }
