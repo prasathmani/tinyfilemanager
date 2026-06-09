@@ -581,10 +581,27 @@
     return response;
   }
 
+  function resolveSearchPath() {
+    var modalPath = String($('#js-search-modal').attr('href') || '').trim();
+    if (modalPath && modalPath !== '#') {
+      return modalPath;
+    }
+
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      if (params.has('p')) {
+        return String(params.get('p') || '').trim();
+      }
+    } catch (e) {
+    }
+
+    return '.';
+  }
+
   function fmSearch() {
     var searchTxt = $('input#advanced-search').val();
     var searchWrapper = $('ul#search-wrapper');
-    var path = $('#js-search-modal').attr('href');
+    var path = resolveSearchPath();
     var html = '';
     var loader = $('div.lds-facebook');
 
@@ -627,6 +644,31 @@
     } else {
       searchWrapper.html('OOPS: minimum 3 characters required!');
     }
+  }
+
+  function triggerRecursiveSearchFromNavbar() {
+    var navbarInput = document.getElementById('search-addon');
+    if (!navbarInput) {
+      return;
+    }
+
+    var query = String(navbarInput.value || '').trim();
+    if (!query) {
+      applyMainTableSearch();
+      return;
+    }
+
+    var advancedInput = document.getElementById('advanced-search');
+    if (advancedInput) {
+      advancedInput.value = query;
+    }
+
+    if (window.jQuery && $('#searchModal').length) {
+      $('#searchModal').modal('show');
+    }
+
+    // Reuse existing recursive search endpoint logic.
+    fmSearch();
   }
 
   function confirmDialog(e, id, title, content, action) {
@@ -725,6 +767,10 @@
     }
     var query = String(input.value || '');
 
+    if ((!window.mainTable || typeof window.mainTable.search !== 'function') && window.jQuery && window.jQuery.fn && window.jQuery.fn.dataTable) {
+      initMainTableDataTable();
+    }
+
     if (window.mainTable && typeof window.mainTable.search === 'function') {
       window.mainTable.search(query).draw();
       return;
@@ -761,7 +807,7 @@
       iconPrimary.style.cursor = 'pointer';
       iconPrimary.addEventListener('click', function (event) {
         event.preventDefault();
-        applyMainTableSearch();
+        triggerRecursiveSearchFromNavbar();
       });
     }
 
