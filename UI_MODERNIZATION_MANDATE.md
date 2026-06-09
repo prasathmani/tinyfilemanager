@@ -1,4 +1,4 @@
-# UI Modernization Mandate (Nemenna pravda)
+# UI Modernization Mandate (Nemennna pravda)
 
 Status: ACTIVE AND BINDING
 Owner: DREMONT TinyFileManager team
@@ -71,6 +71,7 @@ The project direction is a modern Bootstrap-based interface with better clarity,
 - Prefer small, testable, reversible changes.
 - Document UX-impacting changes in PR description and changelog notes.
 - Keep fallback behavior and operational reliability over visual novelty.
+
 
 ## Definition of Done for UI PRs
 
