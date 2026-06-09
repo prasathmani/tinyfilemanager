@@ -3445,6 +3445,164 @@ function fm_owner_meta_write_all(array $data)
     return true;
 }
 
+function fm_owner_meta_db_path()
+{
+    $dir = __DIR__ . '/.fm_usercfg';
+    if (!@is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $htaccess = $dir . '/.htaccess';
+    if (!@file_exists($htaccess)) {
+        @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n");
+    }
+    return $dir . '/owner-meta.sqlite';
+}
+
+function fm_owner_meta_sqlite_row_to_record(array $row)
+{
+    return array(
+        'created_at' => isset($row['created_at']) ? (int) $row['created_at'] : 0,
+        'created_by' => isset($row['created_by']) ? (string) $row['created_by'] : '',
+        'updated_at' => isset($row['updated_at']) ? (int) $row['updated_at'] : 0,
+        'updated_by' => isset($row['updated_by']) ? (string) $row['updated_by'] : '',
+        'owner_source' => isset($row['owner_source']) ? (string) $row['owner_source'] : 'system',
+        'last_action' => isset($row['last_action']) ? (string) $row['last_action'] : '',
+    );
+}
+
+function fm_owner_meta_sqlite_fetch($db, $scope, $rel)
+{
+    $stmt = $db->prepare('SELECT created_at, created_by, updated_at, updated_by, owner_source, last_action
+        FROM fm_owner_meta_records
+        WHERE scope_key = :scope AND rel_path = :rel
+        LIMIT 1');
+    if (!$stmt) {
+        return null;
+    }
+
+    $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+    $stmt->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
+    $result = $stmt->execute();
+    if (!$result) {
+        return null;
+    }
+
+    $row = $result->fetchArray(SQLITE3_ASSOC);
+    $result->finalize();
+    if (!is_array($row)) {
+        return null;
+    }
+
+    return fm_owner_meta_sqlite_row_to_record($row);
+}
+
+function fm_owner_meta_sqlite_upsert($db, $scope, $rel, array $record)
+{
+    $stmt = $db->prepare('INSERT OR REPLACE INTO fm_owner_meta_records
+        (scope_key, rel_path, created_at, created_by, updated_at, updated_by, owner_source, last_action)
+        VALUES (:scope, :rel, :created_at, :created_by, :updated_at, :updated_by, :owner_source, :last_action)');
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+    $stmt->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
+    $stmt->bindValue(':created_at', isset($record['created_at']) ? (int) $record['created_at'] : 0, SQLITE3_INTEGER);
+    $stmt->bindValue(':created_by', isset($record['created_by']) ? (string) $record['created_by'] : '', SQLITE3_TEXT);
+    $stmt->bindValue(':updated_at', isset($record['updated_at']) ? (int) $record['updated_at'] : 0, SQLITE3_INTEGER);
+    $stmt->bindValue(':updated_by', isset($record['updated_by']) ? (string) $record['updated_by'] : '', SQLITE3_TEXT);
+    $stmt->bindValue(':owner_source', isset($record['owner_source']) ? (string) $record['owner_source'] : 'system', SQLITE3_TEXT);
+    $stmt->bindValue(':last_action', isset($record['last_action']) ? (string) $record['last_action'] : '', SQLITE3_TEXT);
+
+    $result = $stmt->execute();
+    if ($result) {
+        $result->finalize();
+    }
+    return $result !== false;
+}
+
+function fm_owner_meta_migrate_json_to_sqlite($db)
+{
+    static $migrationChecked = false;
+    if ($migrationChecked) {
+        return;
+    }
+    $migrationChecked = true;
+
+    $countResult = $db->querySingle('SELECT COUNT(1) FROM fm_owner_meta_records');
+    if (is_numeric($countResult) && (int) $countResult > 0) {
+        return;
+    }
+
+    $legacyFile = fm_owner_meta_store_path();
+    if (!@is_file($legacyFile) || !@is_readable($legacyFile)) {
+        return;
+    }
+
+    $raw = @file_get_contents($legacyFile);
+    $data = json_decode((string) $raw, true);
+    if (!is_array($data) || !isset($data['scopes']) || !is_array($data['scopes'])) {
+        return;
+    }
+
+    $db->exec('BEGIN IMMEDIATE');
+    foreach ($data['scopes'] as $scopeKey => $scopeRows) {
+        if (!is_array($scopeRows)) {
+            continue;
+        }
+        foreach ($scopeRows as $relPath => $record) {
+            if (!is_array($record) || !is_string($relPath) || $relPath === '') {
+                continue;
+            }
+
+            $normalized = array(
+                'created_at' => isset($record['created_at']) ? (int) $record['created_at'] : 0,
+                'created_by' => isset($record['created_by']) ? (string) $record['created_by'] : '',
+                'updated_at' => isset($record['updated_at']) ? (int) $record['updated_at'] : 0,
+                'updated_by' => isset($record['updated_by']) ? (string) $record['updated_by'] : '',
+                'owner_source' => isset($record['owner_source']) ? (string) $record['owner_source'] : fm_owner_meta_infer_source($record),
+                'last_action' => isset($record['last_action']) ? (string) $record['last_action'] : '',
+            );
+            fm_owner_meta_sqlite_upsert($db, (string) $scopeKey, (string) $relPath, $normalized);
+        }
+    }
+    $db->exec('COMMIT');
+}
+
+function fm_owner_meta_get_db()
+{
+    static $db = null;
+    if ($db !== null) {
+        return $db;
+    }
+
+    if (!class_exists('SQLite3')) {
+        return null;
+    }
+
+    try {
+        $db = new SQLite3(fm_owner_meta_db_path());
+        $db->busyTimeout(3000);
+        $db->exec('CREATE TABLE IF NOT EXISTS fm_owner_meta_records (
+            scope_key TEXT NOT NULL,
+            rel_path TEXT NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT 0,
+            created_by TEXT NOT NULL DEFAULT "",
+            updated_at INTEGER NOT NULL DEFAULT 0,
+            updated_by TEXT NOT NULL DEFAULT "",
+            owner_source TEXT NOT NULL DEFAULT "system",
+            last_action TEXT NOT NULL DEFAULT "",
+            PRIMARY KEY (scope_key, rel_path)
+        )');
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_owner_meta_scope_updated ON fm_owner_meta_records(scope_key, updated_at)');
+        fm_owner_meta_migrate_json_to_sqlite($db);
+    } catch (Exception $e) {
+        $db = null;
+    }
+
+    return $db;
+}
+
 function fm_owner_meta_current_user()
 {
     if (defined('FM_USE_AUTH') && FM_USE_AUTH && isset($_SESSION[FM_SESSION_ID]['logged']) && $_SESSION[FM_SESSION_ID]['logged'] !== '') {
@@ -3458,6 +3616,12 @@ function fm_owner_meta_get($absolutePath)
     $rel = fm_owner_meta_rel_path($absolutePath);
     if ($rel === '') {
         return null;
+    }
+
+    $db = fm_owner_meta_get_db();
+    if ($db) {
+        $scope = fm_owner_meta_scope_key();
+        return fm_owner_meta_sqlite_fetch($db, $scope, $rel);
     }
 
     $data = fm_owner_meta_read_all();
@@ -3500,6 +3664,43 @@ function fm_owner_meta_touch($absolutePath, $action = 'update', $actor = '')
 
     if ($actor === '') {
         $actor = fm_owner_meta_current_user();
+    }
+
+    $db = fm_owner_meta_get_db();
+    if ($db) {
+        $scope = fm_owner_meta_scope_key();
+        $action = (string) $action;
+        $record = fm_owner_meta_sqlite_fetch($db, $scope, $rel);
+        if (!is_array($record)) {
+            $record = array();
+        }
+
+        $now = time();
+        if (!isset($record['created_at']) || !is_numeric($record['created_at']) || (int) $record['created_at'] <= 0) {
+            $record['created_at'] = $now;
+        }
+
+        $isNewRecord = empty($record) || (!isset($record['updated_at']) && !isset($record['updated_by']) && !isset($record['created_by']));
+        $ownerSource = fm_owner_meta_infer_source($record);
+
+        if ($isNewRecord) {
+            if (fm_owner_meta_is_app_creation_action($action)) {
+                $ownerSource = 'app';
+                $record['created_by'] = $actor !== '' ? $actor : '';
+            } else {
+                $ownerSource = 'system';
+                $record['created_by'] = '';
+            }
+        } elseif ($ownerSource === 'app' && (!isset($record['created_by']) || trim((string) $record['created_by']) === '') && $actor !== '') {
+            $record['created_by'] = $actor;
+        }
+
+        $record['owner_source'] = $ownerSource;
+        $record['updated_at'] = $now;
+        $record['updated_by'] = $actor !== '' ? $actor : (isset($record['updated_by']) && trim((string) $record['updated_by']) !== '' ? (string) $record['updated_by'] : (isset($record['created_by']) ? (string) $record['created_by'] : 'system'));
+        $record['last_action'] = $action;
+
+        return fm_owner_meta_sqlite_upsert($db, $scope, $rel, $record);
     }
 
     $data = fm_owner_meta_read_all();
@@ -3555,6 +3756,82 @@ function fm_owner_meta_move($oldAbsolutePath, $newAbsolutePath, $actor = '')
         $actor = fm_owner_meta_current_user();
     }
 
+    $db = fm_owner_meta_get_db();
+    if ($db) {
+        $scope = fm_owner_meta_scope_key();
+        $now = time();
+        $record = fm_owner_meta_sqlite_fetch($db, $scope, $oldRel);
+        if (!is_array($record)) {
+            $record = array(
+                'created_at' => $now,
+                'created_by' => '',
+                'owner_source' => 'system',
+            );
+        }
+
+        $record['owner_source'] = fm_owner_meta_infer_source($record);
+        $record['updated_at'] = $now;
+        $record['updated_by'] = $actor !== '' ? $actor : (isset($record['updated_by']) && trim((string) $record['updated_by']) !== '' ? (string) $record['updated_by'] : (isset($record['created_by']) ? (string) $record['created_by'] : 'system'));
+        $record['last_action'] = 'move';
+
+        $stmt = $db->prepare('SELECT rel_path, created_at, created_by, updated_at, updated_by, owner_source, last_action
+            FROM fm_owner_meta_records
+            WHERE scope_key = :scope AND rel_path LIKE :prefix');
+        $descendants = array();
+        if ($stmt) {
+            $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+            $stmt->bindValue(':prefix', $oldRel . '/%', SQLITE3_TEXT);
+            $result = $stmt->execute();
+            if ($result) {
+                while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                    if (is_array($row) && isset($row['rel_path'])) {
+                        $descendants[] = $row;
+                    }
+                }
+                $result->finalize();
+            }
+        }
+
+        $db->exec('BEGIN IMMEDIATE');
+        $ok = fm_owner_meta_sqlite_upsert($db, $scope, $newRel, $record);
+        if ($ok) {
+            foreach ($descendants as $childRow) {
+                $childRel = (string) $childRow['rel_path'];
+                $suffix = substr($childRel, strlen($oldRel));
+                $targetRel = $newRel . $suffix;
+                $ok = fm_owner_meta_sqlite_upsert($db, $scope, $targetRel, fm_owner_meta_sqlite_row_to_record($childRow));
+                if (!$ok) {
+                    break;
+                }
+            }
+        }
+
+        if ($ok) {
+            $deleteStmt = $db->prepare('DELETE FROM fm_owner_meta_records
+                WHERE scope_key = :scope AND (rel_path = :rel OR rel_path LIKE :prefix)');
+            if ($deleteStmt) {
+                $deleteStmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                $deleteStmt->bindValue(':rel', (string) $oldRel, SQLITE3_TEXT);
+                $deleteStmt->bindValue(':prefix', $oldRel . '/%', SQLITE3_TEXT);
+                $deleteRes = $deleteStmt->execute();
+                if ($deleteRes) {
+                    $deleteRes->finalize();
+                }
+                $ok = $deleteRes !== false;
+            } else {
+                $ok = false;
+            }
+        }
+
+        if ($ok) {
+            $db->exec('COMMIT');
+            return true;
+        }
+
+        $db->exec('ROLLBACK');
+        return false;
+    }
+
     $data = fm_owner_meta_read_all();
     $scope = fm_owner_meta_scope_key();
     if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
@@ -3604,6 +3881,74 @@ function fm_owner_meta_copy($srcAbsolutePath, $destAbsolutePath, $actor = '')
         $actor = fm_owner_meta_current_user();
     }
 
+    $db = fm_owner_meta_get_db();
+    if ($db) {
+        $scope = fm_owner_meta_scope_key();
+        $sourceRecord = fm_owner_meta_sqlite_fetch($db, $scope, $srcRel);
+        if (!is_array($sourceRecord)) {
+            $sourceRecord = array();
+        }
+        $now = time();
+
+        $newRecord = $sourceRecord;
+        $newRecord['created_at'] = $now;
+        $newRecord['owner_source'] = 'app';
+        $newRecord['created_by'] = $actor !== '' ? $actor : (isset($sourceRecord['created_by']) ? (string) $sourceRecord['created_by'] : '');
+        if (trim((string) $newRecord['created_by']) === '') {
+            $newRecord['created_by'] = 'system';
+        }
+        $newRecord['updated_at'] = $now;
+        $newRecord['updated_by'] = $newRecord['created_by'];
+        $newRecord['last_action'] = 'copy';
+
+        $stmt = $db->prepare('SELECT rel_path, created_at, created_by, updated_at, updated_by, owner_source, last_action
+            FROM fm_owner_meta_records
+            WHERE scope_key = :scope AND rel_path LIKE :prefix');
+        $descendants = array();
+        if ($stmt) {
+            $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+            $stmt->bindValue(':prefix', $srcRel . '/%', SQLITE3_TEXT);
+            $result = $stmt->execute();
+            if ($result) {
+                while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                    if (is_array($row) && isset($row['rel_path'])) {
+                        $descendants[] = $row;
+                    }
+                }
+                $result->finalize();
+            }
+        }
+
+        $db->exec('BEGIN IMMEDIATE');
+        $ok = fm_owner_meta_sqlite_upsert($db, $scope, $destRel, $newRecord);
+        if ($ok) {
+            foreach ($descendants as $childRow) {
+                $childRel = (string) $childRow['rel_path'];
+                $suffix = substr($childRel, strlen($srcRel));
+                $targetRel = $destRel . $suffix;
+                $child = fm_owner_meta_sqlite_row_to_record($childRow);
+                $child['owner_source'] = 'app';
+                $child['created_at'] = $now;
+                $child['created_by'] = $newRecord['created_by'];
+                $child['updated_at'] = $now;
+                $child['updated_by'] = $newRecord['created_by'];
+                $child['last_action'] = 'copy';
+                $ok = fm_owner_meta_sqlite_upsert($db, $scope, $targetRel, $child);
+                if (!$ok) {
+                    break;
+                }
+            }
+        }
+
+        if ($ok) {
+            $db->exec('COMMIT');
+            return true;
+        }
+
+        $db->exec('ROLLBACK');
+        return false;
+    }
+
     $data = fm_owner_meta_read_all();
     $scope = fm_owner_meta_scope_key();
     if (!isset($data['scopes'][$scope]) || !is_array($data['scopes'][$scope])) {
@@ -3649,6 +3994,24 @@ function fm_owner_meta_remove($absolutePath)
     $rel = fm_owner_meta_rel_path($absolutePath);
     if ($rel === '') {
         return false;
+    }
+
+    $db = fm_owner_meta_get_db();
+    if ($db) {
+        $scope = fm_owner_meta_scope_key();
+        $stmt = $db->prepare('DELETE FROM fm_owner_meta_records
+            WHERE scope_key = :scope AND (rel_path = :rel OR rel_path LIKE :prefix)');
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+        $stmt->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
+        $stmt->bindValue(':prefix', $rel . '/%', SQLITE3_TEXT);
+        $result = $stmt->execute();
+        if ($result) {
+            $result->finalize();
+        }
+        return $result !== false;
     }
 
     $data = fm_owner_meta_read_all();
