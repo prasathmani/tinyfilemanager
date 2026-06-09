@@ -31,6 +31,16 @@ class TFM_CopyActionHandler {
         $from = $this->root_path . '/' . $copy;
         $dest = $this->basePath() . '/' . basename($from);
 
+        if (!$this->isPathInsideRoot($from) || !$this->isPathInsideRoot($dest)) {
+            fm_set_msg('Source or destination path is outside allowed root.', 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+        }
+
+        if (!$this->isPathAllowedForCurrentUser($from) || !$this->isPathAllowedForCurrentUser($dest)) {
+            fm_set_msg('Access denied. Path restriction applicable.', 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+        }
+
         $move = isset($get['move']);
         $move = fm_clean_path(urldecode($move));
 
@@ -112,6 +122,16 @@ class TFM_CopyActionHandler {
             $copy_to_path .= '/' . $copy_to;
         }
 
+        if (!$this->isPathInsideRoot($path) || !$this->isPathInsideRoot($copy_to_path)) {
+            fm_set_msg('Source or destination path is outside allowed root.', 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+        }
+
+        if (!$this->isPathAllowedForCurrentUser($path) || !$this->isPathAllowedForCurrentUser($copy_to_path)) {
+            fm_set_msg('Access denied. Path restriction applicable.', 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
+        }
+
         if ($path == $copy_to_path) {
             fm_set_msg(lng('Paths must be not equal'), 'alert');
             fm_redirect(FM_SELF_URL . '?p=' . urlencode($this->current_path));
@@ -134,6 +154,16 @@ class TFM_CopyActionHandler {
                     $f = fm_clean_path($f);
                     $from = $path . '/' . $f;
                     $dest = $copy_to_path . '/' . $f;
+
+                    if (!$this->isPathInsideRoot($from) || !$this->isPathInsideRoot($dest)) {
+                        $errors++;
+                        continue;
+                    }
+
+                    if (!$this->isPathAllowedForCurrentUser($from) || !$this->isPathAllowedForCurrentUser($dest)) {
+                        $errors++;
+                        continue;
+                    }
 
                     if ($move) {
                         $rename = fm_rename($from, $dest);
@@ -172,5 +202,33 @@ class TFM_CopyActionHandler {
             $path .= '/' . $this->current_path;
         }
         return $path;
+    }
+
+    private function normalizePath($path) {
+        $normalized = str_replace('\\', '/', (string) $path);
+        $normalized = preg_replace('#/+#', '/', $normalized);
+        if (!is_string($normalized) || $normalized === '') {
+            return '';
+        }
+        return rtrim($normalized, '/');
+    }
+
+    private function isPathInsideRoot($path) {
+        $root = $this->normalizePath($this->root_path);
+        $candidate = $this->normalizePath($path);
+        if ($root === '' || $candidate === '') {
+            return false;
+        }
+        if (function_exists('fm_is_path_inside')) {
+            return fm_is_path_inside($candidate, $root);
+        }
+        return ($candidate === $root) || (strpos($candidate, $root . '/') === 0);
+    }
+
+    private function isPathAllowedForCurrentUser($path) {
+        if (function_exists('fm_user_can_access_path')) {
+            return fm_user_can_access_path($path, false);
+        }
+        return true;
     }
 }
