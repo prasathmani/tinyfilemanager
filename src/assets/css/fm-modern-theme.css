@@ -201,6 +201,63 @@ body {
   color: var(--fmx-accent) !important;
 }
 
+#fm-selection-bar {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--fmx-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(36, 99, 235, 0.06), rgba(36, 99, 235, 0.02));
+}
+
+#fm-selection-bar .btn.btn-2,
+#fm-selection-bar #fm-selection-count {
+  border-radius: 999px !important;
+  border: 1px solid var(--fmx-border);
+  background: var(--fmx-surface);
+  color: var(--fmx-text);
+  box-shadow: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+#fm-selection-bar .btn.btn-2:hover,
+#fm-selection-bar .btn.btn-2:focus-visible {
+  background: var(--fmx-accent-weak);
+  border-color: var(--fmx-accent);
+  color: var(--fmx-accent);
+}
+
+#fm-selection-bar #fm-selection-count {
+  background: var(--fmx-accent-weak);
+  border-color: var(--fmx-accent);
+  color: var(--fmx-accent);
+  font-weight: 700;
+}
+
+#fm-selection-bar .btn.btn-2 i {
+  opacity: 0.9;
+}
+
+html[data-bs-theme="dark"] #fm-selection-bar {
+  background: linear-gradient(180deg, rgba(110, 162, 255, 0.13), rgba(110, 162, 255, 0.05));
+}
+
+html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2,
+html[data-bs-theme="dark"] #fm-selection-bar #fm-selection-count {
+  background: rgba(22, 32, 44, 0.9);
+  border-color: var(--fmx-border);
+  color: var(--fmx-text);
+}
+
+html[data-bs-theme="dark"] #fm-selection-bar #fm-selection-count,
+html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:hover,
+html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:focus-visible {
+  border-color: var(--fmx-accent);
+  color: var(--fmx-accent);
+}
+
 .fm-table-wrap,
 .fm-main-table-wrap {
   border-radius: 14px;
@@ -462,6 +519,23 @@ html[data-bs-theme="dark"] #fm-row-actions-float {
     flex: 1 1 50%;
     padding-left: 0.55rem;
     padding-right: 0.55rem;
+  }
+
+  #fm-selection-bar {
+    border-radius: 16px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  #fm-selection-bar .btn.btn-2,
+  #fm-selection-bar #fm-selection-count {
+    flex: 1 1 calc(50% - 6px);
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  #fm-selection-bar #fm-selection-count {
+    flex: 1 0 100%;
   }
 
   #fm-row-actions-float {
