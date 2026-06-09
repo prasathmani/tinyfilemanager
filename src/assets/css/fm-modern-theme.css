@@ -288,34 +288,40 @@ html[data-bs-theme="dark"] .fm-owner-last-editor-badge {
 }
 
 .inline-actions {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
-  gap: 2px;
-  flex-wrap: nowrap;
+  gap: 1px;
+  flex-wrap: nowrap !important;
   justify-content: flex-start;
   white-space: nowrap;
+  column-gap: 1px;
+  row-gap: 1px;
 }
 
 #main-table.fm-modern-table .fm-col-actions > .inline-actions,
 .fm-grid-actions .inline-actions {
-  display: inline-flex;
-  flex-direction: row;
+  display: inline-flex !important;
+  flex-direction: row !important;
   align-items: center;
-  flex-wrap: nowrap;
-  gap: 2px;
+  flex-wrap: nowrap !important;
+  gap: 1px;
 }
 
 #main-table.fm-modern-table .fm-col-actions > .inline-actions > a,
 .fm-grid-actions .inline-actions > a {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
+  width: auto !important;
+  min-height: auto !important;
+  margin: 0 !important;
 }
 
 .inline-actions > a > i {
   min-width: 24px;
   min-height: 24px;
   line-height: 14px;
+  margin-left: 0 !important;
 }
 
 @media (max-width: 767.98px) {
