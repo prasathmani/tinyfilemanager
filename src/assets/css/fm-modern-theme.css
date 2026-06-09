@@ -331,7 +331,7 @@ body.fm-list-mode #main-table.fm-modern-table .fm-col-actions > .inline-actions 
   border-radius: 999px;
   padding: 0.2rem 0.42rem;
   color: var(--fmx-subtle);
-  font-size: 0.69rem;
+  font-size: 0.62rem;
   font-weight: 600;
   line-height: 1.05;
   white-space: nowrap;
@@ -495,7 +495,7 @@ html[data-bs-theme="dark"] #fm-row-actions-float {
   }
 
   .fm-action-note {
-    font-size: 0.64rem;
+    font-size: 0.6rem;
     padding: 0.16rem 0.34rem;
     gap: 3px;
   }

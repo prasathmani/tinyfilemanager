@@ -128,6 +128,9 @@ class TFM_FileActionHandler {
                     if (function_exists('fm_owner_meta_move')) {
                         fm_owner_meta_move($path . '/' . $old, $path . '/' . $new);
                     }
+                    if (function_exists('fm_owner_meta_touch')) {
+                        fm_owner_meta_touch($path . '/' . $new, 'rename');
+                    }
                 fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
             } else {
                 fm_set_msg(sprintf(lng('Error while renaming from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');

@@ -81,7 +81,7 @@
                         'upload_url' => 'Upload URL',
                         'copy' => 'Kopia',
                         'move' => 'Presun',
-                        'rename' => 'Premenovane',
+                        'rename' => 'Premenovanie',
                         'edit' => 'Editacia',
                         'update' => 'Uprava',
                         'write' => 'Zapis',
@@ -102,6 +102,10 @@
 
                     if ($updatedBy !== '' && strtolower($updatedBy) !== 'system') {
                         $label .= ' · ' . $updatedBy;
+                    }
+
+                    if ($updatedAt > 0) {
+                        $label .= ' · ' . date('d.m.Y H:i', $updatedAt);
                     }
 
                     $title = $label;
