@@ -287,6 +287,43 @@ body.fm-density-normal #main-table.fm-modern-table tbody td {
   white-space: normal;
 }
 
+#main-table.fm-modern-table .fm-parent-row td {
+  background: linear-gradient(90deg, rgba(36, 99, 235, 0.08), rgba(36, 99, 235, 0.02));
+}
+
+.fm-parent-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.16rem 0.12rem;
+  font-weight: 700;
+  color: var(--fmx-accent) !important;
+  text-decoration: none;
+}
+
+.fm-parent-nav-link:hover,
+.fm-parent-nav-link:focus-visible {
+  color: #1a4ec2 !important;
+  text-decoration: none;
+}
+
+.fm-parent-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  background: var(--fmx-accent);
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.fm-parent-nav-text {
+  letter-spacing: 0.01em;
+}
+
 #main-table.fm-modern-table .fm-col-owner {
   width: 1%;
   white-space: nowrap;
@@ -594,6 +631,18 @@ body.fm-density-normal .inline-actions > a > i {
     width: 146px;
   }
 
+  .fm-parent-nav-link {
+    padding: 0.08rem 0;
+    gap: 0.34rem;
+    font-size: 0.86rem;
+  }
+
+  .fm-parent-nav-icon {
+    width: 1.26rem;
+    height: 1.26rem;
+    font-size: 0.66rem;
+  }
+
   .fm-action-note {
     font-size: 0.56rem;
     padding: 0.12rem 0.28rem;
@@ -635,6 +684,10 @@ body.fm-density-normal .inline-actions > a > i {
 
   #main-table.fm-modern-table .fm-col-actions {
     width: 132px;
+  }
+
+  .fm-parent-nav-text {
+    font-size: 0.82rem;
   }
 
   .fm-action-note {

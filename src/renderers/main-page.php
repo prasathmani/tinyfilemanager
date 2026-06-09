@@ -56,7 +56,12 @@
             ?>
                 <tr class="fm-parent-row"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                         <td class="nosort"></td><?php endif; ?>
-                    <td class="border-0 fm-col-name" data-sort><a href="?p=<?php echo urlencode($parent) ?>"><i class="fa fa-chevron-circle-left go-back"></i> ..</a></td>
+                    <td class="border-0 fm-col-name" data-sort>
+                        <a href="?p=<?php echo urlencode($parent) ?>" class="fm-parent-nav-link" title="Prejst o uroven vyssie">
+                            <span class="fm-parent-nav-icon" aria-hidden="true"><i class="fa fa-arrow-left"></i></span>
+                            <span class="fm-parent-nav-text">Spat o uroven vyssie</span>
+                        </a>
+                    </td>
                     <td class="border-0 fm-col-size" data-order></td>
                     <td class="border-0 fm-col-modified" data-order></td>
                     <td class="border-0 fm-col-actions"></td>
@@ -654,14 +659,99 @@
     }
 
     @media (max-width: 991.98px) {
-        .fm-footer-actions-col,
-        .fm-footer-online-col {
-            flex-basis: 100%;
-            min-width: 100%;
+        .fm-footer-tools-row {
+            flex-wrap: nowrap;
+            align-items: center;
+            column-gap: .5rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: .2rem;
+        }
+
+        .fm-footer-actions-col {
+            flex: 1 1 auto;
+            min-width: 0;
         }
 
         .fm-footer-online-col {
-            justify-content: flex-start;
+            flex: 0 0 auto;
+            min-width: 250px;
+            max-width: 44vw;
+            justify-content: flex-end;
+        }
+
+        .fm-footer-tools-row #fm-selection-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            width: 100%;
+            padding: 4px;
+        }
+
+        .fm-footer-tools-row #fm-selection-bar .btn.btn-2,
+        .fm-footer-tools-row #fm-selection-bar #fm-selection-count {
+            flex: 0 0 auto;
+            min-height: 34px;
+            padding-top: 0.2rem;
+            padding-bottom: 0.2rem;
+        }
+
+        .fm-online-users-wrap {
+            display: flex;
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            justify-content: flex-end;
+            width: 100%;
+            gap: .35rem !important;
+            padding-bottom: 2px;
+        }
+
+        .fm-online-users-wrap .badge,
+        .fm-online-users-wrap .fm-user-chat-badge,
+        .fm-online-users-wrap .js-reset-runtime-state {
+            flex: 0 0 auto;
+        }
+
+        .fm-footer-tools-row #fm-selection-bar::-webkit-scrollbar,
+        .fm-online-users-wrap::-webkit-scrollbar,
+        .fm-footer-tools-row::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .fm-footer-tools-row #fm-selection-bar::-webkit-scrollbar-thumb,
+        .fm-online-users-wrap::-webkit-scrollbar-thumb,
+        .fm-footer-tools-row::-webkit-scrollbar-thumb {
+            background: rgba(120, 130, 150, 0.45);
+            border-radius: 999px;
+        }
+
+        .fm-footer-tools-row #fm-selection-bar::-webkit-scrollbar-track,
+        .fm-online-users-wrap::-webkit-scrollbar-track,
+        .fm-footer-tools-row::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .fm-footer-online-col {
+            min-width: 220px;
+            max-width: 46vw;
+        }
+
+        .fm-footer-tools-row #fm-selection-bar .btn.btn-2,
+        .fm-footer-tools-row #fm-selection-bar #fm-selection-count {
+            min-height: 32px;
+            font-size: .78rem;
+        }
+
+        .fm-online-users-wrap .badge,
+        .fm-online-users-wrap .fm-user-chat-badge,
+        .fm-online-users-wrap .js-reset-runtime-state {
+            font-size: .72rem;
         }
     }
 </style>
