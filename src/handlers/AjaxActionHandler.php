@@ -54,8 +54,27 @@ class TFM_AjaxActionHandler {
 
         if (isset($post['type']) && $post['type'] == 'search') {
             $dir = $post['path'] == '.' ? '' : $post['path'];
-            $response = scan(fm_clean_path($dir), $post['content']);
+            $response = fm_search_files(fm_clean_path($dir), isset($post['content']) ? $post['content'] : '');
             echo json_encode($response);
+            exit();
+        }
+
+        if (isset($post['type']) && $post['type'] == 'search_index_rebuild') {
+            $isAdmin = function_exists('fm_is_admin') ? (bool) fm_is_admin() : false;
+            header('Content-Type: application/json; charset=utf-8');
+            if (!$isAdmin) {
+                echo json_encode(array(
+                    'success' => false,
+                    'msg' => 'Admin only',
+                ));
+                exit();
+            }
+
+            $ok = function_exists('fm_search_index_rebuild_full') ? (bool) fm_search_index_rebuild_full() : false;
+            echo json_encode(array(
+                'success' => $ok,
+                'msg' => $ok ? 'Search index rebuilt' : 'Search index rebuild failed',
+            ));
             exit();
         }
 
@@ -113,6 +132,9 @@ class TFM_AjaxActionHandler {
         if (function_exists('fm_owner_meta_touch')) {
             fm_owner_meta_touch($file_path, 'edit');
         }
+        if (function_exists('fm_search_index_mark_dirty')) {
+            fm_search_index_mark_dirty('edit', $file_path);
+        }
         die(true);
     }
 
@@ -133,6 +155,9 @@ class TFM_AjaxActionHandler {
             if (copy($fullyQualifiedFileName, $fullPath . $newFileName)) {
                 if (function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($fullPath . $newFileName, 'copy');
+                }
+                if (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('backup_copy', $fullPath . $newFileName);
                 }
                 echo 'Backup ' . $newFileName . ' created';
             } else {

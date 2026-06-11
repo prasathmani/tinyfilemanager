@@ -700,6 +700,8 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
     fm_online_touch_user($_SESSION[FM_SESSION_ID]['logged']);
 }
 
+fm_search_index_register_shutdown_sync();
+
 // clean and check $root_path
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
@@ -756,6 +758,11 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'], $directories_users[$_
 
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
+if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
+    fm_search_index_auto_bootstrap(true, 'authenticated_request');
+} elseif (!$use_auth) {
+    fm_search_index_auto_bootstrap(true, 'unauthenticated_instance_request');
+}
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
@@ -5209,6 +5216,567 @@ function scan($dir = '', $filter = '')
     }
 
     return $files;
+}
+
+/**
+ * SQLite DB path for recursive search index.
+ * @return string
+ */
+function fm_search_index_db_path()
+{
+    return rtrim(fm_runtime_state_dir(), '/\\') . '/search-index.sqlite';
+}
+
+/**
+ * Lightweight append-only search diagnostics log.
+ * @param string $event
+ * @param array $context
+ * @return void
+ */
+function fm_search_log_event($event, array $context = array())
+{
+    $path = rtrim(fm_runtime_state_dir(), '/\\') . '/search-index.log';
+    $entry = array(
+        'ts' => date('c'),
+        'event' => (string) $event,
+        'context' => $context,
+    );
+    @file_put_contents($path, json_encode($entry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+}
+
+/**
+ * Resolve scope key for search index records.
+ * @return string
+ */
+function fm_search_scope_key()
+{
+    if (function_exists('fm_owner_meta_scope_key')) {
+        return (string) fm_owner_meta_scope_key();
+    }
+    if (defined('FM_ROOT_PATH')) {
+        return hash('sha256', (string) FM_ROOT_PATH);
+    }
+
+    global $root_path;
+    $fallbackRoot = is_string($root_path) ? $root_path : __DIR__;
+    return hash('sha256', (string) $fallbackRoot);
+}
+
+/**
+ * Check if a SQLite table contains the requested column.
+ * @param SQLite3 $db
+ * @param string $table
+ * @param string $column
+ * @return bool
+ */
+function fm_search_index_has_column($db, $table, $column)
+{
+    $table = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $table);
+    $column = (string) $column;
+    if ($table === '' || $column === '') {
+        return false;
+    }
+
+    $result = @$db->query("PRAGMA table_info($table)");
+    if (!$result) {
+        return false;
+    }
+
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        if (isset($row['name']) && (string) $row['name'] === $column) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Open or initialize SQLite search index DB.
+ * @return SQLite3|null
+ */
+function fm_search_index_get_db()
+{
+    static $db = null;
+    static $ready = false;
+
+    if ($ready) {
+        return $db;
+    }
+    $ready = true;
+
+    if (!class_exists('SQLite3')) {
+        fm_search_log_event('search_index_unavailable', array('reason' => 'sqlite3_extension_missing'));
+        return null;
+    }
+
+    try {
+        $db = new SQLite3(fm_search_index_db_path());
+        $db->exec('PRAGMA journal_mode = WAL');
+        $db->exec('PRAGMA synchronous = NORMAL');
+        $db->exec('CREATE TABLE IF NOT EXISTS fm_file_index (
+            scope_key TEXT NOT NULL,
+            rel_path TEXT NOT NULL,
+            dir_path TEXT NOT NULL,
+            name TEXT NOT NULL,
+            name_lc TEXT NOT NULL,
+            is_dir INTEGER NOT NULL DEFAULT 0,
+            size INTEGER NOT NULL DEFAULT 0,
+            mtime INTEGER NOT NULL DEFAULT 0,
+            indexed_at INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY(scope_key, rel_path)
+        )');
+        if (!fm_search_index_has_column($db, 'fm_file_index', 'is_dir')) {
+            @$db->exec('ALTER TABLE fm_file_index ADD COLUMN is_dir INTEGER NOT NULL DEFAULT 0');
+        }
+        $db->exec('CREATE TABLE IF NOT EXISTS fm_file_index_meta (
+            scope_key TEXT PRIMARY KEY,
+            is_dirty INTEGER NOT NULL DEFAULT 1,
+            last_full_index_at INTEGER NOT NULL DEFAULT 0,
+            last_mutation_at INTEGER NOT NULL DEFAULT 0,
+            updated_at INTEGER NOT NULL DEFAULT 0
+        )');
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_file_index_scope_name ON fm_file_index(scope_key, name_lc)');
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_file_index_scope_dir ON fm_file_index(scope_key, dir_path)');
+    } catch (Exception $e) {
+        fm_search_log_event('search_index_init_failed', array('message' => $e->getMessage()));
+        $db = null;
+    }
+
+    return $db;
+}
+
+/**
+ * Mark current scope index as stale after filesystem mutation.
+ * @param string $reason
+ * @param string $path
+ * @return void
+ */
+function fm_search_index_mark_dirty($reason = 'mutation', $path = '')
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return;
+    }
+
+    $scope = fm_search_scope_key();
+    $now = time();
+
+    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at)
+        VALUES (:scope, 1, 0, :now, :now)
+        ON CONFLICT(scope_key) DO UPDATE SET
+            is_dirty = 1,
+            last_mutation_at = :now2,
+            updated_at = :now3');
+
+    if ($stmt) {
+        $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+        $stmt->bindValue(':now', (int) $now, SQLITE3_INTEGER);
+        $stmt->bindValue(':now2', (int) $now, SQLITE3_INTEGER);
+        $stmt->bindValue(':now3', (int) $now, SQLITE3_INTEGER);
+        $stmt->execute();
+    }
+
+    $GLOBALS['fm_search_index_request_dirty'] = true;
+
+    fm_search_log_event('search_index_mark_dirty', array(
+        'reason' => (string) $reason,
+        'path' => (string) $path,
+    ));
+}
+
+/**
+ * Load index metadata for current scope.
+ * @param SQLite3 $db
+ * @param string $scope
+ * @return array
+ */
+function fm_search_index_get_meta($db, $scope)
+{
+    $stmt = $db->prepare('SELECT is_dirty, last_full_index_at, last_mutation_at, updated_at
+        FROM fm_file_index_meta
+        WHERE scope_key = :scope
+        LIMIT 1');
+
+    if (!$stmt) {
+        return array(
+            'is_dirty' => 1,
+            'last_full_index_at' => 0,
+            'last_mutation_at' => 0,
+            'updated_at' => 0,
+        );
+    }
+
+    $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+    $result = $stmt->execute();
+    if (!$result) {
+        return array(
+            'is_dirty' => 1,
+            'last_full_index_at' => 0,
+            'last_mutation_at' => 0,
+            'updated_at' => 0,
+        );
+    }
+
+    $row = $result->fetchArray(SQLITE3_ASSOC);
+    if (!is_array($row)) {
+        return array(
+            'is_dirty' => 1,
+            'last_full_index_at' => 0,
+            'last_mutation_at' => 0,
+            'updated_at' => 0,
+        );
+    }
+
+    return array(
+        'is_dirty' => isset($row['is_dirty']) ? (int) $row['is_dirty'] : 1,
+        'last_full_index_at' => isset($row['last_full_index_at']) ? (int) $row['last_full_index_at'] : 0,
+        'last_mutation_at' => isset($row['last_mutation_at']) ? (int) $row['last_mutation_at'] : 0,
+        'updated_at' => isset($row['updated_at']) ? (int) $row['updated_at'] : 0,
+    );
+}
+
+/**
+ * Persist full-index metadata after successful rebuild.
+ * @param SQLite3 $db
+ * @param string $scope
+ * @param int $ts
+ * @return void
+ */
+function fm_search_index_set_clean_meta($db, $scope, $ts)
+{
+    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at)
+        VALUES (:scope, 0, :ts, :ts, :ts)
+        ON CONFLICT(scope_key) DO UPDATE SET
+            is_dirty = 0,
+            last_full_index_at = :ts2,
+            updated_at = :ts3');
+    if ($stmt) {
+        $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+        $stmt->bindValue(':ts', (int) $ts, SQLITE3_INTEGER);
+        $stmt->bindValue(':ts2', (int) $ts, SQLITE3_INTEGER);
+        $stmt->bindValue(':ts3', (int) $ts, SQLITE3_INTEGER);
+        $stmt->execute();
+    }
+}
+
+/**
+ * Rebuild full search index once at the end of a request that changed filesystem state.
+ * @return void
+ */
+function fm_search_index_register_shutdown_sync()
+{
+    static $registered = false;
+    if ($registered) {
+        return;
+    }
+    $registered = true;
+
+    register_shutdown_function(function () {
+        if (empty($GLOBALS['fm_search_index_request_dirty'])) {
+            return;
+        }
+
+        $started = microtime(true);
+        $ok = fm_search_index_rebuild_full();
+        fm_search_log_event('search_index_shutdown_sync', array(
+            'ok' => $ok ? 1 : 0,
+            'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+        ));
+    });
+}
+
+/**
+ * Auto-create or refresh index on the first eligible request.
+ * @param bool $enabled
+ * @param string $reason
+ * @return bool
+ */
+function fm_search_index_auto_bootstrap($enabled, $reason = 'request')
+{
+    static $attempted = false;
+    if ($attempted || !$enabled) {
+        return false;
+    }
+    $attempted = true;
+
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $scope = fm_search_scope_key();
+    $meta = fm_search_index_get_meta($db, $scope);
+    if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
+        return true;
+    }
+
+    $started = microtime(true);
+    $ok = fm_search_index_rebuild($db, $scope, '');
+    fm_search_log_event('search_index_auto_bootstrap', array(
+        'reason' => (string) $reason,
+        'ok' => $ok ? 1 : 0,
+        'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+    ));
+
+    return $ok;
+}
+
+/**
+ * Rebuild index for files and directories under provided base directory.
+ * @param SQLite3 $db
+ * @param string $scope
+ * @param string $baseDir
+ * @return bool
+ */
+function fm_search_index_rebuild($db, $scope, $baseDir = '')
+{
+    $baseDir = fm_clean_path((string) $baseDir);
+    $root = rtrim((string) FM_ROOT_PATH, '/\\');
+    $startAbs = $root . ($baseDir !== '' ? '/' . ltrim($baseDir, '/') : '');
+
+    if (!is_dir($startAbs) || !fm_user_can_access_path($startAbs, true)) {
+        return false;
+    }
+
+    try {
+        $db->exec('BEGIN IMMEDIATE');
+
+        if ($baseDir === '') {
+            $stmtDelete = $db->prepare('DELETE FROM fm_file_index WHERE scope_key = :scope');
+            if ($stmtDelete) {
+                $stmtDelete->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                $stmtDelete->execute();
+            }
+        } else {
+            $stmtDelete = $db->prepare('DELETE FROM fm_file_index WHERE scope_key = :scope AND (dir_path = :dir OR dir_path LIKE :prefix OR rel_path LIKE :prefix2)');
+            if ($stmtDelete) {
+                $stmtDelete->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                $stmtDelete->bindValue(':dir', (string) $baseDir, SQLITE3_TEXT);
+                $stmtDelete->bindValue(':prefix', $baseDir . '/%', SQLITE3_TEXT);
+                $stmtDelete->bindValue(':prefix2', $baseDir . '/%', SQLITE3_TEXT);
+                $stmtDelete->execute();
+            }
+        }
+
+        $insert = $db->prepare('INSERT OR REPLACE INTO fm_file_index (scope_key, rel_path, dir_path, name, name_lc, is_dir, size, mtime, indexed_at)
+            VALUES (:scope, :rel, :dir, :name, :name_lc, :is_dir, :size, :mtime, :indexed_at)');
+        if (!$insert) {
+            $db->exec('ROLLBACK');
+            return false;
+        }
+
+        $stack = array($startAbs);
+        $indexedAt = time();
+
+        while (!empty($stack)) {
+            $current = array_pop($stack);
+            $entries = @scandir($current);
+            if ($entries === false) {
+                continue;
+            }
+
+            foreach ($entries as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+
+                $abs = $current . '/' . $entry;
+                $rel = ltrim(str_replace($root, '', str_replace('\\', '/', $abs)), '/');
+                $dirPath = dirname($rel);
+                if ($dirPath === '.') {
+                    $dirPath = '';
+                }
+                $isDir = is_dir($abs);
+
+                if ($isDir) {
+                    if (!fm_user_can_access_path($abs, true)) {
+                        continue;
+                    }
+
+                    $insert->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                    $insert->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
+                    $insert->bindValue(':dir', (string) $dirPath, SQLITE3_TEXT);
+                    $insert->bindValue(':name', (string) basename($abs), SQLITE3_TEXT);
+                    $insert->bindValue(':name_lc', strtolower((string) basename($abs)), SQLITE3_TEXT);
+                    $insert->bindValue(':is_dir', 1, SQLITE3_INTEGER);
+                    $insert->bindValue(':size', 0, SQLITE3_INTEGER);
+                    $insert->bindValue(':mtime', (int) @filemtime($abs), SQLITE3_INTEGER);
+                    $insert->bindValue(':indexed_at', (int) $indexedAt, SQLITE3_INTEGER);
+                    $insert->execute();
+
+                    $stack[] = $abs;
+                    continue;
+                }
+
+                if (!is_file($abs) || !fm_user_can_access_path($abs, false)) {
+                    continue;
+                }
+
+                $insert->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                $insert->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
+                $insert->bindValue(':dir', (string) $dirPath, SQLITE3_TEXT);
+                $insert->bindValue(':name', (string) basename($abs), SQLITE3_TEXT);
+                $insert->bindValue(':name_lc', strtolower((string) basename($abs)), SQLITE3_TEXT);
+                $insert->bindValue(':is_dir', 0, SQLITE3_INTEGER);
+                $insert->bindValue(':size', (int) @filesize($abs), SQLITE3_INTEGER);
+                $insert->bindValue(':mtime', (int) @filemtime($abs), SQLITE3_INTEGER);
+                $insert->bindValue(':indexed_at', (int) $indexedAt, SQLITE3_INTEGER);
+                $insert->execute();
+            }
+        }
+
+        if ($baseDir === '') {
+            fm_search_index_set_clean_meta($db, $scope, $indexedAt);
+        }
+
+        $db->exec('COMMIT');
+        return true;
+    } catch (Exception $e) {
+        @ $db->exec('ROLLBACK');
+        fm_search_log_event('search_index_rebuild_failed', array('message' => $e->getMessage(), 'dir' => $baseDir));
+        return false;
+    }
+}
+
+/**
+ * Ensure full index exists and is up-to-date for current scope.
+ * @param SQLite3 $db
+ * @param string $scope
+ * @return bool
+ */
+function fm_search_index_ensure_fresh($db, $scope)
+{
+    $meta = fm_search_index_get_meta($db, $scope);
+    if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
+        return true;
+    }
+
+    $started = microtime(true);
+    $ok = fm_search_index_rebuild($db, $scope, '');
+    $elapsedMs = (int) round((microtime(true) - $started) * 1000);
+
+    fm_search_log_event('search_index_rebuild_full', array(
+        'ok' => $ok ? 1 : 0,
+        'elapsed_ms' => $elapsedMs,
+    ));
+
+    return $ok;
+}
+
+/**
+ * Force full search index rebuild.
+ * @return bool
+ */
+function fm_search_index_rebuild_full()
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    return fm_search_index_rebuild($db, fm_search_scope_key(), '');
+}
+
+/**
+ * Execute search via SQLite index. Returns null on DB failure.
+ * @param string $dir
+ * @param string $filter
+ * @return array|null
+ */
+function fm_search_index_query($dir = '', $filter = '')
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return null;
+    }
+
+    $scope = fm_search_scope_key();
+    $dir = fm_clean_path((string) $dir);
+    $needle = trim((string) $filter);
+    if ($needle === '') {
+        return array();
+    }
+
+    if (!fm_search_index_ensure_fresh($db, $scope)) {
+        return null;
+    }
+
+    try {
+        $stmt = $db->prepare('SELECT name, dir_path
+            FROM fm_file_index
+            WHERE scope_key = :scope
+              AND is_dir = 0
+              AND (:dir = "" OR dir_path = :dir OR dir_path LIKE :dirprefix)
+              AND name_lc LIKE :needle
+            ORDER BY dir_path ASC, name ASC
+            LIMIT 2000');
+        if (!$stmt) {
+            return null;
+        }
+
+        $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+        $stmt->bindValue(':dir', (string) $dir, SQLITE3_TEXT);
+        $stmt->bindValue(':dirprefix', ($dir === '' ? '' : $dir . '/%'), SQLITE3_TEXT);
+        $stmt->bindValue(':needle', '%' . strtolower($needle) . '%', SQLITE3_TEXT);
+
+        $result = $stmt->execute();
+        if (!$result) {
+            return null;
+        }
+
+        $rows = array();
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $dirPath = isset($row['dir_path']) ? (string) $row['dir_path'] : '';
+            $rows[] = array(
+                'name' => isset($row['name']) ? (string) $row['name'] : '',
+                'type' => 'file',
+                'path' => '/' . ltrim($dirPath, '/'),
+            );
+        }
+        return $rows;
+    } catch (Exception $e) {
+        fm_search_log_event('search_index_query_failed', array('message' => $e->getMessage(), 'dir' => $dir));
+        return null;
+    }
+}
+
+/**
+ * Main search function with SQLite-first strategy and live-scan fallback.
+ * @param string $dir
+ * @param string $filter
+ * @return array
+ */
+function fm_search_files($dir = '', $filter = '')
+{
+    $dir = fm_clean_path((string) $dir);
+    $filter = trim((string) $filter);
+    if ($filter === '') {
+        return array();
+    }
+
+    $started = microtime(true);
+
+    $indexed = fm_search_index_query($dir, $filter);
+    if (is_array($indexed)) {
+        fm_search_log_event('search_query', array(
+            'mode' => 'index',
+            'dir' => $dir,
+            'filter' => $filter,
+            'count' => count($indexed),
+            'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+        ));
+        return $indexed;
+    }
+
+    $fallback = scan($dir, $filter);
+    fm_search_log_event('search_fallback_scan', array(
+        'dir' => $dir,
+        'filter' => $filter,
+        'count' => count($fallback),
+        'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+    ));
+    return $fallback;
 }
 
 /**

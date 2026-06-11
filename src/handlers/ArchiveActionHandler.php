@@ -65,6 +65,9 @@ class TFM_ArchiveActionHandler {
                 if (function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($path . '/' . $zipname, 'create');
                 }
+                if (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('archive_pack', $path . '/' . $zipname);
+                }
                 fm_set_msg(sprintf(lng('Archive') . ' <b>%s</b> ' . lng('Created'), fm_enc($zipname)));
             } else {
                 fm_set_msg(lng('Archive not created'), 'error');
@@ -138,6 +141,9 @@ class TFM_ArchiveActionHandler {
             if ($res) {
                 if ($createdTargetFolder !== '' && function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($createdTargetFolder, 'mkdir');
+                }
+                if (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('archive_unpack', $path);
                 }
                 fm_set_msg(lng('Archive unpacked'));
             } else {

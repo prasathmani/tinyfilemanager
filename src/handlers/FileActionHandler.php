@@ -38,6 +38,9 @@ class TFM_FileActionHandler {
                 if (function_exists('fm_owner_meta_remove')) {
                     fm_owner_meta_remove($path . '/' . $del);
                 }
+                if (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('delete', $path . '/' . $del);
+                }
                 $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
                 fm_set_msg(sprintf($msg, fm_enc($del)));
             } else {
@@ -71,6 +74,9 @@ class TFM_FileActionHandler {
                         if (function_exists('fm_owner_meta_touch')) {
                             fm_owner_meta_touch($path . '/' . $new, 'create');
                         }
+                        if (function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('create_file', $path . '/' . $new);
+                        }
                         fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
                     } else {
                         fm_set_msg(lng('File extension is not allowed'), 'error');
@@ -82,6 +88,9 @@ class TFM_FileActionHandler {
                 if (fm_mkdir($path . '/' . $new, false) === true) {
                     if (function_exists('fm_owner_meta_touch')) {
                         fm_owner_meta_touch($path . '/' . $new, 'mkdir');
+                    }
+                    if (function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('mkdir', $path . '/' . $new);
                     }
                     fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
                 } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
@@ -140,6 +149,9 @@ class TFM_FileActionHandler {
                     if (function_exists('fm_owner_meta_touch')) {
                         fm_owner_meta_touch($full_new, 'rename');
                     }
+                    if (function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('rename', $full_new);
+                    }
                 fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
             } else {
                 fm_set_msg(sprintf(lng('Error while renaming from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)), 'error');
@@ -175,6 +187,9 @@ class TFM_FileActionHandler {
                         $errors++;
                     } elseif (function_exists('fm_owner_meta_remove')) {
                         fm_owner_meta_remove($new_path);
+                        if (function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('mass_delete', $new_path);
+                        }
                     }
                 }
             }

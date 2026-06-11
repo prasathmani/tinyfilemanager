@@ -140,6 +140,9 @@ class TFM_UploadHandler {
             if (function_exists('fm_owner_meta_touch')) {
                 fm_owner_meta_touch($target_file, 'upload');
             }
+            if (function_exists('fm_search_index_mark_dirty')) {
+                fm_search_index_mark_dirty('upload', $target_file);
+            }
             
             // Log successful upload
             $this->log('upload_success', "File uploaded: $filename");
