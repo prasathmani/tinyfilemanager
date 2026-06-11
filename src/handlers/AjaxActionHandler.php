@@ -78,6 +78,23 @@ class TFM_AjaxActionHandler {
             exit();
         }
 
+        if (isset($post['type']) && $post['type'] == 'search_index_map') {
+            header('Content-Type: application/json; charset=utf-8');
+            $dir = isset($post['path']) ? fm_clean_path((string) $post['path']) : '';
+            $limit = isset($post['limit']) ? (int) $post['limit'] : 1200;
+            if (function_exists('fm_search_index_map')) {
+                echo json_encode(fm_search_index_map($dir, $limit));
+            } else {
+                echo json_encode(array(
+                    'success' => false,
+                    'msg' => 'Search index map is unavailable.',
+                    'items' => array(),
+                    'meta' => array('dir' => $dir),
+                ));
+            }
+            exit();
+        }
+
         if (FM_READONLY || FM_UPLOAD_ONLY) {
             exit();
         }

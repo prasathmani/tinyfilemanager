@@ -725,6 +725,104 @@
     }
   }
 
+  function renderSearchIndexMap(payload) {
+    var items = (payload && payload.items && Array.isArray(payload.items)) ? payload.items : [];
+    var meta = (payload && payload.meta) ? payload.meta : {};
+    var rows = '';
+
+    items.forEach(function (item) {
+      var relPath = String(item.rel_path || '');
+      var dirPath = String(item.dir_path || '');
+      var name = String(item.name || '');
+      var isDir = Number(item.is_dir || 0) === 1;
+      var mtimeTs = Number(item.mtime || 0);
+      var indexedTs = Number(item.indexed_at || 0);
+      var mtime = mtimeTs > 0 ? new Date(mtimeTs * 1000).toLocaleString() : '-';
+      var indexedAt = indexedTs > 0 ? new Date(indexedTs * 1000).toLocaleString() : '-';
+      var typeLabel = isDir ? 'DIR' : 'FILE';
+      var href = isDir
+        ? ('?p=' + encodeURIComponent(relPath))
+        : ('?p=' + encodeURIComponent(dirPath) + '&view=' + encodeURIComponent(name));
+
+      rows += '<tr>' +
+        '<td><span class="badge ' + (isDir ? 'text-bg-info' : 'text-bg-secondary') + '">' + typeLabel + '</span></td>' +
+        '<td><a href="' + href + '">' + escapeHtml(relPath || '/') + '</a></td>' +
+        '<td><code>' + escapeHtml(dirPath || '/') + '</code></td>' +
+        '<td class="text-nowrap">' + escapeHtml(mtime) + '</td>' +
+        '<td class="text-nowrap">' + escapeHtml(indexedAt) + '</td>' +
+        '</tr>';
+    });
+
+    var count = Number(meta.count || items.length || 0);
+    var limit = Number(meta.limit || 0);
+    var scope = String(meta.scope || '');
+    var dbPath = String(meta.db_path || '');
+    var isDirty = Number(meta.is_dirty || 0) === 1;
+    var lastFullTs = Number(meta.last_full_index_at || 0);
+    var lastFull = lastFullTs > 0 ? new Date(lastFullTs * 1000).toLocaleString() : '-';
+
+    return '' +
+      '<div class="mb-2 small text-muted">' +
+      'SQL index map | records: <strong>' + count + '</strong>' +
+      (limit > 0 ? (' / limit ' + limit) : '') +
+      ' | dirty: <strong>' + (isDirty ? 'yes' : 'no') + '</strong>' +
+      ' | last full index: <strong>' + escapeHtml(lastFull) + '</strong>' +
+      '</div>' +
+      '<div class="mb-2 small text-muted">scope: <code>' + escapeHtml(scope) + '</code></div>' +
+      '<div class="mb-2 small text-muted">db: <code>' + escapeHtml(dbPath) + '</code></div>' +
+      '<div class="table-responsive fm-search-results-table-wrap">' +
+      '<table class="table table-sm table-striped align-middle mb-0 fm-search-results-table">' +
+      '<thead><tr><th>Type</th><th>Indexed path</th><th>Dir</th><th>Modified</th><th>Indexed</th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="5" class="text-muted">No indexed items for this path.</td></tr>') + '</tbody>' +
+      '</table>' +
+      '</div>';
+  }
+
+  function loadSearchIndexMap() {
+    var searchWrapper = $('#search-wrapper');
+    var loader = $('div.lds-facebook');
+    var path = resolveSearchPath();
+
+    $.ajax({
+      type: 'POST',
+      url: window.location,
+      data: {
+        ajax: true,
+        type: 'search_index_map',
+        path: path,
+        limit: 1200,
+        token: window.csrf
+      },
+      beforeSend: function () {
+        searchWrapper.html('');
+        loader.addClass('show-me');
+      },
+      success: function (payload) {
+        loader.removeClass('show-me');
+        if (typeof payload === 'string') {
+          try {
+            payload = JSON.parse(payload);
+          } catch (e) {
+            searchWrapper.html('<p class="m-2">ERROR: Invalid SQL map response.</p>');
+            return;
+          }
+        }
+
+        if (!payload || payload.success !== true) {
+          var msg = payload && payload.msg ? String(payload.msg) : 'Search index map is unavailable.';
+          searchWrapper.html('<p class="m-2 text-danger">' + escapeHtml(msg) + '</p>');
+          return;
+        }
+
+        searchWrapper.html(renderSearchIndexMap(payload));
+      },
+      error: function () {
+        loader.removeClass('show-me');
+        searchWrapper.html('<p class="m-2">ERROR: Could not load SQL index map.</p>');
+      }
+    });
+  }
+
   function triggerRecursiveSearchFromNavbar() {
     var navbarInput = document.getElementById('search-addon');
     if (!navbarInput) {
@@ -878,6 +976,7 @@
     var iconSecondary = document.getElementById('search-addon3');
     var mobileFocus = document.getElementById('js-mobile-focus-search');
     var advancedInput = document.getElementById('advanced-search');
+    var mapButton = document.getElementById('js-search-map-btn');
 
     if (!input) {
       // Even without navbar search field, advanced modal search must keep working.
@@ -922,6 +1021,13 @@
           event.preventDefault();
           fmSearch();
         }
+      });
+    }
+
+    if (mapButton) {
+      mapButton.addEventListener('click', function (event) {
+        event.preventDefault();
+        loadSearchIndexMap();
       });
     }
 

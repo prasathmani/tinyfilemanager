@@ -5742,6 +5742,119 @@ function fm_search_index_query($dir = '', $filter = '')
 }
 
 /**
+ * Read indexed file map from SQLite for diagnostics and troubleshooting.
+ * @param string $dir
+ * @param int $limit
+ * @return array
+ */
+function fm_search_index_map($dir = '', $limit = 1200)
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return array(
+            'success' => false,
+            'msg' => 'Search index database is not available.',
+            'items' => array(),
+            'meta' => array('dir' => (string) $dir),
+        );
+    }
+
+    $scope = fm_search_scope_key();
+    $dir = fm_clean_path((string) $dir);
+    $limit = (int) $limit;
+    if ($limit < 50) {
+        $limit = 50;
+    }
+    if ($limit > 5000) {
+        $limit = 5000;
+    }
+
+    if (!fm_search_index_ensure_fresh($db, $scope)) {
+        return array(
+            'success' => false,
+            'msg' => 'Search index is not ready yet.',
+            'items' => array(),
+            'meta' => array('dir' => $dir),
+        );
+    }
+
+    $meta = fm_search_index_get_meta($db, $scope);
+
+    try {
+        $stmt = $db->prepare('SELECT rel_path, dir_path, name, is_dir, mtime, indexed_at
+            FROM fm_file_index
+            WHERE scope_key = :scope
+              AND (
+                :dir = ""
+                OR dir_path = :dir
+                OR dir_path LIKE :dirprefix
+                OR rel_path = :dir
+                OR rel_path LIKE :dirprefix
+              )
+            ORDER BY dir_path ASC, is_dir DESC, name ASC
+            LIMIT :limit');
+        if (!$stmt) {
+            return array(
+                'success' => false,
+                'msg' => 'Search index query preparation failed.',
+                'items' => array(),
+                'meta' => array('dir' => $dir),
+            );
+        }
+
+        $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+        $stmt->bindValue(':dir', (string) $dir, SQLITE3_TEXT);
+        $stmt->bindValue(':dirprefix', ($dir === '' ? '' : $dir . '/%'), SQLITE3_TEXT);
+        $stmt->bindValue(':limit', (int) $limit, SQLITE3_INTEGER);
+
+        $result = $stmt->execute();
+        if (!$result) {
+            return array(
+                'success' => false,
+                'msg' => 'Search index query execution failed.',
+                'items' => array(),
+                'meta' => array('dir' => $dir),
+            );
+        }
+
+        $items = array();
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $items[] = array(
+                'rel_path' => isset($row['rel_path']) ? (string) $row['rel_path'] : '',
+                'dir_path' => isset($row['dir_path']) ? (string) $row['dir_path'] : '',
+                'name' => isset($row['name']) ? (string) $row['name'] : '',
+                'is_dir' => isset($row['is_dir']) ? (int) $row['is_dir'] : 0,
+                'mtime' => isset($row['mtime']) ? (int) $row['mtime'] : 0,
+                'indexed_at' => isset($row['indexed_at']) ? (int) $row['indexed_at'] : 0,
+            );
+        }
+
+        return array(
+            'success' => true,
+            'msg' => '',
+            'items' => $items,
+            'meta' => array(
+                'dir' => $dir,
+                'count' => count($items),
+                'limit' => $limit,
+                'scope' => $scope,
+                'last_full_index_at' => isset($meta['last_full_index_at']) ? (int) $meta['last_full_index_at'] : 0,
+                'is_dirty' => isset($meta['is_dirty']) ? (int) $meta['is_dirty'] : 1,
+                'db_path' => fm_search_index_db_path(),
+            ),
+        );
+    } catch (Exception $e) {
+        fm_search_log_event('search_index_map_failed', array('message' => $e->getMessage(), 'dir' => $dir));
+        return array(
+            'success' => false,
+            'msg' => 'Search index map query failed.',
+            'items' => array(),
+            'meta' => array('dir' => $dir),
+        );
+    }
+}
+
+/**
  * Main search function with SQLite-first strategy and live-scan fallback.
  * @param string $dir
  * @param string $filter
@@ -7013,6 +7126,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                                 <div class="input-group mb-3">
                                     <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?> <?php echo lng('a files') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon3" id="advanced-search" autofocus required>
                                     <button type="button" class="input-group-text" id="search-addon3" aria-label="<?php echo lng('Search') ?>"><i class="fa fa-search"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary" id="js-search-map-btn" title="Zobrazit mapu suborov zo SQL indexu" aria-label="Zobrazit mapu suborov zo SQL indexu"><i class="fa fa-sitemap"></i></button>
                                 </div>
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
