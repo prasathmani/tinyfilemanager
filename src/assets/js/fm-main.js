@@ -606,18 +606,65 @@
       '</div>';
   }
 
-  function resolveSearchPath() {
-    var modalPath = String($('#js-search-modal').attr('href') || '').trim();
-    if (modalPath && modalPath !== '#') {
-      return modalPath;
+  function normalizeSearchPath(value) {
+    var raw = String(value || '').trim();
+    if (!raw || raw === '#') {
+      return '';
     }
 
+    // If path came as URL, extract ?p= from query when available.
     try {
-      var params = new URLSearchParams(window.location.search || '');
-      if (params.has('p')) {
-        return String(params.get('p') || '').trim();
+      if (/^https?:\/\//i.test(raw)) {
+        var absUrl = new URL(raw, window.location.origin);
+        var pAbs = String(absUrl.searchParams.get('p') || '').trim();
+        if (pAbs) {
+          return pAbs;
+        }
       }
     } catch (e) {
+    }
+
+    // Accept plain query snippets too (e.g. ?p=dir/sub).
+    if (raw.indexOf('?') !== -1 || raw.indexOf('&') !== -1) {
+      try {
+        var queryPart = raw.charAt(0) === '?' ? raw.slice(1) : raw;
+        var params = new URLSearchParams(queryPart);
+        var pQuery = String(params.get('p') || '').trim();
+        if (pQuery) {
+          return pQuery;
+        }
+      } catch (e) {
+      }
+    }
+
+    // Keep existing behavior for direct relative path values.
+    return raw;
+  }
+
+  function resolveSearchPath() {
+    // Primary source: current route query (?p=...), always reflects active directory.
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      var fromUrl = normalizeSearchPath(params.get('p'));
+      if (fromUrl !== '') {
+        return fromUrl;
+      }
+    } catch (e) {
+    }
+
+    // Secondary source: hidden form field used across listing forms.
+    var hiddenPath = document.querySelector('input[name="p"]');
+    if (hiddenPath) {
+      var fromHidden = normalizeSearchPath(hiddenPath.value);
+      if (fromHidden !== '') {
+        return fromHidden;
+      }
+    }
+
+    // Fallback source: modal trigger link href.
+    var modalPath = normalizeSearchPath($('#js-search-modal').attr('href'));
+    if (modalPath !== '') {
+      return modalPath;
     }
 
     return '.';
