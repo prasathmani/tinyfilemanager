@@ -30,8 +30,39 @@
             </div>
         <?php endif; ?>
     </div>
-    <div class="table-responsive fm-table-wrap fm-list-clean-wrap">
-        <table class="table table-hover table-sm align-middle fm-modern-table fm-list-clean" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
+    <div class="fm-explorer-layout">
+        <aside class="fm-folder-sidebar" aria-label="Priecinky">
+            <div class="fm-folder-sidebar__title">Priecinky</div>
+            <div class="fm-folder-sidebar__path" title="<?php echo fm_enc('/' . ltrim((string) FM_PATH, '/')); ?>">
+                <i class="fa fa-folder-open-o" aria-hidden="true"></i>
+                <span><?php echo fm_enc('/' . ltrim((string) FM_PATH, '/')); ?></span>
+            </div>
+            <div class="fm-folder-sidebar__list" role="navigation" aria-label="Rychla navigacia priecinkov">
+                <?php if ($parent !== false): ?>
+                    <a class="fm-folder-link fm-folder-link--parent" href="?p=<?php echo urlencode($parent); ?>" title="Prejst o uroven vyssie">
+                        <i class="fa fa-level-up" aria-hidden="true"></i>
+                        <span>..</span>
+                    </a>
+                <?php endif; ?>
+                <a class="fm-folder-link" href="?p=" title="Prejst na root">
+                    <i class="fa fa-home" aria-hidden="true"></i>
+                    <span>Root</span>
+                </a>
+                <?php if (!empty($folders)): ?>
+                    <?php foreach ($folders as $navFolder): ?>
+                        <a class="fm-folder-link" href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $navFolder, '/')); ?>" title="<?php echo fm_enc($navFolder); ?>">
+                            <i class="fa fa-folder-o" aria-hidden="true"></i>
+                            <span><?php echo fm_convert_win(fm_enc($navFolder)); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="fm-folder-empty">V tomto umiestneni nie su dalsie priecinky.</div>
+                <?php endif; ?>
+            </div>
+        </aside>
+        <div class="fm-explorer-main">
+            <div class="table-responsive fm-table-wrap fm-list-clean-wrap">
+                <table class="table table-hover table-sm align-middle fm-modern-table fm-list-clean" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
             <thead class="thead-white">
                 <tr>
                     <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
@@ -466,9 +497,11 @@
                     </tr>
                 </tfoot>
             <?php } ?>
-        </table>
+                </table>
+            </div>
+            <div id="fm-grid-view" class="hidden"></div>
+        </div>
     </div>
-    <div id="fm-grid-view" class="hidden"></div>
 
     <div class="row fm-footer-tools-row">
         <?php
@@ -633,6 +666,88 @@
 </script>
 
 <style>
+    .fm-explorer-layout {
+        display: flex;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .fm-folder-sidebar {
+        width: 250px;
+        min-width: 220px;
+        border: 1px solid rgba(120, 130, 150, 0.35);
+        border-radius: 12px;
+        background: var(--fmx-surface, #f9fafb);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        max-height: 72vh;
+    }
+
+    .fm-folder-sidebar__title {
+        padding: .55rem .7rem;
+        font-weight: 700;
+        font-size: .84rem;
+        border-bottom: 1px solid rgba(120, 130, 150, 0.25);
+        letter-spacing: .01em;
+    }
+
+    .fm-folder-sidebar__path {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .45rem .7rem;
+        color: rgba(33, 37, 41, .74);
+        border-bottom: 1px solid rgba(120, 130, 150, 0.2);
+        font-size: .75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .fm-folder-sidebar__list {
+        padding: .4rem;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .fm-folder-link {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .35rem .45rem;
+        border-radius: 8px;
+        color: inherit;
+        text-decoration: none;
+        font-size: .82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .fm-folder-link:hover,
+    .fm-folder-link:focus-visible {
+        background: rgba(13, 110, 253, 0.1);
+    }
+
+    .fm-folder-link--parent {
+        font-weight: 700;
+    }
+
+    .fm-folder-empty {
+        font-size: .78rem;
+        color: rgba(33, 37, 41, .62);
+        padding: .45rem;
+    }
+
+    .fm-explorer-main {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
     .fm-footer-tools-row {
         display: flex;
         flex-wrap: wrap;
@@ -658,6 +773,20 @@
     }
 
     @media (max-width: 991.98px) {
+        .fm-explorer-layout {
+            flex-direction: column;
+        }
+
+        .fm-folder-sidebar {
+            width: 100%;
+            min-width: 0;
+            max-height: none;
+        }
+
+        .fm-folder-sidebar__list {
+            max-height: 180px;
+        }
+
         .fm-footer-tools-row {
             flex-wrap: nowrap;
             align-items: center;
