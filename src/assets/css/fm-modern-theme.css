@@ -925,3 +925,43 @@ html[data-bs-theme="dark"] body.fm-density-compact #main-table.fm-modern-table.t
   color: var(--fmx-text) !important;
   font-weight: 600 !important;
 }
+
+/* === SEARCH ENHANCEMENTS === */
+
+/* Search input styling */
+.fm-nav-search-input {
+  transition: all 0.2s ease;
+  border-color: #d1d9e0 !important;
+}
+
+.fm-nav-search-input:focus {
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+  border-color: #1f6feb !important;
+  background-color: #ffffff;
+}
+
+/* Search indicator badge */
+#fm-search-indicator {
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 500;
+  padding: 0.35rem 0.55rem;
+}
+
+/* Highlight rows that don't match */
+#main-table tbody tr.fm-search-no-match {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Visual feedback for search results */
+#main-table tbody tr:not(.fm-search-no-match) {
+  transition: opacity 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fm-nav-search-input,
+  #main-table tbody tr {
+    transition: none !important;
+  }
+}

@@ -7106,6 +7106,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         <?php endif; ?>
         <script type="application/json" id="fm-runtime-config"><?php echo fm_enc(json_encode($fm_runtime_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
         <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-main.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
+        <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-search-enhanced.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
 
         <?php if (isset($_GET['edit']) && isset($_GET['env']) && FM_EDIT_FILE && !FM_READONLY):
             $ext = pathinfo($_GET['edit'], PATHINFO_EXTENSION);

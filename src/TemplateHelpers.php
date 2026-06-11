@@ -37,7 +37,7 @@ function fm_show_nav_path($path)
             <?php echo lng('AppTitle') ?>
         </a>
         <div class="fm-mobile-quickbar d-flex d-lg-none ms-auto me-2">
-            <a class="btn btn-sm btn-outline-primary" href="#" id="js-mobile-focus-search" aria-label="<?php echo lng('Search') ?>" title="<?php echo lng('Search') ?>"><i class="fa fa-search" aria-hidden="true"></i></a>
+            <button class="btn btn-sm btn-outline-primary" id="js-mobile-focus-search" data-bs-toggle="modal" data-bs-target="#searchModal" aria-label="<?php echo lng('Search') ?>" title="<?php echo lng('Search') ?>"><i class="fa fa-search" aria-hidden="true"></i></button>
             <?php if ((!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH): ?>
                 <a class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload" aria-label="<?php echo lng('Upload') ?>" title="<?php echo lng('Upload') ?>"><i class="fa fa-cloud-upload" aria-hidden="true"></i></a>
             <?php endif; ?>

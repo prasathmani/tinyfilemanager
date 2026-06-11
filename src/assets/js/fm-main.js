@@ -891,8 +891,14 @@
 
     if (mobileFocus) {
       mobileFocus.addEventListener('click', function (event) {
-        event.preventDefault();
-        input.focus();
+        // Mobile search button now opens advanced search modal (handled by Bootstrap data-bs-toggle)
+        // Just focus the search input in the modal when it opens
+        setTimeout(function() {
+          var advancedInput = document.getElementById('advanced-search');
+          if (advancedInput) {
+            advancedInput.focus();
+          }
+        }, 100);
       });
     }
   }
