@@ -667,6 +667,9 @@
 
 <style>
     .fm-explorer-layout {
+        --fm-explorer-font-size: .82rem;
+        --fm-explorer-row-height: 34px;
+        --fm-explorer-header-height: 34px;
         display: flex;
         align-items: stretch;
         gap: 12px;
@@ -686,9 +689,13 @@
     }
 
     .fm-folder-sidebar__title {
-        padding: .55rem .7rem;
-        font-weight: 700;
-        font-size: .84rem;
+        min-height: var(--fm-explorer-header-height);
+        padding: .35rem .7rem;
+        font-weight: 600;
+        font-size: var(--fm-explorer-font-size);
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
         border-bottom: 1px solid rgba(120, 130, 150, 0.25);
         letter-spacing: .01em;
     }
@@ -697,10 +704,12 @@
         display: flex;
         align-items: center;
         gap: .45rem;
-        padding: .45rem .7rem;
+        min-height: var(--fm-explorer-row-height);
+        padding: .35rem .7rem;
         color: rgba(33, 37, 41, .74);
         border-bottom: 1px solid rgba(120, 130, 150, 0.2);
-        font-size: .75rem;
+        font-size: var(--fm-explorer-font-size);
+        line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -718,11 +727,13 @@
         display: flex;
         align-items: center;
         gap: .5rem;
+        min-height: var(--fm-explorer-row-height);
         padding: .35rem .45rem;
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        font-size: .82rem;
+        font-size: var(--fm-explorer-font-size);
+        line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -746,6 +757,13 @@
     .fm-explorer-main {
         flex: 1 1 auto;
         min-width: 0;
+    }
+
+    .fm-explorer-main #main-table.fm-modern-table thead th,
+    .fm-explorer-main #main-table.fm-modern-table tbody td {
+        min-height: var(--fm-explorer-row-height);
+        font-size: var(--fm-explorer-font-size);
+        line-height: 1.2;
     }
 
     .fm-footer-tools-row {
