@@ -140,6 +140,30 @@ V hornej časti stránky v tlačidle `Upload / Nahrať` existuje voľba nahrania
 
 ---
 
+### 1.9 Dokončiť vyhľadávaciu lištu a rozšírené vyhľadávanie
+
+Vyhľadávacia lišta už reaguje počas zadávania písmen, ale aktuálne je nastavená len na práve otvorený priečinok. V predchádzajúcej fáze sa začalo s tvorbou celkovej mapy súborov a funkcie vyhľadávania boli prepojené s databázou, aby sa proces vyhľadávania zrýchlil a neprechádzal celý disk pri každom dotaze. Toto prepojenie však ešte nefunguje správne.
+
+Zároveň nefunguje formulár rozšíreného vyhľadávania.
+
+**Požiadavka:**
+- dokončiť celkovú mapu všetkých dostupných súborov podľa oprávnení používateľa,
+- vyhľadávanie nesmie byť obmedzené len na práve otvorený priečinok,
+- pri prvom zadanom písmene sa má inicializovať alebo obnoviť úplná mapa súborov dostupných aktuálnemu používateľovi, bez ohľadu na hodnotu prvého písmena,
+- prvé a druhé písmeno ešte nemusia spúšťať finálne vyhľadávanie výsledkov,
+- približne od piateho zadaného znaku má lišta vedieť vyrolovať zoznam súborov, v ktorých sa zadaná kombinácia vyskytuje,
+- vyhľadávanie musí používať databázovo uloženú mapu/index súborov, nie opakované plné skenovanie adresárov pri každom stlačení klávesy,
+- výsledky musia rešpektovať oprávnenia používateľa a jeho root,
+- opraviť alebo dokončiť formulár rozšíreného vyhľadávania,
+- rozšírené vyhľadávanie má používať rovnaký vyhľadávací backend ako rýchla lišta, aby nevznikli dve odlišné logiky.
+
+**Poznámka k výkonu:**
+Mapa súborov sa má vytvárať alebo obnovovať kontrolovane. Cieľom je rýchle vyhľadávanie pri písaní, ale bez toho, aby každé stlačenie klávesy spúšťalo plný rekurzívny scan disku.
+
+**Priorita:** P1 – vysoká
+
+---
+
 ## 2. Dizajn, zobrazenie a používateľské rozhranie
 
 ### 2.1 Optimalizácia slovenských prekladov
@@ -250,7 +274,16 @@ Pri mobilnom zobrazení je logo v hlavičke príliš veľké.
 3. Preveriť a opraviť upload z URL alebo ho dočasne skryť.
 4. Nastaviť predvolený jazyk používateľov na slovenčinu.
 
-### Fáza B – navigácia a strom priečinkov
+### Fáza B – vyhľadávanie a mapa súborov
+
+1. Preveriť aktuálny stav rýchlej vyhľadávacej lišty.
+2. Preveriť databázovú mapu/index súborov.
+3. Dokončiť inicializáciu alebo obnovu úplnej mapy súborov pri prvom použití vyhľadávania.
+4. Nastaviť vyhľadávanie tak, aby približne od piateho znaku vracalo relevantné výsledky naprieč dostupnými súbormi.
+5. Opraviť formulár rozšíreného vyhľadávania.
+6. Zjednotiť rýchle a rozšírené vyhľadávanie nad jedným backendom.
+
+### Fáza C – navigácia a strom priečinkov
 
 1. Definovať root priečinok používateľa.
 2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.
@@ -258,7 +291,7 @@ Pri mobilnom zobrazení je logo v hlavičke príliš veľké.
 4. Navrhnúť a implementovať stromovú štruktúru priečinkov.
 5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa.
 
-### Fáza C – UI a jazyk
+### Fáza D – UI a jazyk
 
 1. Zobraziť verziu vo footeri.
 2. Opraviť slovenské preklady.
@@ -267,7 +300,7 @@ Pri mobilnom zobrazení je logo v hlavičke príliš veľké.
 5. Upraviť header tlačidlá na ikonové.
 6. Upraviť veľkosť loga v mobilnom zobrazení.
 
-### Fáza D – budúce rozšírenia
+### Fáza E – budúce rozšírenia
 
 1. Pripraviť vlastné kontextové menu pre pravé tlačidlo myši.
 2. Navrhnúť funkcie podľa kliknutého objektu.
@@ -286,6 +319,8 @@ Odporúčaná forma commitov:
 - `fix(ui): resolve datatables column count warning`
 - `fix(upload): restore save action after creating folder`
 - `fix(i18n): set Slovak as default user language`
+- `feat(search): complete database-backed file map search`
+- `fix(search): repair advanced search form`
 - `feat(ui): show release version in footer`
 - `feat(nav): add folder tree navigation`
 - `fix(chat): improve dark mode message contrast`
