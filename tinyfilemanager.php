@@ -1885,10 +1885,10 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
+                        <a class="nav-link active" href="#fileUploader" data-bs-toggle="tab" data-bs-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> <?php echo lng('Upload from URL') ?></a>
+                        <a class="nav-link js-url-upload" href="#urlUploader" data-bs-toggle="tab" data-bs-target="#urlUploader"><i class="fa fa-link"></i> <?php echo lng('Upload from URL') ?></a>
                     </li>
                 </ul>
             </div>
@@ -1904,10 +1904,11 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
                     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                     <div class="fallback">
                         <input name="file" type="file" multiple />
+                        <button type="submit" class="btn btn-primary mt-2"><?php echo lng('Upload') ?></button>
                     </div>
                 </form>
 
-                <div class="upload-url-wrapper card-tabs-container hidden" id="urlUploader">
+                <div class="tab-pane fade upload-url-wrapper" id="urlUploader">
                     <form id="js-form-url-upload" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return upload_from_url(this);" method="POST" action="">
                         <input type="hidden" name="type" value="upload" aria-label="hidden" aria-hidden="true">
                         <input type="url" placeholder="URL" name="uploadurl" required class="form-control" style="width: 80%">
