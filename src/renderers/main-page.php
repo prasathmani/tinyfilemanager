@@ -94,11 +94,11 @@
                     </td>
                     <td class="border-0 fm-col-size" data-order></td>
                     <td class="border-0 fm-col-modified" data-order></td>
-                    <td class="border-0 fm-col-actions"></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
                         <td class="border-0 fm-col-perms"></td>
                         <td class="border-0 fm-col-owner"></td>
                     <?php } ?>
+                    <td class="border-0 fm-col-actions"></td>
                 </tr>
             <?php
             }
@@ -480,20 +480,29 @@
 
             if (empty($folders) && empty($files)) { ?>
                 <tfoot>
-                    <tr><?php if (!FM_READONLY): ?>
-                            <td></td><?php endif; ?>
-                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?php echo lng('Folder is empty') ?></em></td>
+                    <tr>
+                        <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?><td></td><?php endif; ?>
+                        <td><em><?php echo lng('Folder is empty') ?></em></td>
+                        <td></td>
+                        <td></td>
+                        <?php if (!FM_IS_WIN && !$hide_Cols): ?><td></td><td></td><?php endif; ?>
+                        <td></td>
                     </tr>
                 </tfoot>
             <?php
             } else { ?>
                 <tfoot>
                     <tr>
-                        <td class="gray fs-7" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? ((FM_READONLY || FM_UPLOAD_ONLY) ? '6' : '7') : ((FM_READONLY || FM_UPLOAD_ONLY) ? '4' : '5') ?>">
+                        <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?><td></td><?php endif; ?>
+                        <td class="gray fs-7">
                             <?php echo lng('FullSize') . ': <span class="badge text-bg-light border-radius-0">' . fm_get_filesize($all_files_size) . '</span>' ?>
                             <?php echo lng('File') . ': <span class="badge text-bg-light border-radius-0">' . $num_files . '</span>' ?>
                             <?php echo lng('Folder') . ': <span class="badge text-bg-light border-radius-0">' . $num_folders . '</span>' ?>
                         </td>
+                        <td></td>
+                        <td></td>
+                        <?php if (!FM_IS_WIN && !$hide_Cols): ?><td></td><td></td><?php endif; ?>
+                        <td></td>
                     </tr>
                 </tfoot>
             <?php } ?>
