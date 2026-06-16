@@ -13,8 +13,10 @@
 $auth_users = array(
     'admin' => '$2y$10$MDkNAqrsNXnWDpWSUe9po.luFRyHwfktNXEcX0/cqKsnq9NJqPmIG',
     'bilek' => '$2y$10$wC5xZkDTUuwHaaLOqe7pFufzs263KpAXb6CMDjUChfEetUHOOsz5i',
+    'chachula' => '$2y$10$aXrwD.R2BgClZAuGDkiwc.twb2UKgPWh7WxYVqdG9eYwP7C1cUUfW',
     'fero' => '$2y$10$CAp.GThS7P4/C7GtWCGM3O.WxICGFjSrV2Xxoi4RsXi4gOlMQvIlW',
     'joyee' => '$2y$10$npAJkc9BGaVg.Wzyf0t/DuAKyk6nDwRWEBTV6YPH1LiokG4weQQm2',
+    'kicin' => '$2y$10$WiObQoB/OV.f46d7lIj9ZODXaaxWNGX4m3dUqPu9xWo.ijsruqpEG',
     'kristian' => '$2y$10$564SbNzU0Yxo180LKdobDOPQoAx8ETwdSyMp2meq5gSPtkmktfmEq',
     'marian' => '$2y$10$01c7A019ZigsppBmpnZ42OFL5T.Q44XXyO8yCVM0ufUSFoM.S6gcS',
     'rehak' => '$2y$10$WUikAfymhLzLrYe51kVC3.YlanYCZMb0ZO7ENhnigFEp3m3AgrzX.',
@@ -24,33 +26,9 @@ $auth_users = array(
     'znava' => '$2y$10$DQ3pvHPHxYp.5ehBn/M7AOOUn.56Ixkdl..0sEINquYopIA7Evhqy',
 );
 
-// --- VŠEOBECNÉ NASTAVENIA ---
-
-// Koreňový priečinok pre admin a manažérov
-$root_path = __DIR__ . '/Mirko';
-
-// Perzistentne interne data aplikacie (chat, online users, owner-meta, fallback log, user profile settings)
-// Ulozene mimo release-sensitive casti, aby ich deploy neprepisal.
-$state_storage_path = __DIR__ . '/uploads/.tfm-state';
-
-// Machine/API login cez URL token (napr. ?machine_token=...)
-// Token držte iba v tomto lokálnom configu; prázdne = vypnuté.
-$machine_login_user = 'joyee';
-$machine_login_token = 'ba7596c5cf28924f0a497a81af62ea713d2836eb3b5939dd9d1d64b726bd81f1'; //Slavio&Joyee_260607
-
-// Maximálna veľkosť uploadu (~5 GB)
-$max_upload_size_bytes = 5000000000;
-
-// Povolené prípony pre upload (prázdne = všetky)
-$allowed_upload_extensions = '';
-
-// Predvolený jazyk a UI nastavenia
-$CONFIG = '{"lang":"sk","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
-
-// Téma: 'light' alebo 'dark'
-// $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark"}';
-
 $readonly_users = array(
+    'chachula',
+    'kicin',
 );
 
 $upload_only_users = array(
@@ -63,18 +41,26 @@ $upload_only_users = array(
 $manager_users = array(
     'bilek',
     'rehak',
+    'znava',
 );
 
 $directories_users = array(
+    'admin' => __DIR__ . '/Mirko/',
+    'bilek' => __DIR__ . '/Mirko/',
+    'chachula' => __DIR__ . '/Mirko/Nemocnica PP',
+    'fero' => __DIR__ . '/Mirko/',
     'joyee' => __DIR__ . '/Joyee',
+    'kicin' => __DIR__ . '/Mirko/Nemocnica PP',
     'kristian' => __DIR__ . '/Mirko/BARMO',
     'marian' => array(
         __DIR__ . '/Mirko/Nemocnica PP',
         __DIR__ . '/Mirko/free',
     ),
+    'rehak' => __DIR__ . '/Mirko/',
     'sano' => __DIR__ . '/Mirko/BARMO',
     'supplier1' => __DIR__ . '/uploads/supplier1',
     'supplier2' => __DIR__ . '/uploads/supplier2',
+    'znava' => __DIR__ . '/Mirko/',
 );
 
 $user_notes = array(
