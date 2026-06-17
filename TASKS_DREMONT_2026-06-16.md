@@ -3,7 +3,7 @@
 **Dátum predstavenia:** 16.06.2026  
 **Projekt:** DREMONT – tinyfilemanager  
 **Repozitár:** https://github.com/slapiar/tinyfilemanager  
-**Aktuálna pracovná verzia:** 3.0.17  
+**Aktuálna pracovná verzia:** 3.0.18  
 **Kontext:** Prvé predstavenie riešenia vo firme DREMONT počas údržby počítačov účtovníčky. Riešenie bolo osobitne predstavené dvom prítomným manažérom.
 
 ---
@@ -49,7 +49,7 @@ Po prihlásení sa má používateľovi zobraziť jeho koreňový priečinok už
 - v angličtine použiť označenie `Root`,
 - technický názov priečinka ponechať iba interne.
 
-**Aktuálny stav:** Oprava je pripravená lokálne. Používateľský root sa po prihlásení otvára priamo a technický názov rootu sa v navigácii nahrádza virtuálnym označením `Adresár:` / `Root`. Čaká na release a ručné overenie v nasadení.
+**Aktuálny stav:** --- HOTOVO, nasadená a ručne overená verzia 3.0.18. Používateľský root sa po prihlásení otvára priamo a technický názov rootu sa v navigácii nahrádza virtuálnym označením `Adresár:` / `Root`.
 
 **Priorita:** P1 – vysoká
 
@@ -300,8 +300,8 @@ V integrovanej administrátorskej stránke Správcu používateľov chýba zrete
 1. DataTables chyba `Incorrect column count` – **opravené a ručne overené**. --- HOTOVO
 2. Upload do nového priečinka – **opravené a ručne overené**. --- HOTOVO
 3. Upload z URL – **opravené a ručne overené**. --- HOTOVO, nasadená pracovná verzia 3.0.17
-4. Root po prihlásení – automaticky otvoriť priečinok `Mirko`. --- HOTOVO, --- nasadená pracovná verzia 3.0.18
-5. Nastaviť predvolený jazyk používateľov na slovenčinu.
+4. Root po prihlásení – automaticky otvoriť priečinok `Mirko`. --- HOTOVO, nasadená a ručne overená verzia 3.0.18
+5. Nastaviť predvolený jazyk používateľov na slovenčinu. --- HOTOVO
 
 
 ### Fáza B – vyhľadávanie a mapa súborov

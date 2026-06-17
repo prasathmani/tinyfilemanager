@@ -15,7 +15,7 @@ class FM_Config
         global $root_path, $root_url, $CONFIG;
         $fm_url = $root_url . $_SERVER['PHP_SELF'];
         $this->data = array(
-            'lang' => 'en',
+            'lang' => 'sk',
             'error_reporting' => true,
             'show_hidden' => true,
             'list_density' => 'compact',
@@ -52,6 +52,10 @@ class FM_Config
             // Fallback source when profile settings cannot be persisted to disk.
             if (isset($_SESSION[FM_SESSION_ID]['user_settings']) && is_array($_SESSION[FM_SESSION_ID]['user_settings'])) {
                 $this->data = array_merge($this->data, $_SESSION[FM_SESSION_ID]['user_settings']);
+            }
+
+            if (!isset($this->data['lang']) || !is_string($this->data['lang']) || trim($this->data['lang']) === '') {
+                $this->data['lang'] = 'sk';
             }
         }
     }

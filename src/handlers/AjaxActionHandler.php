@@ -209,7 +209,7 @@ class TFM_AjaxActionHandler {
         $newLng = $post['js-language'];
         fm_get_translations(array());
         if (!array_key_exists($newLng, $lang_list)) {
-            $newLng = 'en';
+            $newLng = 'sk';
         }
 
         $erp = isset($post['js-error-report']) && $post['js-error-report'] == 'true' ? true : false;
