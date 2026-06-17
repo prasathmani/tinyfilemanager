@@ -7,10 +7,17 @@
 class TFM_LegacyUploadHandler {
     private $root_path;
     private $current_path;
+    private $max_url_upload_bytes;
 
     public function __construct($root_path, $current_path = '') {
         $this->root_path = rtrim((string) $root_path, '/\\');
         $this->current_path = (string) $current_path;
+
+        $maxUploadMb = defined('MAX_UPLOAD_SIZE') ? (float) MAX_UPLOAD_SIZE : 128.0;
+        if ($maxUploadMb <= 0) {
+            $maxUploadMb = 128.0;
+        }
+        $this->max_url_upload_bytes = (int) round($maxUploadMb * 1024 * 1024);
     }
 
     /**
@@ -33,22 +40,21 @@ class TFM_LegacyUploadHandler {
 
         $chunkIndex = isset($post['dzchunkindex']) ? $post['dzchunkindex'] : null;
         $chunkTotal = isset($post['dztotalchunkcount']) ? $post['dztotalchunkcount'] : null;
-        $requestedUploadDir = fm_clean_path(isset($request['upload_dir']) ? $request['upload_dir'] : $this->current_path);
-        $fullPathInput = fm_clean_path(isset($request['fullpath']) ? $request['fullpath'] : '');
+        $requestedUploadDir = fm_clean_path(isset($request['upload_dir']) ? (string) $request['upload_dir'] : $this->current_path);
+        $rawFullPathInput = isset($request['fullpath']) ? (string) $request['fullpath'] : '';
 
         $f = $files;
         $ds = DIRECTORY_SEPARATOR;
 
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
+        $allowed = is_array($allowed) ? array_map('strtolower', array_map('trim', $allowed)) : false;
         $response = array(
             'status' => 'error',
             'info'   => 'Oops! Try again'
         );
 
         $filename = isset($f['file']['name']) ? (string) $f['file']['name'] : '';
-        $tmp_name = $f['file']['tmp_name'];
-        $ext = pathinfo($filename, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($filename, PATHINFO_EXTENSION)) : '';
-        $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
+        $tmp_name = isset($f['file']['tmp_name']) ? (string) $f['file']['tmp_name'] : '';
 
         if ($filename === '' || !isset($f['file']['tmp_name'])) {
             $response = array(
@@ -59,20 +65,32 @@ class TFM_LegacyUploadHandler {
             exit();
         }
 
-        $safeFileName = $this->sanitizeUploadFileName($fullPathInput !== '' ? $fullPathInput : $filename);
-        if ($safeFileName === '') {
+        $safeRelativePath = $this->sanitizeUploadRelativePath($rawFullPathInput !== '' ? $rawFullPathInput : $filename);
+        if ($safeRelativePath === '') {
             $response = array(
                 'status' => 'error',
-                'info'   => 'Invalid file name for upload.',
+                'info'   => 'Invalid upload path. Absolute paths and traversal are not allowed.',
             );
             echo json_encode($response);
             exit();
         }
 
+        $safeFileName = basename($safeRelativePath);
         if (!fm_isvalid_filename($safeFileName)) {
             $response = array(
                 'status' => 'error',
                 'info'   => 'Invalid File name!',
+            );
+            echo json_encode($response);
+            exit();
+        }
+
+        $ext = pathinfo($safeFileName, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($safeFileName, PATHINFO_EXTENSION)) : '';
+        $isFileAllowed = ($allowed) ? in_array($ext, $allowed, true) : true;
+        if (!$isFileAllowed) {
+            $response = array(
+                'status' => 'error',
+                'info'   => 'File extension is not allowed.',
             );
             echo json_encode($response);
             exit();
@@ -88,43 +106,50 @@ class TFM_LegacyUploadHandler {
             exit();
         }
 
-        if (function_exists('fm_validate_mime_type')) {
-            if (!fm_validate_mime_type($tmp_name)) {
-                if (class_exists('AuditLogger')) {
-                    $audit = new AuditLogger();
-                    $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $filename");
-                }
-                $response = array(
-                    'status' => 'error',
-                    'info'   => 'Dangerous file MIME type detected!',
-                );
-                echo json_encode($response);
-                @unlink($tmp_name);
-                exit();
+        if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tmp_name)) {
+            if (class_exists('AuditLogger')) {
+                $audit = new AuditLogger();
+                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
             }
+            $response = array(
+                'status' => 'error',
+                'info'   => 'Dangerous file MIME type detected!',
+            );
+            echo json_encode($response);
+            @unlink($tmp_name);
+            exit();
         }
 
-        if (function_exists('fm_validate_magic_bytes')) {
-            if (!fm_validate_magic_bytes($tmp_name, $ext)) {
-                if (class_exists('AuditLogger')) {
-                    $audit = new AuditLogger();
-                    $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $filename (ext: $ext)");
-                }
-                $response = array(
-                    'status' => 'error',
-                    'info'   => 'File signature does not match extension!',
-                );
-                echo json_encode($response);
-                @unlink($tmp_name);
-                exit();
+        if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tmp_name, $ext)) {
+            if (class_exists('AuditLogger')) {
+                $audit = new AuditLogger();
+                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
             }
+            $response = array(
+                'status' => 'error',
+                'info'   => 'File signature does not match extension!',
+            );
+            echo json_encode($response);
+            @unlink($tmp_name);
+            exit();
         }
 
         $targetPath = rtrim($targetPath, '/\\') . $ds;
         if (is_writable($targetPath)) {
-            $fullPath = rtrim($targetPath, '/\\') . '/' . $safeFileName;
-            $folder = substr($fullPath, 0, strrpos($fullPath, '/'));
+            $fullPath = rtrim($targetPath, '/\\') . '/' . $safeRelativePath;
+            $fullPath = str_replace('\\', '/', $fullPath);
+            $fullPath = preg_replace('#/+#', '/', $fullPath);
 
+            if (!fm_is_path_inside($fullPath, rtrim($targetPath, '/\\'))) {
+                $response = array(
+                    'status' => 'error',
+                    'info'   => 'Resolved upload path is outside allowed directory.',
+                );
+                echo json_encode($response);
+                exit();
+            }
+
+            $folder = substr($fullPath, 0, strrpos($fullPath, '/'));
             if (!is_dir($folder)) {
                 $old = umask(0);
                 if (!@mkdir($folder, 0777, true) && !is_dir($folder)) {
@@ -138,7 +163,7 @@ class TFM_LegacyUploadHandler {
                 umask($old);
             }
 
-            if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
+            if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none') {
                 if ($chunkTotal) {
                     $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? 'wb' : 'ab');
                     if ($out) {
@@ -164,34 +189,45 @@ class TFM_LegacyUploadHandler {
                         } else {
                             $response = array(
                                 'status' => 'error',
-                                'info'   => 'failed to open output stream',
+                                'info'   => 'Failed to open input stream.',
                                 'errorDetails' => error_get_last()
                             );
                         }
                         @fclose($in);
                         @fclose($out);
                         @unlink($tmp_name);
-
-                        $response = array(
-                            'status' => 'success',
-                            'info'   => 'file upload successful'
-                        );
                     } else {
                         $response = array(
                             'status' => 'error',
-                            'info'   => 'failed to open output stream'
+                            'info'   => 'Failed to open output stream.'
                         );
                     }
 
                     if ($chunkIndex == $chunkTotal - 1) {
                         if (file_exists($fullPath)) {
                             $ext_1 = $ext ? '.' . $ext : '';
-                            $fullPathTarget = rtrim($targetPath, '/\\') . '/' . basename($safeFileName, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                            $relativeDir = dirname($safeRelativePath);
+                            if ($relativeDir === '.' || $relativeDir === '/') {
+                                $relativeDir = '';
+                            }
+                            $collisionName = basename($safeFileName, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                            $fullPathTarget = rtrim($targetPath, '/\\')
+                                . ($relativeDir !== '' ? '/' . $relativeDir : '')
+                                . '/' . $collisionName;
+                            $fullPathTarget = str_replace('\\', '/', $fullPathTarget);
+                            $fullPathTarget = preg_replace('#/+#', '/', $fullPathTarget);
                         } else {
                             $fullPathTarget = $fullPath;
                         }
-                        if (rename("{$fullPath}.part", $fullPathTarget) && function_exists('fm_owner_meta_touch')) {
-                            fm_owner_meta_touch($fullPathTarget, 'upload');
+                        if (!fm_is_path_inside($fullPathTarget, rtrim($targetPath, '/\\'))) {
+                            $response = array(
+                                'status' => 'error',
+                                'info'   => 'Resolved upload path is outside allowed directory.',
+                            );
+                        } elseif (rename("{$fullPath}.part", $fullPathTarget)) {
+                            if (function_exists('fm_owner_meta_touch')) {
+                                fm_owner_meta_touch($fullPathTarget, 'upload');
+                            }
                         }
                     }
                 } else if (move_uploaded_file($tmp_name, $fullPath)) {
@@ -206,7 +242,7 @@ class TFM_LegacyUploadHandler {
                     } else {
                         $response = array(
                             'status' => 'error',
-                            'info'   => 'Couldn\'t upload the requested file.'
+                            'info'   => 'Could not persist uploaded file to destination.'
                         );
                     }
                 } else {
@@ -215,6 +251,13 @@ class TFM_LegacyUploadHandler {
                         'info'   => 'Error while moving uploaded file to destination.',
                     );
                 }
+            }
+
+            if (!empty($f['file']['error'])) {
+                $response = array(
+                    'status' => 'error',
+                    'info'   => 'Upload failed with PHP upload error code: ' . (int) $f['file']['error'],
+                );
             }
         } else {
             $response = array(
@@ -258,7 +301,7 @@ class TFM_LegacyUploadHandler {
             exit();
         }
 
-        $downloadResult = $this->downloadRemoteFile($url, $tempFile);
+        $downloadResult = $this->downloadRemoteFile($url, $tempFile, $this->max_url_upload_bytes);
         if (!$downloadResult['success']) {
             @unlink($tempFile);
             $this->emitUrlUploadEvent(array('fail' => array('message' => $downloadResult['message'])));
@@ -291,6 +334,19 @@ class TFM_LegacyUploadHandler {
             }
         }
 
+        if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tempFile)) {
+            @unlink($tempFile);
+            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Dangerous file MIME type detected.')));
+            exit();
+        }
+
+        $validatedExt = strtolower(pathinfo($sanitizedName, PATHINFO_EXTENSION));
+        if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tempFile, $validatedExt)) {
+            @unlink($tempFile);
+            $this->emitUrlUploadEvent(array('fail' => array('message' => 'File signature does not match extension.')));
+            exit();
+        }
+
         $targetPath = $this->buildUniqueTargetPath($targetBase, $sanitizedName);
         if (!@rename($tempFile, $targetPath)) {
             @unlink($tempFile);
@@ -310,14 +366,6 @@ class TFM_LegacyUploadHandler {
         exit();
     }
 
-    private function basePath() {
-        $path = $this->root_path;
-        if ($this->current_path !== '') {
-            $path .= '/' . $this->current_path;
-        }
-        return $path;
-    }
-
     private function emitUrlUploadEvent($message) {
         echo json_encode($message);
     }
@@ -335,6 +383,45 @@ class TFM_LegacyUploadHandler {
         return $name;
     }
 
+    private function sanitizeUploadRelativePath($path) {
+        $path = str_replace('\\', '/', trim((string) $path));
+        if ($path === '') {
+            return '';
+        }
+
+        if (strpos($path, "\0") !== false) {
+            return '';
+        }
+
+        if (preg_match('/^[a-zA-Z]:\//', $path) || strpos($path, '/') === 0 || strpos($path, '//') === 0) {
+            return '';
+        }
+
+        if (strpos($path, '../') !== false || strpos($path, '/..') !== false || strpos($path, '..\\') !== false) {
+            return '';
+        }
+
+        $parts = explode('/', $path);
+        $safeParts = array();
+        foreach ($parts as $part) {
+            $part = preg_replace('/[\x00-\x1F\x7F]+/', '', (string) $part);
+            $part = trim((string) $part, " .\t\n\r\0\x0B");
+            if ($part === '' || $part === '.' || $part === '..') {
+                continue;
+            }
+            if (!fm_isvalid_filename($part)) {
+                return '';
+            }
+            $safeParts[] = $part;
+        }
+
+        if (empty($safeParts)) {
+            return '';
+        }
+
+        return implode('/', $safeParts);
+    }
+
     private function isAllowedRemoteUrl($url) {
         $parts = parse_url((string) $url);
         if (!is_array($parts)) {
@@ -343,6 +430,10 @@ class TFM_LegacyUploadHandler {
 
         $scheme = isset($parts['scheme']) ? strtolower((string) $parts['scheme']) : '';
         if ($scheme !== 'http' && $scheme !== 'https') {
+            return false;
+        }
+
+        if (isset($parts['user']) || isset($parts['pass'])) {
             return false;
         }
 
@@ -357,16 +448,17 @@ class TFM_LegacyUploadHandler {
         }
 
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-            if (!filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            if (!$this->isPublicIpAddress($host)) {
                 return false;
             }
         } else {
-            $resolved = @gethostbynamel($host);
-            if (is_array($resolved)) {
-                foreach ($resolved as $ip) {
-                    if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                        return false;
-                    }
+            $resolvedIps = $this->resolveHostIps($host);
+            if (empty($resolvedIps)) {
+                return false;
+            }
+            foreach ($resolvedIps as $ip) {
+                if (!$this->isPublicIpAddress($ip)) {
+                    return false;
                 }
             }
         }
@@ -374,7 +466,11 @@ class TFM_LegacyUploadHandler {
         return true;
     }
 
-    private function downloadRemoteFile($url, $tempFile) {
+    private function downloadRemoteFile($url, $tempFile, $maxBytes) {
+        if (function_exists('curl_init')) {
+            return $this->downloadRemoteFileWithCurl($url, $tempFile, $maxBytes);
+        }
+
         $result = array(
             'success' => false,
             'message' => 'Failed to download file from URL.',
@@ -383,91 +479,187 @@ class TFM_LegacyUploadHandler {
             'contentType' => '',
         );
 
-        if (function_exists('curl_init')) {
-            $fp = @fopen($tempFile, 'wb');
-            if ($fp === false) {
-                $result['message'] = 'Cannot open temporary file for writing.';
-                return $result;
-            }
-
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_FILE, $fp);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 25);
-            if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
-                curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-            }
-            if (defined('CURLOPT_REDIR_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
-                curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-            }
-            curl_setopt($ch, CURLOPT_USERAGENT, 'tinyfilemanager-url-upload/1.0');
-            curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $headerLine) use (&$result) {
-                $trimmed = trim((string) $headerLine);
-                if ($trimmed !== '') {
-                    $result['headers'][] = $trimmed;
-                }
-                return strlen($headerLine);
-            });
-
-            $ok = curl_exec($ch);
-            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-            fclose($fp);
-
-            $result['status'] = $httpCode;
-            $result['contentType'] = $contentType;
-
-            if ($ok !== true) {
-                $result['message'] = $curlError !== '' ? $curlError : 'Remote download failed.';
-                return $result;
-            }
-            if ($httpCode < 200 || $httpCode >= 300) {
-                $result['message'] = 'Remote server returned HTTP ' . $httpCode . '.';
-                return $result;
-            }
-            if (!is_file($tempFile) || filesize($tempFile) === 0) {
-                $result['message'] = 'Remote download returned an empty file.';
-                return $result;
-            }
-
-            $result['success'] = true;
-            return $result;
-        }
-
         $httpHeaders = array();
         $context = stream_context_create(array(
             'http' => array(
                 'method' => 'GET',
                 'timeout' => 25,
                 'ignore_errors' => true,
-                'follow_location' => 1,
-                'max_redirects' => 3,
+                'follow_location' => 0,
+                'max_redirects' => 0,
                 'header' => "User-Agent: tinyfilemanager-url-upload/1.0\r\n",
             ),
         ));
-        $content = @file_get_contents($url, false, $context);
-        if (isset($http_response_header) && is_array($http_response_header)) {
-            $httpHeaders = $http_response_header;
+
+        $in = @fopen($url, 'rb', false, $context);
+        if ($in === false) {
+            $result['message'] = 'Remote download failed.';
+            return $result;
         }
+
+        $meta = stream_get_meta_data($in);
+        if (!empty($meta['wrapper_data']) && is_array($meta['wrapper_data'])) {
+            $httpHeaders = $meta['wrapper_data'];
+        }
+
         $result['headers'] = $httpHeaders;
         $status = $this->extractHttpStatus($httpHeaders);
         $result['status'] = $status;
         $result['contentType'] = $this->extractContentType($httpHeaders);
 
-        if ($content === false) {
-            $result['message'] = 'Remote download failed.';
+        if ($status >= 300 && $status < 400) {
+            fclose($in);
+            $result['message'] = 'Remote URL redirects are not allowed for security reasons.';
             return $result;
         }
+
         if ($status < 200 || $status >= 300) {
+            fclose($in);
             $result['message'] = 'Remote server returned HTTP ' . $status . '.';
             return $result;
         }
-        if (@file_put_contents($tempFile, $content) === false || filesize($tempFile) === 0) {
+
+        $out = @fopen($tempFile, 'wb');
+        if ($out === false) {
+            fclose($in);
+            $result['message'] = 'Cannot open temporary file for writing.';
+            return $result;
+        }
+
+        $bytesWritten = 0;
+        while (!feof($in)) {
+            $chunk = fread($in, 8192);
+            if ($chunk === false) {
+                fclose($in);
+                fclose($out);
+                $result['message'] = 'Remote download stream failed.';
+                return $result;
+            }
+
+            $chunkLen = strlen($chunk);
+            if ($chunkLen === 0) {
+                continue;
+            }
+
+            $bytesWritten += $chunkLen;
+            if ($maxBytes > 0 && $bytesWritten > $maxBytes) {
+                fclose($in);
+                fclose($out);
+                $result['message'] = 'Downloaded file exceeds maximum allowed size.';
+                return $result;
+            }
+
+            if (fwrite($out, $chunk) === false) {
+                fclose($in);
+                fclose($out);
+                $result['message'] = 'Failed to persist downloaded content.';
+                return $result;
+            }
+        }
+
+        fclose($in);
+        fclose($out);
+
+        if (!is_file($tempFile) || filesize($tempFile) === 0) {
             $result['message'] = 'Failed to persist downloaded content.';
+            return $result;
+        }
+
+        $result['success'] = true;
+        return $result;
+    }
+
+    private function downloadRemoteFileWithCurl($url, $tempFile, $maxBytes) {
+        $result = array(
+            'success' => false,
+            'message' => 'Failed to download file from URL.',
+            'status' => 0,
+            'headers' => array(),
+            'contentType' => '',
+        );
+
+        $fp = @fopen($tempFile, 'wb');
+        if ($fp === false) {
+            $result['message'] = 'Cannot open temporary file for writing.';
+            return $result;
+        }
+
+        $maxExceeded = false;
+        $result['headers'] = array();
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 25);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'tinyfilemanager-url-upload/1.0');
+        if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+        }
+        if (defined('CURLOPT_REDIR_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
+            curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+        }
+        if (defined('CURLOPT_NOPROGRESS')) {
+            curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+        }
+        if (defined('CURLOPT_XFERINFOFUNCTION')) {
+            curl_setopt($ch, CURLOPT_XFERINFOFUNCTION, function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($maxBytes, &$maxExceeded) {
+                if ($maxBytes > 0 && $downloaded > $maxBytes) {
+                    $maxExceeded = true;
+                    return 1;
+                }
+                return 0;
+            });
+        }
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $headerLine) use (&$result) {
+            $trimmed = trim((string) $headerLine);
+            if ($trimmed !== '') {
+                $result['headers'][] = $trimmed;
+            }
+            return strlen($headerLine);
+        });
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) use ($fp, $maxBytes, &$maxExceeded) {
+            if ($maxExceeded) {
+                return 0;
+            }
+            if ($maxBytes > 0 && (ftell($fp) + strlen($data)) > $maxBytes) {
+                $maxExceeded = true;
+                return 0;
+            }
+            return fwrite($fp, $data);
+        });
+
+        $ok = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        fclose($fp);
+
+        $result['status'] = $httpCode;
+        $result['contentType'] = $contentType;
+
+        if ($maxExceeded) {
+            $result['message'] = 'Downloaded file exceeds maximum allowed size.';
+            return $result;
+        }
+
+        if ($ok !== true) {
+            $result['message'] = $curlError !== '' ? $curlError : 'Remote download failed.';
+            return $result;
+        }
+
+        if ($httpCode >= 300 && $httpCode < 400) {
+            $result['message'] = 'Remote URL redirects are not allowed for security reasons.';
+            return $result;
+        }
+
+        if ($httpCode < 200 || $httpCode >= 300) {
+            $result['message'] = 'Remote server returned HTTP ' . $httpCode . '.';
+            return $result;
+        }
+
+        if (!is_file($tempFile) || filesize($tempFile) === 0) {
+            $result['message'] = 'Remote download returned an empty file.';
             return $result;
         }
 
@@ -608,7 +800,44 @@ class TFM_LegacyUploadHandler {
         return $candidateBase;
     }
 
-    private function urlUploadTargetPath($path, $fileinfo, $temp_file) {
-        return $path . '/' . basename($fileinfo->name);
+    private function isPublicIpAddress($ip) {
+        return (bool) filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+    }
+
+    private function resolveHostIps($host) {
+        $ips = array();
+
+        if (function_exists('dns_get_record')) {
+            $aRecords = @dns_get_record($host, DNS_A);
+            if (is_array($aRecords)) {
+                foreach ($aRecords as $record) {
+                    if (!empty($record['ip'])) {
+                        $ips[] = (string) $record['ip'];
+                    }
+                }
+            }
+
+            $aaaaRecords = @dns_get_record($host, DNS_AAAA);
+            if (is_array($aaaaRecords)) {
+                foreach ($aaaaRecords as $record) {
+                    if (!empty($record['ipv6'])) {
+                        $ips[] = (string) $record['ipv6'];
+                    }
+                }
+            }
+        }
+
+        if (empty($ips)) {
+            $legacy = @gethostbynamel($host);
+            if (is_array($legacy)) {
+                $ips = array_merge($ips, $legacy);
+            }
+        }
+
+        $ips = array_values(array_unique(array_filter(array_map('trim', $ips), function ($value) {
+            return $value !== '';
+        })));
+
+        return $ips;
     }
 }
