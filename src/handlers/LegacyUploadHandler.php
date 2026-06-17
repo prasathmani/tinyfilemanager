@@ -214,11 +214,6 @@ class TFM_LegacyUploadHandler {
             $this->emitUrlFail('URL_DENIED', 'URL is not allowed.');
         }
 
-        $targetBase = $this->resolveUploadBasePath($uploadDir);
-        if ($targetBase === null || !is_dir($targetBase) || !is_writable($targetBase)) {
-            $this->emitUrlFail('PATH_DENIED', 'Upload target path is not writable.');
-        }
-
         $tempFile = tempnam(sys_get_temp_dir(), 'url-upload-');
         if ($tempFile === false) {
             $this->emitUrlFail('MOVE_FAILED', 'Cannot create temporary file for download.');
@@ -231,43 +226,29 @@ class TFM_LegacyUploadHandler {
         }
 
         $resolvedName = $this->resolveUploadUrlFileName($url, $downloadResult['headers']);
-        $sanitizedName = $this->sanitizeUploadFileName($resolvedName);
-        if ($sanitizedName === '') {
+        $preparedDestination = $this->prepareUploadDestination($uploadDir, $resolvedName);
+        if (empty($preparedDestination['success'])) {
             @unlink($tempFile);
-            $this->emitUrlFail('INVALID_FILENAME', 'Cannot determine target file name from URL.');
+            $this->emitUrlFail((string) $preparedDestination['code'], (string) $preparedDestination['message']);
         }
 
-        $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
-        $allowed = is_array($allowed) ? array_map('strtolower', array_map('trim', $allowed)) : false;
-        $currentExt = strtolower(pathinfo($sanitizedName, PATHINFO_EXTENSION));
-        if ($allowed) {
-            if ($currentExt === '' || !in_array($currentExt, $allowed, true)) {
-                $guessedExt = $this->guessExtensionFromContentType($downloadResult['contentType']);
-                if ($guessedExt !== '' && in_array($guessedExt, $allowed, true)) {
-                    $sanitizedName .= '.' . $guessedExt;
-                    $currentExt = $guessedExt;
-                }
-            }
-            if ($currentExt === '' || !in_array($currentExt, $allowed, true)) {
-                @unlink($tempFile);
-                $this->emitUrlFail('EXTENSION_DENIED', 'File extension is not allowed.');
-            }
-        }
+        $targetPath = (string) $preparedDestination['targetPath'];
+        $downloadedSize = (int) @filesize($tempFile);
 
-        if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tempFile)) {
-            @unlink($tempFile);
-            $this->emitUrlFail('MIME_DENIED', 'Dangerous file MIME type detected.');
-        }
-
-        $validatedExt = strtolower(pathinfo($sanitizedName, PATHINFO_EXTENSION));
-        if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tempFile, $validatedExt)) {
-            @unlink($tempFile);
-            $this->emitUrlFail('MIME_DENIED', 'File signature does not match extension.');
-        }
-
-        $targetPath = $this->buildUniqueTargetPath($targetBase, $sanitizedName);
         if (!@rename($tempFile, $targetPath)) {
+            if (!@copy($tempFile, $targetPath)) {
+                @unlink($tempFile);
+                $this->emitUrlFail('MOVE_FAILED', 'Failed to persist downloaded file to destination.');
+            }
             @unlink($tempFile);
+        }
+
+        if (!is_file($targetPath)) {
+            $this->emitUrlFail('MOVE_FAILED', 'Failed to persist downloaded file to destination.');
+        }
+
+        if ($downloadedSize > 0 && (int) @filesize($targetPath) === 0) {
+            @unlink($targetPath);
             $this->emitUrlFail('MOVE_FAILED', 'Failed to persist downloaded file to destination.');
         }
 
@@ -281,6 +262,69 @@ class TFM_LegacyUploadHandler {
         $result->type = (string) $downloadResult['contentType'];
         echo json_encode(array('done' => $result));
         exit();
+    }
+
+    private function prepareUploadDestination($uploadDir, $fileName) {
+        $sanitizedName = $this->sanitizeUploadFileName($fileName);
+        if ($sanitizedName === '') {
+            return array(
+                'success' => false,
+                'code' => 'INVALID_FILENAME',
+                'message' => 'Cannot determine target file name from URL.',
+            );
+        }
+
+        if (!fm_isvalid_filename($sanitizedName)) {
+            return array(
+                'success' => false,
+                'code' => 'INVALID_FILENAME',
+                'message' => 'Invalid file name.',
+            );
+        }
+
+        $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
+        $allowed = is_array($allowed) ? array_map('strtolower', array_map('trim', $allowed)) : false;
+        $ext = pathinfo($sanitizedName, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($sanitizedName, PATHINFO_EXTENSION)) : '';
+        $isFileAllowed = ($allowed) ? in_array($ext, $allowed, true) : true;
+        if (!$isFileAllowed) {
+            return array(
+                'success' => false,
+                'code' => 'EXTENSION_DENIED',
+                'message' => 'File extension is not allowed.',
+            );
+        }
+
+        $targetBase = $this->resolveUploadBasePath($uploadDir);
+        if ($targetBase === null || !is_dir($targetBase)) {
+            return array(
+                'success' => false,
+                'code' => 'PATH_DENIED',
+                'message' => 'Upload target path is not allowed.',
+            );
+        }
+
+        if (!is_writable($targetBase)) {
+            return array(
+                'success' => false,
+                'code' => 'NOT_WRITABLE',
+                'message' => 'Upload target path is not writable.',
+            );
+        }
+
+        $targetPath = $this->buildUniqueTargetPath($targetBase, $sanitizedName);
+        if (!fm_is_path_inside($targetPath, rtrim(str_replace('\\', '/', (string) $targetBase), '/'))) {
+            return array(
+                'success' => false,
+                'code' => 'PATH_DENIED',
+                'message' => 'Upload target path is not allowed.',
+            );
+        }
+
+        return array(
+            'success' => true,
+            'targetPath' => $targetPath,
+            'fileName' => $sanitizedName,
+        );
     }
 
     private function emitUploadResponse($status, $code, $info, $extra = array()) {
