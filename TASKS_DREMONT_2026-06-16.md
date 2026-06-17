@@ -275,9 +275,9 @@ Pri mobilnom zobrazení je logo v hlavičke príliš veľké.
 
 ### Fáza A – stabilizácia funkčnosti
 
-1. DataTables chyba `Incorrect column count` – **opravené a ručne overené**.
-2. Upload do nového priečinka – **stále nefunguje, pokračovať diagnostikou requestu a handlera**.
-3. Upload z URL – **záložka funguje, uloženie súboru nefunguje**.
+1. DataTables chyba `Incorrect column count` – **opravené a ručne overené**. --- HOTOVO
+2. Upload do nového priečinka – **stále nefunguje, pokračovať diagnostikou requestu a handlera**. ---HOTOVO
+3. Upload z URL – **záložka funguje, uloženie súboru nefunguje**. --- HOTOVO
 4. Root po prihlásení – automaticky otvoriť priečinok `Mirko`.
 5. Nastaviť predvolený jazyk používateľov na slovenčinu.
 
