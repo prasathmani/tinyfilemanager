@@ -3,8 +3,7 @@ releases/tinyfilemanager-*.zip
 
 # Runtime uploads and ad-hoc local test files
 uploads/
-.fm_usercfg/*.json
-.fm_usercfg/*.sqlite
+.fm_usercfg/*
 !.fm_usercfg/.htaccess
 
 # Runtime-created top-level user roots (local only)

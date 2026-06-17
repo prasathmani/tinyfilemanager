@@ -153,8 +153,16 @@ mkdir -p "$OUT_DIR"
 # Package tracked files to avoid accidental local artifacts.
 # Never include previously generated release archives.
 # Exclude development-only directories from production release bundles.
+# Runtime state under .fm_usercfg is server-local and should not ship in release zips.
 # Private deployment config files are intentionally included in private release builds when present.
-git -C "$ROOT_DIR" ls-files | grep -Ev '^(releases/|\.github/|tests/|docs/archive/|DOCS_AUDIT\.md$|ROADMAP_DREMONT\.md$|SMOKE_TEST_2\.9\.19\.md$|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' > "$TMP_LIST"
+git -C "$ROOT_DIR" ls-files \
+  | grep -Ev '^(releases/|\.github/|tests/|docs/archive/|\.fm_usercfg/|DOCS_AUDIT\.md$|ROADMAP_DREMONT\.md$|SMOKE_TEST_2\.9\.19\.md$|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' \
+  > "$TMP_LIST"
+
+# Keep hardening rules from dropping a tracked .htaccess template for .fm_usercfg.
+if git -C "$ROOT_DIR" ls-files --error-unmatch .fm_usercfg/.htaccess >/dev/null 2>&1; then
+  grep -qxF ".fm_usercfg/.htaccess" "$TMP_LIST" || echo ".fm_usercfg/.htaccess" >> "$TMP_LIST"
+fi
 
 for local_config in api.config.php joyee-bridge.config.php; do
   if [[ -f "$ROOT_DIR/$local_config" ]]; then
