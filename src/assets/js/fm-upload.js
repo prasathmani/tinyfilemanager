@@ -66,7 +66,7 @@
     parallelUploads: 1,
     parallelChunkUploads: false,
     timeout: 120000,
-    maxFilesize: String(config.maxFileSize),
+    maxFilesize: Number(config.maxFileSize) / (1024 * 1024),
     acceptedFiles: config.acceptedFiles || '',
     init: function () {
       this.on('sending', function (file, xhr) {
@@ -94,7 +94,7 @@
           }
 
           if (parsed.status === 'success') {
-            if (typeof window.toast === 'function') {
+            if (parsed.code === 'SUCCESS' && typeof window.toast === 'function') {
               window.toast('Súbor bol uložený.');
             }
             return;

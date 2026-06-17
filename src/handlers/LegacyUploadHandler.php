@@ -13,11 +13,9 @@ class TFM_LegacyUploadHandler {
         $this->root_path = rtrim((string) $root_path, '/\\');
         $this->current_path = (string) $current_path;
 
-        $maxUploadMb = defined('MAX_UPLOAD_SIZE') ? (float) MAX_UPLOAD_SIZE : 128.0;
-        if ($maxUploadMb <= 0) {
-            $maxUploadMb = 128.0;
-        }
-        $this->max_url_upload_bytes = (int) round($maxUploadMb * 1024 * 1024);
+        $this->max_url_upload_bytes = defined('MAX_UPLOAD_SIZE')
+            ? (int) MAX_UPLOAD_SIZE
+            : 134217728;
     }
 
     /**
@@ -87,24 +85,6 @@ class TFM_LegacyUploadHandler {
             $this->emitUploadResponse('error', 'PATH_DENIED', 'Upload target path is not allowed.');
         }
 
-        if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tmp_name)) {
-            if (class_exists('AuditLogger')) {
-                $audit = new AuditLogger();
-                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
-            }
-            @unlink($tmp_name);
-            $this->emitUploadResponse('error', 'MIME_DENIED', 'Dangerous file MIME type detected.');
-        }
-
-        if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tmp_name, $ext)) {
-            if (class_exists('AuditLogger')) {
-                $audit = new AuditLogger();
-                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
-            }
-            @unlink($tmp_name);
-            $this->emitUploadResponse('error', 'MIME_DENIED', 'File signature does not match extension.');
-        }
-
         $targetPath = rtrim($targetPath, '/\\') . $ds;
         if (!is_writable($targetPath)) {
             $this->emitUploadResponse('error', 'NOT_WRITABLE', 'The specified folder for upload is not writable.');
@@ -157,6 +137,26 @@ class TFM_LegacyUploadHandler {
             @unlink($tmp_name);
 
             if ($chunkIndex == $chunkTotal - 1) {
+                $partPath = "{$fullPath}.part";
+
+                if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($partPath)) {
+                    if (class_exists('AuditLogger')) {
+                        $audit = new AuditLogger();
+                        $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
+                    }
+                    @unlink($partPath);
+                    $this->emitUploadResponse('error', 'MIME_DENIED', 'Dangerous file MIME type detected.');
+                }
+
+                if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($partPath, $ext)) {
+                    if (class_exists('AuditLogger')) {
+                        $audit = new AuditLogger();
+                        $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
+                    }
+                    @unlink($partPath);
+                    $this->emitUploadResponse('error', 'MIME_DENIED', 'File signature does not match extension.');
+                }
+
                 if (file_exists($fullPath)) {
                     $ext_1 = $ext ? '.' . $ext : '';
                     $relativeDir = dirname($safeRelativePath);
@@ -177,16 +177,36 @@ class TFM_LegacyUploadHandler {
                     $this->emitUploadResponse('error', 'PATH_DENIED', 'Resolved upload path is outside allowed directory.');
                 }
 
-                if (!rename("{$fullPath}.part", $fullPathTarget)) {
+                if (!rename($partPath, $fullPathTarget)) {
                     $this->emitUploadResponse('error', 'MOVE_FAILED', 'Failed to finalize uploaded file.');
                 }
 
                 if (function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($fullPathTarget, 'upload');
                 }
+
+                $this->emitUploadResponse('success', 'SUCCESS', 'Súbor bol uložený.');
             }
 
-            $this->emitUploadResponse('success', 'SUCCESS', 'Súbor bol uložený.');
+            $this->emitUploadResponse('success', 'CHUNK_RECEIVED', 'Chunk received.');
+        }
+
+        if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tmp_name)) {
+            if (class_exists('AuditLogger')) {
+                $audit = new AuditLogger();
+                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
+            }
+            @unlink($tmp_name);
+            $this->emitUploadResponse('error', 'MIME_DENIED', 'Dangerous file MIME type detected.');
+        }
+
+        if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tmp_name, $ext)) {
+            if (class_exists('AuditLogger')) {
+                $audit = new AuditLogger();
+                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
+            }
+            @unlink($tmp_name);
+            $this->emitUploadResponse('error', 'MIME_DENIED', 'File signature does not match extension.');
         }
 
         if (!move_uploaded_file($tmp_name, $fullPath)) {
