@@ -167,6 +167,15 @@ class TFM_LegacyUploadHandler {
                     fm_owner_meta_touch($fullPathTarget, 'upload');
                 }
 
+                if (function_exists('fm_search_index_sync_path')) {
+                    $ok = fm_search_index_sync_path($fullPathTarget, 'upload_chunk_complete');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('upload_chunk_complete_fallback', $fullPathTarget);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('upload_chunk_complete', $fullPathTarget);
+                }
+
                 $this->emitUploadResponse('success', 'SUCCESS', 'Súbor bol uložený.');
             }
 
@@ -183,6 +192,15 @@ class TFM_LegacyUploadHandler {
 
         if (function_exists('fm_owner_meta_touch')) {
             fm_owner_meta_touch($fullPath, 'upload');
+        }
+
+        if (function_exists('fm_search_index_sync_path')) {
+            $ok = fm_search_index_sync_path($fullPath, 'upload');
+            if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                fm_search_index_mark_dirty('upload_fallback', $fullPath);
+            }
+        } elseif (function_exists('fm_search_index_mark_dirty')) {
+            fm_search_index_mark_dirty('upload', $fullPath);
         }
 
         $this->emitUploadResponse('success', 'SUCCESS', 'Súbor bol uložený.');
@@ -254,6 +272,15 @@ class TFM_LegacyUploadHandler {
 
         if (function_exists('fm_owner_meta_touch')) {
             fm_owner_meta_touch($targetPath, 'upload_url');
+        }
+
+        if (function_exists('fm_search_index_sync_path')) {
+            $ok = fm_search_index_sync_path($targetPath, 'upload_url');
+            if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                fm_search_index_mark_dirty('upload_url_fallback', $targetPath);
+            }
+        } elseif (function_exists('fm_search_index_mark_dirty')) {
+            fm_search_index_mark_dirty('upload_url', $targetPath);
         }
 
         $result = new stdClass();

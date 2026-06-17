@@ -156,7 +156,12 @@ class TFM_AjaxActionHandler {
         if (function_exists('fm_owner_meta_touch')) {
             fm_owner_meta_touch($file_path, 'edit');
         }
-        if (function_exists('fm_search_index_mark_dirty')) {
+        if (function_exists('fm_search_index_sync_path')) {
+            $ok = fm_search_index_sync_path($file_path, 'edit');
+            if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                fm_search_index_mark_dirty('edit_fallback', $file_path);
+            }
+        } elseif (function_exists('fm_search_index_mark_dirty')) {
             fm_search_index_mark_dirty('edit', $file_path);
         }
         die(true);
@@ -180,7 +185,12 @@ class TFM_AjaxActionHandler {
                 if (function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($fullPath . $newFileName, 'copy');
                 }
-                if (function_exists('fm_search_index_mark_dirty')) {
+                if (function_exists('fm_search_index_sync_path')) {
+                    $ok = fm_search_index_sync_path($fullPath . $newFileName, 'backup_copy');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('backup_copy_fallback', $fullPath . $newFileName);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
                     fm_search_index_mark_dirty('backup_copy', $fullPath . $newFileName);
                 }
                 echo 'Backup ' . $newFileName . ' created';

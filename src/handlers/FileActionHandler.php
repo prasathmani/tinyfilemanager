@@ -38,7 +38,12 @@ class TFM_FileActionHandler {
                 if (function_exists('fm_owner_meta_remove')) {
                     fm_owner_meta_remove($path . '/' . $del);
                 }
-                if (function_exists('fm_search_index_mark_dirty')) {
+                if (function_exists('fm_search_index_remove_path')) {
+                    $ok = fm_search_index_remove_path($path . '/' . $del, 'delete');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('delete_fallback', $path . '/' . $del);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
                     fm_search_index_mark_dirty('delete', $path . '/' . $del);
                 }
                 $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
@@ -74,7 +79,12 @@ class TFM_FileActionHandler {
                         if (function_exists('fm_owner_meta_touch')) {
                             fm_owner_meta_touch($path . '/' . $new, 'create');
                         }
-                        if (function_exists('fm_search_index_mark_dirty')) {
+                        if (function_exists('fm_search_index_sync_path')) {
+                            $ok = fm_search_index_sync_path($path . '/' . $new, 'create_file');
+                            if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                                fm_search_index_mark_dirty('create_file_fallback', $path . '/' . $new);
+                            }
+                        } elseif (function_exists('fm_search_index_mark_dirty')) {
                             fm_search_index_mark_dirty('create_file', $path . '/' . $new);
                         }
                         fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
@@ -89,7 +99,12 @@ class TFM_FileActionHandler {
                     if (function_exists('fm_owner_meta_touch')) {
                         fm_owner_meta_touch($path . '/' . $new, 'mkdir');
                     }
-                    if (function_exists('fm_search_index_mark_dirty')) {
+                    if (function_exists('fm_search_index_sync_path')) {
+                        $ok = fm_search_index_sync_path($path . '/' . $new, 'mkdir');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('mkdir_fallback', $path . '/' . $new);
+                        }
+                    } elseif (function_exists('fm_search_index_mark_dirty')) {
                         fm_search_index_mark_dirty('mkdir', $path . '/' . $new);
                     }
                     fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
@@ -149,7 +164,12 @@ class TFM_FileActionHandler {
                     if (function_exists('fm_owner_meta_touch')) {
                         fm_owner_meta_touch($full_new, 'rename');
                     }
-                    if (function_exists('fm_search_index_mark_dirty')) {
+                    if (function_exists('fm_search_index_move_path')) {
+                        $ok = fm_search_index_move_path($full_old, $full_new, 'rename');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('rename_fallback', $full_new);
+                        }
+                    } elseif (function_exists('fm_search_index_mark_dirty')) {
                         fm_search_index_mark_dirty('rename', $full_new);
                     }
                 fm_set_msg(sprintf(lng('Renamed from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($old), fm_enc($new)));
@@ -185,9 +205,16 @@ class TFM_FileActionHandler {
                     $new_path = $path . '/' . $f;
                     if (!fm_rdelete($new_path)) {
                         $errors++;
-                    } elseif (function_exists('fm_owner_meta_remove')) {
-                        fm_owner_meta_remove($new_path);
-                        if (function_exists('fm_search_index_mark_dirty')) {
+                    } else {
+                        if (function_exists('fm_owner_meta_remove')) {
+                            fm_owner_meta_remove($new_path);
+                        }
+                        if (function_exists('fm_search_index_remove_path')) {
+                            $ok = fm_search_index_remove_path($new_path, 'mass_delete');
+                            if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                                fm_search_index_mark_dirty('mass_delete_fallback', $new_path);
+                            }
+                        } elseif (function_exists('fm_search_index_mark_dirty')) {
                             fm_search_index_mark_dirty('mass_delete', $new_path);
                         }
                     }

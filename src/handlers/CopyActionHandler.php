@@ -52,7 +52,12 @@ class TFM_CopyActionHandler {
                     if (function_exists('fm_owner_meta_move')) {
                         fm_owner_meta_move($from, $dest);
                     }
-                    if (function_exists('fm_search_index_mark_dirty')) {
+                    if (function_exists('fm_search_index_move_path')) {
+                        $ok = fm_search_index_move_path($from, $dest, 'move');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('move_fallback', $dest);
+                        }
+                    } elseif (function_exists('fm_search_index_mark_dirty')) {
                         fm_search_index_mark_dirty('move', $dest);
                     }
                     fm_set_msg(sprintf(lng('Moved from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
@@ -66,7 +71,17 @@ class TFM_CopyActionHandler {
                     if (function_exists('fm_owner_meta_copy')) {
                         fm_owner_meta_copy($from, $dest);
                     }
-                    if (function_exists('fm_search_index_mark_dirty')) {
+                    if (is_dir($dest) && function_exists('fm_search_index_sync_subtree')) {
+                        $ok = fm_search_index_sync_subtree($dest, 'copy_dir');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('copy_dir_fallback', $dest);
+                        }
+                    } elseif (function_exists('fm_search_index_sync_path')) {
+                        $ok = fm_search_index_sync_path($dest, 'copy_file');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('copy_file_fallback', $dest);
+                        }
+                    } elseif (function_exists('fm_search_index_mark_dirty')) {
                         fm_search_index_mark_dirty('copy', $dest);
                     }
                     fm_set_msg(sprintf(lng('Copied from') . ' <b>%s</b> ' . lng('to') . ' <b>%s</b>', fm_enc($copy), fm_enc($msg_from)));
@@ -96,7 +111,17 @@ class TFM_CopyActionHandler {
                     if (function_exists('fm_owner_meta_copy')) {
                         fm_owner_meta_copy($from, $fn_duplicate);
                     }
-                    if (function_exists('fm_search_index_mark_dirty')) {
+                    if (is_dir($fn_duplicate) && function_exists('fm_search_index_sync_subtree')) {
+                        $ok = fm_search_index_sync_subtree($fn_duplicate, 'duplicate_dir');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('duplicate_dir_fallback', $fn_duplicate);
+                        }
+                    } elseif (function_exists('fm_search_index_sync_path')) {
+                        $ok = fm_search_index_sync_path($fn_duplicate, 'duplicate_file');
+                        if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                            fm_search_index_mark_dirty('duplicate_file_fallback', $fn_duplicate);
+                        }
+                    } elseif (function_exists('fm_search_index_mark_dirty')) {
                         fm_search_index_mark_dirty('duplicate', $fn_duplicate);
                     }
                     fm_set_msg(sprintf('Copied from <b>%s</b> to <b>%s</b>', fm_enc($copy), fm_enc($fn_duplicate)));
@@ -182,7 +207,12 @@ class TFM_CopyActionHandler {
                             if (function_exists('fm_owner_meta_move')) {
                                 fm_owner_meta_move($from, $dest);
                             }
-                            if (function_exists('fm_search_index_mark_dirty')) {
+                            if (function_exists('fm_search_index_move_path')) {
+                                $ok = fm_search_index_move_path($from, $dest, 'mass_move');
+                                if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                                    fm_search_index_mark_dirty('mass_move_fallback', $dest);
+                                }
+                            } elseif (function_exists('fm_search_index_mark_dirty')) {
                                 fm_search_index_mark_dirty('mass_move', $dest);
                             }
                         }
@@ -193,7 +223,17 @@ class TFM_CopyActionHandler {
                             if (function_exists('fm_owner_meta_copy')) {
                                 fm_owner_meta_copy($from, $dest);
                             }
-                            if (function_exists('fm_search_index_mark_dirty')) {
+                            if (is_dir($dest) && function_exists('fm_search_index_sync_subtree')) {
+                                $ok = fm_search_index_sync_subtree($dest, 'mass_copy_dir');
+                                if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                                    fm_search_index_mark_dirty('mass_copy_dir_fallback', $dest);
+                                }
+                            } elseif (function_exists('fm_search_index_sync_path')) {
+                                $ok = fm_search_index_sync_path($dest, 'mass_copy_file');
+                                if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                                    fm_search_index_mark_dirty('mass_copy_file_fallback', $dest);
+                                }
+                            } elseif (function_exists('fm_search_index_mark_dirty')) {
                                 fm_search_index_mark_dirty('mass_copy', $dest);
                             }
                         }

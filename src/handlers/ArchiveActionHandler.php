@@ -65,7 +65,12 @@ class TFM_ArchiveActionHandler {
                 if (function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($path . '/' . $zipname, 'create');
                 }
-                if (function_exists('fm_search_index_mark_dirty')) {
+                if (function_exists('fm_search_index_sync_path')) {
+                    $ok = fm_search_index_sync_path($path . '/' . $zipname, 'archive_pack');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('archive_pack_fallback', $path . '/' . $zipname);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
                     fm_search_index_mark_dirty('archive_pack', $path . '/' . $zipname);
                 }
                 fm_set_msg(sprintf(lng('Archive') . ' <b>%s</b> ' . lng('Created'), fm_enc($zipname)));
@@ -142,7 +147,12 @@ class TFM_ArchiveActionHandler {
                 if ($createdTargetFolder !== '' && function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($createdTargetFolder, 'mkdir');
                 }
-                if (function_exists('fm_search_index_mark_dirty')) {
+                if (function_exists('fm_search_index_sync_subtree')) {
+                    $ok = fm_search_index_sync_subtree($path, 'archive_unpack');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('archive_unpack_fallback', $path);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
                     fm_search_index_mark_dirty('archive_unpack', $path);
                 }
                 fm_set_msg(lng('Archive unpacked'));

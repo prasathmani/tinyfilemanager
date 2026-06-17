@@ -5287,16 +5287,148 @@ function fm_search_log_event($event, array $context = array())
  */
 function fm_search_scope_key()
 {
-    if (function_exists('fm_owner_meta_scope_key')) {
-        return (string) fm_owner_meta_scope_key();
-    }
-    if (defined('FM_ROOT_PATH')) {
-        return hash('sha256', (string) FM_ROOT_PATH);
+    global $fm_user_allowed_dirs, $root_path;
+
+    $baseRoot = defined('FM_ROOT_PATH') ? (string) FM_ROOT_PATH : (is_string($root_path) ? $root_path : __DIR__);
+    $normalizedRoot = fm_search_index_normalize_abs_path($baseRoot);
+
+    $normalizedAllowed = array();
+    if (!empty($fm_user_allowed_dirs) && is_array($fm_user_allowed_dirs)) {
+        foreach ($fm_user_allowed_dirs as $allowed) {
+            $allowedPath = fm_search_index_normalize_abs_path((string) $allowed);
+            if ($allowedPath === '' || !fm_is_path_inside($allowedPath, $normalizedRoot)) {
+                continue;
+            }
+            $normalizedAllowed[] = $allowedPath;
+        }
+        $normalizedAllowed = array_values(array_unique($normalizedAllowed));
+        sort($normalizedAllowed, SORT_STRING);
     }
 
-    global $root_path;
-    $fallbackRoot = is_string($root_path) ? $root_path : __DIR__;
-    return hash('sha256', (string) $fallbackRoot);
+    $allowedScope = empty($normalizedAllowed) ? '*' : implode('|', $normalizedAllowed);
+    return hash('sha256', 'root=' . $normalizedRoot . ';allow=' . $allowedScope);
+}
+
+/**
+ * Normalize absolute path into stable forward-slash format.
+ * @param string $path
+ * @return string
+ */
+function fm_search_index_normalize_abs_path($path)
+{
+    $path = trim((string) $path);
+    if ($path === '') {
+        return '';
+    }
+
+    $path = str_replace('\\', '/', $path);
+    $path = preg_replace('#/+#', '/', $path);
+    if (!is_string($path) || $path === '') {
+        return '';
+    }
+
+    return rtrim($path, '/');
+}
+
+/**
+ * Convert absolute path to relative path under FM_ROOT_PATH.
+ * Returns empty string for root and null for outside-root paths.
+ * @param string $absolutePath
+ * @return string|null
+ */
+function fm_search_index_rel_from_abs($absolutePath)
+{
+    $root = fm_search_index_normalize_abs_path((string) FM_ROOT_PATH);
+    $abs = fm_search_index_normalize_abs_path((string) $absolutePath);
+
+    if ($root === '' || $abs === '' || !fm_is_path_inside($abs, $root)) {
+        return null;
+    }
+
+    if ($abs === $root) {
+        return '';
+    }
+
+    return ltrim(substr($abs, strlen($root)), '/');
+}
+
+/**
+ * Build stable keyword bag for SQLite search matching.
+ * @param string $relPath
+ * @param string $name
+ * @param bool $isDir
+ * @return string
+ */
+function fm_search_index_build_keywords($relPath, $name, $isDir)
+{
+    $relPath = str_replace('\\', '/', (string) $relPath);
+    $name = (string) $name;
+    $parts = array();
+
+    $parts[] = strtolower($name);
+
+    $extension = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+    $baseName = strtolower((string) pathinfo($name, PATHINFO_FILENAME));
+    if ($baseName !== '') {
+        $parts[] = $baseName;
+    }
+    if (!$isDir && $extension !== '') {
+        $parts[] = $extension;
+    }
+
+    $splitName = preg_split('/[\s._-]+/u', strtolower($name));
+    if (is_array($splitName)) {
+        foreach ($splitName as $token) {
+            $token = trim((string) $token);
+            if ($token !== '') {
+                $parts[] = $token;
+            }
+        }
+    }
+
+    $dirPath = dirname($relPath);
+    if ($dirPath !== '.' && $dirPath !== '') {
+        $dirSegments = explode('/', strtolower($dirPath));
+        foreach ($dirSegments as $segment) {
+            $segment = trim((string) $segment);
+            if ($segment !== '') {
+                $parts[] = $segment;
+
+                $segmentParts = preg_split('/[\s._-]+/u', $segment);
+                if (is_array($segmentParts)) {
+                    foreach ($segmentParts as $segmentPart) {
+                        $segmentPart = trim((string) $segmentPart);
+                        if ($segmentPart !== '') {
+                            $parts[] = $segmentPart;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    $tokens = array();
+    foreach ($parts as $token) {
+        $token = strtolower(trim((string) $token));
+        if ($token === '') {
+            continue;
+        }
+        $tokens[] = $token;
+
+        if (function_exists('iconv')) {
+            $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $token);
+            if (is_string($ascii)) {
+                $ascii = strtolower(trim($ascii));
+                $ascii = preg_replace('/\s+/', ' ', $ascii);
+                if (is_string($ascii) && $ascii !== '') {
+                    $tokens[] = $ascii;
+                }
+            }
+        }
+    }
+
+    $tokens = array_values(array_unique($tokens));
+    return implode(' ', $tokens);
 }
 
 /**
@@ -5360,11 +5492,19 @@ function fm_search_index_get_db()
             is_dir INTEGER NOT NULL DEFAULT 0,
             size INTEGER NOT NULL DEFAULT 0,
             mtime INTEGER NOT NULL DEFAULT 0,
+            keywords TEXT NOT NULL DEFAULT \'\',
             indexed_at INTEGER NOT NULL DEFAULT 0,
+            validated_at INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(scope_key, rel_path)
         )');
         if (!fm_search_index_has_column($db, 'fm_file_index', 'is_dir')) {
             @$db->exec('ALTER TABLE fm_file_index ADD COLUMN is_dir INTEGER NOT NULL DEFAULT 0');
+        }
+        if (!fm_search_index_has_column($db, 'fm_file_index', 'keywords')) {
+            @$db->exec('ALTER TABLE fm_file_index ADD COLUMN keywords TEXT NOT NULL DEFAULT \'\'');
+        }
+        if (!fm_search_index_has_column($db, 'fm_file_index', 'validated_at')) {
+            @$db->exec('ALTER TABLE fm_file_index ADD COLUMN validated_at INTEGER NOT NULL DEFAULT 0');
         }
         $db->exec('CREATE TABLE IF NOT EXISTS fm_file_index_meta (
             scope_key TEXT PRIMARY KEY,
@@ -5498,6 +5638,311 @@ function fm_search_index_set_clean_meta($db, $scope, $ts)
 }
 
 /**
+ * Upsert one file-system object into SQLite index for current scope.
+ * @param string $absolutePath
+ * @param SQLite3|null $db
+ * @param string|null $scope
+ * @param int|null $indexedAt
+ * @return bool
+ */
+function fm_search_index_upsert_path($absolutePath, $db = null, $scope = null, $indexedAt = null)
+{
+    $db = $db instanceof SQLite3 ? $db : fm_search_index_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $absolutePath = fm_search_index_normalize_abs_path((string) $absolutePath);
+    if ($absolutePath === '' || (!is_file($absolutePath) && !is_dir($absolutePath))) {
+        return false;
+    }
+
+    $root = fm_search_index_normalize_abs_path((string) FM_ROOT_PATH);
+    if ($root === '' || !fm_is_path_inside($absolutePath, $root)) {
+        return false;
+    }
+
+    $isDir = is_dir($absolutePath);
+    if (!fm_user_can_access_path($absolutePath, $isDir)) {
+        return false;
+    }
+
+    $relPath = fm_search_index_rel_from_abs($absolutePath);
+    if ($relPath === null || $relPath === '') {
+        return false;
+    }
+
+    $dirPath = dirname($relPath);
+    if ($dirPath === '.') {
+        $dirPath = '';
+    }
+    $name = basename($absolutePath);
+    $nameLc = strtolower($name);
+    $indexedAtValue = is_int($indexedAt) ? $indexedAt : time();
+    $validatedAtValue = $indexedAtValue;
+    $keywords = fm_search_index_build_keywords($relPath, $name, $isDir);
+
+    $insert = $db->prepare('INSERT OR REPLACE INTO fm_file_index (scope_key, rel_path, dir_path, name, name_lc, is_dir, size, mtime, keywords, indexed_at, validated_at)
+        VALUES (:scope, :rel, :dir, :name, :name_lc, :is_dir, :size, :mtime, :keywords, :indexed_at, :validated_at)');
+    if (!$insert) {
+        return false;
+    }
+
+    $insert->bindValue(':scope', (string) ($scope === null ? fm_search_scope_key() : $scope), SQLITE3_TEXT);
+    $insert->bindValue(':rel', (string) $relPath, SQLITE3_TEXT);
+    $insert->bindValue(':dir', (string) $dirPath, SQLITE3_TEXT);
+    $insert->bindValue(':name', (string) $name, SQLITE3_TEXT);
+    $insert->bindValue(':name_lc', (string) $nameLc, SQLITE3_TEXT);
+    $insert->bindValue(':is_dir', $isDir ? 1 : 0, SQLITE3_INTEGER);
+    $insert->bindValue(':size', $isDir ? 0 : (int) @filesize($absolutePath), SQLITE3_INTEGER);
+    $insert->bindValue(':mtime', (int) @filemtime($absolutePath), SQLITE3_INTEGER);
+    $insert->bindValue(':keywords', (string) $keywords, SQLITE3_TEXT);
+    $insert->bindValue(':indexed_at', (int) $indexedAtValue, SQLITE3_INTEGER);
+    $insert->bindValue(':validated_at', (int) $validatedAtValue, SQLITE3_INTEGER);
+
+    return (bool) $insert->execute();
+}
+
+/**
+ * Remove one indexed path and optionally all descendants for current scope.
+ * @param string $absolutePath
+ * @param string $reason
+ * @return bool
+ */
+function fm_search_index_remove_path($absolutePath, $reason = '')
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $scope = fm_search_scope_key();
+    $absolutePath = fm_search_index_normalize_abs_path((string) $absolutePath);
+    $relPath = fm_search_index_rel_from_abs($absolutePath);
+    if ($relPath === null || $relPath === '') {
+        fm_search_log_event('search_index_remove_path_skipped', array('reason' => (string) $reason, 'path' => (string) $absolutePath));
+        return false;
+    }
+
+    $delete = $db->prepare('DELETE FROM fm_file_index
+        WHERE scope_key = :scope
+          AND (
+            rel_path = :rel
+            OR rel_path LIKE :rel_prefix
+            OR dir_path = :rel
+            OR dir_path LIKE :rel_prefix
+          )');
+
+    if (!$delete) {
+        fm_search_index_mark_dirty('remove_prepare_failed', $absolutePath);
+        fm_search_log_event('search_index_remove_path_failed', array('reason' => (string) $reason, 'path' => (string) $absolutePath, 'stage' => 'prepare'));
+        return false;
+    }
+
+    $prefix = $relPath . '/%';
+    $delete->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+    $delete->bindValue(':rel', (string) $relPath, SQLITE3_TEXT);
+    $delete->bindValue(':rel_prefix', (string) $prefix, SQLITE3_TEXT);
+    $ok = (bool) $delete->execute();
+
+    if (!$ok) {
+        fm_search_index_mark_dirty('remove_execute_failed', $absolutePath);
+    }
+
+    fm_search_log_event('search_index_remove_path', array(
+        'reason' => (string) $reason,
+        'path' => (string) $absolutePath,
+        'ok' => $ok ? 1 : 0,
+    ));
+    return $ok;
+}
+
+/**
+ * Incrementally sync one path into current search index scope.
+ * @param string $absolutePath
+ * @param string $reason
+ * @return bool
+ */
+function fm_search_index_sync_path($absolutePath, $reason = '')
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $absolutePath = fm_search_index_normalize_abs_path((string) $absolutePath);
+    if (!is_file($absolutePath) && !is_dir($absolutePath)) {
+        fm_search_log_event('search_index_sync_path_failed', array('reason' => (string) $reason, 'path' => (string) $absolutePath, 'stage' => 'missing'));
+        fm_search_index_mark_dirty('sync_missing', $absolutePath);
+        return false;
+    }
+
+    $scope = fm_search_scope_key();
+    $indexedAt = time();
+    $ok = false;
+    try {
+        $db->exec('BEGIN IMMEDIATE');
+        $ok = fm_search_index_upsert_path($absolutePath, $db, $scope, $indexedAt);
+        if ($ok) {
+            $db->exec('COMMIT');
+        } else {
+            $db->exec('ROLLBACK');
+        }
+    } catch (Exception $e) {
+        @ $db->exec('ROLLBACK');
+        $ok = false;
+        fm_search_log_event('search_index_sync_path_exception', array('reason' => (string) $reason, 'path' => (string) $absolutePath, 'message' => $e->getMessage()));
+    }
+
+    if (!$ok) {
+        fm_search_index_mark_dirty('sync_failed', $absolutePath);
+    }
+
+    fm_search_log_event('search_index_sync_path', array(
+        'reason' => (string) $reason,
+        'path' => (string) $absolutePath,
+        'ok' => $ok ? 1 : 0,
+    ));
+
+    return $ok;
+}
+
+/**
+ * Incrementally sync a directory subtree into current search index scope.
+ * @param string $absolutePath
+ * @param string $reason
+ * @return bool
+ */
+function fm_search_index_sync_subtree($absolutePath, $reason = '')
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $absolutePath = fm_search_index_normalize_abs_path((string) $absolutePath);
+    if (!is_dir($absolutePath) || !fm_user_can_access_path($absolutePath, true)) {
+        fm_search_log_event('search_index_sync_subtree_failed', array('reason' => (string) $reason, 'path' => (string) $absolutePath, 'stage' => 'invalid_dir'));
+        fm_search_index_mark_dirty('sync_subtree_invalid', $absolutePath);
+        return false;
+    }
+
+    $scope = fm_search_scope_key();
+    $indexedAt = time();
+    $ok = true;
+
+    try {
+        $db->exec('BEGIN IMMEDIATE');
+
+        $relPath = fm_search_index_rel_from_abs($absolutePath);
+        if ($relPath !== null && $relPath !== '') {
+            $delete = $db->prepare('DELETE FROM fm_file_index
+                WHERE scope_key = :scope
+                  AND (
+                    rel_path = :rel
+                    OR rel_path LIKE :rel_prefix
+                    OR dir_path = :rel
+                    OR dir_path LIKE :rel_prefix
+                  )');
+            if ($delete) {
+                $delete->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                $delete->bindValue(':rel', (string) $relPath, SQLITE3_TEXT);
+                $delete->bindValue(':rel_prefix', (string) ($relPath . '/%'), SQLITE3_TEXT);
+                $delete->execute();
+            }
+        }
+
+        if (!fm_search_index_upsert_path($absolutePath, $db, $scope, $indexedAt)) {
+            throw new Exception('subtree_root_upsert_failed');
+        }
+
+        $stack = array($absolutePath);
+        while (!empty($stack)) {
+            $current = array_pop($stack);
+            $entries = @scandir($current);
+            if ($entries === false) {
+                continue;
+            }
+
+            foreach ($entries as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+
+                $child = fm_search_index_normalize_abs_path($current . '/' . $entry);
+                $isDir = is_dir($child);
+                if (!fm_user_can_access_path($child, $isDir)) {
+                    continue;
+                }
+
+                if (!fm_search_index_upsert_path($child, $db, $scope, $indexedAt)) {
+                    throw new Exception('subtree_upsert_failed');
+                }
+
+                if ($isDir) {
+                    $stack[] = $child;
+                }
+            }
+        }
+
+        $db->exec('COMMIT');
+    } catch (Exception $e) {
+        @ $db->exec('ROLLBACK');
+        $ok = false;
+        fm_search_log_event('search_index_sync_subtree_exception', array('reason' => (string) $reason, 'path' => (string) $absolutePath, 'message' => $e->getMessage()));
+    }
+
+    if (!$ok) {
+        fm_search_index_mark_dirty('sync_subtree_failed', $absolutePath);
+    }
+
+    fm_search_log_event('search_index_sync_subtree', array(
+        'reason' => (string) $reason,
+        'path' => (string) $absolutePath,
+        'ok' => $ok ? 1 : 0,
+    ));
+
+    return $ok;
+}
+
+/**
+ * Move indexed path by removing old path and syncing new path.
+ * @param string $oldAbsolutePath
+ * @param string $newAbsolutePath
+ * @param string $reason
+ * @return bool
+ */
+function fm_search_index_move_path($oldAbsolutePath, $newAbsolutePath, $reason = '')
+{
+    $removeOk = fm_search_index_remove_path($oldAbsolutePath, $reason . ':remove_old');
+    $newAbsolutePath = fm_search_index_normalize_abs_path((string) $newAbsolutePath);
+
+    $syncOk = false;
+    if (is_dir($newAbsolutePath)) {
+        $syncOk = fm_search_index_sync_subtree($newAbsolutePath, $reason . ':sync_new_subtree');
+    } elseif (is_file($newAbsolutePath)) {
+        $syncOk = fm_search_index_sync_path($newAbsolutePath, $reason . ':sync_new_path');
+    } else {
+        fm_search_index_mark_dirty('move_new_missing', $newAbsolutePath);
+        fm_search_log_event('search_index_move_path_failed', array('reason' => (string) $reason, 'old_path' => (string) $oldAbsolutePath, 'new_path' => (string) $newAbsolutePath, 'stage' => 'missing_new'));
+        return false;
+    }
+
+    $ok = $removeOk && $syncOk;
+    if (!$ok) {
+        fm_search_index_mark_dirty('move_failed', $newAbsolutePath);
+    }
+
+    fm_search_log_event('search_index_move_path', array(
+        'reason' => (string) $reason,
+        'old_path' => (string) $oldAbsolutePath,
+        'new_path' => (string) $newAbsolutePath,
+        'ok' => $ok ? 1 : 0,
+    ));
+    return $ok;
+}
+
+/**
  * Rebuild full search index once at the end of a request that changed filesystem state.
  * @return void
  */
@@ -5596,15 +6041,13 @@ function fm_search_index_rebuild($db, $scope, $baseDir = '')
             }
         }
 
-        $insert = $db->prepare('INSERT OR REPLACE INTO fm_file_index (scope_key, rel_path, dir_path, name, name_lc, is_dir, size, mtime, indexed_at)
-            VALUES (:scope, :rel, :dir, :name, :name_lc, :is_dir, :size, :mtime, :indexed_at)');
-        if (!$insert) {
+        $stack = array($startAbs);
+        $indexedAt = time();
+
+        if ($baseDir !== '' && !fm_search_index_upsert_path($startAbs, $db, $scope, $indexedAt)) {
             $db->exec('ROLLBACK');
             return false;
         }
-
-        $stack = array($startAbs);
-        $indexedAt = time();
 
         while (!empty($stack)) {
             $current = array_pop($stack);
@@ -5619,11 +6062,6 @@ function fm_search_index_rebuild($db, $scope, $baseDir = '')
                 }
 
                 $abs = $current . '/' . $entry;
-                $rel = ltrim(str_replace($root, '', str_replace('\\', '/', $abs)), '/');
-                $dirPath = dirname($rel);
-                if ($dirPath === '.') {
-                    $dirPath = '';
-                }
                 $isDir = is_dir($abs);
 
                 if ($isDir) {
@@ -5631,16 +6069,10 @@ function fm_search_index_rebuild($db, $scope, $baseDir = '')
                         continue;
                     }
 
-                    $insert->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
-                    $insert->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
-                    $insert->bindValue(':dir', (string) $dirPath, SQLITE3_TEXT);
-                    $insert->bindValue(':name', (string) basename($abs), SQLITE3_TEXT);
-                    $insert->bindValue(':name_lc', strtolower((string) basename($abs)), SQLITE3_TEXT);
-                    $insert->bindValue(':is_dir', 1, SQLITE3_INTEGER);
-                    $insert->bindValue(':size', 0, SQLITE3_INTEGER);
-                    $insert->bindValue(':mtime', (int) @filemtime($abs), SQLITE3_INTEGER);
-                    $insert->bindValue(':indexed_at', (int) $indexedAt, SQLITE3_INTEGER);
-                    $insert->execute();
+                    if (!fm_search_index_upsert_path($abs, $db, $scope, $indexedAt)) {
+                        $db->exec('ROLLBACK');
+                        return false;
+                    }
 
                     $stack[] = $abs;
                     continue;
@@ -5650,16 +6082,10 @@ function fm_search_index_rebuild($db, $scope, $baseDir = '')
                     continue;
                 }
 
-                $insert->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
-                $insert->bindValue(':rel', (string) $rel, SQLITE3_TEXT);
-                $insert->bindValue(':dir', (string) $dirPath, SQLITE3_TEXT);
-                $insert->bindValue(':name', (string) basename($abs), SQLITE3_TEXT);
-                $insert->bindValue(':name_lc', strtolower((string) basename($abs)), SQLITE3_TEXT);
-                $insert->bindValue(':is_dir', 0, SQLITE3_INTEGER);
-                $insert->bindValue(':size', (int) @filesize($abs), SQLITE3_INTEGER);
-                $insert->bindValue(':mtime', (int) @filemtime($abs), SQLITE3_INTEGER);
-                $insert->bindValue(':indexed_at', (int) $indexedAt, SQLITE3_INTEGER);
-                $insert->execute();
+                if (!fm_search_index_upsert_path($abs, $db, $scope, $indexedAt)) {
+                    $db->exec('ROLLBACK');
+                    return false;
+                }
             }
         }
 
@@ -5740,12 +6166,16 @@ function fm_search_index_query($dir = '', $filter = '')
     }
 
     try {
-        $stmt = $db->prepare('SELECT name, dir_path
+                $stmt = $db->prepare('SELECT name, dir_path
             FROM fm_file_index
             WHERE scope_key = :scope
               AND is_dir = 0
               AND (:dir = "" OR dir_path = :dir OR dir_path LIKE :dirprefix)
-              AND name_lc LIKE :needle
+                            AND (
+                                name_lc LIKE :needle
+                                OR keywords LIKE :needle
+                                OR LOWER(rel_path) LIKE :needle
+                            )
             ORDER BY dir_path ASC, name ASC
             LIMIT 2000');
         if (!$stmt) {

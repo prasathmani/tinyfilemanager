@@ -140,7 +140,12 @@ class TFM_UploadHandler {
             if (function_exists('fm_owner_meta_touch')) {
                 fm_owner_meta_touch($target_file, 'upload');
             }
-            if (function_exists('fm_search_index_mark_dirty')) {
+            if (function_exists('fm_search_index_sync_path')) {
+                $ok = fm_search_index_sync_path($target_file, 'upload');
+                if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('upload_fallback', $target_file);
+                }
+            } elseif (function_exists('fm_search_index_mark_dirty')) {
                 fm_search_index_mark_dirty('upload', $target_file);
             }
             
