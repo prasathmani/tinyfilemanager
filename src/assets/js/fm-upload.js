@@ -30,7 +30,11 @@
     init: function () {
       this.on('sending', function (file, xhr) {
         var path = file.fullPath ? file.fullPath : file.name;
+        var uploadDirInput = document.getElementById('upload_dir');
         var fullPathInput = document.getElementById('fullpath');
+        if (uploadDirInput && !uploadDirInput.value) {
+          uploadDirInput.value = (typeof window.fm_path === 'string') ? window.fm_path : '';
+        }
         if (fullPathInput) {
           fullPathInput.value = path;
         }

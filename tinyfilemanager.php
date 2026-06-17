@@ -1898,9 +1898,10 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
                     <strong><?php echo lng('DestinationFolder') ?></strong>: <?php echo fm_enc(fm_convert_win(FM_PATH)) ?>
                 </p>
 
-                <form action="<?php echo htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
+                <form action="<?php echo htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" method="POST" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
-                    <input type="hidden" name="fullpath" id="fullpath" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="upload_dir" id="upload_dir" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="fullpath" id="fullpath" value="">
                     <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                     <div class="fallback">
                         <input name="file" type="file" multiple />

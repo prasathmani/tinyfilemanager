@@ -33,28 +33,56 @@ class TFM_LegacyUploadHandler {
 
         $chunkIndex = isset($post['dzchunkindex']) ? $post['dzchunkindex'] : null;
         $chunkTotal = isset($post['dztotalchunkcount']) ? $post['dztotalchunkcount'] : null;
+        $requestedUploadDir = fm_clean_path(isset($request['upload_dir']) ? $request['upload_dir'] : $this->current_path);
         $fullPathInput = fm_clean_path(isset($request['fullpath']) ? $request['fullpath'] : '');
 
         $f = $files;
-        $path = $this->basePath();
         $ds = DIRECTORY_SEPARATOR;
 
-        $uploads = 0;
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
         $response = array(
             'status' => 'error',
             'info'   => 'Oops! Try again'
         );
 
-        $filename = $f['file']['name'];
+        $filename = isset($f['file']['name']) ? (string) $f['file']['name'] : '';
         $tmp_name = $f['file']['tmp_name'];
         $ext = pathinfo($filename, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($filename, PATHINFO_EXTENSION)) : '';
         $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
-        if (!fm_isvalid_filename($filename) && !fm_isvalid_filename($fullPathInput)) {
+        if ($filename === '' || !isset($f['file']['tmp_name'])) {
+            $response = array(
+                'status' => 'error',
+                'info'   => 'No file received for upload.',
+            );
+            echo json_encode($response);
+            exit();
+        }
+
+        $safeFileName = $this->sanitizeUploadFileName($fullPathInput !== '' ? $fullPathInput : $filename);
+        if ($safeFileName === '') {
+            $response = array(
+                'status' => 'error',
+                'info'   => 'Invalid file name for upload.',
+            );
+            echo json_encode($response);
+            exit();
+        }
+
+        if (!fm_isvalid_filename($safeFileName)) {
             $response = array(
                 'status' => 'error',
                 'info'   => 'Invalid File name!',
+            );
+            echo json_encode($response);
+            exit();
+        }
+
+        $targetPath = $this->resolveUploadBasePath($requestedUploadDir);
+        if ($targetPath === null) {
+            $response = array(
+                'status' => 'error',
+                'info'   => 'Upload target path is not allowed.',
             );
             echo json_encode($response);
             exit();
@@ -92,14 +120,21 @@ class TFM_LegacyUploadHandler {
             }
         }
 
-        $targetPath = $path . $ds;
+        $targetPath = rtrim($targetPath, '/\\') . $ds;
         if (is_writable($targetPath)) {
-            $fullPath = $path . '/' . $fullPathInput;
+            $fullPath = rtrim($targetPath, '/\\') . '/' . $safeFileName;
             $folder = substr($fullPath, 0, strrpos($fullPath, '/'));
 
             if (!is_dir($folder)) {
                 $old = umask(0);
-                mkdir($folder, 0777, true);
+                if (!@mkdir($folder, 0777, true) && !is_dir($folder)) {
+                    $response = array(
+                        'status' => 'error',
+                        'info'   => 'Unable to create upload destination folder.',
+                    );
+                    echo json_encode($response);
+                    exit();
+                }
                 umask($old);
             }
 
@@ -151,7 +186,7 @@ class TFM_LegacyUploadHandler {
                     if ($chunkIndex == $chunkTotal - 1) {
                         if (file_exists($fullPath)) {
                             $ext_1 = $ext ? '.' . $ext : '';
-                            $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                            $fullPathTarget = rtrim($targetPath, '/\\') . '/' . basename($safeFileName, $ext_1) . '_' . date('ymdHis') . $ext_1;
                         } else {
                             $fullPathTarget = $fullPath;
                         }
@@ -177,14 +212,14 @@ class TFM_LegacyUploadHandler {
                 } else {
                     $response = array(
                         'status' => 'error',
-                        'info'   => "Error while uploading files. Uploaded files $uploads",
+                        'info'   => 'Error while moving uploaded file to destination.',
                     );
                 }
             }
         } else {
             $response = array(
                 'status' => 'error',
-                'info'   => 'The specified folder for upload isn\'t writeable.'
+                'info'   => 'The specified folder for upload is not writable.'
             );
         }
 
@@ -284,6 +319,39 @@ class TFM_LegacyUploadHandler {
 
     private function emitUrlUploadEvent($message) {
         echo json_encode($message);
+    }
+
+    private function sanitizeUploadFileName($name) {
+        $name = str_replace('\\', '/', (string) $name);
+        $name = basename($name);
+        $name = preg_replace('/[\x00-\x1F\x7F]+/', '', $name);
+        $name = trim((string) $name, " .\t\n\r\0\x0B");
+
+        if ($name === '' || $name === '.' || $name === '..') {
+            return '';
+        }
+
+        return $name;
+    }
+
+    private function resolveUploadBasePath($requestedUploadDir) {
+        $requestedUploadDir = fm_clean_path((string) $requestedUploadDir);
+        $candidateBase = rtrim($this->root_path, '/\\');
+        if ($requestedUploadDir !== '') {
+            $candidateBase .= '/' . $requestedUploadDir;
+        }
+
+        $candidateBase = str_replace('\\', '/', $candidateBase);
+        $normalizedRoot = rtrim(str_replace('\\', '/', (string) $this->root_path), '/');
+        if (!fm_is_path_inside($candidateBase, $normalizedRoot)) {
+            return null;
+        }
+
+        if (function_exists('fm_user_can_access_path') && !fm_user_can_access_path($candidateBase, false)) {
+            return null;
+        }
+
+        return $candidateBase;
     }
 
     private function urlUploadTargetPath($path, $fileinfo, $temp_file) {
