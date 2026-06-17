@@ -156,7 +156,7 @@ mkdir -p "$OUT_DIR"
 # Runtime state under .fm_usercfg is server-local and should not ship in release zips.
 # Private deployment config files are intentionally included in private release builds when present.
 git -C "$ROOT_DIR" ls-files \
-  | grep -Ev '^(releases/|\.github/|tests/|docs/archive/|\.fm_usercfg/|DOCS_AUDIT\.md$|ROADMAP_DREMONT\.md$|SMOKE_TEST_2\.9\.19\.md$|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' \
+  | grep -Ev '^(releases/|\.github/|tests/|docs/archive/|\.fm_usercfg/|scripts/prehliadac\.sh$|DOCS_AUDIT\.md$|ROADMAP_DREMONT\.md$|SMOKE_TEST_2\.9\.19\.md$|\.gitignore$|\.gitattributes$)|\.(zip|tar|tgz|gz|rar|7z)$' \
   > "$TMP_LIST"
 
 # Keep hardening rules from dropping a tracked .htaccess template for .fm_usercfg.
