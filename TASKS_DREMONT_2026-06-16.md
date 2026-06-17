@@ -12,20 +12,14 @@
 
 ### 1.1 DataTables chyba po prihlásení
 
-Po prihlásení sa zobrazuje hláška:
+Po prihlásení sa zobrazovala hláška:
 
 > DataTables warning: table id=main-table - Incorrect column count.  
 > For more information about this error, please see http://datatables.net/tn/18
 
-Predpokladaná príčina: tabuľka priečinkov/súborov má nesprávny počet stĺpcov alebo sa do nej vkladá riadok, ktorý nezodpovedá očakávanej štruktúre DataTables.
+**Stav po teste:** Opravené. Po prihlásení sa už DataTables hláška nezobrazuje.
 
-**Požiadavka:**
-- nájsť presnú príčinu chyby,
-- opraviť HTML výstup tabuľky,
-- preveriť riadky pre súbory, priečinky, prázdny adresár, chybové hlásenia a navigáciu,
-- zabezpečiť, aby DataTables nedostávali riadky s odlišným počtom buniek.
-
-**Priorita:** P0 – kritická
+**Priorita:** P0 – splnené
 
 ---
 
@@ -46,14 +40,16 @@ Súčasné zobrazovanie priečinkov nie je dostatočne prehľadné. Je potrebné
 
 ### 1.3 Root priečinok po prihlásení
 
-Po prihlásení sa má používateľovi zobraziť iba jeho koreňový priečinok. V aktuálnom prípade ide o priečinok `Mirko`, ktorý sa chápe ako root používateľa.
+Po prihlásení sa má používateľovi zobraziť jeho koreňový priečinok už otvorený. V aktuálnom prípade ide o priečinok `Mirko`, ktorý sa chápe ako root používateľa.
 
 **Požiadavka:**
-- po prihlásení otvoriť používateľský root automaticky,
-- nezobrazovať technický názov `Mirko` ako bežný priečinok,
+- po prihlásení automaticky otvoriť používateľský root `Mirko`,
+- nezobrazovať technický názov `Mirko` ako bežný priečinok nad aktuálnym obsahom,
 - v slovenčine použiť označenie `Adresár:`,
 - v angličtine použiť označenie `Root`,
 - technický názov priečinka ponechať iba interne.
+
+**Stav po teste:** Nedoriešené. Domáci priečinok `Mirko` musí byť po prihlásení už otvorený.
 
 **Priorita:** P1 – vysoká
 
@@ -99,14 +95,17 @@ Zatiaľ stačí bezpečne zablokovať štandardné menu a pripraviť technický 
 
 ### 1.6 Upload do nového priečinka neukladá súbor
 
-Ak oprávnený používateľ, napríklad admin alebo manažér, založí nový priečinok a chce do neho nahrať súbor, súbor sa neuloží. Vo formulári chýba tlačidlo `SAVE / ULOŽIŤ`, alebo je tam tlačidlo `Späť`, ktorému treba priradiť správnu ukladaciu funkciu.
+Ak oprávnený používateľ, napríklad admin alebo manažér, založí nový priečinok a chce do neho nahrať súbor, súbor sa neuloží.
+
+**Stav po teste:** Neopravené. Tlačidlo alebo formulár sa síce zobrazí, ale nahratý súbor sa neuloží.
 
 **Požiadavka:**
-- preveriť tok po vytvorení nového priečinka,
-- preveriť upload formulár v novom priečinku,
-- doplniť alebo opraviť tlačidlo `Uložiť`,
-- ak existuje tlačidlo `Späť`, nesmie nahrádzať ukladaciu akciu,
-- upload musí fungovať aj bez reloadu celej aplikácie, ak to aktuálna architektúra umožňuje.
+- preveriť request po odoslaní upload formulára,
+- overiť cieľovú cestu nového priečinka,
+- overiť CSRF token, názov input poľa a submit handler,
+- overiť, či request doputuje do správneho upload handlera,
+- doplniť používateľovi jasnú úspešnú alebo chybovú hlášku,
+- upload musí reálne uložiť súbor do aktuálne otvoreného nového priečinka.
 
 **Priorita:** P0 – kritická
 
@@ -128,13 +127,17 @@ Všetkým používateľom sa má v profile implicitne nastavovať slovenčina.
 
 ### 1.8 Upload z URL nereaguje
 
-V hornej časti stránky v tlačidle `Upload / Nahrať` existuje voľba nahrania z URL, ktorá nereaguje.
+Voľba `Upload from URL` sa už dá otvoriť a zobrazí sa input pre URL aj tlačidlo `Nahrať`, ale súbor sa neuloží.
+
+**Stav po teste:** UI opravené, funkcia neopravená.
 
 **Požiadavka:**
-- preveriť, či je funkcia implementovaná alebo len zobrazená v UI,
-- ak má byť funkčná, opraviť handler,
-- ak zatiaľ nemá byť používaná, dočasne ju skryť,
-- nedržať v používateľskom rozhraní nefunkčnú voľbu.
+- preveriť request z URL upload formulára,
+- overiť, či sa odosiela správna URL, token a cieľová cesta,
+- overiť backend handler pre stiahnutie a uloženie súboru,
+- doplniť kontrolu HTTP odpovede, timeoutu a názvu súboru,
+- doplniť úspešnú alebo chybovú hlášku,
+- ak backend nie je bezpečne použiteľný, voľbu dočasne skryť; nefunkčná funkcia nesmie zostať aktívna.
 
 **Priorita:** P1 – vysoká
 
@@ -202,22 +205,25 @@ V používateľskom rozhraní chýba zobrazenie aktuálnej verzie aplikácie.
 
 ---
 
-### 2.3 Správa „Neprecitane: 1“
+### 2.3 Evidencia neprečítanej komunikácie
 
-Vpravo dole sa po prihlásení ako admin alebo manažér zobrazuje správa:
+Vpravo dole sa po prihlásení ako admin alebo manažér zobrazuje odznak:
 
 > Neprecitane: 1
 
-Správa nezmizne ani po resete cache.
+Odznak nezmizne ani po resete cache a používateľ z neho momentálne nevie otvoriť konkrétne neprečítané správy.
 
 **Požiadavka:**
-- zistiť pôvod hlášky,
 - opraviť diakritiku na `Neprečítané`,
-- zistiť, či ide o chat, notifikáciu alebo testovací stav,
-- ak správa nemá reálny význam, odstrániť ju,
-- ak má význam, doplniť spôsob označenia ako prečítané.
+- zistiť pôvod a dátový zdroj počtu neprečítaných správ,
+- urobiť celý odznak klikateľný,
+- kliknutím priamo na odznak otvoriť zoznam alebo panel neprečítaných správ,
+- umožniť používateľovi otvoriť konkrétnu správu alebo komunikáciu,
+- po otvorení alebo označení správy ako prečítanej aktualizovať počet bez nutnosti resetu cache,
+- ak neexistujú neprečítané správy, odznak skryť alebo zobraziť nulový stav podľa návrhu UI,
+- počet musí zodpovedať skutočnému stavu, nie testovacej alebo statickej hodnote.
 
-**Priorita:** P2 – stredná
+**Priorita:** P1 – vysoká
 
 ---
 
@@ -269,10 +275,11 @@ Pri mobilnom zobrazení je logo v hlavičke príliš veľké.
 
 ### Fáza A – stabilizácia funkčnosti
 
-1. Opraviť DataTables chybu `Incorrect column count`.
-2. Opraviť upload do nového priečinka.
-3. Preveriť a opraviť upload z URL alebo ho dočasne skryť.
-4. Nastaviť predvolený jazyk používateľov na slovenčinu.
+1. DataTables chyba `Incorrect column count` – **opravené a ručne overené**.
+2. Upload do nového priečinka – **stále nefunguje, pokračovať diagnostikou requestu a handlera**.
+3. Upload z URL – **záložka funguje, uloženie súboru nefunguje**.
+4. Root po prihlásení – automaticky otvoriť priečinok `Mirko`.
+5. Nastaviť predvolený jazyk používateľov na slovenčinu.
 
 ### Fáza B – vyhľadávanie a mapa súborov
 
@@ -291,11 +298,11 @@ Pri mobilnom zobrazení je logo v hlavičke príliš veľké.
 4. Navrhnúť a implementovať stromovú štruktúru priečinkov.
 5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa.
 
-### Fáza D – UI a jazyk
+### Fáza D – komunikácia, UI a jazyk
 
 1. Zobraziť verziu vo footeri.
 2. Opraviť slovenské preklady.
-3. Opraviť hlášku `Neprečítané: 1`.
+3. Opraviť evidenciu neprečítaných správ a klikateľný odznak.
 4. Upraviť tmavý režim chatu.
 5. Upraviť header tlačidlá na ikonové.
 6. Upraviť veľkosť loga v mobilnom zobrazení.
@@ -317,12 +324,14 @@ Každá oprava má byť malá, čitateľná a samostatne testovateľná. Po kaž
 Odporúčaná forma commitov:
 
 - `fix(ui): resolve datatables column count warning`
-- `fix(upload): restore save action after creating folder`
+- `fix(upload): persist uploaded files in new folders`
+- `fix(upload): persist files uploaded from URL`
 - `fix(i18n): set Slovak as default user language`
 - `feat(search): complete database-backed file map search`
 - `fix(search): repair advanced search form`
 - `feat(ui): show release version in footer`
 - `feat(nav): add folder tree navigation`
+- `fix(chat): open unread messages from notification badge`
 - `fix(chat): improve dark mode message contrast`
 - `fix(header): use icon-only action buttons`
 - `fix(mobile): reduce header logo size`
