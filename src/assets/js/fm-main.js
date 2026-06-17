@@ -540,6 +540,26 @@
   function uploadFromUrl(el) {
     var form = $(el);
     var resultWrapper = $('div#js-url-upload__list');
+
+    function parseUploadResponse(data) {
+      if (typeof data === 'object' && data !== null) {
+        return data;
+      }
+      if (typeof data !== 'string') {
+        return null;
+      }
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function showUploadResult(isSuccess, message) {
+      var cssClass = isSuccess ? 'alert-success' : 'alert-danger';
+      resultWrapper.append('<div class="alert ' + cssClass + ' row">' + message + '</div>');
+    }
+
     $.ajax({
       type: form.attr('method'),
       url: form.attr('action'),
@@ -550,23 +570,28 @@
         form.find('.lds-facebook').addClass('show-me');
       },
       success: function (data) {
-        if (data) {
-          data = JSON.parse(data);
-          if (data.done) {
-            resultWrapper.append('<div class="alert alert-success row">Uploaded Successful: ' + data.done.name + '</div>');
-            form.find('input[name=uploadurl]').val('');
-          } else if (data.fail) {
-            resultWrapper.append('<div class="alert alert-danger row">Error: ' + data.fail.message + '</div>');
-          }
-          form.find('input[name=uploadurl]').removeAttr('disabled');
-          form.find('button').show();
-          form.find('.lds-facebook').removeClass('show-me');
+        var parsed = parseUploadResponse(data);
+        if (!parsed) {
+          showUploadResult(false, 'Error: Invalid server response.');
+        } else if (parsed.done) {
+          var uploadedName = parsed.done.name ? parsed.done.name : 'file';
+          showUploadResult(true, 'Uploaded successful: ' + uploadedName);
+          form.find('input[name=uploadurl]').val('');
+        } else if (parsed.fail) {
+          var failMessage = (parsed.fail && parsed.fail.message) ? parsed.fail.message : 'Upload from URL failed.';
+          showUploadResult(false, 'Error: ' + failMessage);
+        } else {
+          showUploadResult(false, 'Error: Unexpected upload response.');
         }
+        form.find('input[name=uploadurl]').removeAttr('disabled');
+        form.find('button').show();
+        form.find('.lds-facebook').removeClass('show-me');
       },
       error: function (xhr) {
         form.find('input[name=uploadurl]').removeAttr('disabled');
         form.find('button').show();
         form.find('.lds-facebook').removeClass('show-me');
+        showUploadResult(false, 'Error: Network or server failure during URL upload.');
         console.error(xhr);
       }
     });

@@ -1912,6 +1912,7 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
                 <div class="tab-pane fade upload-url-wrapper" id="urlUploader">
                     <form id="js-form-url-upload" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return upload_from_url(this);" method="POST" action="">
                         <input type="hidden" name="type" value="upload" aria-label="hidden" aria-hidden="true">
+                        <input type="hidden" name="upload_dir" value="<?php echo fm_enc(FM_PATH) ?>">
                         <input type="url" placeholder="URL" name="uploadurl" required class="form-control" style="width: 80%">
                         <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
                         <button type="submit" class="btn btn-primary ms-3"><?php echo lng('Upload') ?></button>
