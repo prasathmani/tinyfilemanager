@@ -301,8 +301,7 @@ V integrovanej administrátorskej stránke Správcu používateľov chýba zrete
 2. Upload do nového priečinka – **opravené a ručne overené**. --- HOTOVO
 3. Upload z URL – **opravené a ručne overené**. --- HOTOVO, nasadená pracovná verzia 3.0.17
 4. Root po prihlásení – automaticky otvoriť priečinok `Mirko`. --- HOTOVO, nasadená a ručne overená verzia 3.0.18
-5. Nastaviť predvolený jazyk používateľov na slovenčinu. --- HOTOVO
-
+5. Nastaviť predvolený jazyk používateľov na slovenčinu. --- HOTOVO, nasadená a ručne overená verzia 3.0.19
 
 ### Fáza B – vyhľadávanie a mapa súborov
 
