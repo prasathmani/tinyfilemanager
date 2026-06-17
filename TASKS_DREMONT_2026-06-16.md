@@ -305,10 +305,10 @@ V integrovanej administrátorskej stránke Správcu používateľov chýba zrete
 
 ### Fáza B – vyhľadávanie a mapa súborov
 
-1. Preveriť aktuálny stav rýchlej vyhľadávacej lišty.
-2. Preveriť databázovú mapu/index súborov.
-3. Dokončiť inicializáciu alebo obnovu úplnej mapy súborov pri prvom použití vyhľadávania.
-4. Nastaviť vyhľadávanie tak, aby približne od piateho znaku vracalo relevantné výsledky naprieč dostupnými súbormi.
+1. Preveriť aktuálny stav rýchlej vyhľadávacej lišty.--- HOTOVO
+2. Preveriť databázovú mapu/index súborov.--- HOTOVO
+3. Dokončiť inicializáciu alebo obnovu úplnej mapy súborov pri prvom použití vyhľadávania. --- HOTOVO
+4. Nastaviť vyhľadávanie tak, aby približne od piateho znaku vracalo relevantné výsledky naprieč dostupnými súbormi. 
 5. Opraviť formulár rozšíreného vyhľadávania.
 6. Zjednotiť rýchle a rozšírené vyhľadávanie nad jedným backendom.
 

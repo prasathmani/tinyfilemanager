@@ -59,6 +59,39 @@ class TFM_AjaxActionHandler {
             exit();
         }
 
+        if (isset($post['type']) && $post['type'] == 'search_index_prepare') {
+            header('Content-Type: application/json; charset=utf-8');
+            if (!isset($_SESSION[FM_SESSION_ID]['logged']) || empty($_SESSION[FM_SESSION_ID]['logged'])) {
+                echo json_encode(array(
+                    'success' => false,
+                    'status' => 'error',
+                    'message' => 'Not authenticated',
+                    'rebuilt' => false,
+                    'count' => 0,
+                    'scope' => '',
+                    'last_full_index_at' => 0,
+                    'elapsed_ms' => 0,
+                ));
+                exit();
+            }
+
+            if (function_exists('fm_search_index_prepare')) {
+                echo json_encode(fm_search_index_prepare('ajax_prepare'));
+            } else {
+                echo json_encode(array(
+                    'success' => false,
+                    'status' => 'error',
+                    'message' => 'Search index preparation is unavailable.',
+                    'rebuilt' => false,
+                    'count' => 0,
+                    'scope' => '',
+                    'last_full_index_at' => 0,
+                    'elapsed_ms' => 0,
+                ));
+            }
+            exit();
+        }
+
         if (isset($post['type']) && $post['type'] == 'search_index_rebuild') {
             $isAdmin = function_exists('fm_is_admin') ? (bool) fm_is_admin() : false;
             header('Content-Type: application/json; charset=utf-8');

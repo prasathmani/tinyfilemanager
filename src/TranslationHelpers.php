@@ -148,6 +148,10 @@ function lng($txt)
     $tr['en']['Error while fetching archive info']              = 'Error while fetching archive info';
     $tr['en']['Delete selected files and folders?']             = 'Delete selected files and folders?';
     $tr['en']['Search file in folder and subfolders...']        = 'Search file in folder and subfolders...';
+    $tr['en']['Preparing search map...']                        = 'Preparing file map...';
+    $tr['en']['Search map is ready.']                           = 'File map is ready.';
+    $tr['en']['Search map could not be prepared. Search will use fallback mode.'] = 'The map could not be prepared. Search will use fallback mode.';
+    $tr['en']['Retrying search after index preparation...']     = 'Retrying search after index preparation...';
     $tr['en']['Access denied. IP restriction applicable']       = 'Access denied. IP restriction applicable';
     $tr['en']['Invalid characters in file or folder name']      = 'Invalid characters in file or folder name';
     $tr['en']['Operations with archives are not available']     = 'Operations with archives are not available';

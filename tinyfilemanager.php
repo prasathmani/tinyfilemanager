@@ -5282,6 +5282,226 @@ function fm_search_log_event($event, array $context = array())
 }
 
 /**
+ * Build a scope-scoped lock file path for search index preparation.
+ * @param string $scope
+ * @return string
+ */
+function fm_search_index_lock_path($scope)
+{
+    $scope = preg_replace('/[^a-f0-9]/i', '', (string) $scope);
+    $scope = substr($scope, 0, 24);
+    if ($scope === '') {
+        $scope = 'default';
+    }
+
+    return rtrim(fm_runtime_state_dir(), '/\\') . '/search-index-' . $scope . '.lock';
+}
+
+/**
+ * Count records for current scope.
+ * @param SQLite3 $db
+ * @param string $scope
+ * @return int
+ */
+function fm_search_index_count_scope($db, $scope)
+{
+    $stmt = $db->prepare('SELECT COUNT(*) AS cnt FROM fm_file_index WHERE scope_key = :scope');
+    if (!$stmt) {
+        return 0;
+    }
+
+    $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+    $result = $stmt->execute();
+    if (!$result) {
+        return 0;
+    }
+
+    $row = $result->fetchArray(SQLITE3_ASSOC);
+    return isset($row['cnt']) ? (int) $row['cnt'] : 0;
+}
+
+/**
+ * Prepare the search index for the current permission scope.
+ * Returns a structured status payload and never performs more than one rebuild in a request.
+ * @param string $reason
+ * @return array
+ */
+function fm_search_index_prepare($reason = 'request')
+{
+    static $cache = array();
+
+    $scope = fm_search_scope_key();
+    if (isset($cache[$scope])) {
+        return $cache[$scope];
+    }
+
+    $started = microtime(true);
+    $result = array(
+        'success' => false,
+        'status' => 'error',
+        'rebuilt' => false,
+        'count' => 0,
+        'scope' => $scope,
+        'last_full_index_at' => 0,
+        'elapsed_ms' => 0,
+        'message' => '',
+    );
+
+    fm_search_log_event('search_index_prepare_start', array(
+        'scope' => $scope,
+        'reason' => (string) $reason,
+    ));
+
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        $result['message'] = 'Search index database is not available.';
+        fm_search_log_event('search_index_prepare_error', array(
+            'scope' => $scope,
+            'reason' => (string) $reason,
+            'message' => $result['message'],
+        ));
+        $result['elapsed_ms'] = (int) round((microtime(true) - $started) * 1000);
+        $cache[$scope] = $result;
+        $GLOBALS['fm_search_index_last_prepare_result'] = $result;
+        return $result;
+    }
+
+    $meta = fm_search_index_get_meta($db, $scope);
+    $result['count'] = fm_search_index_count_scope($db, $scope);
+    $result['last_full_index_at'] = isset($meta['last_full_index_at']) ? (int) $meta['last_full_index_at'] : 0;
+
+    if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
+        $result['success'] = true;
+        $result['status'] = 'ready';
+        $result['message'] = 'Search index already prepared.';
+        $result['elapsed_ms'] = (int) round((microtime(true) - $started) * 1000);
+        fm_search_log_event('search_index_prepare_ready', array(
+            'scope' => $scope,
+            'reason' => (string) $reason,
+            'count' => $result['count'],
+            'elapsed_ms' => $result['elapsed_ms'],
+        ));
+        $cache[$scope] = $result;
+        $GLOBALS['fm_search_index_last_prepare_result'] = $result;
+        return $result;
+    }
+
+    $lockPath = fm_search_index_lock_path($scope);
+    $lockHandle = @fopen($lockPath, 'c+');
+    if (!$lockHandle) {
+        $result['message'] = 'Search index lock is not available.';
+        fm_search_log_event('search_index_prepare_error', array(
+            'scope' => $scope,
+            'reason' => (string) $reason,
+            'message' => $result['message'],
+        ));
+        $result['elapsed_ms'] = (int) round((microtime(true) - $started) * 1000);
+        $cache[$scope] = $result;
+        return $result;
+    }
+
+    $timeoutMs = 3500;
+    $pollUs = 150000;
+    $deadline = microtime(true) + ($timeoutMs / 1000);
+    $locked = false;
+
+    while (microtime(true) <= $deadline) {
+        if (@flock($lockHandle, LOCK_EX | LOCK_NB)) {
+            $locked = true;
+            break;
+        }
+        usleep($pollUs);
+    }
+
+    if (!$locked) {
+        $meta = fm_search_index_get_meta($db, $scope);
+        $result['count'] = fm_search_index_count_scope($db, $scope);
+        $result['last_full_index_at'] = isset($meta['last_full_index_at']) ? (int) $meta['last_full_index_at'] : 0;
+        if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
+            $result['success'] = true;
+            $result['status'] = 'ready';
+            $result['message'] = 'Search index became ready while waiting.';
+            fm_search_log_event('search_index_prepare_wait', array(
+                'scope' => $scope,
+                'reason' => (string) $reason,
+                'count' => $result['count'],
+                'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+            ));
+        } else {
+            $result['success'] = true;
+            $result['status'] = 'preparing';
+            $result['message'] = 'Search index is being prepared by another request.';
+            fm_search_log_event('search_index_prepare_wait', array(
+                'scope' => $scope,
+                'reason' => (string) $reason,
+                'count' => $result['count'],
+                'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+            ));
+        }
+
+        $result['elapsed_ms'] = (int) round((microtime(true) - $started) * 1000);
+        @fclose($lockHandle);
+        $cache[$scope] = $result;
+        return $result;
+    }
+
+    try {
+        $meta = fm_search_index_get_meta($db, $scope);
+        if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
+            $result['success'] = true;
+            $result['status'] = 'ready';
+            $result['message'] = 'Search index already prepared.';
+        } else {
+            $rebuildStarted = microtime(true);
+            fm_search_log_event('search_index_prepare_rebuild', array(
+                'scope' => $scope,
+                'reason' => (string) $reason,
+            ));
+
+            $ok = fm_search_index_rebuild($db, $scope, '');
+            $result['rebuilt'] = $ok ? true : false;
+            if ($ok) {
+                $meta = fm_search_index_get_meta($db, $scope);
+                $result['count'] = fm_search_index_count_scope($db, $scope);
+                $result['last_full_index_at'] = isset($meta['last_full_index_at']) ? (int) $meta['last_full_index_at'] : 0;
+                if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
+                    $result['success'] = true;
+                    $result['status'] = 'rebuilt';
+                    $result['message'] = 'Search index rebuilt successfully.';
+                } else {
+                    $result['message'] = 'Search index rebuild finished but meta state is still dirty.';
+                }
+            } else {
+                $result['message'] = 'Search index rebuild failed.';
+            }
+
+            $result['elapsed_ms'] = (int) round((microtime(true) - $started) * 1000);
+            fm_search_log_event($ok ? 'search_index_prepare_ready' : 'search_index_prepare_error', array(
+                'scope' => $scope,
+                'reason' => (string) $reason,
+                'count' => $result['count'],
+                'elapsed_ms' => $result['elapsed_ms'],
+                'rebuilt' => $result['rebuilt'] ? 1 : 0,
+            ));
+        }
+    } catch (Exception $e) {
+        $result['message'] = $e->getMessage();
+        $result['elapsed_ms'] = (int) round((microtime(true) - $started) * 1000);
+        fm_search_log_event('search_index_prepare_error', array(
+            'scope' => $scope,
+            'reason' => (string) $reason,
+            'message' => $result['message'],
+        ));
+    }
+
+    @flock($lockHandle, LOCK_UN);
+    @fclose($lockHandle);
+    $cache[$scope] = $result;
+    $GLOBALS['fm_search_index_last_prepare_result'] = $result;
+    return $result;
+}
+
+/**
  * Resolve scope key for search index records.
  * @return string
  */
@@ -5987,21 +6207,15 @@ function fm_search_index_auto_bootstrap($enabled, $reason = 'request')
         return false;
     }
 
-    $scope = fm_search_scope_key();
-    $meta = fm_search_index_get_meta($db, $scope);
-    if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
-        return true;
-    }
-
-    $started = microtime(true);
-    $ok = fm_search_index_rebuild($db, $scope, '');
+    $prepared = fm_search_index_prepare($reason);
     fm_search_log_event('search_index_auto_bootstrap', array(
         'reason' => (string) $reason,
-        'ok' => $ok ? 1 : 0,
-        'elapsed_ms' => (int) round((microtime(true) - $started) * 1000),
+        'ok' => isset($prepared['success']) && $prepared['success'] ? 1 : 0,
+        'status' => isset($prepared['status']) ? (string) $prepared['status'] : 'error',
+        'elapsed_ms' => isset($prepared['elapsed_ms']) ? (int) $prepared['elapsed_ms'] : 0,
     ));
 
-    return $ok;
+    return isset($prepared['success']) && $prepared['success'];
 }
 
 /**
@@ -6110,21 +6324,9 @@ function fm_search_index_rebuild($db, $scope, $baseDir = '')
  */
 function fm_search_index_ensure_fresh($db, $scope)
 {
-    $meta = fm_search_index_get_meta($db, $scope);
-    if ((int) $meta['is_dirty'] === 0 && (int) $meta['last_full_index_at'] > 0) {
-        return true;
-    }
-
-    $started = microtime(true);
-    $ok = fm_search_index_rebuild($db, $scope, '');
-    $elapsedMs = (int) round((microtime(true) - $started) * 1000);
-
-    fm_search_log_event('search_index_rebuild_full', array(
-        'ok' => $ok ? 1 : 0,
-        'elapsed_ms' => $elapsedMs,
-    ));
-
-    return $ok;
+    $prepared = fm_search_index_prepare('ensure_fresh');
+    $GLOBALS['fm_search_index_last_prepare_result'] = $prepared;
+    return isset($prepared['success']) && $prepared['success'];
 }
 
 /**
@@ -6165,6 +6367,12 @@ function fm_search_index_query($dir = '', $filter = '')
         return null;
     }
 
+    $afterRebuild = false;
+    if (isset($GLOBALS['fm_search_index_last_prepare_result']) && is_array($GLOBALS['fm_search_index_last_prepare_result'])) {
+        $afterRebuild = !empty($GLOBALS['fm_search_index_last_prepare_result']['rebuilt']);
+        unset($GLOBALS['fm_search_index_last_prepare_result']);
+    }
+
     try {
                 $stmt = $db->prepare('SELECT name, dir_path
             FROM fm_file_index
@@ -6200,6 +6408,14 @@ function fm_search_index_query($dir = '', $filter = '')
                 'type' => 'file',
                 'path' => '/' . ltrim($dirPath, '/'),
             );
+        }
+
+        if ($afterRebuild) {
+            fm_search_log_event('search_query_after_rebuild', array(
+                'dir' => $dir,
+                'filter' => $needle,
+                'count' => count($rows),
+            ));
         }
         return $rows;
     } catch (Exception $e) {
@@ -7605,6 +7821,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                                     <div></div>
                                     <div></div>
                                 </div>
+                                <div id="fm-search-index-status" class="small text-muted mb-2" aria-live="polite" style="display:none;"></div>
                                 <div id="search-wrapper">
                                     <p class="m-2"><?php echo lng('Search file in folder and subfolders...') ?></p>
                                 </div>
@@ -7680,6 +7897,11 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
             'isManagerOrAdmin' => FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY),
             'folderEmptyText' => lng('Folder is empty'),
             'selectedLabel' => lng('Selected'),
+            'searchIndexPreparingText' => lng('Preparing search map...'),
+            'searchIndexReadyText' => lng('Search map is ready.'),
+            'searchIndexPrepareErrorText' => lng('Search map could not be prepared. Search will use fallback mode.'),
+            'searchIndexPreparingBusyText' => lng('Preparing search map...'),
+            'searchIndexRetryText' => lng('Retrying search after index preparation...'),
         );
         ?>
         <?php if (FM_USE_HIGHLIGHTJS && isset($_GET['view'])): ?>

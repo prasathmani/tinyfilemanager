@@ -14,6 +14,13 @@
   var config = readJsonConfig('fm-runtime-config');
   window.csrf = config.csrfToken || window.csrf || '';
 
+  var searchIndexState = {
+    ready: false,
+    preparePromise: null,
+    pendingQuery: '',
+    pendingPath: ''
+  };
+
   if (config.highlightCurrentView && typeof window.hljs !== 'undefined' && typeof window.hljs.highlightAll === 'function') {
     window.hljs.highlightAll();
     window.isHighlightingEnabled = true;
@@ -65,6 +72,185 @@
   }
 
   var selectionAnchor = null;
+
+  function getRuntimeText(key, fallback) {
+    return String(config[key] || fallback || '');
+  }
+
+  function getSearchStatusElement() {
+    return document.getElementById('fm-search-index-status');
+  }
+
+  function setSearchStatus(message, kind) {
+    var element = getSearchStatusElement();
+    if (!element) {
+      return;
+    }
+
+    if (!message) {
+      element.textContent = '';
+      element.style.display = 'none';
+      element.className = 'small text-muted mb-2';
+      return;
+    }
+
+    element.textContent = message;
+    element.style.display = 'block';
+    element.className = 'small mb-2' + (kind === 'error' ? ' text-danger' : kind === 'success' ? ' text-success' : ' text-muted');
+  }
+
+  function executeSearchRequest(searchTxt, path) {
+    var searchWrapper = $('#search-wrapper');
+    var loader = $('div.lds-facebook');
+    var html = '';
+
+    $.ajax({
+      type: 'POST',
+      url: window.location,
+      data: {
+        ajax: true,
+        content: searchTxt,
+        path: path,
+        type: 'search',
+        token: window.csrf
+      },
+      beforeSend: function () {
+        searchWrapper.html('');
+        loader.addClass('show-me');
+      },
+      success: function (payload) {
+        loader.removeClass('show-me');
+        if (typeof payload === 'string') {
+          try {
+            payload = JSON.parse(payload);
+          } catch (e) {
+            searchWrapper.html('<p class="m-2">ERROR: Invalid search response.</p>');
+            return;
+          }
+        }
+        if (payload && payload.length) {
+          html = searchTemplate(payload);
+          searchWrapper.html(html);
+          setSearchStatus(getRuntimeText('searchIndexReadyText', 'Search map is ready.'), 'success');
+        } else {
+          searchWrapper.html('<p class="m-2">No result found!<p>');
+          setSearchStatus(getRuntimeText('searchIndexReadyText', 'Search map is ready.'), 'success');
+        }
+      },
+      error: function () {
+        loader.removeClass('show-me');
+        searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');
+      },
+      failure: function () {
+        loader.removeClass('show-me');
+        searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');
+      }
+    });
+  }
+
+  function flushPendingSearch() {
+    var searchTxt = String(searchIndexState.pendingQuery || '').trim();
+    var path = String(searchIndexState.pendingPath || resolveSearchPath());
+
+    searchIndexState.pendingQuery = '';
+    searchIndexState.pendingPath = '';
+
+    if (!searchTxt || searchTxt.length <= 2) {
+      return;
+    }
+
+    setSearchStatus(getRuntimeText('searchIndexRetryText', 'Retrying search after index preparation...'), 'info');
+    executeSearchRequest(searchTxt, path);
+  }
+
+  function prepareSearchIndex(options) {
+    var settings = options || {};
+    var showStatus = settings.showStatus !== false;
+
+    if (searchIndexState.ready) {
+      var readyPromise = $.Deferred();
+      readyPromise.resolve({ success: true, cached: true });
+      return readyPromise.promise();
+    }
+
+    if (searchIndexState.preparePromise) {
+      if (showStatus) {
+        setSearchStatus(getRuntimeText('searchIndexPreparingText', 'Preparing search map...'), 'info');
+      }
+      return searchIndexState.preparePromise;
+    }
+
+    var deferred = $.Deferred();
+    var promise = deferred.promise();
+    searchIndexState.preparePromise = promise;
+
+    promise.always(function () {
+      searchIndexState.preparePromise = null;
+      if (searchIndexState.pendingQuery) {
+        flushPendingSearch();
+      }
+    });
+
+    $.ajax({
+      type: 'POST',
+      url: window.location,
+      data: {
+        ajax: true,
+        type: 'search_index_prepare',
+        path: resolveSearchPath(),
+        token: window.csrf
+      },
+      beforeSend: function () {
+        if (showStatus) {
+          setSearchStatus(getRuntimeText('searchIndexPreparingText', 'Preparing search map...'), 'info');
+        }
+      },
+      success: function (payload) {
+        if (typeof payload === 'string') {
+          try {
+            payload = JSON.parse(payload);
+          } catch (e) {
+            payload = null;
+          }
+        }
+
+        if (payload && payload.success === true) {
+          searchIndexState.ready = true;
+          setSearchStatus(getRuntimeText('searchIndexReadyText', 'Search map is ready.'), 'success');
+          deferred.resolve(payload);
+          return;
+        }
+
+        searchIndexState.ready = false;
+        setSearchStatus(getRuntimeText('searchIndexPrepareErrorText', 'Search map could not be prepared. Search will use fallback mode.'), 'error');
+        deferred.resolve(payload || { success: false });
+      },
+      error: function () {
+        searchIndexState.ready = false;
+        setSearchStatus(getRuntimeText('searchIndexPrepareErrorText', 'Search map could not be prepared. Search will use fallback mode.'), 'error');
+        deferred.resolve({ success: false });
+      },
+      failure: function () {
+        searchIndexState.ready = false;
+        setSearchStatus(getRuntimeText('searchIndexPrepareErrorText', 'Search map could not be prepared. Search will use fallback mode.'), 'error');
+        deferred.resolve({ success: false });
+      }
+    });
+
+    return promise;
+  }
+
+  function queueSearchRequest(searchTxt, path) {
+    searchIndexState.pendingQuery = searchTxt;
+    searchIndexState.pendingPath = path;
+
+    if (searchIndexState.ready) {
+      flushPendingSearch();
+      return;
+    }
+
+    prepareSearchIndex({ showStatus: true });
+  }
 
   function updateSelectionAnchor(checkbox) {
     if (!checkbox || checkbox.type !== 'checkbox') {
@@ -701,56 +887,12 @@
 
   function fmSearch() {
     var searchTxt = $('input#advanced-search').val();
-    var searchWrapper = $('#search-wrapper');
     var path = resolveSearchPath();
-    var html = '';
-    var loader = $('div.lds-facebook');
 
     if (!!searchTxt && searchTxt.length > 2 && path) {
-      var data = {
-        ajax: true,
-        content: searchTxt,
-        path: path,
-        type: 'search',
-        token: window.csrf
-      };
-
-      $.ajax({
-        type: 'POST',
-        url: window.location,
-        data: data,
-        beforeSend: function () {
-          searchWrapper.html('');
-          loader.addClass('show-me');
-        },
-        success: function (payload) {
-          loader.removeClass('show-me');
-          if (typeof payload === 'string') {
-            try {
-              payload = JSON.parse(payload);
-            } catch (e) {
-              searchWrapper.html('<p class="m-2">ERROR: Invalid search response.</p>');
-              return;
-            }
-          }
-          if (payload && payload.length) {
-            html = searchTemplate(payload);
-            searchWrapper.html(html);
-          } else {
-            searchWrapper.html('<p class="m-2">No result found!<p>');
-          }
-        },
-        error: function () {
-          loader.removeClass('show-me');
-          searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');
-        },
-        failure: function () {
-          loader.removeClass('show-me');
-          searchWrapper.html('<p class="m-2">ERROR: Try again later!</p>');
-        }
-      });
+      queueSearchRequest(searchTxt, path);
     } else {
-      searchWrapper.html('OOPS: minimum 3 characters required!');
+      $('#search-wrapper').html('OOPS: minimum 3 characters required!');
     }
   }
 
@@ -1058,6 +1200,10 @@
         event.preventDefault();
         loadSearchIndexMap();
       });
+    }
+
+    if (document.getElementById('searchModal')) {
+      prepareSearchIndex({ showStatus: false });
     }
 
     input.addEventListener('keydown', function (event) {
