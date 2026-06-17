@@ -11,6 +11,47 @@
     }
   }
 
+  function parseDropzoneResponse(response) {
+    if (response && typeof response === 'object') {
+      return response;
+    }
+    if (typeof response !== 'string' || response.trim() === '') {
+      return null;
+    }
+    try {
+      return JSON.parse(response);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function extractHttpError(response, xhr) {
+    var status = (xhr && typeof xhr.status !== 'undefined') ? xhr.status : 'unknown';
+    var body = '';
+
+    if (typeof response === 'string') {
+      body = response;
+    } else if (response && typeof response === 'object') {
+      if (typeof response.info === 'string') {
+        body = response.info;
+      } else if (typeof response.message === 'string') {
+        body = response.message;
+      } else {
+        try {
+          body = JSON.stringify(response);
+        } catch (e) {
+          body = '';
+        }
+      }
+    }
+
+    if (!body && xhr && typeof xhr.responseText === 'string') {
+      body = xhr.responseText;
+    }
+
+    return 'HTTP ' + status + (body ? ' - ' + body : '');
+  }
+
   var config = readJsonConfig('fm-upload-config');
   if (!config || typeof window.Dropzone === 'undefined' || !window.Dropzone.options) {
     return;
@@ -44,21 +85,31 @@
           }
         };
       })
-        .on('success', function (res) {
-          try {
-            var response = JSON.parse(res.xhr.response);
-            if (response.status === 'error' && typeof window.toast === 'function') {
-              window.toast(response.info);
-            }
-          } catch (e) {
-            if (typeof window.toast === 'function') {
-              window.toast('Error: Invalid JSON response');
-            }
+        .on('success', function (file, response) {
+          var parsed = parseDropzoneResponse(response);
+          if (!parsed) {
+            file.status = window.Dropzone.ERROR;
+            this.emit('error', file, 'Invalid JSON response from server');
+            return;
           }
+
+          if (parsed.status === 'success') {
+            if (typeof window.toast === 'function') {
+              window.toast('Súbor bol uložený.');
+            }
+            return;
+          }
+
+          var message = (typeof parsed.info === 'string' && parsed.info.trim() !== '')
+            ? parsed.info
+            : 'Upload failed.';
+          file.status = window.Dropzone.ERROR;
+          this.emit('error', file, message);
         })
-        .on('error', function (file, response) {
+        .on('error', function (file, response, xhr) {
+          var message = extractHttpError(response, xhr);
           if (typeof window.toast === 'function') {
-            window.toast(response);
+            window.toast(message);
           }
         });
     }

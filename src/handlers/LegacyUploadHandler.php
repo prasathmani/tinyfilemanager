@@ -30,12 +30,17 @@ class TFM_LegacyUploadHandler {
     public function handle($files, $post, $request) {
         if (isset($post['token'])) {
             if (!verifyToken($post['token'])) {
-                echo json_encode(array('status' => 'error', 'info' => 'Invalid Token.'));
-                exit();
+                $this->emitUploadResponse('error', 'TOKEN_INVALID', 'Invalid token.');
             }
         } else {
-            echo json_encode(array('status' => 'error', 'info' => 'Token Missing.'));
-            exit();
+            $this->emitUploadResponse('error', 'TOKEN_INVALID', 'Token missing.');
+        }
+
+        if ((defined('FM_READONLY') && FM_READONLY && (!defined('FM_UPLOAD_ONLY') || !FM_UPLOAD_ONLY))) {
+            $this->emitUploadResponse('error', 'ROLE_DENIED', 'You do not have permission to upload files.');
+        }
+        if (defined('FM_CAN_WRITE_IN_PATH') && !FM_CAN_WRITE_IN_PATH) {
+            $this->emitUploadResponse('error', 'PATH_DENIED', 'Current path is not writable.');
         }
 
         $chunkIndex = isset($post['dzchunkindex']) ? $post['dzchunkindex'] : null;
@@ -48,62 +53,38 @@ class TFM_LegacyUploadHandler {
 
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
         $allowed = is_array($allowed) ? array_map('strtolower', array_map('trim', $allowed)) : false;
-        $response = array(
-            'status' => 'error',
-            'info'   => 'Oops! Try again'
-        );
 
         $filename = isset($f['file']['name']) ? (string) $f['file']['name'] : '';
         $tmp_name = isset($f['file']['tmp_name']) ? (string) $f['file']['tmp_name'] : '';
+        $phpUploadError = isset($f['file']['error']) ? (int) $f['file']['error'] : UPLOAD_ERR_NO_FILE;
 
         if ($filename === '' || !isset($f['file']['tmp_name'])) {
-            $response = array(
-                'status' => 'error',
-                'info'   => 'No file received for upload.',
-            );
-            echo json_encode($response);
-            exit();
+            $this->emitUploadResponse('error', 'NO_FILE', 'No file received for upload.');
+        }
+
+        if ($phpUploadError !== UPLOAD_ERR_OK) {
+            $this->emitUploadResponse('error', 'PHP_UPLOAD_ERROR', $this->phpUploadErrorMessage($phpUploadError));
         }
 
         $safeRelativePath = $this->sanitizeUploadRelativePath($rawFullPathInput !== '' ? $rawFullPathInput : $filename);
         if ($safeRelativePath === '') {
-            $response = array(
-                'status' => 'error',
-                'info'   => 'Invalid upload path. Absolute paths and traversal are not allowed.',
-            );
-            echo json_encode($response);
-            exit();
+            $this->emitUploadResponse('error', 'INVALID_FILENAME', 'Invalid upload path or file name.');
         }
 
         $safeFileName = basename($safeRelativePath);
         if (!fm_isvalid_filename($safeFileName)) {
-            $response = array(
-                'status' => 'error',
-                'info'   => 'Invalid File name!',
-            );
-            echo json_encode($response);
-            exit();
+            $this->emitUploadResponse('error', 'INVALID_FILENAME', 'Invalid file name.');
         }
 
         $ext = pathinfo($safeFileName, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($safeFileName, PATHINFO_EXTENSION)) : '';
         $isFileAllowed = ($allowed) ? in_array($ext, $allowed, true) : true;
         if (!$isFileAllowed) {
-            $response = array(
-                'status' => 'error',
-                'info'   => 'File extension is not allowed.',
-            );
-            echo json_encode($response);
-            exit();
+            $this->emitUploadResponse('error', 'EXTENSION_DENIED', 'File extension is not allowed.');
         }
 
         $targetPath = $this->resolveUploadBasePath($requestedUploadDir);
         if ($targetPath === null) {
-            $response = array(
-                'status' => 'error',
-                'info'   => 'Upload target path is not allowed.',
-            );
-            echo json_encode($response);
-            exit();
+            $this->emitUploadResponse('error', 'PATH_DENIED', 'Upload target path is not allowed.');
         }
 
         if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tmp_name)) {
@@ -111,13 +92,8 @@ class TFM_LegacyUploadHandler {
                 $audit = new AuditLogger();
                 $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
             }
-            $response = array(
-                'status' => 'error',
-                'info'   => 'Dangerous file MIME type detected!',
-            );
-            echo json_encode($response);
             @unlink($tmp_name);
-            exit();
+            $this->emitUploadResponse('error', 'MIME_DENIED', 'Dangerous file MIME type detected.');
         }
 
         if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tmp_name, $ext)) {
@@ -125,149 +101,107 @@ class TFM_LegacyUploadHandler {
                 $audit = new AuditLogger();
                 $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
             }
-            $response = array(
-                'status' => 'error',
-                'info'   => 'File signature does not match extension!',
-            );
-            echo json_encode($response);
             @unlink($tmp_name);
-            exit();
+            $this->emitUploadResponse('error', 'MIME_DENIED', 'File signature does not match extension.');
         }
 
         $targetPath = rtrim($targetPath, '/\\') . $ds;
-        if (is_writable($targetPath)) {
-            $fullPath = rtrim($targetPath, '/\\') . '/' . $safeRelativePath;
-            $fullPath = str_replace('\\', '/', $fullPath);
-            $fullPath = preg_replace('#/+#', '/', $fullPath);
-
-            if (!fm_is_path_inside($fullPath, rtrim($targetPath, '/\\'))) {
-                $response = array(
-                    'status' => 'error',
-                    'info'   => 'Resolved upload path is outside allowed directory.',
-                );
-                echo json_encode($response);
-                exit();
-            }
-
-            $folder = substr($fullPath, 0, strrpos($fullPath, '/'));
-            if (!is_dir($folder)) {
-                $old = umask(0);
-                if (!@mkdir($folder, 0777, true) && !is_dir($folder)) {
-                    $response = array(
-                        'status' => 'error',
-                        'info'   => 'Unable to create upload destination folder.',
-                    );
-                    echo json_encode($response);
-                    exit();
-                }
-                umask($old);
-            }
-
-            if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none') {
-                if ($chunkTotal) {
-                    $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? 'wb' : 'ab');
-                    if ($out) {
-                        $in = @fopen($tmp_name, 'rb');
-                        if ($in) {
-                            if (PHP_VERSION_ID < 80009) {
-                                do {
-                                    for (;;) {
-                                        $buff = fread($in, 4096);
-                                        if ($buff === false || $buff === '') {
-                                            break;
-                                        }
-                                        fwrite($out, $buff);
-                                    }
-                                } while (!feof($in));
-                            } else {
-                                stream_copy_to_stream($in, $out);
-                            }
-                            $response = array(
-                                'status' => 'success',
-                                'info'   => 'file upload successful'
-                            );
-                        } else {
-                            $response = array(
-                                'status' => 'error',
-                                'info'   => 'Failed to open input stream.',
-                                'errorDetails' => error_get_last()
-                            );
-                        }
-                        @fclose($in);
-                        @fclose($out);
-                        @unlink($tmp_name);
-                    } else {
-                        $response = array(
-                            'status' => 'error',
-                            'info'   => 'Failed to open output stream.'
-                        );
-                    }
-
-                    if ($chunkIndex == $chunkTotal - 1) {
-                        if (file_exists($fullPath)) {
-                            $ext_1 = $ext ? '.' . $ext : '';
-                            $relativeDir = dirname($safeRelativePath);
-                            if ($relativeDir === '.' || $relativeDir === '/') {
-                                $relativeDir = '';
-                            }
-                            $collisionName = basename($safeFileName, $ext_1) . '_' . date('ymdHis') . $ext_1;
-                            $fullPathTarget = rtrim($targetPath, '/\\')
-                                . ($relativeDir !== '' ? '/' . $relativeDir : '')
-                                . '/' . $collisionName;
-                            $fullPathTarget = str_replace('\\', '/', $fullPathTarget);
-                            $fullPathTarget = preg_replace('#/+#', '/', $fullPathTarget);
-                        } else {
-                            $fullPathTarget = $fullPath;
-                        }
-                        if (!fm_is_path_inside($fullPathTarget, rtrim($targetPath, '/\\'))) {
-                            $response = array(
-                                'status' => 'error',
-                                'info'   => 'Resolved upload path is outside allowed directory.',
-                            );
-                        } elseif (rename("{$fullPath}.part", $fullPathTarget)) {
-                            if (function_exists('fm_owner_meta_touch')) {
-                                fm_owner_meta_touch($fullPathTarget, 'upload');
-                            }
-                        }
-                    }
-                } else if (move_uploaded_file($tmp_name, $fullPath)) {
-                    if (file_exists($fullPath)) {
-                        if (function_exists('fm_owner_meta_touch')) {
-                            fm_owner_meta_touch($fullPath, 'upload');
-                        }
-                        $response = array(
-                            'status' => 'success',
-                            'info'   => 'file upload successful'
-                        );
-                    } else {
-                        $response = array(
-                            'status' => 'error',
-                            'info'   => 'Could not persist uploaded file to destination.'
-                        );
-                    }
-                } else {
-                    $response = array(
-                        'status' => 'error',
-                        'info'   => 'Error while moving uploaded file to destination.',
-                    );
-                }
-            }
-
-            if (!empty($f['file']['error'])) {
-                $response = array(
-                    'status' => 'error',
-                    'info'   => 'Upload failed with PHP upload error code: ' . (int) $f['file']['error'],
-                );
-            }
-        } else {
-            $response = array(
-                'status' => 'error',
-                'info'   => 'The specified folder for upload is not writable.'
-            );
+        if (!is_writable($targetPath)) {
+            $this->emitUploadResponse('error', 'NOT_WRITABLE', 'The specified folder for upload is not writable.');
         }
 
-        echo json_encode($response);
-        exit();
+        $fullPath = rtrim($targetPath, '/\\') . '/' . $safeRelativePath;
+        $fullPath = str_replace('\\', '/', $fullPath);
+        $fullPath = preg_replace('#/+#', '/', $fullPath);
+
+        if (!fm_is_path_inside($fullPath, rtrim($targetPath, '/\\'))) {
+            $this->emitUploadResponse('error', 'PATH_DENIED', 'Resolved upload path is outside allowed directory.');
+        }
+
+        $folder = substr($fullPath, 0, strrpos($fullPath, '/'));
+        if (!is_dir($folder)) {
+            $old = umask(0);
+            if (!@mkdir($folder, 0777, true) && !is_dir($folder)) {
+                $this->emitUploadResponse('error', 'MOVE_FAILED', 'Unable to create upload destination folder.');
+            }
+            umask($old);
+        }
+
+        if ($chunkTotal) {
+            $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? 'wb' : 'ab');
+            if (!$out) {
+                $this->emitUploadResponse('error', 'MOVE_FAILED', 'Failed to open output stream.');
+            }
+
+            $in = @fopen($tmp_name, 'rb');
+            if (!$in) {
+                @fclose($out);
+                $this->emitUploadResponse('error', 'MOVE_FAILED', 'Failed to open input stream.');
+            }
+
+            if (PHP_VERSION_ID < 80009) {
+                do {
+                    for (;;) {
+                        $buff = fread($in, 4096);
+                        if ($buff === false || $buff === '') {
+                            break;
+                        }
+                        fwrite($out, $buff);
+                    }
+                } while (!feof($in));
+            } else {
+                stream_copy_to_stream($in, $out);
+            }
+            @fclose($in);
+            @fclose($out);
+            @unlink($tmp_name);
+
+            if ($chunkIndex == $chunkTotal - 1) {
+                if (file_exists($fullPath)) {
+                    $ext_1 = $ext ? '.' . $ext : '';
+                    $relativeDir = dirname($safeRelativePath);
+                    if ($relativeDir === '.' || $relativeDir === '/') {
+                        $relativeDir = '';
+                    }
+                    $collisionName = basename($safeFileName, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                    $fullPathTarget = rtrim($targetPath, '/\\')
+                        . ($relativeDir !== '' ? '/' . $relativeDir : '')
+                        . '/' . $collisionName;
+                    $fullPathTarget = str_replace('\\', '/', $fullPathTarget);
+                    $fullPathTarget = preg_replace('#/+#', '/', $fullPathTarget);
+                } else {
+                    $fullPathTarget = $fullPath;
+                }
+
+                if (!fm_is_path_inside($fullPathTarget, rtrim($targetPath, '/\\'))) {
+                    $this->emitUploadResponse('error', 'PATH_DENIED', 'Resolved upload path is outside allowed directory.');
+                }
+
+                if (!rename("{$fullPath}.part", $fullPathTarget)) {
+                    $this->emitUploadResponse('error', 'MOVE_FAILED', 'Failed to finalize uploaded file.');
+                }
+
+                if (function_exists('fm_owner_meta_touch')) {
+                    fm_owner_meta_touch($fullPathTarget, 'upload');
+                }
+            }
+
+            $this->emitUploadResponse('success', 'SUCCESS', 'Súbor bol uložený.');
+        }
+
+        if (!move_uploaded_file($tmp_name, $fullPath)) {
+            $this->emitUploadResponse('error', 'MOVE_FAILED', 'Error while moving uploaded file to destination.');
+        }
+
+        if (!file_exists($fullPath)) {
+            $this->emitUploadResponse('error', 'MOVE_FAILED', 'Could not persist uploaded file to destination.');
+        }
+
+        if (function_exists('fm_owner_meta_touch')) {
+            fm_owner_meta_touch($fullPath, 'upload');
+        }
+
+        $this->emitUploadResponse('success', 'SUCCESS', 'Súbor bol uložený.');
     }
 
     /**
@@ -276,44 +210,47 @@ class TFM_LegacyUploadHandler {
      * @return void
      */
     public function handleUrlUpload($request) {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if ((defined('FM_READONLY') && FM_READONLY && (!defined('FM_UPLOAD_ONLY') || !FM_UPLOAD_ONLY))) {
+            $this->emitUrlFail('ROLE_DENIED', 'Upload from URL is not allowed for this role.');
+        }
+        if (defined('FM_CAN_WRITE_IN_PATH') && !FM_CAN_WRITE_IN_PATH) {
+            $this->emitUrlFail('PATH_DENIED', 'Current path is not writable.');
+        }
+
         $url = isset($request['uploadurl']) ? trim((string) stripslashes((string) $request['uploadurl'])) : '';
         $uploadDir = isset($request['upload_dir']) ? fm_clean_path((string) $request['upload_dir']) : $this->current_path;
 
         if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Invalid URL parameter.')));
-            exit();
+            $this->emitUrlFail('INVALID_URL', 'Invalid URL parameter.');
         }
 
         if (!$this->isAllowedRemoteUrl($url)) {
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'URL is not allowed.')));
-            exit();
+            $this->emitUrlFail('URL_DENIED', 'URL is not allowed.');
         }
 
         $targetBase = $this->resolveUploadBasePath($uploadDir);
         if ($targetBase === null || !is_dir($targetBase) || !is_writable($targetBase)) {
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Upload target path is not writable.')));
-            exit();
+            $this->emitUrlFail('PATH_DENIED', 'Upload target path is not writable.');
         }
 
         $tempFile = tempnam(sys_get_temp_dir(), 'url-upload-');
         if ($tempFile === false) {
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Cannot create temporary file for download.')));
-            exit();
+            $this->emitUrlFail('MOVE_FAILED', 'Cannot create temporary file for download.');
         }
 
         $downloadResult = $this->downloadRemoteFile($url, $tempFile, $this->max_url_upload_bytes);
         if (!$downloadResult['success']) {
             @unlink($tempFile);
-            $this->emitUrlUploadEvent(array('fail' => array('message' => $downloadResult['message'])));
-            exit();
+            $this->emitUrlFail('DOWNLOAD_FAILED', $downloadResult['message']);
         }
 
         $resolvedName = $this->resolveUploadUrlFileName($url, $downloadResult['headers']);
         $sanitizedName = $this->sanitizeUploadFileName($resolvedName);
         if ($sanitizedName === '') {
             @unlink($tempFile);
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Cannot determine target file name from URL.')));
-            exit();
+            $this->emitUrlFail('INVALID_FILENAME', 'Cannot determine target file name from URL.');
         }
 
         $allowed = (FM_UPLOAD_EXTENSION) ? explode(',', FM_UPLOAD_EXTENSION) : false;
@@ -329,29 +266,25 @@ class TFM_LegacyUploadHandler {
             }
             if ($currentExt === '' || !in_array($currentExt, $allowed, true)) {
                 @unlink($tempFile);
-                $this->emitUrlUploadEvent(array('fail' => array('message' => 'File extension is not allowed.')));
-                exit();
+                $this->emitUrlFail('EXTENSION_DENIED', 'File extension is not allowed.');
             }
         }
 
         if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tempFile)) {
             @unlink($tempFile);
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Dangerous file MIME type detected.')));
-            exit();
+            $this->emitUrlFail('MIME_DENIED', 'Dangerous file MIME type detected.');
         }
 
         $validatedExt = strtolower(pathinfo($sanitizedName, PATHINFO_EXTENSION));
         if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tempFile, $validatedExt)) {
             @unlink($tempFile);
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'File signature does not match extension.')));
-            exit();
+            $this->emitUrlFail('MIME_DENIED', 'File signature does not match extension.');
         }
 
         $targetPath = $this->buildUniqueTargetPath($targetBase, $sanitizedName);
         if (!@rename($tempFile, $targetPath)) {
             @unlink($tempFile);
-            $this->emitUrlUploadEvent(array('fail' => array('message' => 'Failed to persist downloaded file to destination.')));
-            exit();
+            $this->emitUrlFail('MOVE_FAILED', 'Failed to persist downloaded file to destination.');
         }
 
         if (function_exists('fm_owner_meta_touch')) {
@@ -362,12 +295,51 @@ class TFM_LegacyUploadHandler {
         $result->name = basename($targetPath);
         $result->size = (int) filesize($targetPath);
         $result->type = (string) $downloadResult['contentType'];
-        $this->emitUrlUploadEvent(array('done' => $result));
+        echo json_encode(array('done' => $result));
         exit();
     }
 
-    private function emitUrlUploadEvent($message) {
-        echo json_encode($message);
+    private function emitUploadResponse($status, $code, $info, $extra = array()) {
+        $payload = array(
+            'status' => $status,
+            'code' => $code,
+            'info' => (string) $info,
+        );
+        if (!empty($extra) && is_array($extra)) {
+            $payload = array_merge($payload, $extra);
+        }
+        echo json_encode($payload);
+        exit();
+    }
+
+    private function emitUrlFail($code, $message) {
+        echo json_encode(array(
+            'fail' => array(
+                'code' => (string) $code,
+                'message' => (string) $message,
+            ),
+        ));
+        exit();
+    }
+
+    private function phpUploadErrorMessage($errorCode) {
+        switch ((int) $errorCode) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'Uploaded file is too large.';
+            case UPLOAD_ERR_PARTIAL:
+                return 'Uploaded file was only partially uploaded.';
+            case UPLOAD_ERR_NO_FILE:
+                return 'No file was uploaded.';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Temporary upload folder is missing.';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Failed to write uploaded file to disk.';
+            case UPLOAD_ERR_EXTENSION:
+                return 'File upload stopped by a PHP extension.';
+            default:
+                return 'Unknown PHP upload error.';
+        }
     }
 
     private function sanitizeUploadFileName($name) {

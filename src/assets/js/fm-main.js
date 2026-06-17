@@ -591,7 +591,11 @@
         form.find('input[name=uploadurl]').removeAttr('disabled');
         form.find('button').show();
         form.find('.lds-facebook').removeClass('show-me');
-        showUploadResult(false, 'Error: Network or server failure during URL upload.');
+
+        var status = xhr && typeof xhr.status !== 'undefined' ? xhr.status : 'unknown';
+        var responseText = xhr && typeof xhr.responseText === 'string' ? xhr.responseText.trim() : '';
+        var detailed = responseText ? ('HTTP ' + status + ' - ' + responseText) : ('HTTP ' + status + ' - Server nevrátil detail chyby.');
+        showUploadResult(false, 'URL upload zlyhal: ' + detailed);
         console.error(xhr);
       }
     });

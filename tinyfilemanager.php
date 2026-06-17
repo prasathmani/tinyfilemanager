@@ -1912,6 +1912,7 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
                     <a href="?p=<?php echo FM_PATH ?>" class="float-right"><i class="fa fa-chevron-circle-left go-back"></i> <?php echo lng('Back') ?></a>
                     <strong><?php echo lng('DestinationFolder') ?></strong>: <?php echo fm_enc(fm_convert_win(FM_PATH)) ?>
                 </p>
+                <p class="text-muted small mb-2">Súbor sa odošle automaticky po výbere.</p>
 
                 <form action="<?php echo htmlspecialchars(FM_SELF_URL) . '?p=' . fm_enc(FM_PATH) ?>" method="POST" class="dropzone card-tabs-container" id="fileUploader" enctype="multipart/form-data">
                     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">

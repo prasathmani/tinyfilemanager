@@ -95,6 +95,19 @@ class TFM_AjaxActionHandler {
             exit();
         }
 
+        if (isset($post['type']) && $post['type'] == 'upload' && !empty($request['uploadurl'])) {
+            header('Content-Type: application/json; charset=utf-8');
+            if ((FM_READONLY && !FM_UPLOAD_ONLY) || !FM_CAN_WRITE_IN_PATH) {
+                $message = !FM_CAN_WRITE_IN_PATH ? 'Current path is not writable.' : 'Upload from URL is not allowed for this role.';
+                $code = !FM_CAN_WRITE_IN_PATH ? 'PATH_DENIED' : 'ROLE_DENIED';
+                echo json_encode(array('fail' => array('code' => $code, 'message' => $message)));
+                exit();
+            }
+
+            $legacy_upload_handler = new TFM_LegacyUploadHandler($this->root_path, $this->current_path);
+            $legacy_upload_handler->handleUrlUpload($request);
+        }
+
         if (FM_READONLY || FM_UPLOAD_ONLY) {
             exit();
         }
@@ -112,12 +125,6 @@ class TFM_AjaxActionHandler {
             echo $res;
             exit();
         }
-
-        if (isset($post['type']) && $post['type'] == 'upload' && !empty($request['uploadurl'])) {
-            $legacy_upload_handler = new TFM_LegacyUploadHandler($this->root_path, $this->current_path);
-            $legacy_upload_handler->handleUrlUpload($request);
-        }
-
         exit();
     }
 
