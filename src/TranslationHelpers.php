@@ -126,6 +126,7 @@ function lng($txt)
     $tr['en']['Select folder']      = 'Select folder';
     $tr['en']['Source path not defined']    = 'Source path not defined';
     $tr['en']['already exists']     = 'already exists';
+    $tr['en']['VirtualRootLabel']   = 'Root';
     $tr['en']['Error while moving from']    = 'Error while moving from';
     $tr['en']['Create archive?']    = 'Create archive?';
     $tr['en']['Invalid file or folder name']    = 'Invalid file or folder name';

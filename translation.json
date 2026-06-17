@@ -2234,6 +2234,7 @@
         "Size in archive": "Veľkosť v archíve",
         "Sometimes the save action may not work on the first try, so please attempt it again.": "Niekedy sa uloženie nemusí podariť na prvý pokus, skúste to znova.",
         "Source path not defined": "Zdrojová cesta nie je definovaná",
+        "VirtualRootLabel": "Adresár:",
         "Tar": "Tar",
         "Theme": "Téma",
         "Total size": "Celková veľkosť",

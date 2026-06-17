@@ -26,7 +26,7 @@ function print_external($key)
  */
 function fm_show_nav_path($path)
 {
-    global $lang, $sticky_navbar, $editFile;
+    global $lang, $sticky_navbar, $editFile, $fm_user_allowed_dirs;
     $isStickyNavBar = $sticky_navbar ? 'fixed-top' : '';
     $fm_dark_logo_src = 'https://dremont.sk/wp-content/uploads/2024/04/logoWh-e1712400013803.png';
 ?>
@@ -52,16 +52,58 @@ function fm_show_nav_path($path)
 
             <?php
             $path = fm_clean_path($path);
-            $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
+            $virtual_root_enabled = false;
+            $virtual_root_relative = '';
+            $virtual_root_label = lng('VirtualRootLabel');
+
+            if (defined('FM_USE_AUTH') && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged']) && !empty($fm_user_allowed_dirs) && is_array($fm_user_allowed_dirs)) {
+                $candidate_default_path = fm_get_user_default_path();
+                if ($candidate_default_path !== '') {
+                    $normalized_roots = array();
+                    $root_base = rtrim(str_replace('\\', '/', FM_ROOT_PATH), '/');
+                    foreach ($fm_user_allowed_dirs as $allowed_path) {
+                        $allowed_path = rtrim(str_replace('\\', '/', (string) $allowed_path), '/');
+                        if ($allowed_path === '' || !fm_is_path_inside($allowed_path, $root_base)) {
+                            continue;
+                        }
+                        $normalized_roots[] = fm_clean_path(ltrim(substr($allowed_path, strlen($root_base)), '/'));
+                    }
+                    $normalized_roots = array_values(array_unique(array_filter($normalized_roots, 'strlen')));
+                    $candidate_default_path = fm_clean_path($candidate_default_path);
+                    if (count($normalized_roots) === 1 && $normalized_roots[0] === $candidate_default_path) {
+                        $virtual_root_enabled = true;
+                        $virtual_root_relative = $candidate_default_path;
+                    }
+                }
+            }
+
+            if ($virtual_root_enabled) {
+                $home_target = urlencode($virtual_root_relative);
+                $root_url = "<a href='?p={$home_target}'>" . fm_enc($virtual_root_label) . "</a>";
+            } else {
+                $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
+            }
             $sep = '<i class="bread-crumb"> / </i>';
-            if ($path != '') {
-                $exploded = explode('/', $path);
+            $display_path = $path;
+            if ($virtual_root_enabled && $display_path !== '') {
+                if ($display_path === $virtual_root_relative) {
+                    $display_path = '';
+                } elseif (strpos($display_path . '/', $virtual_root_relative . '/') === 0) {
+                    $display_path = ltrim(substr($display_path, strlen($virtual_root_relative)), '/');
+                } else {
+                    $virtual_root_enabled = false;
+                }
+            }
+
+            if ($display_path != '') {
+                $exploded = explode('/', $display_path);
                 $count = count($exploded);
                 $array = array();
                 $parent = '';
                 for ($i = 0; $i < $count; $i++) {
                     $parent = trim($parent . '/' . $exploded[$i], '/');
-                    $parent_enc = urlencode($parent);
+                    $target_path = $virtual_root_enabled ? trim($virtual_root_relative . '/' . $parent, '/') : $parent;
+                    $parent_enc = urlencode($target_path);
                     $array[] = "<a href='?p={$parent_enc}'>" . fm_enc(fm_convert_win($exploded[$i])) . "</a>";
                 }
                 $root_url .= $sep . implode($sep, $array);

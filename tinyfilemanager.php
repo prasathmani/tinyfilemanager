@@ -787,18 +787,36 @@ define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 // always use ?p=
 if (!isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
     $default_path = '';
-    if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged']) && !empty($_SESSION[FM_SESSION_ID]['post_login_redirect'])) {
+    if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
         $candidate_default_path = fm_get_user_default_path();
         if ($candidate_default_path !== '') {
             $candidate_absolute_path = rtrim(FM_ROOT_PATH, '/\\') . '/' . ltrim($candidate_default_path, '/');
             if (fm_user_can_access_path($candidate_absolute_path, true)) {
-                $default_path = $candidate_default_path;
+                $default_path = fm_clean_path($candidate_default_path);
             }
         }
         unset($_SESSION[FM_SESSION_ID]['post_login_redirect']);
     }
 
     fm_redirect(FM_SELF_URL . '?p=' . urlencode($default_path));
+}
+
+// Explicit empty path (?p=) should open assigned user root when available.
+if (isset($_GET['p']) && count($_GET) === 1 && !isset($_GET['help_doc']) && empty($_FILES) && fm_clean_path((string) $_GET['p']) === '') {
+    $default_path = '';
+    if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
+        $candidate_default_path = fm_get_user_default_path();
+        if ($candidate_default_path !== '') {
+            $candidate_absolute_path = rtrim(FM_ROOT_PATH, '/\\') . '/' . ltrim($candidate_default_path, '/');
+            if (fm_user_can_access_path($candidate_absolute_path, true)) {
+                $default_path = fm_clean_path($candidate_default_path);
+            }
+        }
+    }
+
+    if ($default_path !== '') {
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($default_path));
+    }
 }
 
 // get path
