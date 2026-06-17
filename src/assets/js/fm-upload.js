@@ -26,7 +26,8 @@
   }
 
   function extractHttpError(response, xhr) {
-    var status = (xhr && typeof xhr.status !== 'undefined') ? xhr.status : 'unknown';
+    var hasHttpStatus = xhr && typeof xhr.status === 'number';
+    var status = hasHttpStatus ? xhr.status : null;
     var body = '';
 
     if (typeof response === 'string') {
@@ -49,7 +50,11 @@
       body = xhr.responseText;
     }
 
-    return 'HTTP ' + status + (body ? ' - ' + body : '');
+    if (hasHttpStatus) {
+      return 'HTTP ' + status + (body ? ' - ' + body : '');
+    }
+
+    return body || 'Upload failed.';
   }
 
   var config = readJsonConfig('fm-upload-config');

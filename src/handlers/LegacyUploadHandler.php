@@ -139,24 +139,6 @@ class TFM_LegacyUploadHandler {
             if ($chunkIndex == $chunkTotal - 1) {
                 $partPath = "{$fullPath}.part";
 
-                if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($partPath)) {
-                    if (class_exists('AuditLogger')) {
-                        $audit = new AuditLogger();
-                        $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
-                    }
-                    @unlink($partPath);
-                    $this->emitUploadResponse('error', 'MIME_DENIED', 'Dangerous file MIME type detected.');
-                }
-
-                if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($partPath, $ext)) {
-                    if (class_exists('AuditLogger')) {
-                        $audit = new AuditLogger();
-                        $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
-                    }
-                    @unlink($partPath);
-                    $this->emitUploadResponse('error', 'MIME_DENIED', 'File signature does not match extension.');
-                }
-
                 if (file_exists($fullPath)) {
                     $ext_1 = $ext ? '.' . $ext : '';
                     $relativeDir = dirname($safeRelativePath);
@@ -189,24 +171,6 @@ class TFM_LegacyUploadHandler {
             }
 
             $this->emitUploadResponse('success', 'CHUNK_RECEIVED', 'Chunk received.');
-        }
-
-        if (function_exists('fm_validate_mime_type') && !fm_validate_mime_type($tmp_name)) {
-            if (class_exists('AuditLogger')) {
-                $audit = new AuditLogger();
-                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Dangerous MIME type: $safeFileName");
-            }
-            @unlink($tmp_name);
-            $this->emitUploadResponse('error', 'MIME_DENIED', 'Dangerous file MIME type detected.');
-        }
-
-        if (function_exists('fm_validate_magic_bytes') && !fm_validate_magic_bytes($tmp_name, $ext)) {
-            if (class_exists('AuditLogger')) {
-                $audit = new AuditLogger();
-                $audit->log('upload_rejected', $_SESSION[FM_SESSION_ID]['logged'] ?? 'unknown', "Invalid magic bytes: $safeFileName (ext: $ext)");
-            }
-            @unlink($tmp_name);
-            $this->emitUploadResponse('error', 'MIME_DENIED', 'File signature does not match extension.');
         }
 
         if (!move_uploaded_file($tmp_name, $fullPath)) {
