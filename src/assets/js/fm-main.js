@@ -563,7 +563,7 @@
     $.ajax({
       type: form.attr('method'),
       url: form.attr('action'),
-      data: form.serialize() + '&token=' + window.csrf + '&ajax=true',
+      data: buildAjaxPayloadWithToken(form),
       beforeSend: function () {
         form.find('input[name=uploadurl]').attr('disabled', 'disabled');
         form.find('button').hide();

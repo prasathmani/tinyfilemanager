@@ -1959,7 +1959,7 @@ if (isset($_GET['upload']) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_I
         'acceptedFiles' => getUploadExt(),
     );
     ?>
-    <script type="application/json" id="fm-upload-config"><?php echo fm_enc(json_encode($fm_upload_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
+    <script type="application/json" id="fm-upload-config"><?php echo json_encode($fm_upload_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
     <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-upload.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
 <?php
     fm_show_footer();
@@ -7237,7 +7237,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         <?php if (FM_USE_HIGHLIGHTJS && isset($_GET['view'])): ?>
             <?php print_external('js-highlightjs'); ?>
         <?php endif; ?>
-        <script type="application/json" id="fm-runtime-config"><?php echo fm_enc(json_encode($fm_runtime_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
+        <script type="application/json" id="fm-runtime-config"><?php echo json_encode($fm_runtime_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
         <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-main.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
         <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-search-enhanced.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
 
@@ -7249,7 +7249,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
             );
         ?>
             <?php print_external('js-ace'); ?>
-            <script type="application/json" id="fm-ace-config"><?php echo fm_enc(json_encode($fm_ace_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?></script>
+            <script type="application/json" id="fm-ace-config"><?php echo json_encode($fm_ace_config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
             <script src="<?php echo fm_enc($fm_assets_base . '/src/assets/js/fm-ace.js?v=' . rawurlencode((string) $fm_assets_version)); ?>"></script>
         <?php endif; ?>
         <div id="snackbar"></div>
