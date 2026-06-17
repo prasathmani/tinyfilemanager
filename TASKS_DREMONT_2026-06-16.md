@@ -300,7 +300,7 @@ V integrovanej administrátorskej stránke Správcu používateľov chýba zrete
 1. DataTables chyba `Incorrect column count` – **opravené a ručne overené**. --- HOTOVO
 2. Upload do nového priečinka – **opravené a ručne overené**. --- HOTOVO
 3. Upload z URL – **opravené a ručne overené**. --- HOTOVO, nasadená pracovná verzia 3.0.17
-4. Root po prihlásení – oprava pripravená lokálne, čaká na release a ručné overenie.
+4. Root po prihlásení – automaticky otvoriť priečinok `Mirko`. --- HOTOVO, --- nasadená pracovná verzia 3.0.18
 5. Nastaviť predvolený jazyk používateľov na slovenčinu.
 
 

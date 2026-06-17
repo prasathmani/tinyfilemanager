@@ -7,6 +7,9 @@ uploads/
 .fm_usercfg/*.sqlite
 !.fm_usercfg/.htaccess
 
+# Runtime-created top-level user roots (local only)
+/Mirko/
+
 # Local Joyee bridge secrets (server-only)
 joyee-bridge.config.php
 

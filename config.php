@@ -8,6 +8,9 @@
 //   alebo v PHP: echo password_hash('moje_heslo', PASSWORD_BCRYPT);
 // =============================================================================
 
+// Globálne predvolené UI nastavenia (fallback pre používateľov bez vlastného profilu).
+$CONFIG = '{"lang":"sk","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light","list_density":"compact","fallback_logging":false}';
+
 // --- POUŽÍVATELIA A HESLÁ ---
 // Formát: 'meno' => 'bcrypt_hash_hesla'
 $auth_users = array(
