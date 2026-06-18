@@ -674,13 +674,13 @@
                                 <?php echo fm_enc($onlineUser); ?>
                             </button>
                         <?php endforeach; ?>
-                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2"><?php echo fm_enc($footerBuildLabel); ?></a>
-                        <span class="text-muted ms-sm-2 fm-footer-copyright" style="font-size: 0.5em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2" style="font-size: 0.67em;"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted ms-sm-2 fm-footer-copyright" style="font-size: 0.75em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
                     </div>
                 <?php else: ?>
                     <div class="d-flex flex-column align-items-sm-end align-items-start gap-1 w-100">
-                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
-                        <span class="text-muted fm-footer-copyright" style="font-size: 0.5em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted" style="font-size: 0.67em;"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted fm-footer-copyright" style="font-size: 0.75em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
                     </div>
                 <?php endif; ?>
             </div>
@@ -710,13 +710,13 @@
                                 <?php echo fm_enc($onlineUser); ?>
                             </button>
                         <?php endforeach; ?>
-                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2"><?php echo fm_enc($footerBuildLabel); ?></a>
-                        <span class="text-muted ms-sm-2 fm-footer-copyright" style="font-size: 0.5em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2" style="font-size: 0.67em;"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted ms-sm-2 fm-footer-copyright" style="font-size: 0.75em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
                     </div>
                 <?php else: ?>
                     <div class="d-flex flex-column align-items-sm-end align-items-start gap-1">
-                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
-                        <span class="text-muted fm-footer-copyright" style="font-size: 0.5em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted" style="font-size: 0.67em;"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted fm-footer-copyright" style="font-size: 0.75em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
                     </div>
                 <?php endif; ?>
             </div>

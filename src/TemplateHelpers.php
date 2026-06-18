@@ -111,7 +111,7 @@ function fm_show_nav_path($path)
                         $current_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
                         if ($current_user === 'admin') : ?>
                             <li class="nav-item">
-                                <a title="Správa používateľov" class="nav-link" href="?p=<?php echo urlencode(FM_PATH); ?>&amp;admin_users=1"><i class="fa fa-users-cog"></i> Správa používateľov</a>
+                                <a title="Správa používateľov" aria-label="Správa používateľov" class="nav-link fm-header-icon-link" href="?p=<?php echo urlencode(FM_PATH); ?>&amp;admin_users=1"><i class="fa fa-users-cog" aria-hidden="true"></i><span class="visually-hidden">Správa používateľov</span></a>
                             </li>
                         <?php endif; ?>
                         <li class="nav-item avatar dropdown">
