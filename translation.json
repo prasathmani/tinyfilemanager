@@ -2264,7 +2264,8 @@
         "not deleted": "nebolo odstránené",
         "not found!": "nenájdené!",
         "password_hash not supported, Upgrade PHP version": "password_hash nie je podporovaný, aktualizujte verziu PHP",
-        "to": "do"
+        "to": "do",
+        "Home": "Domov"
       }
     },
     {

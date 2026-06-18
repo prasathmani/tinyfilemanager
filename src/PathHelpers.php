@@ -230,3 +230,62 @@ function fm_is_exclude_items($name, $path)
     }
     return false;
 }
+
+/**
+ * Build breadcrumb segments for navigation.
+ * Returns array of segments with labels and paths for breadcrumb display.
+ * The first segment is always "Home" (user's root), followed by parent path segments.
+ * Returns empty array if user is at their root directory.
+ *
+ * @param string $current_path Relative path from root
+ * @return array Array of breadcrumb segments with 'label', 'path', 'is_root' keys
+ */
+function fm_build_breadcrumb_segments($current_path)
+{
+    // Get user's effective root
+    $user_default_path = fm_get_user_default_path();
+    
+    // If at root directory, return empty (no breadcrumb shown)
+    $current_path = fm_clean_path($current_path);
+    if ($current_path === $user_default_path || $current_path === '') {
+        return array();
+    }
+    
+    $breadcrumbs = array();
+    
+    // First breadcrumb is "Home" pointing to user's root
+    $breadcrumbs[] = array(
+        'label' => lng('Home'),
+        'path' => $user_default_path,
+        'is_root' => true,
+    );
+    
+    // Parse current path into segments
+    $segments = array_filter(explode('/', $current_path), 'strlen');
+    if (empty($segments)) {
+        return $breadcrumbs;
+    }
+    
+    // Build intermediate path segments (all except the last one)
+    $path_so_far = '';
+    $segment_count = count($segments);
+    
+    for ($i = 0; $i < $segment_count - 1; $i++) {
+        $segment = $segments[$i];
+        $path_so_far = trim($path_so_far . '/' . $segment, '/');
+        
+        // Verify user has access to this path
+        $absolute_path = FM_ROOT_PATH . (FM_ROOT_PATH !== '' && $path_so_far !== '' ? '/' . $path_so_far : '');
+        if (!fm_user_can_access_path($absolute_path, false)) {
+            continue;
+        }
+        
+        $breadcrumbs[] = array(
+            'label' => fm_enc($segment),
+            'path' => $path_so_far,
+            'is_root' => false,
+        );
+    }
+    
+    return $breadcrumbs;
+}

@@ -83,14 +83,32 @@
             </thead>
             <?php
             if ($parent !== false) {
+                $breadcrumbs = fm_build_breadcrumb_segments(FM_PATH);
             ?>
                 <tr class="fm-parent-row"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
                         <td class="nosort"></td><?php endif; ?>
                     <td class="border-0 fm-col-name" data-sort>
-                        <a href="?p=<?php echo urlencode($parent) ?>" class="fm-parent-nav-link" title="Prejst o uroven vyssie">
-                            <span class="fm-parent-nav-icon" aria-hidden="true"><i class="fa fa-arrow-left"></i></span>
-                            <span class="fm-parent-nav-text">Spat o uroven vyssie</span>
-                        </a>
+                        <?php if (!empty($breadcrumbs)): ?>
+                            <a href="?p=<?php echo urlencode($breadcrumbs[0]['path']); ?>" class="fm-parent-nav-link fm-breadcrumb-back" title="<?php echo lng('Back'); ?>">
+                                <span class="fm-parent-nav-icon" aria-hidden="true"><i class="fa fa-arrow-left"></i></span>
+                                <span class="fm-parent-nav-text"><?php echo lng('Back'); ?></span>
+                                <span class="fm-breadcrumb-content">
+                                    <?php foreach ($breadcrumbs as $index => $crumb): ?>
+                                        <?php if ($index > 0): ?>
+                                            <span class="fm-breadcrumb-sep"> / </span>
+                                        <?php endif; ?>
+                                        <a href="?p=<?php echo urlencode($crumb['path']); ?>" class="fm-breadcrumb-link" title="<?php echo fm_enc($crumb['label']); ?>" onclick="event.stopPropagation();">
+                                            <?php echo $crumb['label']; ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </span>
+                            </a>
+                        <?php else: ?>
+                            <a href="?p=<?php echo urlencode($parent) ?>" class="fm-parent-nav-link" title="<?php echo lng('Back'); ?>">
+                                <span class="fm-parent-nav-icon" aria-hidden="true"><i class="fa fa-arrow-left"></i></span>
+                                <span class="fm-parent-nav-text"><?php echo lng('Back'); ?></span>
+                            </a>
+                        <?php endif; ?>
                     </td>
                     <td class="border-0 fm-col-size" data-order></td>
                     <td class="border-0 fm-col-modified" data-order></td>

@@ -53,6 +53,7 @@ function lng($txt)
     $tr['en']['UnSelectAll']    = 'Unselect all';
     $tr['en']['File']           = 'File';
     $tr['en']['Back']           = 'Back';
+    $tr['en']['Home']           = 'Home';
     $tr['en']['Size']           = 'Size';
     $tr['en']['Perms']          = 'Perms';
     $tr['en']['Modified']       = 'Modified';
