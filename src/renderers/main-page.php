@@ -723,6 +723,16 @@
     </div>
 </form>
 
+<div id="fm-context-menu" class="fm-context-menu hidden" role="menu" aria-hidden="true">
+    <div class="fm-context-menu__title">Context menu</div>
+    <div class="fm-context-menu__meta" data-context-menu-meta>Empty space</div>
+    <div class="fm-context-menu__items">
+        <button type="button" class="fm-context-menu__item" data-context-menu-item="primary"><i class="fa fa-folder-open-o fm-context-menu__icon" aria-hidden="true"></i><span class="fm-context-menu__item-label">Open</span></button>
+        <button type="button" class="fm-context-menu__item" data-context-menu-item="secondary"><i class="fa fa-pencil-square-o fm-context-menu__icon" aria-hidden="true"></i><span class="fm-context-menu__item-label">Rename</span></button>
+        <button type="button" class="fm-context-menu__item" data-context-menu-item="third"><i class="fa fa-files-o fm-context-menu__icon" aria-hidden="true"></i><span class="fm-context-menu__item-label">Copy</span></button>
+    </div>
+</div>
+
 <script src="src/assets/js/fm-folder-tree.js?v=<?php echo VERSION; ?>"></script>
 
 <script>
@@ -901,6 +911,61 @@
     .fm-folder-tree {
         display: block;
         min-width: 0;
+    }
+
+    .fm-context-menu {
+        position: fixed;
+        z-index: 1090;
+        min-width: 210px;
+        padding: .55rem;
+        border: 1px solid var(--fmx-border);
+        border-radius: 12px;
+        background: var(--fmx-surface);
+        box-shadow: 0 16px 38px rgba(15, 23, 42, 0.22);
+    }
+
+    .fm-context-menu__title {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--fmx-subtle);
+        margin-bottom: .35rem;
+    }
+
+    .fm-context-menu__meta {
+        font-size: .82rem;
+        font-weight: 600;
+        margin-bottom: .45rem;
+        color: var(--fmx-text);
+    }
+
+    .fm-context-menu__items {
+        display: grid;
+        gap: .35rem;
+    }
+
+    .fm-context-menu__item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        border: 1px solid var(--fmx-border);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--fmx-text);
+        padding: .45rem .65rem;
+        text-align: left;
+        font-size: .82rem;
+        cursor: not-allowed;
+        opacity: .72;
+    }
+
+    .fm-context-menu__icon {
+        width: 1.15rem;
+        text-align: center;
+        color: var(--fmx-accent);
+        flex: 0 0 auto;
     }
 
     .fm-tree-node {
@@ -1205,6 +1270,9 @@
         var floatingPanelTitleEl = null;
         var floatingPanelActionsEl = null;
         var activeFloatingRow = null;
+        var contextMenuEl = document.getElementById('fm-context-menu');
+        var contextMenuMetaEl = contextMenuEl ? contextMenuEl.querySelector('[data-context-menu-meta]') : null;
+        var contextMenuItemEls = contextMenuEl ? contextMenuEl.querySelectorAll('[data-context-menu-item]') : [];
         var hoverShowTimer = null;
         var hoverHideTimer = null;
         var HOVER_SHOW_DELAY_MS = 120;
@@ -1494,6 +1562,145 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        function hideContextMenu() {
+            if (!contextMenuEl) {
+                return;
+            }
+            contextMenuEl.classList.add('hidden');
+            contextMenuEl.setAttribute('aria-hidden', 'true');
+        }
+
+        function getContextMenuModel(menuType) {
+            if (menuType === 'folder') {
+                return {
+                    label: 'Folder',
+                    items: [
+                        { label: 'Open folder', action: 'open', icon: 'fa-folder-open-o' },
+                        { label: 'Rename', action: 'rename', icon: 'fa-pencil-square-o' },
+                        { label: 'Copy', action: 'copy', icon: 'fa-files-o' }
+                    ]
+                };
+            }
+
+            if (menuType === 'file') {
+                return {
+                    label: 'File',
+                    items: [
+                        { label: 'Open file', action: 'open', icon: 'fa-file-o' },
+                        { label: 'Rename', action: 'rename', icon: 'fa-pencil-square-o' },
+                        { label: 'Copy', action: 'copy', icon: 'fa-files-o' }
+                    ]
+                };
+            }
+
+            return {
+                label: 'Empty space',
+                items: [
+                    { label: 'Upload', action: 'upload', icon: 'fa-cloud-upload' },
+                    { label: 'New item', action: 'newItem', icon: 'fa-plus-square' },
+                    { label: 'Refresh', action: 'refresh', icon: 'fa-refresh' }
+                ]
+            };
+        }
+
+        function showContextMenu(menuType, label, href, x, y) {
+            if (!contextMenuEl) {
+                return;
+            }
+
+            var model = getContextMenuModel(menuType || 'empty');
+            contextMenuMetaEl.textContent = (label || model.label || 'Empty space') + ' • ' + (menuType || 'empty');
+            contextMenuEl.dataset.contextMenuType = menuType || 'empty';
+            contextMenuEl.dataset.contextMenuHref = href || '';
+            contextMenuEl.dataset.contextMenuPath = '';
+            contextMenuEl.dataset.contextMenuName = '';
+
+            if (menuType === 'folder' && href) {
+                var folderPath = '';
+                try {
+                    var folderUrl = new URL(href, window.location.href);
+                    folderPath = folderUrl.searchParams.get('p') || '';
+                } catch (e) {
+                }
+                contextMenuEl.dataset.contextMenuPath = folderPath;
+                contextMenuEl.dataset.contextMenuName = label || '';
+            } else if (menuType === 'file' && href) {
+                contextMenuEl.dataset.contextMenuPath = href;
+                contextMenuEl.dataset.contextMenuName = label || '';
+            } else {
+                var currentPathInput = document.querySelector('input[name="p"]');
+                contextMenuEl.dataset.contextMenuPath = currentPathInput ? String(currentPathInput.value || '') : '';
+            }
+
+            contextMenuEl.style.left = Math.max(8, x) + 'px';
+            contextMenuEl.style.top = Math.max(8, y) + 'px';
+            contextMenuItemEls.forEach(function (itemEl, index) {
+                var itemLabelEl = itemEl.querySelector('.fm-context-menu__item-label');
+                var iconEl = itemEl.querySelector('.fm-context-menu__icon');
+                var itemData = model.items[index] || { label: '', action: '' };
+                if (!itemLabelEl) {
+                    return;
+                }
+                itemLabelEl.textContent = itemData.label || '';
+                if (iconEl) {
+                    iconEl.className = 'fa fm-context-menu__icon ' + (itemData.icon || 'fa-circle-o');
+                }
+                itemEl.disabled = false;
+                itemEl.dataset.contextMenuAction = itemData.action || '';
+            });
+            contextMenuEl.classList.remove('hidden');
+            contextMenuEl.setAttribute('aria-hidden', 'false');
+        }
+
+        function detectContextMenuTarget(target) {
+            var menuType = 'empty';
+            var label = 'Empty space';
+
+            if (!target || !target.closest) {
+                return { type: menuType, label: label };
+            }
+
+            var treeLabel = target.closest('.fm-tree-label');
+            if (treeLabel) {
+                menuType = 'folder';
+                label = treeLabel.textContent.trim() || 'Folder';
+                return { type: menuType, label: label, href: treeLabel.getAttribute('href') || '' };
+            }
+
+            var row = target.closest('tbody tr');
+            if (row && !row.classList.contains('fm-parent-row')) {
+                var folderIcon = row.querySelector('td.fm-col-name i.fa-folder-o, td.fm-col-name i.icon-link_folder');
+                var nameCell = row.querySelector('td.fm-col-name .filename a');
+                var fullPath = nameCell ? (nameCell.getAttribute('data-full-path') || '') : '';
+                label = nameCell ? (nameCell.textContent || '').trim() : 'Item';
+                if (folderIcon) {
+                    menuType = 'folder';
+                } else {
+                    menuType = 'file';
+                }
+                return { type: menuType, label: label || (menuType === 'folder' ? 'Folder' : 'File'), href: nameCell ? (nameCell.getAttribute('href') || '') : '', fullPath: fullPath };
+            }
+
+            return { type: menuType, label: label, href: '' };
+        }
+
+        function getBaseName(path) {
+            var clean = String(path || '').replace(/^\/+|\/+$/g, '');
+            if (!clean) {
+                return '';
+            }
+            var parts = clean.split('/');
+            return parts.pop() || '';
+        }
+
+        function getParentPath(path) {
+            var clean = String(path || '').replace(/^\/+|\/+$/g, '');
+            if (!clean || clean.indexOf('/') === -1) {
+                return '';
+            }
+            return clean.split('/').slice(0, -1).join('/');
         }
 
         function collectVisibleRows() {
@@ -1789,6 +1996,78 @@
             });
         }
 
+        function bindContextMenu() {
+            if (!contextMenuEl) {
+                return;
+            }
+
+            document.addEventListener('click', function () {
+                hideContextMenu();
+            });
+
+            contextMenuEl.addEventListener('click', function (event) {
+                var button = event.target && event.target.closest ? event.target.closest('[data-context-menu-action]') : null;
+                if (!button || button.disabled) {
+                    return;
+                }
+
+                var action = button.getAttribute('data-context-menu-action') || '';
+                var menuType = contextMenuEl.dataset.contextMenuType || 'empty';
+                var href = contextMenuEl.dataset.contextMenuHref || '';
+                var path = contextMenuEl.dataset.contextMenuPath || '';
+                var name = contextMenuEl.dataset.contextMenuName || '';
+                hideContextMenu();
+
+                if (action === 'open' && href) {
+                    window.location.href = href;
+                    return;
+                }
+
+                if (action === 'rename' && path) {
+                    var renameBasePath = getParentPath(path);
+                    var renameName = name || getBaseName(path);
+                    if (renameName && typeof rename === 'function') {
+                        rename(renameBasePath, renameName);
+                    }
+                    return;
+                }
+
+                if (action === 'copy' && path) {
+                    var currentCopyPathInput = document.querySelector('input[name="p"]');
+                    var currentCopyPath = currentCopyPathInput ? String(currentCopyPathInput.value || '') : '';
+                    window.location.href = '?p=' + encodeURIComponent(currentCopyPath) + '&copy=' + encodeURIComponent(path);
+                    return;
+                }
+
+                if (action === 'upload' && menuType === 'empty') {
+                    window.location.href = '?p=' + encodeURIComponent(path) + '&upload';
+                    return;
+                }
+
+                if (action === 'newItem' && menuType === 'empty') {
+                    openCreateNewItemModal();
+                    return;
+                }
+
+                if (action === 'refresh' && menuType === 'empty') {
+                    window.location.reload();
+                }
+            });
+
+            document.addEventListener('contextmenu', function (event) {
+                var shell = event.target && event.target.closest ? event.target.closest('.fm-shell, .fm-explorer-layout, #main-table, .fm-folder-sidebar') : null;
+                if (!shell) {
+                    hideContextMenu();
+                    return;
+                }
+
+                event.preventDefault();
+                var detected = detectContextMenuTarget(event.target);
+                var actionHref = detected.href || detected.fullPath || '';
+                showContextMenu(detected.type, detected.label, actionHref, event.clientX, event.clientY);
+            });
+        }
+
         function setViewMode(mode) {
             currentViewMode = mode === 'grid' ? 'grid' : 'list';
 
@@ -1851,6 +2130,7 @@
         });
         setupSidebarResizer();
         bindFloatingRowActions();
+        bindContextMenu();
         refreshOwnerSourceCounts();
         window.setTimeout(function () {
             applyFilter();
