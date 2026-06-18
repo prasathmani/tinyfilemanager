@@ -34,7 +34,9 @@ Súčasné zobrazovanie priečinkov nie je dostatočne prehľadné. Je potrebné
 - zachovať oprávnenia používateľa,
 - nezobraziť používateľovi priečinky, ku ktorým nemá prístup.
 
-**Priorita:** P1 – vysoká
+**Aktuálny stav:** --- HOTOVO, nasadená a ručne overená verzia 3.1.2. Strom priečinkov je napojený na SQLite index, podporuje lazy-loading vetiev, reaguje na zmeny súborového systému a po oprave AJAX smerovania/hraníc rootu už stabilne načítava aj vnorené vetvy bez chybovej hlášky.
+
+**Priorita:** P1 – splnené
 
 ---
 
@@ -322,7 +324,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 3. Zobraziť `Späť` + breadcrumb nadradenej cesty; používateľský root označiť ako `Domov`. --- HOTOVO, nasadená a ručne overená verzia 3.0.22
 4. Navrhnúť a implementovať stromovú štruktúru priečinkov.
-5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa.
+5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa. --- HOTOVO, nasadená a ručne overená verzia 3.1.2
 
 ### Fáza D – komunikácia, UI a jazyk
 
