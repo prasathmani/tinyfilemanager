@@ -314,8 +314,8 @@ V integrovanej administrátorskej stránke Správcu používateľov chýba zrete
 
 ### Fáza C – navigácia a strom priečinkov
 
-1. Definovať root priečinok používateľa.
-2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.
+1. Definovať root priečinok používateľa.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
+2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 3. Zobraziť `Späť` + breadcrumb nadradenej cesty; používateľský root označiť ako `Domov`.
 4. Navrhnúť a implementovať stromovú štruktúru priečinkov.
 5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa.
