@@ -117,7 +117,7 @@ function fm_show_nav_path($path)
                         <li class="nav-item avatar dropdown">
                             <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle"></i>
-                                <span class="ms-1"><?php echo fm_enc($_SESSION[FM_SESSION_ID]['logged']); ?></span>
+                                <span class="ms-1" style="font-size: 1.33em; font-weight: 600;"><?php echo fm_enc($_SESSION[FM_SESSION_ID]['logged']); ?></span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="navbarDropdownMenuLink-5" data-bs-theme="<?php echo FM_THEME; ?>">
                                 <a title="Môj profil" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1#js-changepwd-form"><i class="fa fa-id-card-o" aria-hidden="true"></i> Môj profil / Zmena hesla</a>
