@@ -670,6 +670,7 @@
                                 <?php echo fm_enc($onlineUser); ?>
                             </button>
                         <?php endforeach; ?>
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2"><?php echo fm_enc($footerBuildLabel); ?></a>
                     </div>
                 <?php else: ?>
                     <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted d-inline-block text-sm-end w-100"><?php echo fm_enc($footerBuildLabel); ?></a>
@@ -701,6 +702,7 @@
                                 <?php echo fm_enc($onlineUser); ?>
                             </button>
                         <?php endforeach; ?>
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2"><?php echo fm_enc($footerBuildLabel); ?></a>
                     </div>
                 <?php else: ?>
                     <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
