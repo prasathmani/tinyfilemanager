@@ -129,7 +129,7 @@
                     'currentPath' => $fm_tree_current_path,
                     'treeRevision' => $fm_tree_revision,
                     'ancestorPaths' => $fm_tree_ancestors,
-                    'endpoint' => FM_SELF_PATH,
+                    'endpoint' => FM_SELF_URL . '?p=' . urlencode($fm_tree_current_path),
                     'texts' => array(
                         'expand' => lng('Expand'),
                         'collapse' => lng('Collapse'),

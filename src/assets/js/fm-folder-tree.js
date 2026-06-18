@@ -212,7 +212,9 @@
     function buildTreeRequest(payload) {
       var formData = new URLSearchParams();
       var requestToken = getCurrentToken();
+      var requestPath = currentPath || homePath || '';
       formData.append('ajax', '1');
+      formData.append('p', requestPath);
       formData.append('token', requestToken);
 
       Object.keys(payload || {}).forEach(function (key) {

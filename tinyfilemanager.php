@@ -801,8 +801,15 @@ define('FM_UPLOAD_ONLY', !$fm_is_super_admin && $use_auth && !empty($upload_only
 define('FM_MANAGER', !$fm_is_super_admin && $use_auth && !empty($manager_users) && in_array($fm_logged_user, $manager_users, true));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
+$fm_is_ajax_request = (
+    (isset($_POST['ajax']) && (string) $_POST['ajax'] !== '')
+    || (isset($_REQUEST['ajax']) && (string) $_REQUEST['ajax'] !== '')
+    || (isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+        && strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+);
+
 // always use ?p=
-if (!isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
+if (!$fm_is_ajax_request && !isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
     $default_path = '';
     if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
         $candidate_default_path = fm_get_navigation_home_root();
@@ -819,7 +826,7 @@ if (!isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
 }
 
 // Explicit empty path (?p=) should open assigned user root when available.
-if (isset($_GET['p']) && count($_GET) === 1 && !isset($_GET['help_doc']) && empty($_FILES) && fm_clean_path((string) $_GET['p']) === '') {
+if (!$fm_is_ajax_request && isset($_GET['p']) && count($_GET) === 1 && !isset($_GET['help_doc']) && empty($_FILES) && fm_clean_path((string) $_GET['p']) === '') {
     $default_path = '';
     if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
         $candidate_default_path = fm_get_navigation_home_root();
