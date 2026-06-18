@@ -1281,7 +1281,45 @@ if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID
 
     if ($chat_action === 'fetch') {
         $messages = fm_chat_get_conversation($chat_current_user, $chat_peer, 150);
-        echo json_encode(array('ok' => true, 'data' => array('messages' => $messages)));
+        $max_incoming_id = 0;
+        foreach ($messages as $msg) {
+            $msg_sender = isset($msg['sender']) ? (string) $msg['sender'] : '';
+            $msg_recipient = isset($msg['recipient']) ? (string) $msg['recipient'] : '';
+            $msg_id = isset($msg['id']) ? (int) $msg['id'] : 0;
+            if ($msg_sender === $chat_peer && $msg_recipient === $chat_current_user && $msg_id > $max_incoming_id) {
+                $max_incoming_id = $msg_id;
+            }
+        }
+
+        if ($max_incoming_id > 0) {
+            fm_chat_mark_read($chat_current_user, $chat_peer, $max_incoming_id);
+        }
+
+        echo json_encode(array('ok' => true, 'data' => array('messages' => $messages, 'read_upto' => $max_incoming_id)));
+        exit;
+    }
+
+    if ($chat_action === 'mark_read') {
+        if (!verifyToken(isset($_POST['token']) ? $_POST['token'] : '')) {
+            http_response_code(401);
+            echo json_encode(array('ok' => false, 'error' => 'Invalid token.'));
+            exit;
+        }
+
+        $last_id = isset($_POST['last_id']) ? (int) $_POST['last_id'] : 0;
+        if (!fm_chat_mark_read($chat_current_user, $chat_peer, $last_id)) {
+            http_response_code(500);
+            echo json_encode(array('ok' => false, 'error' => 'Failed to mark messages as read.'));
+            exit;
+        }
+
+        echo json_encode(array(
+            'ok' => true,
+            'data' => array(
+                'peer' => $chat_peer,
+                'last_read_id' => fm_chat_get_last_read_id($chat_current_user, $chat_peer),
+            ),
+        ));
         exit;
     }
 
@@ -4315,6 +4353,14 @@ function fm_chat_get_db()
             created_at INTEGER NOT NULL
         )');
         $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_chat_pair_time ON fm_chat_messages(sender, recipient, created_at)');
+        $db->exec('CREATE TABLE IF NOT EXISTS fm_chat_read_state (
+            username TEXT NOT NULL,
+            peer TEXT NOT NULL,
+            last_read_id INTEGER NOT NULL DEFAULT 0,
+            updated_at INTEGER NOT NULL,
+            PRIMARY KEY (username, peer)
+        )');
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_chat_read_state_user_peer ON fm_chat_read_state(username, peer)');
     } catch (Exception $e) {
         $db = null;
     }
@@ -4410,7 +4456,15 @@ function fm_chat_get_inbox($recipient, $limit = 50)
         $limit = 200;
     }
 
-    $stmt = $db->prepare('SELECT m1.id, m1.sender, m1.message, m1.created_at
+    $stmt = $db->prepare('SELECT m1.id, m1.sender, m1.message, m1.created_at,
+            COALESCE(rs.last_read_id, 0) AS last_read_id,
+            (
+                SELECT COUNT(1)
+                FROM fm_chat_messages um
+                WHERE um.sender = m1.sender
+                  AND um.recipient = :recipient_unread
+                  AND um.id > COALESCE(rs.last_read_id, 0)
+            ) AS unread_count
         FROM fm_chat_messages m1
         INNER JOIN (
             SELECT sender, MAX(id) AS max_id
@@ -4418,6 +4472,9 @@ function fm_chat_get_inbox($recipient, $limit = 50)
             WHERE recipient = :recipient
             GROUP BY sender
         ) latest ON latest.max_id = m1.id
+        LEFT JOIN fm_chat_read_state rs
+            ON rs.username = :recipient_state
+           AND rs.peer = m1.sender
         ORDER BY m1.id DESC
         LIMIT :limit');
     if (!$stmt) {
@@ -4425,6 +4482,8 @@ function fm_chat_get_inbox($recipient, $limit = 50)
     }
 
     $stmt->bindValue(':recipient', (string) $recipient, SQLITE3_TEXT);
+    $stmt->bindValue(':recipient_unread', (string) $recipient, SQLITE3_TEXT);
+    $stmt->bindValue(':recipient_state', (string) $recipient, SQLITE3_TEXT);
     $stmt->bindValue(':limit', $limit, SQLITE3_INTEGER);
 
     $result = $stmt->execute();
@@ -4439,11 +4498,107 @@ function fm_chat_get_inbox($recipient, $limit = 50)
             'sender' => isset($row['sender']) ? (string) $row['sender'] : '',
             'message' => isset($row['message']) ? (string) $row['message'] : '',
             'created_at' => isset($row['created_at']) ? (int) $row['created_at'] : 0,
+            'last_read_id' => isset($row['last_read_id']) ? (int) $row['last_read_id'] : 0,
+            'unread_count' => isset($row['unread_count']) ? (int) $row['unread_count'] : 0,
+            'unread' => isset($row['unread_count']) ? ((int) $row['unread_count'] > 0) : false,
         );
     }
 
     $result->finalize();
     return $items;
+}
+
+function fm_chat_get_last_read_id($username, $peer)
+{
+    $db = fm_chat_get_db();
+    if (!$db) {
+        return 0;
+    }
+
+    $stmt = $db->prepare('SELECT last_read_id
+        FROM fm_chat_read_state
+        WHERE username = :username AND peer = :peer
+        LIMIT 1');
+    if (!$stmt) {
+        return 0;
+    }
+
+    $stmt->bindValue(':username', (string) $username, SQLITE3_TEXT);
+    $stmt->bindValue(':peer', (string) $peer, SQLITE3_TEXT);
+
+    $result = $stmt->execute();
+    if (!$result) {
+        return 0;
+    }
+
+    $row = $result->fetchArray(SQLITE3_ASSOC);
+    $result->finalize();
+
+    if (!is_array($row) || !isset($row['last_read_id'])) {
+        return 0;
+    }
+
+    return (int) $row['last_read_id'];
+}
+
+function fm_chat_mark_read($username, $peer, $last_read_id = 0)
+{
+    $db = fm_chat_get_db();
+    if (!$db) {
+        return false;
+    }
+
+    $username = (string) $username;
+    $peer = (string) $peer;
+    $last_read_id = (int) $last_read_id;
+    if ($username === '' || $peer === '') {
+        return false;
+    }
+
+    if ($last_read_id <= 0) {
+        $lookup = $db->prepare('SELECT MAX(id) AS max_id
+            FROM fm_chat_messages
+            WHERE sender = :peer AND recipient = :username');
+        if ($lookup) {
+            $lookup->bindValue(':peer', $peer, SQLITE3_TEXT);
+            $lookup->bindValue(':username', $username, SQLITE3_TEXT);
+            $lookup_result = $lookup->execute();
+            if ($lookup_result) {
+                $lookup_row = $lookup_result->fetchArray(SQLITE3_ASSOC);
+                if (is_array($lookup_row) && isset($lookup_row['max_id'])) {
+                    $last_read_id = (int) $lookup_row['max_id'];
+                }
+                $lookup_result->finalize();
+            }
+        }
+    }
+
+    if ($last_read_id <= 0) {
+        return true;
+    }
+
+    $current_last_read_id = fm_chat_get_last_read_id($username, $peer);
+    if ($last_read_id < $current_last_read_id) {
+        $last_read_id = $current_last_read_id;
+    }
+
+    $stmt = $db->prepare('INSERT OR REPLACE INTO fm_chat_read_state (username, peer, last_read_id, updated_at)
+        VALUES (:username, :peer, :last_read_id, :updated_at)');
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
+    $stmt->bindValue(':peer', $peer, SQLITE3_TEXT);
+    $stmt->bindValue(':last_read_id', $last_read_id, SQLITE3_INTEGER);
+    $stmt->bindValue(':updated_at', time(), SQLITE3_INTEGER);
+
+    $result = $stmt->execute();
+    if ($result) {
+        $result->finalize();
+    }
+
+    return $result !== false;
 }
 
 function fm_markdown_inline($text)

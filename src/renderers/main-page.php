@@ -660,9 +660,9 @@
                                 <?php echo lng('Reset runtime state'); ?>
                             </button>
                         <?php endif; ?>
-                        <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
+                        <button type="button" class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;" data-chat-open-unread>
                             <?php echo lng('Unread'); ?>: <span class="fm-chat-unread-count">0</span>
-                        </span>
+                        </button>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
                                 type="button"
@@ -696,9 +696,9 @@
                                 <?php echo lng('Reset runtime state'); ?>
                             </button>
                         <?php endif; ?>
-                        <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
+                        <button type="button" class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;" data-chat-open-unread>
                             <?php echo lng('Unread'); ?>: <span class="fm-chat-unread-count">0</span>
-                        </span>
+                        </button>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
                                 type="button"
@@ -1894,6 +1894,20 @@
         </div>
     </div>
 
+    <div class="modal fade" id="fm-chat-unread-modal" tabindex="-1" aria-labelledby="fm-chat-unread-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fm-chat-unread-modal-label"><?php echo lng('Unread'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="fm-chat-unread-list" class="list-group list-group-flush"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         (function () {
             var currentUser = <?php echo json_encode($footerLoggedUser); ?>;
@@ -1906,6 +1920,8 @@
             var formEl = document.getElementById('fm-chat-form');
             var inputEl = document.getElementById('fm-chat-input');
             var titleEl = document.getElementById('fm-chat-modal-label');
+            var unreadListModalEl = document.getElementById('fm-chat-unread-modal');
+            var unreadListEl = document.getElementById('fm-chat-unread-list');
             var tokenEl = document.querySelector('input[name="token"]');
             var badges = document.querySelectorAll('.fm-user-chat-badge[data-chat-user]');
             var unreadCountEls = document.querySelectorAll('.fm-chat-unread-count');
@@ -1916,12 +1932,14 @@
             }
 
             var modal = null;
+            var unreadListModal = null;
             var state = {
                 peer: '',
                 timer: null,
                 inboxTimer: null,
                 inboxInitialized: false,
                 lastIncomingBySender: {},
+                unreadInboxItems: {},
                 unreadBySender: {},
                 lastReadBySender: {},
             };
@@ -1971,8 +1989,9 @@
             function recomputeUnreadCount() {
                 var total = 0;
                 Object.keys(state.unreadBySender).forEach(function (sender) {
-                    if (state.unreadBySender[sender] > 0) {
-                        total++;
+                    var count = Number(state.unreadBySender[sender] || 0);
+                    if (count > 0) {
+                        total += count;
                     }
                 });
                 setUnreadCount(total);
@@ -1987,8 +2006,43 @@
                     state.lastReadBySender[sender] = id;
                     saveReadState();
                 }
+
+                if (state.unreadInboxItems[sender]) {
+                    state.unreadInboxItems[sender].unread_count = 0;
+                }
                 delete state.unreadBySender[sender];
                 recomputeUnreadCount();
+            }
+
+            function chatMarkRead(peer, lastId) {
+                if (!peer) {
+                    return Promise.resolve(false);
+                }
+
+                var url = new URL(window.location.href);
+                url.searchParams.set('chat_action', 'mark_read');
+
+                var body = new URLSearchParams();
+                body.set('with', peer);
+                body.set('token', tokenEl.value || '');
+                if (lastId && Number(lastId) > 0) {
+                    body.set('last_id', String(Number(lastId)));
+                }
+
+                return fetch(url.toString(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    credentials: 'same-origin',
+                    body: body.toString()
+                }).then(function (response) {
+                    return response.json();
+                }).then(function (payload) {
+                    return !!(payload && payload.ok === true);
+                }).catch(function () {
+                    return false;
+                });
             }
 
             function markBadgeRinging(user, ring) {
@@ -2043,6 +2097,109 @@
                         formEl.reset();
                     });
                 });
+            }
+
+            function openChatWithPeer(peer) {
+                if (!peer || peer === currentUser) {
+                    return;
+                }
+
+                state.peer = peer;
+                clearPeerNotification(peer);
+                titleEl.textContent = 'Chat with ' + peer;
+                historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
+                showModal();
+                chatFetch();
+                startPolling();
+            }
+
+            function renderUnreadInboxList() {
+                if (!unreadListEl) {
+                    return;
+                }
+
+                var rows = Object.keys(state.unreadInboxItems).map(function (sender) {
+                    var item = state.unreadInboxItems[sender] || {};
+                    var unreadCount = Number(item.unread_count || 0);
+                    if (unreadCount <= 0) {
+                        return null;
+                    }
+
+                    return {
+                        sender: sender,
+                        unreadCount: unreadCount,
+                        id: Number(item.id || 0),
+                        message: String(item.message || ''),
+                        createdAt: Number(item.created_at || 0)
+                    };
+                }).filter(function (item) {
+                    return !!item;
+                }).sort(function (a, b) {
+                    return b.createdAt - a.createdAt;
+                });
+
+                if (!rows.length) {
+                    unreadListEl.innerHTML = '<div class="text-muted small p-3"><?php echo fm_enc(lng('Unread')); ?>: 0</div>';
+                    return;
+                }
+
+                var html = rows.map(function (row) {
+                    return '<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start" data-chat-unread-peer="' + esc(row.sender) + '">'
+                        + '<div class="me-2">'
+                        + '<div class="fw-semibold">' + esc(row.sender) + '</div>'
+                        + '<div class="small text-muted text-truncate" style="max-width: 330px;">' + esc(row.message) + '</div>'
+                        + '<div class="small text-muted">' + esc(formatTime(row.createdAt)) + '</div>'
+                        + '</div>'
+                        + '<span class="badge text-bg-warning rounded-pill">' + String(row.unreadCount) + '</span>'
+                        + '</button>';
+                }).join('');
+
+                unreadListEl.innerHTML = html;
+                unreadListEl.querySelectorAll('[data-chat-unread-peer]').forEach(function (buttonEl) {
+                    buttonEl.addEventListener('click', function () {
+                        var peer = buttonEl.getAttribute('data-chat-unread-peer') || '';
+                        if (!peer) {
+                            return;
+                        }
+
+                        if (unreadListModal && typeof unreadListModal.hide === 'function') {
+                            unreadListModal.hide();
+                        } else if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal && unreadListModalEl) {
+                            window.jQuery(unreadListModalEl).modal('hide');
+                        } else if (unreadListModalEl) {
+                            unreadListModalEl.classList.remove('show');
+                            unreadListModalEl.style.display = 'none';
+                            unreadListModalEl.setAttribute('aria-hidden', 'true');
+                        }
+
+                        openChatWithPeer(peer);
+                    });
+                });
+            }
+
+            function showUnreadListModal() {
+                if (!unreadListModalEl || !unreadListEl) {
+                    return;
+                }
+
+                renderUnreadInboxList();
+
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    if (!unreadListModal) {
+                        unreadListModal = new window.bootstrap.Modal(unreadListModalEl);
+                    }
+                    unreadListModal.show();
+                    return;
+                }
+
+                if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+                    window.jQuery(unreadListModalEl).modal('show');
+                    return;
+                }
+
+                unreadListModalEl.style.display = 'block';
+                unreadListModalEl.classList.add('show');
+                unreadListModalEl.removeAttribute('aria-hidden');
             }
 
             function esc(value) {
@@ -2179,13 +2336,25 @@
                         }
 
                         var inbox = payload.data.inbox;
+                        state.unreadInboxItems = {};
+                        var seenSenders = {};
                         var shouldAutoOpenSender = '';
                         inbox.forEach(function (item) {
                             var sender = item && item.sender ? String(item.sender) : '';
                             var id = item && item.id ? Number(item.id) : 0;
+                            var unreadCount = item && item.unread_count ? Number(item.unread_count) : 0;
                             if (!sender || !id || sender === currentUser) {
                                 return;
                             }
+
+                            seenSenders[sender] = true;
+                            state.unreadInboxItems[sender] = {
+                                id: id,
+                                sender: sender,
+                                message: item && item.message ? String(item.message) : '',
+                                created_at: item && item.created_at ? Number(item.created_at) : 0,
+                                unread_count: unreadCount,
+                            };
 
                             var prev = Number(state.lastIncomingBySender[sender] || 0);
                             if (id > prev) {
@@ -2196,16 +2365,15 @@
                                     markBadgeRinging(sender, false);
                                     markSenderRead(sender, id);
                                 } else {
-                                    if (state.inboxInitialized && !state.peer && !shouldAutoOpenSender) {
+                                    if (unreadCount > 0 && state.inboxInitialized && !state.peer && !shouldAutoOpenSender) {
                                         shouldAutoOpenSender = sender;
                                     }
                                 }
                             }
 
                             if (state.peer !== sender) {
-                                var currentReadId = Number(state.lastReadBySender[sender] || 0);
-                                if (id > currentReadId) {
-                                    state.unreadBySender[sender] = id;
+                                if (unreadCount > 0) {
+                                    state.unreadBySender[sender] = unreadCount;
                                     markBadgeRinging(sender, true);
                                 } else {
                                     delete state.unreadBySender[sender];
@@ -2214,16 +2382,18 @@
                             }
                         });
 
+                        Object.keys(state.unreadBySender).forEach(function (sender) {
+                            if (!seenSenders[sender]) {
+                                delete state.unreadBySender[sender];
+                                markBadgeRinging(sender, false);
+                            }
+                        });
+
                         state.inboxInitialized = true;
                         recomputeUnreadCount();
 
                         if (shouldAutoOpenSender) {
-                            state.peer = shouldAutoOpenSender;
-                            titleEl.textContent = 'Chat with ' + shouldAutoOpenSender;
-                            historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
-                            showModal();
-                            chatFetch();
-                            startPolling();
+                            openChatWithPeer(shouldAutoOpenSender);
                         }
                     })
                     .catch(function () {
@@ -2246,22 +2416,20 @@
                 var lastIncoming = Number(state.lastIncomingBySender[peer] || 0);
                 if (lastIncoming > 0) {
                     markSenderRead(peer, lastIncoming);
+                    chatMarkRead(peer, lastIncoming);
                 }
             }
 
             badges.forEach(function (badge) {
                 badge.addEventListener('click', function () {
                     var peer = badge.getAttribute('data-chat-user') || '';
-                    if (!peer || peer === currentUser) {
-                        return;
-                    }
-                    state.peer = peer;
-                    clearPeerNotification(peer);
-                    titleEl.textContent = 'Chat with ' + peer;
-                    historyEl.innerHTML = '<div class="text-muted small p-2">Loading...</div>';
-                    showModal();
-                    chatFetch();
-                    startPolling();
+                    openChatWithPeer(peer);
+                });
+            });
+
+            unreadBadgeEls.forEach(function (badgeEl) {
+                badgeEl.addEventListener('click', function () {
+                    showUnreadListModal();
                 });
             });
 

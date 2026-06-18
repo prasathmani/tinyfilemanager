@@ -323,14 +323,14 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 1. Definovať root priečinok používateľa.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 3. Zobraziť `Späť` + breadcrumb nadradenej cesty; používateľský root označiť ako `Domov`. --- HOTOVO, nasadená a ručne overená verzia 3.0.22
-4. Navrhnúť a implementovať stromovú štruktúru priečinkov.
-5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa. --- HOTOVO, nasadená a ručne overená verzia 3.1.2
+4. Navrhnúť a implementovať stromovú štruktúru priečinkov. --- HOTOVO, nasadená a ručne overená verzia 3.1.2; následne UX doladenie vo verzii 3.1.6 (kompaktnejší strom, resize panel, oprava copy/move kontextu z riadku/plávajúcej lišty).
+5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa. --- HOTOVO, nasadená a ručne overená verzia 3.1.2; hranice rootu a kontext akcií priebežne dotiahnuté vo verzii 3.1.6.
 
 ### Fáza D – komunikácia, UI a jazyk
 
 1. Zobraziť verziu vo footeri. --- IMPLEMENTOVANÉ A OTESTOVANÉ
 2. Opraviť slovenské preklady. --- IMPLEMENTOVANÉ A OTESTOVANÉ HOTOVO, nasadená a ručne overená verzia 3.1.5
-3. Opraviť evidenciu neprečítaných správ a klikateľný odznak.
+3. Opraviť evidenciu neprečítaných správ a klikateľný odznak. --- ROZPRACOVANÉ
 4. Upraviť tmavý režim chatu.
 5. Upraviť header tlačidlá na ikonové.
 6. Upraviť veľkosť loga v mobilnom zobrazení.
