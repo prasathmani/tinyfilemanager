@@ -1867,6 +1867,80 @@
             animation: fm-chat-ring-blink 0.85s steps(2, jump-none) infinite;
         }
 
+        .fm-chat-history {
+            background: var(--bs-body-bg);
+            color: var(--bs-body-color);
+        }
+
+        .fm-chat-bubble {
+            border: 1px solid transparent;
+            max-width: 75%;
+        }
+
+        .fm-chat-bubble--mine {
+            background: var(--bs-primary);
+            color: #fff;
+        }
+
+        .fm-chat-bubble--theirs {
+            background: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            border-color: rgba(120, 130, 150, 0.28);
+        }
+
+        .fm-chat-unread-list .list-group-item {
+            background: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            border-color: rgba(120, 130, 150, 0.22);
+        }
+
+        .fm-chat-unread-list .list-group-item:hover,
+        .fm-chat-unread-list .list-group-item:focus {
+            background: rgba(13, 110, 253, 0.08);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-modal .modal-content,
+        html[data-bs-theme="dark"] .fm-chat-unread-modal .modal-content {
+            background: #1f2328;
+            color: #e7edf5;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-modal .modal-header,
+        html[data-bs-theme="dark"] .fm-chat-modal .modal-footer,
+        html[data-bs-theme="dark"] .fm-chat-unread-modal .modal-header {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-history {
+            background: #1f2328;
+            color: #e7edf5;
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-bubble--theirs {
+            background: #2a3037;
+            color: #e7edf5;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-bubble--mine {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-unread-list .list-group-item {
+            background: #1f2328;
+            color: #e7edf5;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html[data-bs-theme="dark"] .fm-chat-unread-list .list-group-item:hover,
+        html[data-bs-theme="dark"] .fm-chat-unread-list .list-group-item:focus {
+            background: rgba(110, 162, 255, 0.16);
+            color: #e7edf5;
+        }
+
         @keyframes fm-chat-ring-blink {
             50% {
                 opacity: 0.35;
@@ -1874,7 +1948,7 @@
         }
     </style>
 
-    <div class="modal fade" id="fm-chat-modal" tabindex="-1" aria-labelledby="fm-chat-modal-label" aria-hidden="true">
+    <div class="modal fade fm-chat-modal" id="fm-chat-modal" tabindex="-1" aria-labelledby="fm-chat-modal-label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1882,7 +1956,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <div id="fm-chat-history" class="p-3" style="max-height: 420px; overflow-y: auto;"></div>
+                    <div id="fm-chat-history" class="p-3 fm-chat-history" style="max-height: 420px; overflow-y: auto;"></div>
                 </div>
                 <div class="modal-footer">
                     <form id="fm-chat-form" class="w-100 d-flex gap-2 m-0">
@@ -1894,7 +1968,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="fm-chat-unread-modal" tabindex="-1" aria-labelledby="fm-chat-unread-modal-label" aria-hidden="true">
+    <div class="modal fade fm-chat-unread-modal" id="fm-chat-unread-modal" tabindex="-1" aria-labelledby="fm-chat-unread-modal-label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1902,7 +1976,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <div id="fm-chat-unread-list" class="list-group list-group-flush"></div>
+                    <div id="fm-chat-unread-list" class="list-group list-group-flush fm-chat-unread-list"></div>
                 </div>
             </div>
         </div>
@@ -2227,7 +2301,7 @@
                 var html = messages.map(function (msg) {
                     var mine = msg.sender === currentUser;
                     var align = mine ? 'justify-content-end' : 'justify-content-start';
-                    var bubble = mine ? 'bg-primary text-white' : 'bg-light border';
+                    var bubble = mine ? 'fm-chat-bubble fm-chat-bubble--mine' : 'fm-chat-bubble fm-chat-bubble--theirs';
                     return '<div class="d-flex ' + align + ' mb-2">'
                         + '<div class="rounded px-3 py-2 ' + bubble + '" style="max-width: 75%;">'
                         + '<div class="small fw-semibold mb-1">' + esc(msg.sender || '') + '</div>'

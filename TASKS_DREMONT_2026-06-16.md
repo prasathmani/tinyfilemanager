@@ -330,7 +330,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 
 1. Zobraziť verziu vo footeri. --- IMPLEMENTOVANÉ A OTESTOVANÉ
 2. Opraviť slovenské preklady. --- IMPLEMENTOVANÉ A OTESTOVANÉ HOTOVO, nasadená a ručne overená verzia 3.1.5
-3. Opraviť evidenciu neprečítaných správ a klikateľný odznak. --- ROZPRACOVANÉ
+3. Opraviť evidenciu neprečítaných správ a klikateľný odznak. --- HOTOVO, nasadená a ručne overená verzia 3.1.7
 4. Upraviť tmavý režim chatu.
 5. Upraviť header tlačidlá na ikonové.
 6. Upraviť veľkosť loga v mobilnom zobrazení.
