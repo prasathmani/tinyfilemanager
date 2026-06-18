@@ -1212,6 +1212,21 @@ defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
 $fm_current_abs_path = FM_ROOT_PATH . (FM_PATH != '' ? '/' . FM_PATH : '');
 if (!FM_IS_ADMIN && !fm_is_within_navigation_home($fm_current_abs_path)) {
+    $fm_home_relative = fm_clean_path((string) fm_get_navigation_home_root());
+    $fm_candidate_path = '';
+
+    if ($fm_home_relative !== '' && FM_PATH !== '' && strpos(FM_PATH . '/', $fm_home_relative . '/') !== 0) {
+        $fm_candidate_path = fm_clean_path($fm_home_relative . '/' . FM_PATH);
+        $fm_candidate_abs_path = FM_ROOT_PATH . ($fm_candidate_path !== '' ? '/' . $fm_candidate_path : '');
+
+        if (fm_is_within_navigation_home($fm_candidate_abs_path)
+            && fm_user_can_access_path($fm_candidate_abs_path, true)
+            && @is_dir($fm_candidate_abs_path)
+        ) {
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode($fm_candidate_path));
+        }
+    }
+
     $fm_fallback_path = fm_get_navigation_home_root();
     fm_set_msg('Access denied. Home root boundary applicable.', 'error');
     fm_redirect(FM_SELF_URL . '?p=' . urlencode($fm_fallback_path));

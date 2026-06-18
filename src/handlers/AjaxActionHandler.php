@@ -155,6 +155,17 @@ class TFM_AjaxActionHandler {
             $navigation_home = fm_get_navigation_home_root();
             if ($requested_path === '') {
                 $requested_path = $navigation_home;
+            } elseif ($navigation_home !== '' && strpos($requested_path . '/', $navigation_home . '/') !== 0) {
+                $candidate_path = fm_clean_path($navigation_home . '/' . $requested_path);
+                $candidate_abs_path = rtrim(str_replace('\\', '/', (string) FM_ROOT_PATH), '/')
+                    . ($candidate_path !== '' ? '/' . $candidate_path : '');
+
+                if (fm_is_within_navigation_home($candidate_abs_path)
+                    && fm_user_can_access_path($candidate_abs_path, true)
+                    && @is_dir($candidate_abs_path)
+                ) {
+                    $requested_path = $candidate_path;
+                }
             }
 
             $response = function_exists('fm_search_index_get_child_directories')
