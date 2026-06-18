@@ -614,7 +614,8 @@
     <div class="row fm-footer-tools-row">
         <?php
         $footerLoggedUser = (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
-        $footerShowUserBadges = !empty($footerLoggedUser) && (FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY));
+        // Chat availability is role-agnostic: every logged-in user can communicate.
+        $footerShowUserBadges = !empty($footerLoggedUser);
         $footerOnlineUsers = $footerShowUserBadges ? fm_online_get_users() : array();
         $footerReleaseVersion = fm_get_release_version();
         if ($footerReleaseVersion === '' || $footerReleaseVersion === 'dev') {

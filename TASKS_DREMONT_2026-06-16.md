@@ -342,6 +342,10 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 2. Navrhnúť funkcie podľa kliknutého objektu.
 3. Dopĺňať pokročilé používateľské akcie postupne, bez veľkého refactoru. --- HOTOVO, nasadená a ručne overená verzia 3.1.10
 
+### Fáza F – podnety z praxe
+
+1. Sprístupniť komunikáciu každému prihlásenému používateľovi bez rozdielu oprávnení (read-only, upload-only, manager, admin). --- IMPLEMENTOVANÉ A OTESTOVANÉ
+
 ---
 
 ## 4. Technická zásada
