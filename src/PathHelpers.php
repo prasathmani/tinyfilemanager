@@ -81,6 +81,59 @@ function fm_get_user_default_path()
 }
 
 /**
+ * Get navigation home root relative to FM_ROOT_PATH.
+ * For admin it is always FM_ROOT_PATH itself (empty relative path).
+ * For regular users it prefers configured shared home root and falls back
+ * to the legacy first allowed directory behavior.
+ *
+ * @return string
+ */
+function fm_get_navigation_home_root()
+{
+    if (defined('FM_IS_ADMIN') && FM_IS_ADMIN) {
+        return '';
+    }
+
+    $configured_home = '';
+    if (defined('FM_USER_HOME_ROOT')) {
+        $configured_home = fm_clean_path((string) FM_USER_HOME_ROOT);
+    }
+
+    if ($configured_home !== '') {
+        return $configured_home;
+    }
+
+    return fm_get_user_default_path();
+}
+
+/**
+ * Check whether an absolute path is within the navigation home boundary.
+ *
+ * @param string $absolute_path
+ * @return bool
+ */
+function fm_is_within_navigation_home($absolute_path)
+{
+    $absolute_path = rtrim(str_replace('\\', '/', (string) $absolute_path), '/');
+    if ($absolute_path === '') {
+        return false;
+    }
+
+    $home_relative = fm_get_navigation_home_root();
+    if ($home_relative === '') {
+        return true;
+    }
+
+    $root_path = rtrim(str_replace('\\', '/', (string) FM_ROOT_PATH), '/');
+    if ($root_path === '') {
+        return false;
+    }
+
+    $home_absolute = $root_path . '/' . ltrim($home_relative, '/');
+    return fm_is_path_inside($absolute_path, $home_absolute);
+}
+
+/**
  * Path traversal prevention and clean the URL.
  * It replaces occurrences of / and \\ with DIRECTORY_SEPARATOR and resolves . and .. segments.
  *
@@ -242,50 +295,55 @@ function fm_is_exclude_items($name, $path)
  */
 function fm_build_breadcrumb_segments($current_path)
 {
-    // Get user's effective root
-    $user_default_path = fm_get_user_default_path();
-    
-    // If at root directory, return empty (no breadcrumb shown)
     $current_path = fm_clean_path($current_path);
-    if ($current_path === $user_default_path || $current_path === '') {
+    $home_path = fm_get_navigation_home_root();
+
+    if ($current_path === '' || $current_path === $home_path) {
         return array();
     }
-    
+
+    if ($home_path !== '' && strpos($current_path . '/', $home_path . '/') !== 0) {
+        return array();
+    }
+
+    $relative_to_home = $home_path === ''
+        ? $current_path
+        : ltrim(substr($current_path, strlen($home_path)), '/');
+    if ($relative_to_home === '') {
+        return array();
+    }
+
     $breadcrumbs = array();
-    
-    // First breadcrumb is "Home" pointing to user's root
+
     $breadcrumbs[] = array(
         'label' => lng('Home'),
-        'path' => $user_default_path,
+        'path' => $home_path,
         'is_root' => true,
     );
-    
-    // Parse current path into segments
-    $segments = array_filter(explode('/', $current_path), 'strlen');
+
+    $segments = array_filter(explode('/', $relative_to_home), 'strlen');
     if (empty($segments)) {
         return $breadcrumbs;
     }
-    
-    // Build intermediate path segments (all except the last one)
-    $path_so_far = '';
+
+    $path_so_far = $home_path;
     $segment_count = count($segments);
-    
+
     for ($i = 0; $i < $segment_count - 1; $i++) {
         $segment = $segments[$i];
         $path_so_far = trim($path_so_far . '/' . $segment, '/');
-        
-        // Verify user has access to this path
+
         $absolute_path = FM_ROOT_PATH . (FM_ROOT_PATH !== '' && $path_so_far !== '' ? '/' . $path_so_far : '');
         if (!fm_user_can_access_path($absolute_path, false)) {
             continue;
         }
-        
+
         $breadcrumbs[] = array(
             'label' => fm_enc($segment),
             'path' => $path_so_far,
             'is_root' => false,
         );
     }
-    
+
     return $breadcrumbs;
 }

@@ -64,6 +64,10 @@ $global_readonly = false;
 // array('Username' => 'Directory path', 'Username2' => array('Dir1', 'Dir2'), ...)
 $directories_users = array();
 
+// Shared home root for regular users (relative to $root_path or absolute path).
+// This is the UI/Navigation "Home" boundary for non-admin users.
+$user_home_root = '';
+
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 
@@ -713,6 +717,18 @@ if (!@is_dir($root_path)) {
     exit;
 }
 
+$fm_user_home_root = '';
+if (isset($user_home_root) && is_string($user_home_root) && trim($user_home_root) !== '') {
+    $home_candidate = str_replace('\\', '/', trim($user_home_root));
+    $home_is_absolute = preg_match('/^(?:[a-zA-Z]:\/|\/)/', $home_candidate) === 1;
+    $home_absolute = $home_is_absolute ? $home_candidate : ($root_path . '/' . ltrim($home_candidate, '/'));
+    $home_absolute = rtrim(str_replace('\\', '/', $home_absolute), '/');
+
+    if (fm_is_path_inside($home_absolute, $root_path)) {
+        $fm_user_home_root = fm_clean_path(ltrim(substr($home_absolute, strlen($root_path)), '/'));
+    }
+}
+
 // build per-user allowed directory list (optional restrictions)
 if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'], $directories_users[$_SESSION[FM_SESSION_ID]['logged']])) {
     $user_dirs = $directories_users[$_SESSION[FM_SESSION_ID]['logged']];
@@ -761,6 +777,7 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'], $directories_users[$_
 
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
+defined('FM_USER_HOME_ROOT') || define('FM_USER_HOME_ROOT', $fm_user_home_root);
 if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
     fm_search_index_auto_bootstrap(true, 'authenticated_request');
 } elseif (!$use_auth) {
@@ -788,7 +805,7 @@ define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 if (!isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
     $default_path = '';
     if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
-        $candidate_default_path = fm_get_user_default_path();
+        $candidate_default_path = fm_get_navigation_home_root();
         if ($candidate_default_path !== '') {
             $candidate_absolute_path = rtrim(FM_ROOT_PATH, '/\\') . '/' . ltrim($candidate_default_path, '/');
             if (fm_user_can_access_path($candidate_absolute_path, true)) {
@@ -805,7 +822,7 @@ if (!isset($_GET['p']) && !isset($_GET['help_doc']) && empty($_FILES)) {
 if (isset($_GET['p']) && count($_GET) === 1 && !isset($_GET['help_doc']) && empty($_FILES) && fm_clean_path((string) $_GET['p']) === '') {
     $default_path = '';
     if ($use_auth && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
-        $candidate_default_path = fm_get_user_default_path();
+        $candidate_default_path = fm_get_navigation_home_root();
         if ($candidate_default_path !== '') {
             $candidate_absolute_path = rtrim(FM_ROOT_PATH, '/\\') . '/' . ltrim($candidate_default_path, '/');
             if (fm_user_can_access_path($candidate_absolute_path, true)) {
@@ -1194,8 +1211,13 @@ defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_s
 defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
 $fm_current_abs_path = FM_ROOT_PATH . (FM_PATH != '' ? '/' . FM_PATH : '');
+if (!FM_IS_ADMIN && !fm_is_within_navigation_home($fm_current_abs_path)) {
+    $fm_fallback_path = fm_get_navigation_home_root();
+    fm_set_msg('Access denied. Home root boundary applicable.', 'error');
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode($fm_fallback_path));
+}
 if (!fm_user_can_access_path($fm_current_abs_path, true)) {
-    $fm_fallback_path = fm_get_user_default_path();
+    $fm_fallback_path = fm_get_navigation_home_root();
     fm_set_msg('Access denied. Path restriction applicable.', 'error');
     fm_redirect(FM_SELF_URL . '?p=' . urlencode($fm_fallback_path));
 }

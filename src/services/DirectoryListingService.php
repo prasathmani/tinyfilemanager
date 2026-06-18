@@ -30,7 +30,7 @@ class TFM_DirectoryListingService {
         $parent = fm_get_parent_path($this->current_path);
         if ($parent !== false) {
             $parent_path = $this->root_path . ($parent !== '' ? '/' . $parent : '');
-            if (!fm_user_can_access_path($parent_path, true)) {
+            if (!fm_user_can_access_path($parent_path, true) || !fm_is_within_navigation_home($parent_path)) {
                 $parent = false;
             }
         }

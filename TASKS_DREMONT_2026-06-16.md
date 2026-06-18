@@ -314,6 +314,8 @@ V integrovanej administrátorskej stránke Správcu používateľov chýba zrete
 
 ### Fáza C – navigácia a strom priečinkov
 
+Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používateľov. Používateľské allowed_dirs určujú iba viditeľné a prístupné vetvy v rámci Domov; pridelený priečinok používateľa sa nestáva jeho Domov. Admin môže mať samostatne nakonfigurovaný širší root.
+
 1. Definovať root priečinok používateľa.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 3. Zobraziť `Späť` + breadcrumb nadradenej cesty; používateľský root označiť ako `Domov`.

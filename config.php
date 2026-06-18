@@ -66,5 +66,9 @@ $directories_users = array(
     'znava' => __DIR__ . '/Mirko/',
 );
 
+// Shared navigation home for regular users (relative to $root_path).
+// Allowed directories still only filter what each user can see/open inside this home.
+$user_home_root = 'Mirko';
+
 $user_notes = array(
 );

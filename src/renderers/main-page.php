@@ -89,7 +89,7 @@
                         <td class="nosort"></td><?php endif; ?>
                     <td class="border-0 fm-col-name" data-sort>
                         <?php if (!empty($breadcrumbs)): ?>
-                            <a href="?p=<?php echo urlencode($breadcrumbs[0]['path']); ?>" class="fm-parent-nav-link fm-breadcrumb-back" title="<?php echo lng('Back'); ?>">
+                            <a href="?p=<?php echo urlencode($parent); ?>" class="fm-parent-nav-link fm-breadcrumb-back" title="<?php echo lng('Back'); ?>">
                                 <span class="fm-parent-nav-icon" aria-hidden="true"><i class="fa fa-arrow-left"></i></span>
                                 <span class="fm-parent-nav-text"><?php echo lng('Back'); ?></span>
                                 <span class="fm-breadcrumb-content">
