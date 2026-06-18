@@ -52,34 +52,15 @@ function fm_show_nav_path($path)
 
             <?php
             $path = fm_clean_path($path);
-            $virtual_root_enabled = false;
-            $virtual_root_relative = '';
-            $virtual_root_label = lng('VirtualRootLabel');
-
-            if (defined('FM_USE_AUTH') && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) {
-                $navigation_home = fm_get_navigation_home_root();
-                if ($navigation_home !== '' && !FM_IS_ADMIN) {
-                    $virtual_root_enabled = true;
-                    $virtual_root_relative = $navigation_home;
-                }
-            }
-
-            if ($virtual_root_enabled) {
-                $home_target = urlencode($virtual_root_relative);
-                $root_url = "<a href='?p={$home_target}'>" . fm_enc($virtual_root_label) . "</a>";
-            } else {
-                $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
-            }
+            $navigation_home = fm_get_navigation_home_root();
+            $home_target = urlencode($navigation_home);
+            $root_url = "<a href='?p={$home_target}'>" . fm_enc(fm_get_navigation_home_label()) . "</a>";
             $sep = '<i class="bread-crumb"> / </i>';
             $display_path = $path;
-            if ($virtual_root_enabled && $display_path !== '') {
-                if ($display_path === $virtual_root_relative) {
-                    $display_path = '';
-                } elseif (strpos($display_path . '/', $virtual_root_relative . '/') === 0) {
-                    $display_path = ltrim(substr($display_path, strlen($virtual_root_relative)), '/');
-                } else {
-                    $virtual_root_enabled = false;
-                }
+            if (fm_is_navigation_home($display_path)) {
+                $display_path = '';
+            } elseif ($navigation_home !== '' && strpos($display_path . '/', $navigation_home . '/') === 0) {
+                $display_path = ltrim(substr($display_path, strlen($navigation_home)), '/');
             }
 
             if ($display_path != '') {
@@ -89,7 +70,7 @@ function fm_show_nav_path($path)
                 $parent = '';
                 for ($i = 0; $i < $count; $i++) {
                     $parent = trim($parent . '/' . $exploded[$i], '/');
-                    $target_path = $virtual_root_enabled ? trim($virtual_root_relative . '/' . $parent, '/') : $parent;
+                    $target_path = $navigation_home !== '' ? trim($navigation_home . '/' . $parent, '/') : $parent;
                     $parent_enc = urlencode($target_path);
                     $array[] = "<a href='?p={$parent_enc}'>" . fm_enc(fm_convert_win($exploded[$i])) . "</a>";
                 }

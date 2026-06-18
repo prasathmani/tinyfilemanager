@@ -107,6 +107,29 @@ function fm_get_navigation_home_root()
 }
 
 /**
+ * Get user-facing navigation home label.
+ *
+ * @return string
+ */
+function fm_get_navigation_home_label()
+{
+    return (string) lng('Home');
+}
+
+/**
+ * Check if a relative path points exactly to navigation home.
+ *
+ * @param string $path
+ * @return bool
+ */
+function fm_is_navigation_home($path)
+{
+    $normalized_path = fm_clean_path((string) $path);
+    $home_path = fm_clean_path((string) fm_get_navigation_home_root());
+    return $normalized_path === $home_path;
+}
+
+/**
  * Check whether an absolute path is within the navigation home boundary.
  *
  * @param string $absolute_path

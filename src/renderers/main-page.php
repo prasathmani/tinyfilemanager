@@ -31,22 +31,33 @@
         <?php endif; ?>
     </div>
     <div class="fm-explorer-layout">
+        <?php
+        $fm_navigation_home = fm_get_navigation_home_root();
+        $fm_on_navigation_home = fm_is_navigation_home(FM_PATH);
+        $fm_sidebar_path_text = fm_enc('/' . ltrim((string) FM_PATH, '/'));
+        if ($fm_on_navigation_home) {
+            $fm_sidebar_path_text = fm_enc(fm_get_navigation_home_label());
+        } elseif ($fm_navigation_home !== '' && strpos((FM_PATH . '/'), ($fm_navigation_home . '/')) === 0) {
+            $fm_relative_sidebar = ltrim(substr((string) FM_PATH, strlen($fm_navigation_home)), '/');
+            $fm_sidebar_path_text = fm_enc(fm_get_navigation_home_label() . ($fm_relative_sidebar !== '' ? ' / ' . $fm_relative_sidebar : ''));
+        }
+        ?>
         <aside class="fm-folder-sidebar" aria-label="Priecinky">
             <div class="fm-folder-sidebar__title">Priecinky</div>
-            <div class="fm-folder-sidebar__path" title="<?php echo fm_enc('/' . ltrim((string) FM_PATH, '/')); ?>">
+            <div class="fm-folder-sidebar__path" title="<?php echo $fm_sidebar_path_text; ?>">
                 <i class="fa fa-folder-open-o" aria-hidden="true"></i>
-                <span><?php echo fm_enc('/' . ltrim((string) FM_PATH, '/')); ?></span>
+                <span><?php echo $fm_sidebar_path_text; ?></span>
             </div>
             <div class="fm-folder-sidebar__list" role="navigation" aria-label="Rychla navigacia priecinkov">
-                <?php if ($parent !== false): ?>
+                <?php if ($parent !== false && !$fm_on_navigation_home): ?>
                     <a class="fm-folder-link fm-folder-link--parent" href="?p=<?php echo urlencode($parent); ?>" title="Prejst o uroven vyssie">
                         <i class="fa fa-level-up" aria-hidden="true"></i>
                         <span>..</span>
                     </a>
                 <?php endif; ?>
-                <a class="fm-folder-link" href="?p=" title="Prejst na root">
+                <a class="fm-folder-link" href="?p=<?php echo urlencode($fm_navigation_home); ?>" title="<?php echo fm_enc(fm_get_navigation_home_label()); ?>">
                     <i class="fa fa-home" aria-hidden="true"></i>
-                    <span>Root</span>
+                    <span><?php echo fm_enc(fm_get_navigation_home_label()); ?></span>
                 </a>
                 <?php if (!empty($folders)): ?>
                     <?php foreach ($folders as $navFolder): ?>
@@ -82,7 +93,7 @@
                 </tr>
             </thead>
             <?php
-            if ($parent !== false) {
+            if ($parent !== false && !fm_is_navigation_home(FM_PATH)) {
                 $breadcrumbs = fm_build_breadcrumb_segments(FM_PATH);
             ?>
                 <tr class="fm-parent-row"><?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
