@@ -334,7 +334,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 4. Upraviť tmavý režim chatu. --- HOTOVO, nasadená a ručne overená verzia 3.1.8
 5. Upraviť header tlačidlá na ikonové. --- HOTOVO (implementované, používateľsky overené)
 6. Upraviť veľkosť loga v mobilnom zobrazení. --- HOTOVO (implementované, používateľsky overené)
-7. Doplniť tlačidlo `Zatvoriť` / `Cancel` v Správcovi používateľov. --- IMPLEMENTOVANÉ A OTESTOVANÉ
+7. Doplniť tlačidlo `Zatvoriť` / `Cancel` v Správcovi používateľov. --- HOTOVO, nasadená a ručne overená verzia 3.1.9
 
 ### Fáza E – budúce rozšírenia
 
