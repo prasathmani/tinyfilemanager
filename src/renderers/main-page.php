@@ -615,6 +615,11 @@
         $footerLoggedUser = (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
         $footerShowUserBadges = !empty($footerLoggedUser) && (FM_MANAGER || (!FM_READONLY && !FM_UPLOAD_ONLY));
         $footerOnlineUsers = $footerShowUserBadges ? fm_online_get_users() : array();
+        $footerReleaseVersion = fm_get_release_version();
+        if ($footerReleaseVersion === '' || $footerReleaseVersion === 'dev') {
+            $footerReleaseVersion = (string) VERSION;
+        }
+        $footerBuildLabel = 'tinyfilemanager DREMONT v' . $footerReleaseVersion;
         if ($footerShowUserBadges && empty($footerOnlineUsers)) {
             $footerOnlineUsers = array($footerLoggedUser);
         }
@@ -649,11 +654,11 @@
                                 type="button"
                                 class="badge border-0 text-bg-danger js-reset-runtime-state"
                             >
-                                Reset cache + pripojenia
+                                <?php echo lng('Reset runtime state'); ?>
                             </button>
                         <?php endif; ?>
                         <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
-                            Neprecitane: <span class="fm-chat-unread-count">0</span>
+                            <?php echo lng('Unread'); ?>: <span class="fm-chat-unread-count">0</span>
                         </span>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
@@ -667,7 +672,7 @@
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted d-inline-block text-sm-end w-100">Tiny File Manager <?php echo VERSION; ?></a>
+                    <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted d-inline-block text-sm-end w-100"><?php echo fm_enc($footerBuildLabel); ?></a>
                 <?php endif; ?>
             </div>
         <?php else: ?>
@@ -680,11 +685,11 @@
                                 type="button"
                                 class="badge border-0 text-bg-danger js-reset-runtime-state"
                             >
-                                Reset cache + pripojenia
+                                <?php echo lng('Reset runtime state'); ?>
                             </button>
                         <?php endif; ?>
                         <span class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;">
-                            Neprecitane: <span class="fm-chat-unread-count">0</span>
+                            <?php echo lng('Unread'); ?>: <span class="fm-chat-unread-count">0</span>
                         </span>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
@@ -698,7 +703,7 @@
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted">Tiny File Manager <?php echo VERSION; ?></a>
+                    <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

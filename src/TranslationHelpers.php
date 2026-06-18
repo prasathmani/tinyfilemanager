@@ -109,6 +109,9 @@ function lng($txt)
     $tr['en']['FullSize']       = 'Full Size';
     $tr['en']['HideColumns']        = 'Hide Perms/Owner columns';
     $tr['en']['Online users']       = 'Online users';
+    $tr['en']['Unread']             = 'Unread';
+    $tr['en']['Reset runtime state'] = 'Reset cache + connections';
+    $tr['en']['Version']            = 'Version';
     $tr['en']['Some internal options are available only for managers'] = 'Some internal options are available only for managers';
     $tr['en']['Change Password']    = 'Change Password';
     $tr['en']['Current password']   = 'Current password';

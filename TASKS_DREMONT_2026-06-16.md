@@ -328,8 +328,8 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 
 ### Fáza D – komunikácia, UI a jazyk
 
-1. Zobraziť verziu vo footeri.
-2. Opraviť slovenské preklady.
+1. Zobraziť verziu vo footeri. --- IMPLEMENTOVANÉ A OTESTOVANÉ
+2. Opraviť slovenské preklady. --- IMPLEMENTOVANÉ A OTESTOVANÉ
 3. Opraviť evidenciu neprečítaných správ a klikateľný odznak.
 4. Upraviť tmavý režim chatu.
 5. Upraviť header tlačidlá na ikonové.

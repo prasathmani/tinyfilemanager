@@ -689,7 +689,7 @@ if ($use_auth) {
                             &mdash;&mdash; &copy;
                             <a href="<?php echo LOGIN_COMPANY_URL; ?>" target="_blank" class="text-decoration-none text-muted" data-version="<?php echo VERSION; ?>"><?php echo LOGIN_COMPANY_NAME; ?></a> &mdash;&mdash;
                             <div class="login-version">
-                                Verzia: <?php echo htmlspecialchars(fm_get_release_version(), ENT_QUOTES, 'UTF-8'); ?>
+                                <?php echo lng('Version'); ?>: <?php echo htmlspecialchars(fm_get_release_version(), ENT_QUOTES, 'UTF-8'); ?>
                             </div>
                         </div>
                     </div>
