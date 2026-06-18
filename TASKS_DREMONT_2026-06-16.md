@@ -3,7 +3,7 @@
 **Dátum predstavenia:** 16.06.2026  
 **Projekt:** DREMONT – tinyfilemanager  
 **Repozitár:** https://github.com/slapiar/tinyfilemanager  
-**Aktuálna pracovná verzia:** 3.0.18  
+**Aktuálna pracovná verzia:** 3.0.22  
 **Kontext:** Prvé predstavenie riešenia vo firme DREMONT počas údržby počítačov účtovníčky. Riešenie bolo osobitne predstavené dvom prítomným manažérom.
 
 ---
@@ -73,7 +73,9 @@ V navigácii smerom nahor sa zobrazuje text bez diakritiky:
 - jednotlivé priečinky v zobrazenej nadradenej ceste majú byť klikateľné a musia rešpektovať oprávnenia používateľa,
 - texty `Späť` a `Domov` riešiť cez existujúci prekladový systém, nie natvrdo iba pre slovenčinu.
 
-**Priorita:** P2 – stredná
+**Aktuálny stav:** --- HOTOVO, nasadená a ručne overená verzia 3.0.22. Spoločný používateľský koreň sa vo všetkých navigačných miestach zobrazuje ako `Domov`, technický názov rootu sa bežnému používateľovi nezobrazuje, na úrovni Domov sa nezobrazuje `Späť` ani `..` a v podriadených priečinkoch smeruje `Späť` vždy na bezprostredného rodiča. Adminovi zostáva zachovaný jeho širší nakonfigurovaný root.
+
+**Priorita:** P2 – splnené
 
 ---
 
@@ -318,7 +320,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 
 1. Definovať root priečinok používateľa.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
 2. Upraviť zobrazovanie rootu ako `Adresár:` / `Root`.--- HOTOVO, nasadená a ručne overená verzia 3.0.18,
-3. Zobraziť `Späť` + breadcrumb nadradenej cesty; používateľský root označiť ako `Domov`.
+3. Zobraziť `Späť` + breadcrumb nadradenej cesty; používateľský root označiť ako `Domov`. --- HOTOVO, nasadená a ručne overená verzia 3.0.22
 4. Navrhnúť a implementovať stromovú štruktúru priečinkov.
 5. Zabezpečiť, aby strom rešpektoval oprávnenia používateľa.
 
