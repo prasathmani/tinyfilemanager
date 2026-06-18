@@ -118,11 +118,6 @@ body.theme-dark .main-nav .fm-brand-logo-dark {
   display: inline-block !important;
 }
 
-html[data-bs-theme="dark"] .main-nav .fm-header-icon-link .fa,
-body.theme-dark .main-nav .fm-header-icon-link .fa {
-  filter: invert(1);
-}
-
 #wrapper {
   padding-bottom: 18px;
 }
