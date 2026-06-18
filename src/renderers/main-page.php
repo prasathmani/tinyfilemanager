@@ -620,6 +620,8 @@
             $footerReleaseVersion = (string) VERSION;
         }
         $footerBuildLabel = 'tinyfilemanager DREMONT v' . $footerReleaseVersion;
+        $footerCopyrightYear = (int) date('Y');
+        $footerCopyrightLabel = '©' . $footerCopyrightYear . ' slapiar';
         if ($footerShowUserBadges && empty($footerOnlineUsers)) {
             $footerOnlineUsers = array($footerLoggedUser);
         }
@@ -671,9 +673,13 @@
                             </button>
                         <?php endforeach; ?>
                         <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted ms-sm-2 fm-footer-copyright"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community</span>
                     </div>
                 <?php else: ?>
-                    <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted d-inline-block text-sm-end w-100"><?php echo fm_enc($footerBuildLabel); ?></a>
+                    <div class="d-flex flex-column align-items-sm-end align-items-start gap-1 w-100">
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted fm-footer-copyright"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community</span>
+                    </div>
                 <?php endif; ?>
             </div>
         <?php else: ?>
@@ -703,9 +709,13 @@
                             </button>
                         <?php endforeach; ?>
                         <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted ms-sm-2"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted ms-sm-2 fm-footer-copyright"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community</span>
                     </div>
                 <?php else: ?>
-                    <a href="https://tinyfilemanager.github.io" target="_blank" class="float-right text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
+                    <div class="d-flex flex-column align-items-sm-end align-items-start gap-1">
+                        <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted"><?php echo fm_enc($footerBuildLabel); ?></a>
+                        <span class="text-muted fm-footer-copyright"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community</span>
+                    </div>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
