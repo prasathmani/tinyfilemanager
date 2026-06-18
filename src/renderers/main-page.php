@@ -140,6 +140,7 @@
                 ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
             </div>
         </aside>
+        <div class="fm-sidebar-resizer" id="fm-sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize folders panel" tabindex="0"></div>
         <div class="fm-explorer-main">
             <div class="table-responsive fm-table-wrap fm-list-clean-wrap">
                 <table class="table table-hover table-sm align-middle fm-modern-table fm-list-clean" id="main-table" data-bs-theme="<?php echo FM_THEME; ?>">
@@ -387,7 +388,7 @@
                                 <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDailog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
                                 <?php endif; ?>
                                 <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                                <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
+                                <a title="<?php echo lng('CopyTo') ?>..." href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                             <?php endif; ?>
                             <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
                         </div>
@@ -796,6 +797,10 @@
         --fm-explorer-font-size: .82rem;
         --fm-explorer-row-height: 34px;
         --fm-explorer-header-height: 34px;
+        --fm-tree-font-size: .62rem;
+        --fm-tree-indent-size: .83rem;
+        --fm-tree-toggle-size: 1.1rem;
+        --fm-sidebar-width: 250px;
         display: flex;
         align-items: stretch;
         gap: 12px;
@@ -803,7 +808,7 @@
     }
 
     .fm-folder-sidebar {
-        width: 250px;
+        width: var(--fm-sidebar-width);
         min-width: 220px;
         border: 1px solid rgba(120, 130, 150, 0.35);
         border-radius: 12px;
@@ -814,11 +819,44 @@
         max-height: 72vh;
     }
 
+    .fm-sidebar-resizer {
+        width: 10px;
+        align-self: stretch;
+        cursor: col-resize;
+        position: relative;
+        border-radius: 8px;
+        touch-action: none;
+        user-select: none;
+        background: transparent;
+        flex: 0 0 auto;
+    }
+
+    .fm-sidebar-resizer::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 50%;
+        width: 2px;
+        transform: translateX(-50%);
+        background: rgba(120, 130, 150, 0.42);
+        border-radius: 999px;
+    }
+
+    .fm-explorer-layout.is-resizing {
+        user-select: none;
+        cursor: col-resize;
+    }
+
+    .fm-explorer-layout.is-resizing * {
+        cursor: col-resize !important;
+    }
+
     .fm-folder-sidebar__title {
         min-height: var(--fm-explorer-header-height);
         padding: .35rem .7rem;
         font-weight: 600;
-        font-size: var(--fm-explorer-font-size);
+        font-size: var(--fm-tree-font-size);
         line-height: 1.2;
         display: flex;
         align-items: center;
@@ -834,7 +872,7 @@
         padding: .35rem .7rem;
         color: rgba(33, 37, 41, .74);
         border-bottom: 1px solid rgba(120, 130, 150, 0.2);
-        font-size: var(--fm-explorer-font-size);
+        font-size: var(--fm-tree-font-size);
         line-height: 1.25;
         white-space: normal;
         overflow: visible;
@@ -857,6 +895,7 @@
     .fm-folder-sidebar__list {
         padding: .4rem;
         overflow: auto;
+        overflow-x: auto;
     }
 
     .fm-folder-tree {
@@ -867,7 +906,7 @@
     .fm-tree-node {
         display: flex;
         align-items: center;
-        gap: .2rem;
+        gap: .15rem;
         min-height: var(--fm-explorer-row-height);
         border-radius: 8px;
         padding: .1rem .15rem;
@@ -886,8 +925,8 @@
     }
 
     .fm-tree-toggle {
-        width: 1.45rem;
-        height: 1.45rem;
+        width: var(--fm-tree-toggle-size);
+        height: var(--fm-tree-toggle-size);
         border: 0;
         border-radius: 6px;
         background: transparent;
@@ -921,15 +960,15 @@
     .fm-tree-label {
         display: inline-flex;
         align-items: center;
-        gap: .45rem;
-        min-height: 1.9rem;
+        gap: .34rem;
+        min-height: 1.45rem;
         flex: 1 1 auto;
         min-width: 0;
-        padding: .2rem .35rem;
+        padding: .15rem .25rem;
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        font-size: var(--fm-explorer-font-size);
+        font-size: var(--fm-tree-font-size);
         line-height: 1.2;
     }
 
@@ -951,9 +990,9 @@
     }
 
     .fm-tree-children {
-        margin-left: 1.1rem;
+        margin-left: var(--fm-tree-indent-size);
         border-left: 1px dashed rgba(120, 130, 150, 0.35);
-        padding-left: .3rem;
+        padding-left: .22rem;
     }
 
     .fm-tree-empty {
@@ -1030,6 +1069,10 @@
             width: 100%;
             min-width: 0;
             max-height: none;
+        }
+
+        .fm-sidebar-resizer {
+            display: none;
         }
 
         .fm-folder-sidebar__list {
@@ -1135,6 +1178,15 @@
 
 <script>
     (function () {
+        var explorerLayoutEl = document.querySelector('.fm-explorer-layout');
+        var sidebarEl = document.querySelector('.fm-folder-sidebar');
+        var sidebarResizerEl = document.getElementById('fm-sidebar-resizer');
+        var SIDEBAR_STORAGE_KEY = 'fm.sidebar.width';
+        var SIDEBAR_MIN_WIDTH = 190;
+        var SIDEBAR_MAX_RATIO = 0.58;
+        var mediumViewportQuery = window.matchMedia ? window.matchMedia('(max-width: 991.98px)') : null;
+        var sidebarDragging = false;
+
         var filterEl = document.getElementById('fm-owner-source-filter');
         var tableEl = document.getElementById('main-table');
         var tableWrapEl = document.querySelector('.fm-table-wrap');
@@ -1159,6 +1211,160 @@
         var HOVER_HIDE_DELAY_MS = 180;
 
         var dataTableFilterInstalled = false;
+
+        function getSidebarMaxWidth() {
+            if (!explorerLayoutEl) {
+                return 520;
+            }
+
+            var layoutWidth = explorerLayoutEl.getBoundingClientRect().width;
+            if (!layoutWidth || layoutWidth <= 0) {
+                return 520;
+            }
+
+            return Math.max(SIDEBAR_MIN_WIDTH + 30, Math.round(layoutWidth * SIDEBAR_MAX_RATIO));
+        }
+
+        function clampSidebarWidth(width) {
+            var numeric = Number(width);
+            if (!isFinite(numeric)) {
+                return SIDEBAR_MIN_WIDTH;
+            }
+
+            var min = SIDEBAR_MIN_WIDTH;
+            var max = getSidebarMaxWidth();
+            if (numeric < min) {
+                return min;
+            }
+            if (numeric > max) {
+                return max;
+            }
+            return Math.round(numeric);
+        }
+
+        function applySidebarWidth(width, persist) {
+            if (!sidebarEl || (mediumViewportQuery && mediumViewportQuery.matches)) {
+                return;
+            }
+
+            var clamped = clampSidebarWidth(width);
+            sidebarEl.style.width = clamped + 'px';
+            sidebarEl.style.minWidth = clamped + 'px';
+            sidebarEl.style.maxWidth = clamped + 'px';
+
+            if (persist) {
+                try {
+                    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(clamped));
+                } catch (e) {
+                    // ignore storage errors
+                }
+            }
+        }
+
+        function resetSidebarWidthForSmallScreens() {
+            if (!sidebarEl) {
+                return;
+            }
+
+            sidebarEl.style.width = '';
+            sidebarEl.style.minWidth = '';
+            sidebarEl.style.maxWidth = '';
+        }
+
+        function loadStoredSidebarWidth() {
+            if (!sidebarEl || (mediumViewportQuery && mediumViewportQuery.matches)) {
+                return;
+            }
+
+            try {
+                var raw = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
+                if (raw !== null && raw !== '') {
+                    applySidebarWidth(raw, false);
+                }
+            } catch (e) {
+                // ignore storage errors
+            }
+        }
+
+        function setupSidebarResizer() {
+            if (!sidebarEl || !sidebarResizerEl || !explorerLayoutEl || !window.PointerEvent) {
+                return;
+            }
+
+            function onPointerMove(event) {
+                if (!sidebarDragging) {
+                    return;
+                }
+
+                var layoutRect = explorerLayoutEl.getBoundingClientRect();
+                var desiredWidth = event.clientX - layoutRect.left;
+                applySidebarWidth(desiredWidth, false);
+            }
+
+            function stopDrag(event) {
+                if (!sidebarDragging) {
+                    return;
+                }
+
+                sidebarDragging = false;
+                explorerLayoutEl.classList.remove('is-resizing');
+                if (event && sidebarResizerEl.releasePointerCapture) {
+                    try {
+                        sidebarResizerEl.releasePointerCapture(event.pointerId);
+                    } catch (e) {
+                        // ignore release errors
+                    }
+                }
+
+                var width = sidebarEl.getBoundingClientRect().width;
+                applySidebarWidth(width, true);
+            }
+
+            sidebarResizerEl.addEventListener('pointerdown', function (event) {
+                if (mediumViewportQuery && mediumViewportQuery.matches) {
+                    return;
+                }
+
+                event.preventDefault();
+                sidebarDragging = true;
+                explorerLayoutEl.classList.add('is-resizing');
+                if (sidebarResizerEl.setPointerCapture) {
+                    sidebarResizerEl.setPointerCapture(event.pointerId);
+                }
+            });
+
+            sidebarResizerEl.addEventListener('pointermove', onPointerMove);
+            sidebarResizerEl.addEventListener('pointerup', stopDrag);
+            sidebarResizerEl.addEventListener('pointercancel', stopDrag);
+            sidebarResizerEl.addEventListener('lostpointercapture', stopDrag);
+
+            if (mediumViewportQuery) {
+                var handleViewportChange = function () {
+                    if (mediumViewportQuery.matches) {
+                        resetSidebarWidthForSmallScreens();
+                    } else {
+                        loadStoredSidebarWidth();
+                    }
+                };
+
+                if (typeof mediumViewportQuery.addEventListener === 'function') {
+                    mediumViewportQuery.addEventListener('change', handleViewportChange);
+                } else if (typeof mediumViewportQuery.addListener === 'function') {
+                    mediumViewportQuery.addListener(handleViewportChange);
+                }
+            }
+
+            window.addEventListener('resize', function () {
+                if (mediumViewportQuery && mediumViewportQuery.matches) {
+                    return;
+                }
+
+                var currentWidth = sidebarEl.getBoundingClientRect().width;
+                applySidebarWidth(currentWidth, false);
+            });
+
+            loadStoredSidebarWidth();
+        }
 
         function getSelectedSource() {
             return (filterEl.value || 'all').toLowerCase();
@@ -1643,6 +1849,7 @@
                 setViewMode(mode);
             });
         });
+        setupSidebarResizer();
         bindFloatingRowActions();
         refreshOwnerSourceCounts();
         window.setTimeout(function () {
