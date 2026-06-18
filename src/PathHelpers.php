@@ -157,6 +157,80 @@ function fm_is_within_navigation_home($absolute_path)
 }
 
 /**
+ * Build ancestor path chain from navigation home to the current path.
+ *
+ * @param string $relative_path
+ * @return array
+ */
+function fm_get_navigation_ancestor_paths($relative_path)
+{
+    $relative_path = fm_clean_path((string) $relative_path);
+    $home_path = fm_clean_path((string) fm_get_navigation_home_root());
+
+    if ($relative_path === '' && $home_path !== '') {
+        $relative_path = $home_path;
+    }
+
+    if ($home_path !== '' && $relative_path !== $home_path && strpos($relative_path . '/', $home_path . '/') !== 0) {
+        return array($home_path);
+    }
+
+    $ancestors = array($home_path);
+    $relative_to_home = $home_path === ''
+        ? $relative_path
+        : ltrim(substr($relative_path, strlen($home_path)), '/');
+
+    if ($relative_to_home === '') {
+        return $ancestors;
+    }
+
+    $cursor = $home_path;
+    $segments = array_filter(explode('/', $relative_to_home), 'strlen');
+    foreach ($segments as $segment) {
+        $cursor = trim($cursor . '/' . $segment, '/');
+        $ancestors[] = $cursor;
+    }
+
+    return array_values(array_unique($ancestors));
+}
+
+/**
+ * Return whether the folder contains at least one visible child directory.
+ *
+ * @param string $relative_path
+ * @return bool
+ */
+function fm_directory_has_visible_children($relative_path)
+{
+    if (function_exists('fm_search_index_get_child_directories')) {
+        $response = fm_search_index_get_child_directories($relative_path);
+        return !empty($response['success']) && !empty($response['children']);
+    }
+
+    return false;
+}
+
+/**
+ * Return visible direct child directories for tree/list navigation.
+ *
+ * @param string $relative_path
+ * @return array
+ */
+function fm_get_visible_child_directories($relative_path)
+{
+    if (!function_exists('fm_search_index_get_child_directories')) {
+        return array();
+    }
+
+    $response = fm_search_index_get_child_directories($relative_path);
+    if (empty($response['success']) || !isset($response['children']) || !is_array($response['children'])) {
+        return array();
+    }
+
+    return $response['children'];
+}
+
+/**
  * Path traversal prevention and clean the URL.
  * It replaces occurrences of / and \\ with DIRECTORY_SEPARATOR and resolves . and .. segments.
  *

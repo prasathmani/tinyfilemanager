@@ -14,6 +14,30 @@
   var config = readJsonConfig('fm-runtime-config');
   window.csrf = config.csrfToken || window.csrf || '';
 
+  function resolveCurrentPathFromLocation() {
+    try {
+      var url = new URL(window.location.href);
+      return String(url.searchParams.get('p') || '').replace(/^\/+|\/+$/g, '');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function emitFilesystemChanged(detail) {
+    if (typeof window.CustomEvent !== 'function') {
+      return;
+    }
+
+    var payload = detail && typeof detail === 'object' ? detail : {};
+    if (!Array.isArray(payload.paths) || !payload.paths.length) {
+      payload.paths = [resolveCurrentPathFromLocation()];
+    }
+
+    window.dispatchEvent(new CustomEvent('fm:filesystem-changed', {
+      detail: payload,
+    }));
+  }
+
   var searchIndexState = {
     ready: false,
     preparePromise: null,
@@ -480,6 +504,10 @@
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4 && xhr.status === 200) {
         toast(xhr.responseText);
+        emitFilesystemChanged({
+          reason: 'backup',
+          paths: [String(path || '').replace(/^\/+|\/+$/g, '')],
+        });
       }
     };
     xhr.send(payload);
@@ -503,6 +531,10 @@
         contentType: 'application/json; charset=utf-8',
         success: function () {
           toast('Saved Successfully');
+          emitFilesystemChanged({
+            reason: 'save',
+            paths: [resolveCurrentPathFromLocation()],
+          });
           window.onbeforeunload = function () {
             return;
           };
@@ -762,6 +794,10 @@
         } else if (parsed.done) {
           var uploadedName = parsed.done.name ? parsed.done.name : 'file';
           showUploadResult(true, 'Uploaded successful: ' + uploadedName);
+          emitFilesystemChanged({
+            reason: 'upload_from_url',
+            paths: [resolveCurrentPathFromLocation()],
+          });
           form.find('input[name=uploadurl]').val('');
         } else if (parsed.fail) {
           var failMessage = (parsed.fail && parsed.fail.message) ? parsed.fail.message : 'Upload from URL failed.';

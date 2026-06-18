@@ -95,6 +95,14 @@ class TFM_RenameHandler {
                 if (function_exists('fm_owner_meta_touch')) {
                     fm_owner_meta_touch($full_path_new, 'rename');
                 }
+                if (function_exists('fm_search_index_move_path')) {
+                    $ok = fm_search_index_move_path($full_path_old, $full_path_new, 'rename');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('rename_fallback', $full_path_new);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('rename', $full_path_new);
+                }
                 $msg = "Renamed: $old_name -> $new_name";
                 $this->log('rename_success', $msg);
                 return ['success' => true, 'message' => $msg];

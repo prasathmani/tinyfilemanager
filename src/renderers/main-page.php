@@ -33,42 +33,111 @@
     <div class="fm-explorer-layout">
         <?php
         $fm_navigation_home = fm_get_navigation_home_root();
-        $fm_on_navigation_home = fm_is_navigation_home(FM_PATH);
-        $fm_sidebar_path_text = fm_enc('/' . ltrim((string) FM_PATH, '/'));
-        if ($fm_on_navigation_home) {
-            $fm_sidebar_path_text = fm_enc(fm_get_navigation_home_label());
-        } elseif ($fm_navigation_home !== '' && strpos((FM_PATH . '/'), ($fm_navigation_home . '/')) === 0) {
-            $fm_relative_sidebar = ltrim(substr((string) FM_PATH, strlen($fm_navigation_home)), '/');
-            $fm_sidebar_path_text = fm_enc(fm_get_navigation_home_label() . ($fm_relative_sidebar !== '' ? ' / ' . $fm_relative_sidebar : ''));
+        $fm_tree_current_path = fm_clean_path((string) FM_PATH);
+        if ($fm_tree_current_path === '' && $fm_navigation_home !== '') {
+            $fm_tree_current_path = $fm_navigation_home;
         }
+        $fm_tree_revision = function_exists('fm_search_index_get_tree_revision')
+            ? (int) fm_search_index_get_tree_revision()
+            : 0;
+        $fm_on_navigation_home = fm_is_navigation_home($fm_tree_current_path);
+        $fm_tree_ancestors = fm_get_navigation_ancestor_paths($fm_tree_current_path);
+        $fm_tree_root_children = fm_get_visible_child_directories($fm_navigation_home);
+        $fm_tree_root_has_children = !empty($fm_tree_root_children);
+        $fm_sidebar_path_raw = '/' . ltrim((string) $fm_tree_current_path, '/');
+        if ($fm_on_navigation_home) {
+            $fm_sidebar_path_raw = fm_get_navigation_home_label();
+        } elseif ($fm_navigation_home !== '' && strpos(($fm_tree_current_path . '/'), ($fm_navigation_home . '/')) === 0) {
+            $fm_relative_sidebar = ltrim(substr((string) $fm_tree_current_path, strlen($fm_navigation_home)), '/');
+            $fm_sidebar_path_raw = fm_get_navigation_home_label() . ($fm_relative_sidebar !== '' ? ' / ' . $fm_relative_sidebar : '');
+        }
+        $fm_sidebar_path_title = fm_enc($fm_sidebar_path_raw);
+        $fm_sidebar_path_text = str_replace('/', '/<wbr>', $fm_sidebar_path_title);
         ?>
-        <aside class="fm-folder-sidebar" aria-label="Priecinky">
-            <div class="fm-folder-sidebar__title">Priecinky</div>
-            <div class="fm-folder-sidebar__path" title="<?php echo $fm_sidebar_path_text; ?>">
+        <aside class="fm-folder-sidebar" aria-label="<?php echo lng('Folders'); ?>">
+            <div class="fm-folder-sidebar__title"><?php echo lng('Folders'); ?></div>
+            <div class="fm-folder-sidebar__path" title="<?php echo $fm_sidebar_path_title; ?>">
                 <i class="fa fa-folder-open-o" aria-hidden="true"></i>
                 <span><?php echo $fm_sidebar_path_text; ?></span>
             </div>
-            <div class="fm-folder-sidebar__list" role="navigation" aria-label="Rychla navigacia priecinkov">
-                <?php if ($parent !== false && !$fm_on_navigation_home): ?>
-                    <a class="fm-folder-link fm-folder-link--parent" href="?p=<?php echo urlencode($parent); ?>" title="Prejst o uroven vyssie">
-                        <i class="fa fa-level-up" aria-hidden="true"></i>
-                        <span>..</span>
-                    </a>
-                <?php endif; ?>
-                <a class="fm-folder-link" href="?p=<?php echo urlencode($fm_navigation_home); ?>" title="<?php echo fm_enc(fm_get_navigation_home_label()); ?>">
-                    <i class="fa fa-home" aria-hidden="true"></i>
-                    <span><?php echo fm_enc(fm_get_navigation_home_label()); ?></span>
-                </a>
-                <?php if (!empty($folders)): ?>
-                    <?php foreach ($folders as $navFolder): ?>
-                        <a class="fm-folder-link" href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $navFolder, '/')); ?>" title="<?php echo fm_enc($navFolder); ?>">
-                            <i class="fa fa-folder-o" aria-hidden="true"></i>
-                            <span><?php echo fm_convert_win(fm_enc($navFolder)); ?></span>
+            <div class="fm-folder-sidebar__list" role="navigation" aria-label="<?php echo lng('Folders'); ?>">
+                <div
+                    class="fm-folder-tree"
+                    id="fm-folder-tree"
+                    role="tree"
+                    aria-label="<?php echo lng('Folders'); ?>"
+                    data-home-path="<?php echo fm_enc($fm_navigation_home); ?>"
+                    data-current-path="<?php echo fm_enc($fm_tree_current_path); ?>"
+                >
+                    <?php
+                    $fm_root_expanded = $fm_tree_root_has_children ? 'true' : 'false';
+                    ?>
+                    <div class="fm-tree-node<?php echo $fm_on_navigation_home ? ' is-active' : ''; ?><?php echo $fm_tree_root_has_children ? ' is-expanded' : ''; ?>" role="treeitem" aria-level="1" aria-expanded="<?php echo $fm_root_expanded; ?>" aria-selected="<?php echo $fm_on_navigation_home ? 'true' : 'false'; ?>" data-path="<?php echo fm_enc($fm_navigation_home); ?>">
+                        <button
+                            type="button"
+                            class="fm-tree-toggle<?php echo !$fm_tree_root_has_children ? ' is-leaf' : ''; ?>"
+                            data-path="<?php echo fm_enc($fm_navigation_home); ?>"
+                            aria-label="<?php echo fm_enc($fm_tree_root_has_children ? lng('Collapse') : lng('No subfolders')); ?>"
+                            aria-expanded="<?php echo $fm_root_expanded; ?>"
+                            <?php echo !$fm_tree_root_has_children ? 'disabled' : ''; ?>
+                        >
+                            <i class="fa fa-caret-right" aria-hidden="true"></i>
+                        </button>
+                        <a
+                            class="fm-tree-label<?php echo $fm_on_navigation_home ? ' is-active' : ''; ?>"
+                            href="?p=<?php echo urlencode($fm_navigation_home); ?>"
+                            data-path="<?php echo fm_enc($fm_navigation_home); ?>"
+                            role="treeitem"
+                            aria-selected="<?php echo $fm_on_navigation_home ? 'true' : 'false'; ?>"
+                        >
+                            <i class="fa fa-home" aria-hidden="true"></i>
+                            <span><?php echo fm_enc(fm_get_navigation_home_label()); ?></span>
                         </a>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="fm-folder-empty">V tomto umiestneni nie su dalsie priecinky.</div>
-                <?php endif; ?>
+                    </div>
+                    <div class="fm-tree-children" data-parent-path="<?php echo fm_enc($fm_navigation_home); ?>" <?php echo $fm_tree_root_has_children ? '' : 'hidden'; ?>>
+                        <?php foreach ($fm_tree_root_children as $tree_child): ?>
+                            <?php
+                            $tree_child_name = isset($tree_child['name']) ? (string) $tree_child['name'] : '';
+                            $tree_child_path = isset($tree_child['path']) ? fm_clean_path((string) $tree_child['path']) : '';
+                            $tree_child_has_children = !empty($tree_child['has_children']);
+                            $tree_child_is_active = ($fm_tree_current_path === $tree_child_path);
+                            $tree_child_is_expanded = $tree_child_has_children && in_array($tree_child_path, $fm_tree_ancestors, true);
+                            ?>
+                            <div class="fm-tree-node fm-tree-node--depth-2<?php echo $tree_child_is_active ? ' is-active' : ''; ?><?php echo $tree_child_is_expanded ? ' is-expanded' : ''; ?>" role="treeitem" aria-level="2" aria-expanded="<?php echo $tree_child_has_children ? ($tree_child_is_expanded ? 'true' : 'false') : 'false'; ?>" aria-selected="<?php echo $tree_child_is_active ? 'true' : 'false'; ?>" data-path="<?php echo fm_enc($tree_child_path); ?>">
+                                <button
+                                    type="button"
+                                    class="fm-tree-toggle<?php echo !$tree_child_has_children ? ' is-leaf' : ''; ?>"
+                                    data-path="<?php echo fm_enc($tree_child_path); ?>"
+                                    aria-label="<?php echo fm_enc($tree_child_has_children ? ($tree_child_is_expanded ? lng('Collapse') : lng('Expand')) : lng('No subfolders')); ?>"
+                                    aria-expanded="<?php echo $tree_child_has_children ? ($tree_child_is_expanded ? 'true' : 'false') : 'false'; ?>"
+                                    <?php echo !$tree_child_has_children ? 'disabled' : ''; ?>
+                                >
+                                    <i class="fa fa-caret-right" aria-hidden="true"></i>
+                                </button>
+                                <a class="fm-tree-label<?php echo $tree_child_is_active ? ' is-active' : ''; ?>" href="?p=<?php echo urlencode($tree_child_path); ?>" data-path="<?php echo fm_enc($tree_child_path); ?>" role="treeitem" aria-selected="<?php echo $tree_child_is_active ? 'true' : 'false'; ?>">
+                                    <i class="fa fa-folder-o" aria-hidden="true"></i>
+                                    <span><?php echo fm_convert_win(fm_enc($tree_child_name)); ?></span>
+                                </a>
+                            </div>
+                            <div class="fm-tree-children" data-parent-path="<?php echo fm_enc($tree_child_path); ?>" <?php echo $tree_child_is_expanded ? '' : 'hidden'; ?>></div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <script type="application/json" id="fm-folder-tree-config"><?php echo json_encode(array(
+                    'csrfToken' => $_SESSION['token'],
+                    'homePath' => $fm_navigation_home,
+                    'currentPath' => $fm_tree_current_path,
+                    'treeRevision' => $fm_tree_revision,
+                    'ancestorPaths' => $fm_tree_ancestors,
+                    'endpoint' => FM_SELF_PATH,
+                    'texts' => array(
+                        'expand' => lng('Expand'),
+                        'collapse' => lng('Collapse'),
+                        'loading' => lng('Loading…'),
+                        'noSubfolders' => lng('No subfolders'),
+                        'loadError' => lng('Failed to load folders'),
+                    ),
+                ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
             </div>
         </aside>
         <div class="fm-explorer-main">
@@ -636,6 +705,8 @@
     </div>
 </form>
 
+<script src="src/assets/js/fm-folder-tree.js?v=<?php echo VERSION; ?>"></script>
+
 <script>
     (function () {
         var resetButtons = document.querySelectorAll('.js-reset-runtime-state');
@@ -740,56 +811,161 @@
 
     .fm-folder-sidebar__path {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: .45rem;
         min-height: var(--fm-explorer-row-height);
         padding: .35rem .7rem;
         color: rgba(33, 37, 41, .74);
         border-bottom: 1px solid rgba(120, 130, 150, 0.2);
         font-size: var(--fm-explorer-font-size);
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.25;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .fm-folder-sidebar__path i {
+        margin-top: .1rem;
+        flex: 0 0 auto;
+    }
+
+    .fm-folder-sidebar__path span {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: normal;
     }
 
     .fm-folder-sidebar__list {
         padding: .4rem;
         overflow: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
     }
 
-    .fm-folder-link {
+    .fm-folder-tree {
+        display: block;
+        min-width: 0;
+    }
+
+    .fm-tree-node {
         display: flex;
         align-items: center;
-        gap: .5rem;
+        gap: .2rem;
         min-height: var(--fm-explorer-row-height);
-        padding: .35rem .45rem;
+        border-radius: 8px;
+        padding: .1rem .15rem;
+    }
+
+    .fm-tree-node--depth-2 {
+        margin-left: 0;
+    }
+
+    .fm-tree-node.is-active {
+        background: rgba(13, 110, 253, 0.1);
+    }
+
+    .fm-tree-node.is-loading .fm-tree-label {
+        opacity: .65;
+    }
+
+    .fm-tree-toggle {
+        width: 1.45rem;
+        height: 1.45rem;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        cursor: pointer;
+    }
+
+    .fm-tree-toggle .fa {
+        transition: transform .14s ease;
+    }
+
+    .fm-tree-node.is-expanded > .fm-tree-toggle .fa {
+        transform: rotate(90deg);
+    }
+
+    .fm-tree-toggle.is-leaf {
+        cursor: default;
+        opacity: .35;
+    }
+
+    .fm-tree-toggle:focus-visible,
+    .fm-tree-label:focus-visible {
+        outline: 2px solid rgba(13, 110, 253, 0.55);
+        outline-offset: 1px;
+    }
+
+    .fm-tree-label {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        min-height: 1.9rem;
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: .2rem .35rem;
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
         font-size: var(--fm-explorer-font-size);
         line-height: 1.2;
+    }
+
+    .fm-tree-label:hover,
+    .fm-tree-label:focus-visible {
+        background: rgba(13, 110, 253, 0.1);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .fm-tree-label span {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .fm-folder-link:hover,
-    .fm-folder-link:focus-visible {
-        background: rgba(13, 110, 253, 0.1);
-    }
-
-    .fm-folder-link--parent {
+    .fm-tree-label.is-active {
         font-weight: 700;
     }
 
-    .fm-folder-empty {
+    .fm-tree-children {
+        margin-left: 1.1rem;
+        border-left: 1px dashed rgba(120, 130, 150, 0.35);
+        padding-left: .3rem;
+    }
+
+    .fm-tree-empty {
         font-size: .78rem;
         color: rgba(33, 37, 41, .62);
-        padding: .45rem;
+        padding: .35rem .4rem .45rem 1.8rem;
+    }
+
+    .fm-tree-error {
+        border: 0;
+        background: transparent;
+        color: #c98017;
+        font-size: .78rem;
+        text-align: left;
+        padding: .35rem .4rem .45rem 1.8rem;
+        width: 100%;
+    }
+
+    html[data-bs-theme="dark"] .fm-tree-node.is-active {
+        background: rgba(110, 162, 255, 0.18);
+    }
+
+    html[data-bs-theme="dark"] .fm-tree-label:hover,
+    html[data-bs-theme="dark"] .fm-tree-label:focus-visible {
+        background: rgba(110, 162, 255, 0.16);
+    }
+
+    html[data-bs-theme="dark"] .fm-tree-empty {
+        color: rgba(220, 229, 241, .68);
     }
 
     .fm-explorer-main {

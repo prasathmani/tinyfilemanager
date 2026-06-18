@@ -40,6 +40,13 @@ class TFM_DirectoryListingService {
         $files = array();
         $current_dir_name = array_slice(explode('/', $path), -1)[0];
 
+        $visible_child_directories = fm_get_visible_child_directories($this->current_path);
+        foreach ($visible_child_directories as $child) {
+            if (isset($child['name']) && is_string($child['name']) && $child['name'] !== '') {
+                $folders[] = $child['name'];
+            }
+        }
+
         if (is_array($objects) && fm_is_exclude_items($current_dir_name, $path)) {
             foreach ($objects as $file) {
                 if ($file == '.' || $file == '..') {
@@ -51,8 +58,6 @@ class TFM_DirectoryListingService {
                 $new_path = $path . '/' . $file;
                 if (@is_file($new_path) && fm_is_exclude_items($file, $new_path) && fm_user_can_access_path($new_path, false)) {
                     $files[] = $file;
-                } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path) && fm_user_can_access_path($new_path, true)) {
-                    $folders[] = $file;
                 }
             }
         }
@@ -61,6 +66,7 @@ class TFM_DirectoryListingService {
             natcasesort($files);
         }
         if (!empty($folders)) {
+            $folders = array_values(array_unique($folders));
             natcasesort($folders);
         }
 

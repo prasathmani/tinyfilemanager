@@ -128,6 +128,86 @@ class TFM_AjaxActionHandler {
             exit();
         }
 
+        if (isset($post['type']) && $post['type'] == 'folder_tree_children') {
+            header('Content-Type: application/json; charset=utf-8');
+
+            if (!isset($_SESSION[FM_SESSION_ID]['logged']) || empty($_SESSION[FM_SESSION_ID]['logged'])) {
+                http_response_code(401);
+                echo json_encode(array(
+                    'success' => false,
+                    'message' => 'Not authenticated',
+                ));
+                exit();
+            }
+
+            $raw_requested_path = isset($post['path']) ? (string) $post['path'] : '';
+            $decoded_requested_path = rawurldecode($raw_requested_path);
+            if (strpos($decoded_requested_path, '..') !== false) {
+                http_response_code(403);
+                echo json_encode(array(
+                    'success' => false,
+                    'message' => 'Access denied',
+                ));
+                exit();
+            }
+
+            $requested_path = fm_clean_path($decoded_requested_path);
+            $navigation_home = fm_get_navigation_home_root();
+            if ($requested_path === '') {
+                $requested_path = $navigation_home;
+            }
+
+            $response = function_exists('fm_search_index_get_child_directories')
+                ? fm_search_index_get_child_directories($requested_path)
+                : array(
+                    'success' => false,
+                    'message' => 'Folder tree index is unavailable.',
+                    'path' => $requested_path,
+                    'children' => array(),
+                    'revision' => 0,
+                );
+
+            if (empty($response['success'])) {
+                if (isset($response['message']) && $response['message'] === 'Access denied') {
+                    http_response_code(403);
+                } else {
+                    http_response_code(503);
+                }
+            }
+
+            echo json_encode(array(
+                'success' => !empty($response['success']),
+                'path' => isset($response['path']) ? (string) $response['path'] : $requested_path,
+                'children' => isset($response['children']) && is_array($response['children']) ? $response['children'] : array(),
+                'revision' => isset($response['revision']) ? (int) $response['revision'] : 0,
+                'message' => isset($response['message']) ? (string) $response['message'] : '',
+            ));
+            exit();
+        }
+
+        if (isset($post['type']) && $post['type'] == 'folder_tree_revision') {
+            header('Content-Type: application/json; charset=utf-8');
+            if (!isset($_SESSION[FM_SESSION_ID]['logged']) || empty($_SESSION[FM_SESSION_ID]['logged'])) {
+                http_response_code(401);
+                echo json_encode(array(
+                    'success' => false,
+                    'message' => 'Not authenticated',
+                    'revision' => 0,
+                ));
+                exit();
+            }
+
+            $revision = function_exists('fm_search_index_get_tree_revision')
+                ? (int) fm_search_index_get_tree_revision()
+                : 0;
+
+            echo json_encode(array(
+                'success' => true,
+                'revision' => $revision,
+            ));
+            exit();
+        }
+
         if (isset($post['type']) && $post['type'] == 'upload' && !empty($request['uploadurl'])) {
             header('Content-Type: application/json; charset=utf-8');
             if ((FM_READONLY && !FM_UPLOAD_ONLY) || !FM_CAN_WRITE_IN_PATH) {

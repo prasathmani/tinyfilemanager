@@ -64,6 +64,14 @@ class TFM_DeleteHandler {
                 if (function_exists('fm_owner_meta_remove')) {
                     fm_owner_meta_remove($full_path);
                 }
+                if (function_exists('fm_search_index_remove_path')) {
+                    $ok = fm_search_index_remove_path($full_path, 'delete');
+                    if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                        fm_search_index_mark_dirty('delete_fallback', $full_path);
+                    }
+                } elseif (function_exists('fm_search_index_mark_dirty')) {
+                    fm_search_index_mark_dirty('delete', $full_path);
+                }
                 $this->log('delete_success', $msg);
                 return ['success' => true, 'message' => $msg];
             } else {

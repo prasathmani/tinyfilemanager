@@ -5753,10 +5753,15 @@ function fm_search_index_get_db()
             is_dirty INTEGER NOT NULL DEFAULT 1,
             last_full_index_at INTEGER NOT NULL DEFAULT 0,
             last_mutation_at INTEGER NOT NULL DEFAULT 0,
+            folder_tree_revision INTEGER NOT NULL DEFAULT 0,
             updated_at INTEGER NOT NULL DEFAULT 0
         )');
+        if (!fm_search_index_has_column($db, 'fm_file_index_meta', 'folder_tree_revision')) {
+            @$db->exec('ALTER TABLE fm_file_index_meta ADD COLUMN folder_tree_revision INTEGER NOT NULL DEFAULT 0');
+        }
         $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_file_index_scope_name ON fm_file_index(scope_key, name_lc)');
         $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_file_index_scope_dir ON fm_file_index(scope_key, dir_path)');
+        $db->exec('CREATE INDEX IF NOT EXISTS idx_fm_file_index_scope_dir_type ON fm_file_index(scope_key, dir_path, is_dir, name_lc)');
     } catch (Exception $e) {
         fm_search_log_event('search_index_init_failed', array('message' => $e->getMessage()));
         $db = null;
@@ -5781,8 +5786,8 @@ function fm_search_index_mark_dirty($reason = 'mutation', $path = '')
     $scope = fm_search_scope_key();
     $now = time();
 
-    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at)
-        VALUES (:scope, 1, 0, :now, :now)
+    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at, folder_tree_revision)
+        VALUES (:scope, 1, 0, :now, :now, 0)
         ON CONFLICT(scope_key) DO UPDATE SET
             is_dirty = 1,
             last_mutation_at = :now2,
@@ -5805,6 +5810,76 @@ function fm_search_index_mark_dirty($reason = 'mutation', $path = '')
 }
 
 /**
+ * Return current folder-tree revision for active or provided scope.
+ * @param string|null $scope
+ * @return int
+ */
+function fm_search_index_get_tree_revision($scope = null)
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return 0;
+    }
+
+    $scope = $scope === null ? fm_search_scope_key() : (string) $scope;
+    $stmt = $db->prepare('SELECT folder_tree_revision FROM fm_file_index_meta WHERE scope_key = :scope LIMIT 1');
+    if (!$stmt) {
+        return 0;
+    }
+
+    $stmt->bindValue(':scope', $scope, SQLITE3_TEXT);
+    $result = $stmt->execute();
+    if (!$result) {
+        return 0;
+    }
+
+    $row = $result->fetchArray(SQLITE3_ASSOC);
+    return isset($row['folder_tree_revision']) ? (int) $row['folder_tree_revision'] : 0;
+}
+
+/**
+ * Increment folder-tree revision for active or provided scope.
+ * @param string $reason
+ * @param SQLite3|null $db
+ * @param string|null $scope
+ * @return int
+ */
+function fm_search_index_bump_tree_revision($reason = 'mutation', $db = null, $scope = null)
+{
+    $db = $db instanceof SQLite3 ? $db : fm_search_index_get_db();
+    if (!$db) {
+        return 0;
+    }
+
+    $scope = $scope === null ? fm_search_scope_key() : (string) $scope;
+    $now = time();
+
+    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at, folder_tree_revision)
+        VALUES (:scope, 0, 0, :now, :now, 1)
+        ON CONFLICT(scope_key) DO UPDATE SET
+            folder_tree_revision = COALESCE(folder_tree_revision, 0) + 1,
+            updated_at = :now2');
+    if (!$stmt) {
+        return 0;
+    }
+
+    $stmt->bindValue(':scope', $scope, SQLITE3_TEXT);
+    $stmt->bindValue(':now', (int) $now, SQLITE3_INTEGER);
+    $stmt->bindValue(':now2', (int) $now, SQLITE3_INTEGER);
+    $ok = (bool) $stmt->execute();
+    if (!$ok) {
+        return 0;
+    }
+
+    fm_search_log_event('folder_tree_revision_bump', array(
+        'reason' => (string) $reason,
+        'scope' => $scope,
+    ));
+
+    return fm_search_index_get_tree_revision($scope);
+}
+
+/**
  * Load index metadata for current scope.
  * @param SQLite3 $db
  * @param string $scope
@@ -5812,7 +5887,7 @@ function fm_search_index_mark_dirty($reason = 'mutation', $path = '')
  */
 function fm_search_index_get_meta($db, $scope)
 {
-    $stmt = $db->prepare('SELECT is_dirty, last_full_index_at, last_mutation_at, updated_at
+    $stmt = $db->prepare('SELECT is_dirty, last_full_index_at, last_mutation_at, updated_at, folder_tree_revision
         FROM fm_file_index_meta
         WHERE scope_key = :scope
         LIMIT 1');
@@ -5822,6 +5897,7 @@ function fm_search_index_get_meta($db, $scope)
             'is_dirty' => 1,
             'last_full_index_at' => 0,
             'last_mutation_at' => 0,
+            'folder_tree_revision' => 0,
             'updated_at' => 0,
         );
     }
@@ -5833,6 +5909,7 @@ function fm_search_index_get_meta($db, $scope)
             'is_dirty' => 1,
             'last_full_index_at' => 0,
             'last_mutation_at' => 0,
+            'folder_tree_revision' => 0,
             'updated_at' => 0,
         );
     }
@@ -5843,6 +5920,7 @@ function fm_search_index_get_meta($db, $scope)
             'is_dirty' => 1,
             'last_full_index_at' => 0,
             'last_mutation_at' => 0,
+            'folder_tree_revision' => 0,
             'updated_at' => 0,
         );
     }
@@ -5851,6 +5929,7 @@ function fm_search_index_get_meta($db, $scope)
         'is_dirty' => isset($row['is_dirty']) ? (int) $row['is_dirty'] : 1,
         'last_full_index_at' => isset($row['last_full_index_at']) ? (int) $row['last_full_index_at'] : 0,
         'last_mutation_at' => isset($row['last_mutation_at']) ? (int) $row['last_mutation_at'] : 0,
+        'folder_tree_revision' => isset($row['folder_tree_revision']) ? (int) $row['folder_tree_revision'] : 0,
         'updated_at' => isset($row['updated_at']) ? (int) $row['updated_at'] : 0,
     );
 }
@@ -5864,17 +5943,22 @@ function fm_search_index_get_meta($db, $scope)
  */
 function fm_search_index_set_clean_meta($db, $scope, $ts)
 {
-    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at)
-        VALUES (:scope, 0, :ts, :ts, :ts)
+    $currentRevision = fm_search_index_get_tree_revision((string) $scope);
+
+    $stmt = $db->prepare('INSERT INTO fm_file_index_meta (scope_key, is_dirty, last_full_index_at, last_mutation_at, updated_at, folder_tree_revision)
+        VALUES (:scope, 0, :ts, :ts, :ts, :revision)
         ON CONFLICT(scope_key) DO UPDATE SET
             is_dirty = 0,
             last_full_index_at = :ts2,
-            updated_at = :ts3');
+            updated_at = :ts3,
+            folder_tree_revision = COALESCE(folder_tree_revision, :revision2)');
     if ($stmt) {
         $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
         $stmt->bindValue(':ts', (int) $ts, SQLITE3_INTEGER);
         $stmt->bindValue(':ts2', (int) $ts, SQLITE3_INTEGER);
         $stmt->bindValue(':ts3', (int) $ts, SQLITE3_INTEGER);
+        $stmt->bindValue(':revision', (int) $currentRevision, SQLITE3_INTEGER);
+        $stmt->bindValue(':revision2', (int) $currentRevision, SQLITE3_INTEGER);
         $stmt->execute();
     }
 }
@@ -5966,7 +6050,27 @@ function fm_search_index_remove_path($absolutePath, $reason = '')
         return false;
     }
 
-    $delete = $db->prepare('DELETE FROM fm_file_index
+        $hadDir = false;
+        $probe = $db->prepare('SELECT 1
+                FROM fm_file_index
+                WHERE scope_key = :scope
+                    AND is_dir = 1
+                    AND (
+                        rel_path = :rel
+                        OR rel_path LIKE :rel_prefix
+                    )
+                LIMIT 1');
+        if ($probe) {
+                $probe->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+                $probe->bindValue(':rel', (string) $relPath, SQLITE3_TEXT);
+                $probe->bindValue(':rel_prefix', (string) ($relPath . '/%'), SQLITE3_TEXT);
+                $probeResult = $probe->execute();
+                if ($probeResult && $probeResult->fetchArray(SQLITE3_ASSOC)) {
+                        $hadDir = true;
+                }
+        }
+
+        $delete = $db->prepare('DELETE FROM fm_file_index
         WHERE scope_key = :scope
           AND (
             rel_path = :rel
@@ -5989,12 +6093,15 @@ function fm_search_index_remove_path($absolutePath, $reason = '')
 
     if (!$ok) {
         fm_search_index_mark_dirty('remove_execute_failed', $absolutePath);
+    } elseif ($hadDir) {
+        fm_search_index_bump_tree_revision('remove_path:' . (string) $reason, $db, $scope);
     }
 
     fm_search_log_event('search_index_remove_path', array(
         'reason' => (string) $reason,
         'path' => (string) $absolutePath,
         'ok' => $ok ? 1 : 0,
+        'had_dir' => $hadDir ? 1 : 0,
     ));
     return $ok;
 }
@@ -6022,6 +6129,7 @@ function fm_search_index_sync_path($absolutePath, $reason = '')
     $scope = fm_search_scope_key();
     $indexedAt = time();
     $ok = false;
+    $isDir = is_dir($absolutePath);
     try {
         $db->exec('BEGIN IMMEDIATE');
         $ok = fm_search_index_upsert_path($absolutePath, $db, $scope, $indexedAt);
@@ -6038,6 +6146,8 @@ function fm_search_index_sync_path($absolutePath, $reason = '')
 
     if (!$ok) {
         fm_search_index_mark_dirty('sync_failed', $absolutePath);
+    } elseif ($isDir) {
+        fm_search_index_bump_tree_revision('sync_path:' . (string) $reason, $db, $scope);
     }
 
     fm_search_log_event('search_index_sync_path', array(
@@ -6136,6 +6246,8 @@ function fm_search_index_sync_subtree($absolutePath, $reason = '')
 
     if (!$ok) {
         fm_search_index_mark_dirty('sync_subtree_failed', $absolutePath);
+    } else {
+        fm_search_index_bump_tree_revision('sync_subtree:' . (string) $reason, $db, $scope);
     }
 
     fm_search_log_event('search_index_sync_subtree', array(
@@ -6171,8 +6283,11 @@ function fm_search_index_move_path($oldAbsolutePath, $newAbsolutePath, $reason =
     }
 
     $ok = $removeOk && $syncOk;
+    $newIsDir = is_dir($newAbsolutePath);
     if (!$ok) {
         fm_search_index_mark_dirty('move_failed', $newAbsolutePath);
+    } elseif ($newIsDir) {
+        fm_search_index_bump_tree_revision('move_path:' . (string) $reason);
     }
 
     fm_search_log_event('search_index_move_path', array(
@@ -6182,6 +6297,153 @@ function fm_search_index_move_path($oldAbsolutePath, $newAbsolutePath, $reason =
         'ok' => $ok ? 1 : 0,
     ));
     return $ok;
+}
+
+/**
+ * Return visible direct child directories from SQLite index for tree UI.
+ * @param string $parentPath
+ * @return array
+ */
+function fm_search_index_get_child_directories($parentPath = '')
+{
+    $db = fm_search_index_get_db();
+    if (!$db) {
+        return array(
+            'success' => false,
+            'message' => 'Search index database is not available.',
+            'path' => fm_clean_path((string) $parentPath),
+            'children' => array(),
+            'revision' => 0,
+        );
+    }
+
+    $scope = fm_search_scope_key();
+    $parentPath = fm_clean_path((string) $parentPath);
+    $homePath = fm_clean_path((string) fm_get_navigation_home_root());
+
+    if ($parentPath === '' && $homePath !== '') {
+        $parentPath = $homePath;
+    }
+
+    $rootPath = rtrim(str_replace('\\', '/', (string) FM_ROOT_PATH), '/');
+    if ($rootPath === '') {
+        return array(
+            'success' => false,
+            'message' => 'Root path is not available.',
+            'path' => $parentPath,
+            'children' => array(),
+            'revision' => 0,
+        );
+    }
+
+    $absoluteParent = $rootPath . ($parentPath !== '' ? '/' . $parentPath : '');
+    if (!fm_is_within_navigation_home($absoluteParent) || !fm_user_can_access_path($absoluteParent, true)) {
+        return array(
+            'success' => false,
+            'message' => 'Access denied',
+            'path' => $parentPath,
+            'children' => array(),
+            'revision' => fm_search_index_get_tree_revision($scope),
+        );
+    }
+
+    if (!fm_search_index_ensure_fresh($db, $scope)) {
+        return array(
+            'success' => false,
+            'message' => 'Search index is not ready yet.',
+            'path' => $parentPath,
+            'children' => array(),
+            'revision' => fm_search_index_get_tree_revision($scope),
+        );
+    }
+
+    try {
+        $stmt = $db->prepare('SELECT
+                c.name AS name,
+                c.rel_path AS path,
+                CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM fm_file_index AS cc
+                    WHERE cc.scope_key = c.scope_key
+                      AND cc.is_dir = 1
+                      AND cc.dir_path = c.rel_path
+                    LIMIT 1
+                ) THEN 1 ELSE 0 END AS has_children
+            FROM fm_file_index AS c
+            WHERE c.scope_key = :scope
+              AND c.is_dir = 1
+              AND c.dir_path = :parent
+            ORDER BY c.name_lc ASC, c.name ASC');
+
+        if (!$stmt) {
+            return array(
+                'success' => false,
+                'message' => 'Search index query preparation failed.',
+                'path' => $parentPath,
+                'children' => array(),
+                'revision' => fm_search_index_get_tree_revision($scope),
+            );
+        }
+
+        $stmt->bindValue(':scope', (string) $scope, SQLITE3_TEXT);
+        $stmt->bindValue(':parent', (string) $parentPath, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        if (!$result) {
+            return array(
+                'success' => false,
+                'message' => 'Search index query execution failed.',
+                'path' => $parentPath,
+                'children' => array(),
+                'revision' => fm_search_index_get_tree_revision($scope),
+            );
+        }
+
+        $children = array();
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $name = isset($row['name']) ? (string) $row['name'] : '';
+            $path = isset($row['path']) ? fm_clean_path((string) $row['path']) : '';
+            if ($name === '' || $path === '') {
+                continue;
+            }
+            if (!FM_SHOW_HIDDEN && substr($name, 0, 1) === '.') {
+                continue;
+            }
+
+            $absolutePath = $rootPath . '/' . $path;
+            if (!fm_is_within_navigation_home($absolutePath) || !fm_user_can_access_path($absolutePath, true)) {
+                continue;
+            }
+            if (!fm_is_exclude_items($name, $absolutePath)) {
+                continue;
+            }
+
+            $children[] = array(
+                'name' => $name,
+                'path' => $path,
+                'has_children' => !empty($row['has_children']),
+            );
+        }
+
+        return array(
+            'success' => true,
+            'message' => '',
+            'path' => $parentPath,
+            'children' => $children,
+            'revision' => fm_search_index_get_tree_revision($scope),
+        );
+    } catch (Exception $e) {
+        fm_search_log_event('folder_tree_children_query_failed', array(
+            'parent' => $parentPath,
+            'message' => $e->getMessage(),
+        ));
+        return array(
+            'success' => false,
+            'message' => 'Folder tree query failed.',
+            'path' => $parentPath,
+            'children' => array(),
+            'revision' => fm_search_index_get_tree_revision($scope),
+        );
+    }
 }
 
 /**

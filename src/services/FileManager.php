@@ -244,6 +244,14 @@ class TFM_FileManager {
         if (function_exists('fm_owner_meta_touch')) {
             fm_owner_meta_touch($full_path, 'mkdir');
         }
+        if (function_exists('fm_search_index_sync_path')) {
+            $ok = fm_search_index_sync_path($full_path, 'mkdir');
+            if (!$ok && function_exists('fm_search_index_mark_dirty')) {
+                fm_search_index_mark_dirty('mkdir_fallback', $full_path);
+            }
+        } elseif (function_exists('fm_search_index_mark_dirty')) {
+            fm_search_index_mark_dirty('mkdir', $full_path);
+        }
         
         $this->log('dir_create', "Directory created: $dirname");
         return true;

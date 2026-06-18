@@ -52,8 +52,14 @@ function lng($txt)
     $tr['en']['SelectAll']      = 'Select all';
     $tr['en']['UnSelectAll']    = 'Unselect all';
     $tr['en']['File']           = 'File';
+    $tr['en']['Folders']        = 'Folders';
     $tr['en']['Back']           = 'Back';
     $tr['en']['Home']           = 'Home';
+    $tr['en']['Expand']         = 'Expand';
+    $tr['en']['Collapse']       = 'Collapse';
+    $tr['en']['Loading…']       = 'Loading...';
+    $tr['en']['No subfolders']  = 'No subfolders';
+    $tr['en']['Failed to load folders'] = 'Failed to load folders';
     $tr['en']['Size']           = 'Size';
     $tr['en']['Perms']          = 'Perms';
     $tr['en']['Modified']       = 'Modified';

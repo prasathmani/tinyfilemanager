@@ -3,9 +3,9 @@ set -euo pipefail
 
 # Run a clean preview of origin/master in a separate worktree.
 # Usage:
-#   ./scripts/run-master-preview.sh
-#   ./scripts/run-master-preview.sh --port 8090
-#   ./scripts/run-master-preview.sh --no-open
+#   ./scripts/prehliadac.sh
+#   ./scripts/prehliadac.sh --port 8090
+#   ./scripts/prehliadac.sh --no-open
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKTREE_DIR="${ROOT_DIR}/../tinyfilemanager-master"
@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat <<EOF
-Usage: ./scripts/run-master-preview.sh [--port PORT] [--no-open]
+Usage: ./scripts/prehliadac.sh [--port PORT] [--no-open]
 
 Options:
   --port PORT  Port for PHP server (default: 8080)
