@@ -340,7 +340,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 
 1. Pripraviť vlastné kontextové menu pre pravé tlačidlo myši.
 2. Navrhnúť funkcie podľa kliknutého objektu.
-3. Dopĺňať pokročilé používateľské akcie postupne, bez veľkého refactoru.
+3. Dopĺňať pokročilé používateľské akcie postupne, bez veľkého refactoru. --- HOTOVO, nasadená a ručne overená verzia 3.1.10
 
 ---
 
