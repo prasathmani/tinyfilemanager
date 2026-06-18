@@ -102,7 +102,7 @@ Zatiaľ stačí bezpečne zablokovať štandardné menu a pripraviť technický 
 
 Ak oprávnený používateľ, napríklad admin alebo manažér, založí nový priečinok a chce do neho nahrať súbor, súbor sa neuloží.
 
-**Stav po teste:** Opravené a ručne overené. Normálny upload reálne ukladá súbor do aktuálne otvoreného priečinka.
+**Stav po teste:** Opravené a ručne overené. Normálny upload reálne ukladá súbor do aktuálne otvoreného nového priečinka.
 
 **Požiadavka:**
 - preveriť request po odoslaní upload formulára,
@@ -344,7 +344,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 
 Nezasahovať naraz do celej aplikácie.
 
-Každá oprava má byť malá, čitateľná a samostatne testovateľná. Po každej dokončenej úlohe spraviť commit s jasným popisom.
+Každá oprava má byť malá, čitateľná a samostatne testovateľná. Po každej implementovanej a otestovanej úlohe pripraviť samostatný commit s jasným popisom. Push, release, nasadenie a označenie HOTOVO sa vykonávajú až po výstupnej kontrole a ručnom overení.
 
 Odporúčaná forma commitov:
 
@@ -365,6 +365,82 @@ Odporúčaná forma commitov:
 
 ---
 
-## 5. Poznámka k manažérom
+## 5. Rozdelenie zodpovednosti a výstupná kontrola
+
+Pri ďalšom vývoji projektu DREMONT sa oddeľuje implementácia od výstupnej kontroly.
+
+### Copilot
+
+Copilot vykonáva iba:
+
+- analýzu existujúceho kódu,
+- implementáciu malej a samostatne testovateľnej úlohy,
+- syntax kontroly,
+- automatizované alebo lokálne integračné testy,
+- vytvorenie lokálneho commitu iba vtedy, keď je to výslovne uvedené v konkrétnom zadaní,
+- záverečný technický report.
+
+Copilot nesmie svojvoľne:
+
+- robiť push,
+- vytvárať release,
+- nasadzovať verziu,
+- označovať úlohu ako `--- HOTOVO`,
+- meniť poradie roadmapy,
+- preskakovať na inú úlohu bez výslovného zadania.
+
+### Joyee – výstupná kontrola
+
+Joyee vykonáva alebo riadi:
+
+- kontrolu technického reportu Copilota,
+- kontrolu diffu a commitov dostupných na GitHube,
+- posúdenie, či patch zodpovedá zadaniu,
+- rozhodnutie, či je patch schválený na push, release a nasadenie,
+- prípravu presných technických krokov pre commit, push a release,
+- aktualizáciu TASK dokumentu po úspešnom nasadení a ručnom overení.
+
+Označenie:
+
+`--- HOTOVO, nasadená a ručne overená verzia X.Y.Z`
+
+sa zapisuje až po splnení všetkých podmienok:
+
+1. implementácia je dokončená,
+2. patch je skontrolovaný,
+3. commit je dostupný na GitHube,
+4. release je vytvorený,
+5. verzia je nasadená,
+6. používateľ ju ručne overil na reálnom hostingu.
+
+Copilot sám nesmie rozhodnúť, že úloha je HOTOVO.
+
+### Používateľ
+
+Používateľ:
+
+- ručne overuje nasadenú verziu na reálnom hostingu,
+- potvrdzuje funkčnosť z pohľadu používateľa,
+- rozhoduje o obchodných, prevádzkových a projektových prioritách,
+- môže schváliť alebo odmietnuť ďalší krok.
+
+### Princíp štyroch stavov
+
+Každá úloha môže mať postupne tieto stavy:
+
+1. `ROZPRACOVANÉ`
+2. `IMPLEMENTOVANÉ A OTESTOVANÉ`
+3. `SCHVÁLENÉ NA RELEASE`
+4. `--- HOTOVO, nasadená a ručne overená verzia X.Y.Z`
+
+Tieto stavy sa nesmú zamieňať.
+
+Úspešný lokálny test alebo lokálny commit ešte neznamená, že je úloha HOTOVO.
+
+Aktualizácia stavu v `TASKS_DREMONT_2026-06-16.md` musí byť pravdivá a musí používať presné číslo reálne nasadenej verzie. Verzia sa nesmie odhadovať.
+
+---
+
+## 6. Poznámka k manažérom
 
 Manažéri môžu používať pracovné a súborové funkcie podľa pridelených oprávnení, ale nemajú mať prístup do správy používateľov. Správa používateľov ostáva výhradne administrátorská funkcia, zatiaľ!
