@@ -77,6 +77,24 @@ body.theme-dark .main-nav.navbar {
   min-width: 12ch;
 }
 
+.main-nav .fm-header-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+}
+
+.main-nav .fm-header-icon-link .fa {
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .main-nav .fm-header-icon-link .fa {
+    font-size: 2.03em;
+  }
+}
+
 .main-nav .fm-brand-logo {
   height: 32px;
   width: auto;
@@ -772,6 +790,12 @@ body.fm-density-normal .inline-actions > a > i {
 
   .fm-owner-stack {
     gap: 3px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-nav .fm-brand-logo {
+    height: 20.8px;
   }
 }
 

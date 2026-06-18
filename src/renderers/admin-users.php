@@ -11,6 +11,8 @@ $directories_users = isset($directories_users) && is_array($directories_users) ?
 $audit_events = function_exists('fm_admin_read_audit_events') ? fm_admin_read_audit_events(50) : array();
 $config_file_path = dirname(__DIR__, 2) . '/config.php';
 $config_is_writable = is_file($config_file_path) && is_writable($config_file_path);
+$fm_admin_return_path = isset($_GET['p']) ? (string) $_GET['p'] : (defined('FM_PATH') ? (string) FM_PATH : '');
+$admin_close_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
 
 // Union of all usernames
 $usernames = array();
@@ -73,8 +75,12 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             Operácie New/Edit/Delete sa neuložia, kým web server nezíska právo zápisu.
         </div>
     <?php endif; ?>
-    <div class="mb-3">
+    <div class="mb-3 d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-success" data-admin-user-action="new">New user</button>
+        <a href="?p=<?php echo urlencode($fm_admin_return_path); ?>" class="btn btn-outline-secondary">
+            <i class="fa fa-times-circle" aria-hidden="true"></i>
+            <?php echo fm_enc($admin_close_label); ?>
+        </a>
     </div>
     <div class="table-responsive">
         <table class="table table-bordered table-striped table-sm align-middle">

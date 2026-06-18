@@ -16,6 +16,7 @@ $title = $modal_mode === 'edit' ? 'Edit user' : 'New user';
 $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
 $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
 $note_value = htmlspecialchars($modal_note, ENT_QUOTES, 'UTF-8');
+$modal_cancel_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
 
 ?>
 <div class="modal fade" id="adminUserModal" tabindex="-1" aria-labelledby="adminUserModalLabel" aria-hidden="true">
@@ -65,7 +66,7 @@ $note_value = htmlspecialchars($modal_note, ENT_QUOTES, 'UTF-8');
           <input type="hidden" name="token" value="<?php echo htmlspecialchars($modal_token, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo fm_enc($modal_cancel_label); ?></button>
           <button type="submit" class="btn btn-primary">Save</button>
           <?php if ($modal_mode === 'edit'): ?>
           <button type="button" class="btn btn-danger ms-2" id="admin-user-delete-btn">Zmazať</button>

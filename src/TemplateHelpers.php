@@ -97,11 +97,11 @@ function fm_show_nav_path($path)
                     </li>
                     <?php if ((!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH): ?>
                         <li class="nav-item">
-                            <a title="<?php echo lng('Upload') ?>" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php echo lng('Upload') ?></a>
+                            <a title="<?php echo lng('Upload') ?>" aria-label="<?php echo lng('Upload') ?>" class="nav-link fm-header-icon-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i><span class="visually-hidden"><?php echo lng('Upload') ?></span></a>
                         </li>
                         <?php if (!FM_UPLOAD_ONLY): ?>
                         <li class="nav-item">
-                            <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-bs-toggle="modal" data-bs-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
+                            <a title="Nový Priečinok alebo Súbor" aria-label="Nový Priečinok alebo Súbor" class="nav-link fm-header-icon-link" href="#createNewItem" data-bs-toggle="modal" data-bs-target="#createNewItem"><i class="fa fa-plus-square" aria-hidden="true"></i><span class="visually-hidden">Nový Priečinok alebo Súbor</span></a>
                         </li>
                         <?php endif; ?>
                     <?php endif; ?>
