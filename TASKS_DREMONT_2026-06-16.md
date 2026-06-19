@@ -345,7 +345,9 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 ### Fáza F – podnety z praxe
 
 1. Sprístupniť komunikáciu každému prihlásenému používateľovi bez rozdielu oprávnení (read-only, upload-only, manager, admin). --- IMPLEMENTOVANÉ A OTESTOVANÉ nasadená a ručne overená verzia 3.1.16
-2. Pripraviť jednoduchú mobilnú inštaláciu aplikácie (PWA): inštalácia na plochu, manifest, service worker a základné mobilné meta nastavenia.
+2. Pripraviť jednoduchú mobilnú inštaláciu aplikácie (PWA): inštalácia na plochu, manifest, service worker a základné mobilné meta nastavenia. --- HOTOVO, nasadená a ručne overená verzia 3.2.1
+3. Upraviť mobilný footer tak, aby zostal čitateľný, a lištu hromadných úprav vyvolávať cez jednu ikonu vo footeri ako vyskakovací panel. --- HOTOVO, nasadená a ručne overená verzia 3.2.1
+4. Doplniť na prihlasovací formulár tlačidlo/ikonu „Pridať aplikáciu do mobilu“ s priamym PWA promptom (Android) a návodom pre Safari na iPhone. --- HOTOVO, nasadená a ručne overená verzia 3.2.1
 
 ---
 
