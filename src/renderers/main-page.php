@@ -614,6 +614,9 @@
     <div class="row fm-footer-tools-row">
         <?php
         $footerLoggedUser = (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
+        $fm_bulk_toolbar_visible = defined('FM_BULK_ACTIONS_ENABLED') ? (bool) FM_BULK_ACTIONS_ENABLED : (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH);
+        $fm_bulk_can_modify = !FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH;
+        $fm_bulk_can_delete = $fm_bulk_can_modify && !FM_MANAGER;
         // Chat availability is role-agnostic: every logged-in user can communicate.
         $footerShowUserBadges = !empty($footerLoggedUser);
         $footerOnlineUsers = $footerShowUserBadges ? fm_online_get_users() : array();
@@ -628,7 +631,7 @@
             $footerOnlineUsers = array($footerLoggedUser);
         }
         ?>
-        <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+        <?php if ($fm_bulk_toolbar_visible): ?>
             <div class="fm-footer-actions-col">
                 <div class="fm-mobile-bulk-header">
                     <strong>Hromadné akcie</strong>
@@ -639,10 +642,13 @@
                     <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a>
                     <a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a>
                     <a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a>
-                    <?php if (!FM_MANAGER): ?>
+                    <input type="submit" class="hidden" name="download_selected" id="a-download-selected" value="download_selected">
+                    <a href="javascript:document.getElementById('a-download-selected').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-download"></i> <?php echo lng('Download') ?> ZIP</a>
+                    <?php if ($fm_bulk_can_delete): ?>
                     <input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('<?php echo lng('Delete selected files and folders?'); ?>')">
                     <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> <?php echo lng('Delete') ?> </a>
                     <?php endif; ?>
+                    <?php if ($fm_bulk_can_modify): ?>
                     <input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
                     <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Zip') ?> </a>
                     <input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
@@ -651,6 +657,7 @@
                     <input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:(function(){var f=document.getElementById('fm-bulk-move-flag');if(f){f.removeAttribute('name');}document.getElementById('a-copy').click();})();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
                     <a href="javascript:(function(){var f=document.getElementById('fm-bulk-move-flag');if(f){f.setAttribute('name','move');}document.getElementById('a-copy').click();})();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-arrows"></i> <?php echo lng('Move') ?> </a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="fm-footer-online-col">
@@ -734,7 +741,7 @@
             </div>
         <?php endif; ?>
     </div>
-    <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+    <?php if ($fm_bulk_toolbar_visible): ?>
         <button type="button" id="fm-mobile-bulk-backdrop" class="fm-mobile-bulk-backdrop" data-fm-bulk-close aria-hidden="true" tabindex="-1"></button>
     <?php endif; ?>
 </form>

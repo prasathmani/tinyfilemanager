@@ -9,6 +9,7 @@ if (!isset($modal_token)) $modal_token = '';
 if (!isset($modal_access_type)) $modal_access_type = 'standard';
 if (!isset($modal_directories)) $modal_directories = '';
 if (!isset($modal_note)) $modal_note = '';
+if (!isset($modal_bulk_actions_enabled)) $modal_bulk_actions_enabled = true;
 
 $readonly = $modal_mode === 'edit' ? 'readonly' : '';
 $now = date('Y-m-d\TH:i');
@@ -53,6 +54,10 @@ $modal_cancel_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
           <div class="mb-3">
             <label for="admin-dirs" class="form-label">Assigned directories</label>
             <textarea class="form-control" id="admin-dirs" name="directories" rows="3"><?php echo $directories_value; ?></textarea>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="admin-bulk-actions-enabled" name="bulk_actions_enabled" value="1" <?php echo $modal_bulk_actions_enabled ? 'checked' : ''; ?>>
+            <label class="form-check-label" for="admin-bulk-actions-enabled">Povoliť lištu hromadných akcií</label>
           </div>
           <div class="mb-3">
             <label for="admin-date" class="form-label">Dátum vloženia / zmeny</label>

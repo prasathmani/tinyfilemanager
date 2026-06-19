@@ -57,6 +57,10 @@ $upload_only_users = array();
 // Manager users (full access except delete)
 $manager_users = array();
 
+// Users for whom the bulk action bar should be hidden.
+// Default behavior: enabled for all authenticated users.
+$bulk_actions_disabled_users = array();
+
 // Global readonly, including when auth is not being used
 $global_readonly = false;
 
@@ -957,6 +961,17 @@ define('FM_UPLOAD_ONLY', !$fm_is_super_admin && $use_auth && !empty($upload_only
 define('FM_MANAGER', !$fm_is_super_admin && $use_auth && !empty($manager_users) && in_array($fm_logged_user, $manager_users, true));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
+$bulk_actions_disabled_users = isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users)
+    ? array_values(array_unique(array_map('strval', $bulk_actions_disabled_users)))
+    : array();
+$fm_bulk_actions_enabled = false;
+if (!$use_auth) {
+    $fm_bulk_actions_enabled = !FM_READONLY && !FM_UPLOAD_ONLY;
+} elseif ($fm_logged_user !== '') {
+    $fm_bulk_actions_enabled = !in_array($fm_logged_user, $bulk_actions_disabled_users, true);
+}
+define('FM_BULK_ACTIONS_ENABLED', $fm_bulk_actions_enabled);
+
 $fm_is_ajax_request = (
     (isset($_POST['ajax']) && (string) $_POST['ajax'] !== '')
     || (isset($_REQUEST['ajax']) && (string) $_REQUEST['ajax'] !== '')
@@ -1063,6 +1078,7 @@ if (isset($_GET['admin_users_save'])) {
     $access_type = isset($_POST['access_type']) ? trim((string) $_POST['access_type']) : 'standard';
     $directories_raw = isset($_POST['directories']) ? (string) $_POST['directories'] : '';
     $note = isset($_POST['note']) ? trim((string) $_POST['note']) : '';
+    $bulk_actions_enabled = isset($_POST['bulk_actions_enabled']) && (string) $_POST['bulk_actions_enabled'] === '1';
     $change_date = isset($_POST['date']) ? trim((string) $_POST['date']) : '';
 
     if ($username === '' || !preg_match('/^[A-Za-z0-9._-]{2,64}$/', $username)) {
@@ -1086,6 +1102,9 @@ if (isset($_GET['admin_users_save'])) {
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
     $user_notes_local = $config_data['user_notes'];
+    $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users'])
+        ? array_values(array_unique(array_map('strval', $config_data['bulk_actions_disabled_users'])))
+        : array();
 
     $exists = array_key_exists($username, $auth_users_local)
         || in_array($username, $readonly_users_local, true)
@@ -1117,6 +1136,7 @@ if (isset($_GET['admin_users_save'])) {
     if (array_key_exists($username, $directories_users_local)) {
         $old_dirs_count = is_array($directories_users_local[$username]) ? count($directories_users_local[$username]) : 1;
     }
+    $old_bulk_actions_enabled = !in_array($username, $bulk_actions_disabled_users_local, true);
 
     $password_changed = false;
     if ($password !== '' || $password2 !== '') {
@@ -1168,6 +1188,13 @@ if (isset($_GET['admin_users_save'])) {
         $user_notes_local[$username] = $note;
     }
 
+    if ($bulk_actions_enabled) {
+        $bulk_actions_disabled_users_local = array_values(array_diff($bulk_actions_disabled_users_local, array($username)));
+    } else {
+        $bulk_actions_disabled_users_local[] = $username;
+        $bulk_actions_disabled_users_local = array_values(array_unique($bulk_actions_disabled_users_local));
+    }
+
     $write_ok = fm_admin_persist_user_config_arrays(
         $config_file,
         $auth_users_local,
@@ -1175,7 +1202,8 @@ if (isset($_GET['admin_users_save'])) {
         $upload_only_users_local,
         $manager_users_local,
         $directories_users_local,
-        $user_notes_local
+        $user_notes_local,
+        $bulk_actions_disabled_users_local
     );
 
     if (!$write_ok['ok']) {
@@ -1189,6 +1217,8 @@ if (isset($_GET['admin_users_save'])) {
         'directories_old_count' => $old_dirs_count,
         'directories_new_count' => $new_dirs_count,
         'password_changed' => $password_changed,
+        'bulk_actions_enabled_old' => $old_bulk_actions_enabled,
+        'bulk_actions_enabled_new' => $bulk_actions_enabled,
     );
     if ($note !== '') {
         $audit_meta['note'] = $note;
@@ -1204,6 +1234,8 @@ if (isset($_GET['admin_users_save'])) {
         'directories_old_count' => $audit_meta['directories_old_count'],
         'directories_new_count' => $audit_meta['directories_new_count'],
         'password_changed' => $audit_meta['password_changed'],
+        'bulk_actions_enabled_old' => isset($audit_meta['bulk_actions_enabled_old']) ? $audit_meta['bulk_actions_enabled_old'] : '',
+        'bulk_actions_enabled_new' => isset($audit_meta['bulk_actions_enabled_new']) ? $audit_meta['bulk_actions_enabled_new'] : '',
         'note' => isset($audit_meta['note']) ? $audit_meta['note'] : '',
         'change_date' => isset($audit_meta['change_date']) ? $audit_meta['change_date'] : '',
     ));
@@ -1262,6 +1294,9 @@ if (isset($_GET['admin_users_delete'])) {
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
     $user_notes_local = $config_data['user_notes'];
+    $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users'])
+        ? array_values(array_unique(array_map('strval', $config_data['bulk_actions_disabled_users'])))
+        : array();
 
     $exists = array_key_exists($username, $auth_users_local)
         || in_array($username, $readonly_users_local, true)
@@ -1288,6 +1323,7 @@ if (isset($_GET['admin_users_delete'])) {
     unset($auth_users_local[$username]);
     unset($directories_users_local[$username]);
     unset($user_notes_local[$username]);
+    $bulk_actions_disabled_users_local = array_values(array_diff($bulk_actions_disabled_users_local, array($username)));
     $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
     $upload_only_users_local = array_values(array_diff($upload_only_users_local, array($username)));
     $manager_users_local = array_values(array_diff($manager_users_local, array($username)));
@@ -1299,7 +1335,8 @@ if (isset($_GET['admin_users_delete'])) {
         $upload_only_users_local,
         $manager_users_local,
         $directories_users_local,
-        $user_notes_local
+        $user_notes_local,
+        $bulk_actions_disabled_users_local
     );
 
     if (!$write_ok['ok']) {
@@ -1332,6 +1369,7 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_access_type = 'standard';
     $modal_directories = '';
     $modal_note = '';
+    $modal_bulk_actions_enabled = true;
 
     $modal_config_file = __DIR__ . '/config.php';
     $modal_config = fm_admin_load_user_config_arrays($modal_config_file);
@@ -1340,6 +1378,9 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_manager_users = $modal_config['ok'] ? $modal_config['manager_users'] : (isset($manager_users) && is_array($manager_users) ? $manager_users : array());
     $modal_directories_users = $modal_config['ok'] ? $modal_config['directories_users'] : (isset($directories_users) && is_array($directories_users) ? $directories_users : array());
     $modal_user_notes = $modal_config['ok'] ? $modal_config['user_notes'] : (isset($user_notes) && is_array($user_notes) ? $user_notes : array());
+    $modal_bulk_actions_disabled_users = $modal_config['ok'] && isset($modal_config['bulk_actions_disabled_users']) && is_array($modal_config['bulk_actions_disabled_users'])
+        ? array_values(array_unique(array_map('strval', $modal_config['bulk_actions_disabled_users'])))
+        : (isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users) ? array_values(array_unique(array_map('strval', $bulk_actions_disabled_users))) : array());
 
     if ($modal_mode === 'edit' && $modal_username !== '') {
         if (!empty($modal_manager_users) && in_array($modal_username, $modal_manager_users, true)) {
@@ -1362,6 +1403,8 @@ if (isset($_GET['admin_users_modal'])) {
         if (!empty($modal_user_notes) && array_key_exists($modal_username, $modal_user_notes)) {
             $modal_note = (string) $modal_user_notes[$modal_username];
         }
+
+        $modal_bulk_actions_enabled = !in_array($modal_username, $modal_bulk_actions_disabled_users, true);
     }
     require __DIR__ . '/src/renderers/admin-user-modal.php';
     exit;
@@ -1574,6 +1617,132 @@ if (class_exists('TFM_DownloadPreviewHandler')) {
 if (!empty($_FILES) && (!FM_READONLY || FM_UPLOAD_ONLY) && FM_CAN_WRITE_IN_PATH) {
     $legacy_upload_handler = new TFM_LegacyUploadHandler(FM_ROOT_PATH, FM_PATH);
     $legacy_upload_handler->handle($_FILES, $_POST, $_REQUEST);
+}
+
+// Bulk download selected items as temporary ZIP (works for read-only users too)
+if (isset($_POST['group'], $_POST['download_selected'], $_POST['token']) && FM_BULK_ACTIONS_ENABLED) {
+    if (!verifyToken($_POST['token'])) {
+        fm_set_msg(lng('Invalid Token.'), 'error');
+        die('Invalid Token.');
+    }
+
+    if (!class_exists('ZipArchive')) {
+        fm_set_msg(lng('Operations with archives are not available'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $selected_files = isset($_POST['file']) && is_array($_POST['file']) ? $_POST['file'] : array();
+    $selected_files = array_values(array_unique(array_filter(array_map('fm_clean_path', $selected_files), 'strlen')));
+    if (empty($selected_files)) {
+        fm_set_msg(lng('Nothing selected'), 'alert');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $base_dir = rtrim(FM_ROOT_PATH . (FM_PATH !== '' ? '/' . FM_PATH : ''), '/\\');
+    if ($base_dir === '') {
+        $base_dir = FM_ROOT_PATH;
+    }
+
+    $base_real = realpath($base_dir);
+    if ($base_real === false || !is_dir($base_real)) {
+        fm_set_msg(lng('Folder not found'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $tmp_zip_seed = tempnam(sys_get_temp_dir(), 'tfm_bulk_');
+    if ($tmp_zip_seed === false) {
+        fm_set_msg(lng('Archive not created'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $tmp_zip_path = $tmp_zip_seed . '.zip';
+    @unlink($tmp_zip_seed);
+
+    $zip = new ZipArchive();
+    if ($zip->open($tmp_zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        @unlink($tmp_zip_path);
+        fm_set_msg(lng('Archive not created'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $added_count = 0;
+    foreach ($selected_files as $selected_rel) {
+        $selected_name = ltrim(str_replace('\\', '/', $selected_rel), '/');
+        if ($selected_name === '' || strpos($selected_name, '../') !== false) {
+            continue;
+        }
+
+        $selected_abs = $base_real . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $selected_name);
+        $selected_real = realpath($selected_abs);
+        if ($selected_real === false) {
+            continue;
+        }
+
+        $selected_real_norm = str_replace('\\', '/', $selected_real);
+        $base_real_norm = rtrim(str_replace('\\', '/', $base_real), '/');
+        if ($selected_real_norm !== $base_real_norm && strpos($selected_real_norm . '/', $base_real_norm . '/') !== 0) {
+            continue;
+        }
+
+        if (is_dir($selected_real)) {
+            $zip->addEmptyDir($selected_name);
+            $added_count++;
+
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($selected_real, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+
+            foreach ($iterator as $item) {
+                $item_path = (string) $item->getPathname();
+                $relative = ltrim(str_replace('\\', '/', substr($item_path, strlen($selected_real))), '/');
+                $archive_path = trim($selected_name . '/' . $relative, '/');
+                if ($archive_path === '') {
+                    continue;
+                }
+
+                if ($item->isDir()) {
+                    $zip->addEmptyDir($archive_path);
+                    $added_count++;
+                } elseif ($item->isFile()) {
+                    $zip->addFile($item_path, $archive_path);
+                    $added_count++;
+                }
+            }
+            continue;
+        }
+
+        if (is_file($selected_real)) {
+            $zip->addFile($selected_real, $selected_name);
+            $added_count++;
+        }
+    }
+
+    $zip->close();
+
+    if ($added_count < 1 || !is_file($tmp_zip_path)) {
+        @unlink($tmp_zip_path);
+        fm_set_msg(lng('Archive not created'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
+
+    $download_name = 'selected_' . date('Ymd_His') . '.zip';
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . $download_name . '"');
+    header('Content-Transfer-Encoding: binary');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    header('Content-Length: ' . filesize($tmp_zip_path));
+
+    readfile($tmp_zip_path);
+    @unlink($tmp_zip_path);
+    exit;
 }
 
 // Mass deleting
@@ -2937,6 +3106,7 @@ function fm_admin_load_user_config_arrays($config_file)
         $manager_users = array();
         $directories_users = array();
         $user_notes = array();
+        $bulk_actions_disabled_users = array();
         include $__config_file;
         return array(
             'auth_users' => is_array($auth_users) ? $auth_users : array(),
@@ -2945,6 +3115,7 @@ function fm_admin_load_user_config_arrays($config_file)
             'manager_users' => is_array($manager_users) ? $manager_users : array(),
             'directories_users' => is_array($directories_users) ? $directories_users : array(),
             'user_notes' => is_array($user_notes) ? $user_notes : array(),
+            'bulk_actions_disabled_users' => is_array($bulk_actions_disabled_users) ? $bulk_actions_disabled_users : array(),
         );
     };
 
@@ -3078,7 +3249,7 @@ function fm_admin_replace_config_array_assignment($content, $var_name, $new_code
  * @param array $directories_users
  * @return array
  */
-function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array())
+function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array(), array $bulk_actions_disabled_users = array())
 {
     $original_content = @file_get_contents($config_file);
     if ($original_content === false) {
@@ -3095,6 +3266,7 @@ function fm_admin_persist_user_config_arrays($config_file, array $auth_users, ar
         'manager_users' => fm_admin_export_list_array_code('manager_users', $manager_users),
         'directories_users' => fm_admin_export_assoc_array_code('directories_users', $directories_users, $config_dir),
         'user_notes' => fm_admin_export_assoc_array_code('user_notes', $user_notes, $config_dir),
+        'bulk_actions_disabled_users' => fm_admin_export_list_array_code('bulk_actions_disabled_users', $bulk_actions_disabled_users),
     );
 
     foreach ($replacements as $var_name => $new_code) {

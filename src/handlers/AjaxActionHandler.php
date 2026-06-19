@@ -475,7 +475,8 @@ class TFM_AjaxActionHandler {
             isset($configData['upload_only_users']) && is_array($configData['upload_only_users']) ? $configData['upload_only_users'] : array(),
             isset($configData['manager_users']) && is_array($configData['manager_users']) ? $configData['manager_users'] : array(),
             isset($configData['directories_users']) && is_array($configData['directories_users']) ? $configData['directories_users'] : array(),
-            isset($configData['user_notes']) && is_array($configData['user_notes']) ? $configData['user_notes'] : array()
+            isset($configData['user_notes']) && is_array($configData['user_notes']) ? $configData['user_notes'] : array(),
+            isset($configData['bulk_actions_disabled_users']) && is_array($configData['bulk_actions_disabled_users']) ? $configData['bulk_actions_disabled_users'] : array()
         );
 
         if (!empty($persistResult['ok'])) {

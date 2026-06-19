@@ -796,6 +796,9 @@ body.fm-density-normal .inline-actions > a > i {
 @media (max-width: 768px) {
   .main-nav .fm-brand-logo {
     height: 20.8px;
+    width: 124px;
+    object-fit: contain;
+    object-position: left center;
   }
 }
 
