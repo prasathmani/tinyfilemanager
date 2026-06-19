@@ -414,8 +414,65 @@ if ($fm_self_path === '') {
 
 defined('FM_SELF_PATH') || define('FM_SELF_PATH', $fm_self_path);
 defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . FM_SELF_PATH);
+$fm_self_dir = dirname(FM_SELF_PATH);
+if ($fm_self_dir === '\\' || $fm_self_dir === '.' || $fm_self_dir === '') {
+    $fm_self_dir = '/';
+}
+$fm_self_dir = rtrim(str_replace('\\', '/', $fm_self_dir), '/');
+if ($fm_self_dir === '') {
+    $fm_self_dir = '/';
+}
+defined('FM_SELF_DIR') || define('FM_SELF_DIR', $fm_self_dir);
+defined('FM_SELF_DIR_URL') || define(
+    'FM_SELF_DIR_URL',
+    ($is_https ? 'https' : 'http') . '://' . $http_host . (FM_SELF_DIR === '/' ? '/' : FM_SELF_DIR . '/')
+);
 
-// Lightweight PWA manifest endpoint (no service worker)
+if (isset($_GET['sw'])) {
+    $cache_name = 'tfm-shell-v' . preg_replace('/[^a-zA-Z0-9_.-]/', '-', (string) VERSION);
+    $shell_urls = array(
+        FM_SELF_URL . '?p=',
+        FM_SELF_URL . '?manifest=1',
+    );
+
+    $icon_source = LOGIN_LOGO_PATH ? LOGIN_LOGO_PATH : $favicon_path;
+    if (!empty($icon_source) && !preg_match('#^https?://#i', (string) $icon_source)) {
+        $shell_urls[] = FM_ROOT_URL . '/' . ltrim((string) $icon_source, '/');
+    }
+
+    $shell_urls = array_values(array_unique($shell_urls));
+
+    header('Content-Type: application/javascript; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo "'use strict';\n";
+    echo 'const FM_CACHE_NAME = ' . json_encode($cache_name, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ";\n";
+    echo 'const FM_SHELL_URLS = ' . json_encode($shell_urls, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ";\n";
+    echo "self.addEventListener('install', (event) => {\n";
+    echo "  event.waitUntil(caches.open(FM_CACHE_NAME).then((cache) => cache.addAll(FM_SHELL_URLS)).then(() => self.skipWaiting()));\n";
+    echo "});\n";
+    echo "self.addEventListener('activate', (event) => {\n";
+    echo "  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== FM_CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim()));\n";
+    echo "});\n";
+    echo "self.addEventListener('fetch', (event) => {\n";
+    echo "  if (event.request.method !== 'GET') {\n";
+    echo "    return;\n";
+    echo "  }\n";
+    echo "  const requestUrl = new URL(event.request.url);\n";
+    echo "  if (requestUrl.origin !== self.location.origin) {\n";
+    echo "    return;\n";
+    echo "  }\n";
+    echo "  if (event.request.mode === 'navigate') {\n";
+    echo "    event.respondWith(fetch(event.request).catch(() => caches.match(FM_SHELL_URLS[0])));\n";
+    echo "    return;\n";
+    echo "  }\n";
+    echo "  if (FM_SHELL_URLS.includes(requestUrl.href)) {\n";
+    echo "    event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));\n";
+    echo "  }\n";
+    echo "});\n";
+    exit;
+}
+
+// Lightweight PWA manifest endpoint
 if (isset($_GET['manifest'])) {
     $icon_source = LOGIN_LOGO_PATH ? LOGIN_LOGO_PATH : $favicon_path;
     $icon_url = '';
@@ -443,7 +500,7 @@ if (isset($_GET['manifest'])) {
         'name' => APP_TITLE,
         'short_name' => 'TFM',
         'start_url' => FM_SELF_URL . '?p=',
-        'scope' => FM_SELF_URL,
+        'scope' => FM_SELF_DIR_URL,
         'display' => 'standalone',
         'orientation' => 'portrait',
         'background_color' => '#f7f7f7',
@@ -7150,6 +7207,20 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="<?php echo fm_enc(APP_TITLE); ?>">
         <link rel="manifest" href="<?php echo fm_enc(FM_SELF_URL . '?manifest=1'); ?>">
+        <script>
+            if ('serviceWorker' in navigator && window.isSecureContext) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register(
+                        <?php echo json_encode(FM_SELF_URL . '?sw=1', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>,
+                        {
+                            scope: <?php echo json_encode(FM_SELF_DIR_URL, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>
+                        }
+                    ).catch(function() {
+                        // Silent fallback to web mode when service worker cannot be registered.
+                    });
+                });
+            }
+        </script>
         <?php if ($favicon_path) {
             echo '<link rel="icon" href="' . fm_enc($favicon_path) . '" type="image/png">';
         } ?>

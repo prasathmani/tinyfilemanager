@@ -630,6 +630,10 @@
         ?>
         <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
             <div class="fm-footer-actions-col">
+                <div class="fm-mobile-bulk-header">
+                    <strong>Hromadné akcie</strong>
+                    <button type="button" class="btn-close btn-close-sm" data-fm-bulk-close aria-label="Close"></button>
+                </div>
                 <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
                     <span id="fm-selection-count" class="btn btn-small btn-outline-secondary btn-2 pe-none" style="display:none;">0</span>
                     <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a>
@@ -652,6 +656,10 @@
             <div class="fm-footer-online-col">
                 <?php if ($footerShowUserBadges): ?>
                     <div class="d-flex gap-2 align-items-center flex-wrap justify-content-sm-end justify-content-start fm-online-users-wrap">
+                        <button type="button" class="badge border-0 text-bg-primary fm-mobile-bulk-launcher" data-fm-bulk-open title="Hromadné akcie" aria-label="Hromadné akcie" aria-expanded="false">
+                            <i class="fa fa-sliders" aria-hidden="true"></i>
+                            <span class="fm-mobile-bulk-launcher__count" style="display:none;">0</span>
+                        </button>
                         <span class="badge text-bg-light border"><?php echo lng('Online users') ?>: <?php echo count($footerOnlineUsers); ?></span>
                         <?php if ($footerLoggedUser === 'admin'): ?>
                             <button
@@ -679,6 +687,10 @@
                     </div>
                 <?php else: ?>
                     <div class="d-flex flex-column align-items-sm-end align-items-start gap-1 w-100">
+                        <button type="button" class="badge border-0 text-bg-primary fm-mobile-bulk-launcher" data-fm-bulk-open title="Hromadné akcie" aria-label="Hromadné akcie" aria-expanded="false">
+                            <i class="fa fa-sliders" aria-hidden="true"></i>
+                            <span class="fm-mobile-bulk-launcher__count" style="display:none;">0</span>
+                        </button>
                         <a href="https://tinyfilemanager.github.io" target="_blank" class="text-muted" style="font-size: 0.67em;"><?php echo fm_enc($footerBuildLabel); ?></a>
                         <span class="text-muted fm-footer-copyright" style="font-size: 0.75em; font-weight: 300;"><?php echo fm_enc($footerCopyrightLabel); ?> · <a href="<?php echo fm_enc(FM_ROOT_URL . '/LICENSE'); ?>" target="_blank" class="text-muted">GNU GPL v3.0</a> · Made with the open source community · <a href="https://github.com/slapiar" target="_blank" class="text-muted">slapiar</a></span>
                     </div>
@@ -722,6 +734,9 @@
             </div>
         <?php endif; ?>
     </div>
+    <?php if (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH): ?>
+        <button type="button" id="fm-mobile-bulk-backdrop" class="fm-mobile-bulk-backdrop" data-fm-bulk-close aria-hidden="true" tabindex="-1"></button>
+    <?php endif; ?>
 </form>
 
 <div id="fm-context-menu" class="fm-context-menu hidden" role="menu" aria-hidden="true">
@@ -1126,6 +1141,37 @@
         width: 100%;
     }
 
+    .fm-mobile-bulk-launcher,
+    .fm-mobile-bulk-backdrop,
+    .fm-mobile-bulk-header {
+        display: none;
+    }
+
+    .fm-mobile-bulk-launcher {
+        position: relative;
+        min-width: 36px;
+        min-height: 28px;
+        align-items: center;
+        justify-content: center;
+        gap: .2rem;
+        cursor: pointer;
+    }
+
+    .fm-mobile-bulk-launcher__count {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 17px;
+        height: 17px;
+        border-radius: 999px;
+        background: #dc3545;
+        color: #fff;
+        font-size: .66rem;
+        line-height: 17px;
+        text-align: center;
+        padding: 0 4px;
+    }
+
     @media (max-width: 991.98px) {
         .fm-explorer-layout {
             flex-direction: column;
@@ -1146,34 +1192,89 @@
         }
 
         .fm-footer-tools-row {
-            flex-wrap: nowrap;
-            align-items: center;
+            flex-wrap: wrap;
+            align-items: flex-start;
             column-gap: .5rem;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
+            row-gap: .45rem;
+            overflow: visible;
             padding-bottom: .2rem;
         }
 
         .fm-footer-actions-col {
-            flex: 1 1 auto;
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            bottom: 12px;
+            z-index: 1056;
             min-width: 0;
+            max-width: none;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(120, 130, 150, 0.33);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .22);
+            padding: .62rem;
+            transform: translateY(calc(100% + 20px));
+            opacity: 0;
+            pointer-events: none;
+            transition: transform .18s ease, opacity .18s ease;
         }
 
-        .fm-footer-online-col {
-            flex: 0 0 auto;
-            min-width: 250px;
-            max-width: 44vw;
-            justify-content: flex-end;
+        html[data-bs-theme="dark"] .fm-footer-actions-col {
+            background: rgba(31, 35, 40, 0.98);
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+
+        .fm-footer-actions-col.is-open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .fm-mobile-bulk-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .45rem;
+            font-size: .88rem;
+        }
+
+        .fm-mobile-bulk-backdrop {
+            display: block;
+            position: fixed;
+            inset: 0;
+            border: 0;
+            background: rgba(0, 0, 0, .22);
+            z-index: 1055;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .18s ease;
+        }
+
+        .fm-mobile-bulk-backdrop.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .fm-mobile-bulk-launcher {
+            display: inline-flex;
         }
 
         .fm-footer-tools-row #fm-selection-bar {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
+            display: flex;
+            flex-wrap: wrap;
+            min-width: 0;
+            overflow: visible;
+            white-space: normal;
             width: 100%;
-            padding: 4px;
+            padding: 0;
+            gap: .38rem;
+        }
+
+        .fm-footer-online-col {
+            flex: 1 1 100%;
+            min-width: 0;
+            max-width: none;
+            justify-content: flex-start;
         }
 
         .fm-footer-tools-row #fm-selection-bar .btn.btn-2,
@@ -1186,11 +1287,10 @@
 
         .fm-online-users-wrap {
             display: flex;
-            flex-wrap: nowrap !important;
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            justify-content: flex-end;
+            flex-wrap: wrap !important;
+            overflow: visible;
+            white-space: normal;
+            justify-content: flex-start;
             width: 100%;
             gap: .35rem !important;
             padding-bottom: 2px;
@@ -1202,20 +1302,17 @@
             flex: 0 0 auto;
         }
 
-        .fm-footer-tools-row #fm-selection-bar::-webkit-scrollbar,
         .fm-online-users-wrap::-webkit-scrollbar,
         .fm-footer-tools-row::-webkit-scrollbar {
             height: 5px;
         }
 
-        .fm-footer-tools-row #fm-selection-bar::-webkit-scrollbar-thumb,
         .fm-online-users-wrap::-webkit-scrollbar-thumb,
         .fm-footer-tools-row::-webkit-scrollbar-thumb {
             background: rgba(120, 130, 150, 0.45);
             border-radius: 999px;
         }
 
-        .fm-footer-tools-row #fm-selection-bar::-webkit-scrollbar-track,
         .fm-online-users-wrap::-webkit-scrollbar-track,
         .fm-footer-tools-row::-webkit-scrollbar-track {
             background: transparent;
@@ -1224,8 +1321,8 @@
 
     @media (max-width: 575.98px) {
         .fm-footer-online-col {
-            min-width: 220px;
-            max-width: 46vw;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .fm-footer-tools-row #fm-selection-bar .btn.btn-2,
@@ -1261,6 +1358,12 @@
         var countAppEl = document.getElementById('fm-owner-count-app');
         var countSystemEl = document.getElementById('fm-owner-count-system');
         var countBadgeEls = document.querySelectorAll('.fm-owner-source-count[data-owner-filter-target]');
+        var selectionCountEl = document.getElementById('fm-selection-count');
+        var bulkPanelEl = document.querySelector('.fm-footer-actions-col');
+        var bulkOpenButtonEl = document.querySelector('[data-fm-bulk-open]');
+        var bulkBackdropEl = document.getElementById('fm-mobile-bulk-backdrop');
+        var bulkCloseButtonEls = document.querySelectorAll('[data-fm-bulk-close]');
+        var mobileBulkCountEl = document.querySelector('.fm-mobile-bulk-launcher__count');
         var canCreateNewItem = <?php echo (!FM_READONLY && !FM_UPLOAD_ONLY && FM_CAN_WRITE_IN_PATH) ? 'true' : 'false'; ?>;
         if (!tableEl) {
             return;
@@ -1280,6 +1383,59 @@
         var HOVER_HIDE_DELAY_MS = 180;
 
         var dataTableFilterInstalled = false;
+
+        function isMobileBulkViewport() {
+            return !!(window.matchMedia && window.matchMedia('(max-width: 991.98px)').matches);
+        }
+
+        function getSelectedItemsCount() {
+            var checked = tableEl.querySelectorAll('input[name="file[]"]:checked');
+            return checked ? checked.length : 0;
+        }
+
+        function closeMobileBulkPanel() {
+            if (!bulkPanelEl) {
+                return;
+            }
+
+            bulkPanelEl.classList.remove('is-open');
+            if (bulkBackdropEl) {
+                bulkBackdropEl.classList.remove('is-visible');
+            }
+            if (bulkOpenButtonEl) {
+                bulkOpenButtonEl.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function openMobileBulkPanel() {
+            if (!bulkPanelEl || !isMobileBulkViewport()) {
+                return;
+            }
+
+            bulkPanelEl.classList.add('is-open');
+            if (bulkBackdropEl) {
+                bulkBackdropEl.classList.add('is-visible');
+            }
+            if (bulkOpenButtonEl) {
+                bulkOpenButtonEl.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        function updateSelectionBarState() {
+            var selectedCount = getSelectedItemsCount();
+
+            if (selectionCountEl) {
+                selectionCountEl.textContent = String(selectedCount);
+                selectionCountEl.style.display = selectedCount > 0 ? '' : 'none';
+            }
+
+            if (mobileBulkCountEl) {
+                mobileBulkCountEl.textContent = String(selectedCount);
+                mobileBulkCountEl.style.display = selectedCount > 0 ? '' : 'none';
+            }
+        }
+
+        window.fmUpdateSelectionBar = updateSelectionBarState;
 
         function getSidebarMaxWidth() {
             if (!explorerLayoutEl) {
@@ -2132,10 +2288,59 @@
         setupSidebarResizer();
         bindFloatingRowActions();
         bindContextMenu();
+
+        if (bulkOpenButtonEl) {
+            bulkOpenButtonEl.addEventListener('click', function () {
+                if (bulkPanelEl && bulkPanelEl.classList.contains('is-open')) {
+                    closeMobileBulkPanel();
+                } else {
+                    openMobileBulkPanel();
+                }
+            });
+        }
+
+        bulkCloseButtonEls.forEach(function (button) {
+            button.addEventListener('click', function () {
+                closeMobileBulkPanel();
+            });
+        });
+
+        if (bulkPanelEl) {
+            bulkPanelEl.addEventListener('click', function (event) {
+                if (!isMobileBulkViewport()) {
+                    return;
+                }
+
+                if (event.target && event.target.closest && event.target.closest('#fm-selection-bar a')) {
+                    window.setTimeout(closeMobileBulkPanel, 120);
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeMobileBulkPanel();
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            if (!isMobileBulkViewport()) {
+                closeMobileBulkPanel();
+            }
+        });
+
+        tableEl.addEventListener('change', function (event) {
+            if (event.target && event.target.matches && event.target.matches('input[name="file[]"]')) {
+                updateSelectionBarState();
+            }
+        });
+
+        updateSelectionBarState();
         refreshOwnerSourceCounts();
         window.setTimeout(function () {
             applyFilter();
             setViewMode('list');
+            updateSelectionBarState();
         }, 0);
     })();
 </script>

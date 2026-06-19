@@ -345,6 +345,7 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 ### Fáza F – podnety z praxe
 
 1. Sprístupniť komunikáciu každému prihlásenému používateľovi bez rozdielu oprávnení (read-only, upload-only, manager, admin). --- IMPLEMENTOVANÉ A OTESTOVANÉ nasadená a ručne overená verzia 3.1.16
+2. Pripraviť jednoduchú mobilnú inštaláciu aplikácie (PWA): inštalácia na plochu, manifest, service worker a základné mobilné meta nastavenia.
 
 ---
 
