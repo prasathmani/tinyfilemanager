@@ -1101,7 +1101,44 @@ if (isset($_GET['admin_users_owner_map'])) {
         $rebuild
     );
 
+    $submitted_owner_map = null;
+    if ($action === 'apply' && isset($_POST['owners_json'])) {
+        $owner_map_result = fm_admin_parse_owner_map_submission(
+            (string) $_POST['owners_json'],
+            $auth_users_local,
+            $manager_users_local
+        );
+        if (empty($owner_map_result['ok'])) {
+            http_response_code(400);
+            echo json_encode(array('ok' => false, 'error' => isset($owner_map_result['error']) ? (string) $owner_map_result['error'] : 'Invalid owner map submission.'));
+            exit;
+        }
+        $submitted_owner_map = isset($owner_map_result['owners']) && is_array($owner_map_result['owners']) ? $owner_map_result['owners'] : null;
+    }
+
     if ($action === 'apply') {
+        if (is_array($submitted_owner_map)) {
+            $plan['owners'] = $submitted_owner_map;
+            $plan['rows'] = array_map(static function ($row) use ($submitted_owner_map) {
+                $username = isset($row['username']) ? (string) $row['username'] : '';
+                $new_owner = isset($submitted_owner_map[$username]) ? (string) $submitted_owner_map[$username] : (isset($row['new_owner']) ? (string) $row['new_owner'] : 'admin');
+                $current_owner = isset($row['current_owner']) ? (string) $row['current_owner'] : '-';
+                return array(
+                    'username' => $username,
+                    'current_owner' => $current_owner,
+                    'new_owner' => $new_owner,
+                    'reason' => 'submitted_from_ui',
+                    'changed' => $current_owner !== $new_owner,
+                );
+            }, isset($plan['rows']) && is_array($plan['rows']) ? $plan['rows'] : array());
+            $plan['summary']['changed'] = 0;
+            foreach ($plan['rows'] as $row) {
+                if (!empty($row['changed'])) {
+                    $plan['summary']['changed']++;
+                }
+            }
+        }
+
         $persist_result = fm_admin_persist_user_config_arrays(
             $config_file,
             $auth_users_local,
@@ -3485,6 +3522,67 @@ function fm_admin_build_owner_map_plan(array $auth_users, array $manager_users, 
             'rebuild' => (bool) $rebuild,
         ),
     );
+}
+
+/**
+ * Parse explicit owner map submitted from admin UI.
+ * @param string $json
+ * @param array $auth_users
+ * @param array $manager_users
+ * @return array
+ */
+function fm_admin_parse_owner_map_submission($json, array $auth_users, array $manager_users)
+{
+    $json = trim((string) $json);
+    if ($json === '') {
+        return array('ok' => false, 'error' => 'Owner map is empty.');
+    }
+
+    $decoded = json_decode($json, true);
+    if (!is_array($decoded)) {
+        return array('ok' => false, 'error' => 'Invalid owner map JSON.');
+    }
+
+    $isList = array_keys($decoded) === range(0, count($decoded) - 1);
+    if ($isList) {
+        return array('ok' => false, 'error' => 'Owner map JSON must be an object.');
+    }
+
+    $known_users = array_fill_keys(array_values(array_unique(array_map('strval', array_keys($auth_users)))), true);
+    $manager_set = array_fill_keys(array_values(array_unique(array_map('strval', $manager_users))), true);
+    $out = array();
+
+    foreach ($decoded as $username_raw => $owner_raw) {
+        $username = trim((string) $username_raw);
+        $owner = trim((string) $owner_raw);
+
+        if ($username === '' || !isset($known_users[$username])) {
+            return array('ok' => false, 'error' => 'Unknown user in owner map: ' . $username_raw);
+        }
+
+        if ($username === 'admin' || isset($manager_set[$username])) {
+            $out[$username] = 'admin';
+            continue;
+        }
+
+        if ($owner !== 'admin' && !isset($manager_set[$owner])) {
+            return array('ok' => false, 'error' => 'Invalid owner for ' . $username . '.');
+        }
+
+        $out[$username] = $owner;
+    }
+
+    foreach (array_keys($auth_users) as $username) {
+        $username = (string) $username;
+        if ($username === 'admin' || isset($manager_set[$username])) {
+            $out[$username] = 'admin';
+        } elseif (!isset($out[$username])) {
+            $out[$username] = 'admin';
+        }
+    }
+
+    ksort($out);
+    return array('ok' => true, 'owners' => $out);
 }
 
 /**

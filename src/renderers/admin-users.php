@@ -18,6 +18,7 @@ $config_is_writable = is_file($config_file_path) && is_writable($config_file_pat
 $fm_admin_return_path = isset($_GET['p']) ? (string) $_GET['p'] : (defined('FM_PATH') ? (string) FM_PATH : '');
 $admin_close_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
 $admin_ajax_token = isset($_SESSION['token']) ? (string) $_SESSION['token'] : '';
+$owner_map_choices = array_values(array_unique(array_merge(array('admin'), array_map('strval', $manager_users))));
 
 // Union of all usernames
 $usernames = array();
@@ -103,8 +104,8 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
         <button type="button" class="btn btn-success" data-admin-user-action="new">New user</button>
         <?php if ($is_admin_actor): ?>
             <button type="button" class="btn btn-outline-primary" id="owner-map-preview-btn">Zobraziť mapu zodpovednosti</button>
-            <button type="button" class="btn btn-outline-warning" id="owner-map-apply-btn">Automaticky zmapovať</button>
-            <button type="button" class="btn btn-outline-success" id="owner-map-oneclick-btn">Preview + Apply + Refresh</button>
+            <button type="button" class="btn btn-outline-warning" id="owner-map-apply-btn">Uložiť upravenú mapu</button>
+            <button type="button" class="btn btn-outline-success" id="owner-map-oneclick-btn">Náhľad + Uložiť + Obnoviť</button>
         <?php endif; ?>
         <a href="?p=<?php echo urlencode($fm_admin_return_path); ?>" class="btn btn-outline-secondary">
             <i class="fa fa-times-circle" aria-hidden="true"></i>
@@ -129,7 +130,7 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 </div>
             </div>
             <div class="card-body p-0">
-                <div id="owner-map-status" class="p-3 text-muted">Klikni na "Zobraziť mapu zodpovednosti" pre náhľad.</div>
+                <div id="owner-map-status" class="p-3 text-muted">Klikni na "Zobraziť mapu zodpovednosti" pre náhľad a úpravu vlastníctva.</div>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped mb-0 align-middle" id="owner-map-table" style="display:none;">
                         <thead class="table-light">
@@ -279,6 +280,8 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
     <div id="admin-user-modal-container"></div>
         <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var ownerMapChoices = <?php echo json_encode($owner_map_choices, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
             function forEachNode(list, cb) {
                 if (!list || typeof cb !== 'function') {
                     return;
@@ -449,6 +452,16 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
             var ownerMapBody = document.getElementById('owner-map-body');
             var ownerMapLastRows = [];
 
+            function normalizeOwnerValue(value) {
+                var normalized = String(value == null ? '' : value).trim();
+                for (var i = 0; i < ownerMapChoices.length; i++) {
+                    if (String(ownerMapChoices[i]) === normalized) {
+                        return normalized;
+                    }
+                }
+                return 'admin';
+            }
+
             function escapeHtml(value) {
                 return String(value == null ? '' : value)
                     .replace(/&/g, '&amp;')
@@ -472,10 +485,20 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 var html = '';
                 forEachNode(visibleRows, function (row) {
                     var changed = !!row.changed;
+                    var username = String(row.username || '');
+                    var newOwner = normalizeOwnerValue(row.new_owner || 'admin');
+                    var ownerOptions = '';
+                    forEachNode(ownerMapChoices, function (choice) {
+                        var selected = String(choice) === newOwner ? ' selected' : '';
+                        ownerOptions += '<option value="' + escapeHtml(choice) + '"' + selected + '>' + escapeHtml(choice) + '</option>';
+                    });
                     html += '<tr>'
-                        + '<td>' + escapeHtml(row.username || '') + '</td>'
+                        + '<td>' + escapeHtml(username) + '</td>'
                         + '<td>' + escapeHtml(row.current_owner || '-') + '</td>'
-                        + '<td>' + escapeHtml(row.new_owner || '-') + '</td>'
+                        + '<td>'
+                        + '<select class="form-select form-select-sm owner-map-owner-select" data-owner-username="' + escapeHtml(username) + '">' + ownerOptions + '</select>'
+                        + '<button type="button" class="btn btn-link btn-sm p-0 mt-1" data-admin-user-action="edit" data-username="' + escapeHtml(username) + '">Upraviť používateľa</button>'
+                        + '</td>'
                         + '<td>' + (changed ? '<span class="badge text-bg-warning">zmena</span>' : '<span class="badge text-bg-light border">bez zmeny</span>') + '</td>'
                         + '<td><small>' + escapeHtml(row.reason || '') + '</small></td>'
                         + '</tr>';
@@ -489,13 +512,36 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 var map = {};
                 forEachNode(rows, function (row) {
                     var username = String(row && row.username ? row.username : '').trim();
-                    var owner = String(row && row.new_owner ? row.new_owner : '').trim();
+                    var owner = normalizeOwnerValue(row && row.new_owner ? row.new_owner : 'admin');
                     if (!username || !owner) {
                         return;
                     }
                     map[username] = owner;
                 });
                 return map;
+            }
+
+            function syncOwnerMapModelFromDom() {
+                if (!ownerMapBody || !ownerMapLastRows || !ownerMapLastRows.length) {
+                    return;
+                }
+
+                var selects = ownerMapBody.querySelectorAll('.owner-map-owner-select');
+                forEachNode(selects, function (selectEl) {
+                    var username = selectEl.getAttribute('data-owner-username') || '';
+                    var newOwner = normalizeOwnerValue(selectEl.value);
+                    if (!username) {
+                        return;
+                    }
+
+                    for (var i = 0; i < ownerMapLastRows.length; i++) {
+                        if (String(ownerMapLastRows[i].username || '') === username) {
+                            ownerMapLastRows[i].new_owner = newOwner;
+                            ownerMapLastRows[i].changed = String(ownerMapLastRows[i].current_owner || '-') !== newOwner;
+                            break;
+                        }
+                    }
+                });
             }
 
             function downloadTextFile(filename, content, mimeType) {
@@ -530,9 +576,11 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 };
 
                 if (apply) {
+                    syncOwnerMapModelFromDom();
                     var fd = new FormData();
                     fd.append('token', '<?php echo fm_enc($admin_ajax_token); ?>');
                     fd.append('rebuild', rebuild);
+                    fd.append('owners_json', JSON.stringify(buildOwnerMapJson(ownerMapLastRows)));
                     fetchOptions.body = fd;
                 }
 
@@ -578,12 +626,14 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
 
             if (ownerMapOnlyChanges) {
                 ownerMapOnlyChanges.addEventListener('change', function () {
+                    syncOwnerMapModelFromDom();
                     renderOwnerMapRows(ownerMapLastRows);
                 });
             }
 
             if (ownerMapExportJsonBtn) {
                 ownerMapExportJsonBtn.addEventListener('click', function () {
+                    syncOwnerMapModelFromDom();
                     if (!ownerMapLastRows || !ownerMapLastRows.length) {
                         ownerMapStatus.textContent = 'Najprv načítaj mapu cez náhľad.';
                         return;
@@ -605,21 +655,23 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
 
             if (ownerMapApplyBtn) {
                 ownerMapApplyBtn.addEventListener('click', function () {
-                    if (!window.confirm('Naozaj chceš aplikovať automatické mapovanie ownerov?')) {
+                    if (!window.confirm('Naozaj chceš uložiť ručne upravenú mapu ownerov?')) {
                         return;
                     }
+                    syncOwnerMapModelFromDom();
                     ownerMapRequest(true);
                 });
             }
 
             if (ownerMapOneclickBtn) {
                 ownerMapOneclickBtn.addEventListener('click', function () {
-                    if (!window.confirm('Spustiť postup Preview → Apply → Refresh?')) {
+                    if (!window.confirm('Spustiť postup Náhľad → Uložiť → Obnoviť?')) {
                         return;
                     }
 
                     ownerMapRequest(false)
                         .then(function () {
+                            syncOwnerMapModelFromDom();
                             var changedCount = 0;
                             forEachNode(ownerMapLastRows, function (row) {
                                 if (row && row.changed) {
@@ -637,6 +689,17 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                         .catch(function (err) {
                             ownerMapStatus.textContent = 'Chyba one-click: ' + String(err && err.message ? err.message : err);
                         });
+                });
+            }
+
+            if (ownerMapBody) {
+                ownerMapBody.addEventListener('change', function (e) {
+                    var target = e.target || null;
+                    if (!target || !target.classList || !target.classList.contains('owner-map-owner-select')) {
+                        return;
+                    }
+                    syncOwnerMapModelFromDom();
+                    renderOwnerMapRows(ownerMapLastRows);
                 });
             }
 
@@ -786,8 +849,10 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                     });
             });
 
-            function handleModalAction(e) {
-                var btn = e.currentTarget;
+            function handleModalAction(btn) {
+                if (!btn) {
+                    return;
+                }
                 var action = btn.getAttribute('data-admin-user-action');
                 var username = btn.getAttribute('data-username') || '';
                 var path = getCurrentPath();
@@ -831,9 +896,20 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                         console.error('Failed to load admin user modal:', err);
                     });
             }
-            var buttons = document.querySelectorAll('[data-admin-user-action]');
-            forEachNode(buttons, function (btn) {
-                btn.addEventListener('click', handleModalAction);
+
+            document.addEventListener('click', function (e) {
+                var target = e.target;
+                if (!target || typeof target.closest !== 'function') {
+                    return;
+                }
+
+                var actionBtn = target.closest('[data-admin-user-action]');
+                if (!actionBtn) {
+                    return;
+                }
+
+                e.preventDefault();
+                handleModalAction(actionBtn);
             });
         });
         </script>
