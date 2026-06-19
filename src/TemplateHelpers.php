@@ -185,6 +185,20 @@ function fm_show_header_login()
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="<?php echo fm_enc(APP_TITLE); ?>">
         <link rel="manifest" href="<?php echo fm_enc(FM_SELF_URL . '?manifest=1'); ?>">
+        <script>
+            if ('serviceWorker' in navigator && window.isSecureContext) {
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.register(
+                        <?php echo json_encode(FM_SELF_URL . '?sw=1', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>,
+                        {
+                            scope: <?php echo json_encode(FM_SELF_DIR_URL, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>
+                        }
+                    ).catch(function () {
+                        // Login page keeps working even when service worker registration fails.
+                    });
+                });
+            }
+        </script>
         <?php if ($favicon_path) {
             echo '<link rel="icon" href="' . fm_enc($favicon_path) . '" type="image/png">';
         } ?>
@@ -253,6 +267,22 @@ function fm_show_header_login()
 
             .fm-login-page .btn.btn-block {
                 padding: 12px 10px
+            }
+
+            .fm-login-page .fm-install-btn {
+                margin-top: .55rem;
+            }
+
+            .fm-login-page .fm-install-help {
+                margin-top: .4rem;
+                margin-bottom: 0;
+                font-size: .82rem;
+                color: #556270;
+                line-height: 1.35;
+            }
+
+            .theme-dark .fm-install-help {
+                color: #b4bec5;
             }
 
             .fm-login-page .footer {

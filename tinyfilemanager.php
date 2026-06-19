@@ -721,12 +721,72 @@ if ($use_auth) {
                                         <button type="submit" class="btn btn-success btn-block w-100 mt-4" role="button">
                                             <?php echo lng('Login'); ?>
                                         </button>
+                                        <button type="button" id="fm_install_app_btn" class="btn btn-outline-primary w-100 fm-install-btn hidden" aria-hidden="true">
+                                            Pridať aplikáciu do mobilu
+                                        </button>
+                                        <p id="fm_install_app_help" class="fm-install-help hidden" aria-live="polite"></p>
                                     </div>
                                 </form>
                                 <script>
                                 (function () {
                                     var input = document.getElementById('fm_pwd');
                                     var button = document.getElementById('fm_pwd_toggle');
+                                    var installButton = document.getElementById('fm_install_app_btn');
+                                    var installHelp = document.getElementById('fm_install_app_help');
+                                    var deferredInstallPrompt = null;
+
+                                    function setInstallHelp(message) {
+                                        if (!installHelp) {
+                                            return;
+                                        }
+
+                                        if (message) {
+                                            installHelp.textContent = message;
+                                            installHelp.classList.remove('hidden');
+                                        } else {
+                                            installHelp.textContent = '';
+                                            installHelp.classList.add('hidden');
+                                        }
+                                    }
+
+                                    function showInstallButton() {
+                                        if (!installButton) {
+                                            return;
+                                        }
+
+                                        installButton.classList.remove('hidden');
+                                        installButton.removeAttribute('aria-hidden');
+                                    }
+
+                                    function hideInstallButton() {
+                                        if (!installButton) {
+                                            return;
+                                        }
+
+                                        installButton.classList.add('hidden');
+                                        installButton.setAttribute('aria-hidden', 'true');
+                                    }
+
+                                    function isIOSDevice() {
+                                        return /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
+                                    }
+
+                                    function isSafariBrowser() {
+                                        var ua = String(window.navigator.userAgent || '').toLowerCase();
+                                        return ua.indexOf('safari') !== -1
+                                            && ua.indexOf('chrome') === -1
+                                            && ua.indexOf('android') === -1
+                                            && ua.indexOf('crios') === -1
+                                            && ua.indexOf('fxios') === -1
+                                            && ua.indexOf('edgios') === -1;
+                                    }
+
+                                    function isStandaloneMode() {
+                                        var byDisplayMode = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+                                        var byNavigator = typeof window.navigator.standalone === 'boolean' && window.navigator.standalone;
+                                        return !!(byDisplayMode || byNavigator);
+                                    }
+
                                     if (!input || !button) {
                                         return;
                                     }
@@ -738,6 +798,45 @@ if ($use_auth) {
                                         button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
                                         input.focus();
                                     });
+
+                                    window.addEventListener('beforeinstallprompt', function (event) {
+                                        event.preventDefault();
+                                        deferredInstallPrompt = event;
+                                        setInstallHelp('');
+                                        showInstallButton();
+                                    });
+
+                                    if (installButton) {
+                                        installButton.addEventListener('click', function () {
+                                            if (deferredInstallPrompt) {
+                                                deferredInstallPrompt.prompt();
+                                                deferredInstallPrompt.userChoice.then(function () {
+                                                    deferredInstallPrompt = null;
+                                                }).catch(function () {
+                                                    deferredInstallPrompt = null;
+                                                });
+                                                return;
+                                            }
+
+                                            if (isIOSDevice() && isSafariBrowser() && !isStandaloneMode()) {
+                                                setInstallHelp('iPhone: v Safari klikni Zdieľať a potom Pridať na plochu.');
+                                                showInstallButton();
+                                                return;
+                                            }
+
+                                            setInstallHelp('Ak sa dialóg nezobrazil, použi menu prehliadača a voľbu Pridať na plochu.');
+                                            showInstallButton();
+                                        });
+                                    }
+
+                                    window.addEventListener('appinstalled', function () {
+                                        setInstallHelp('Aplikácia bola pridaná na plochu.');
+                                        hideInstallButton();
+                                    });
+
+                                    if (isIOSDevice() && isSafariBrowser() && !isStandaloneMode()) {
+                                        showInstallButton();
+                                    }
                                 })();
                                 </script>
                             </div>
