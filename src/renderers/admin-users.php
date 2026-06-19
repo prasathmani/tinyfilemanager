@@ -17,6 +17,7 @@ $config_file_path = dirname(__DIR__, 2) . '/config.php';
 $config_is_writable = is_file($config_file_path) && is_writable($config_file_path);
 $fm_admin_return_path = isset($_GET['p']) ? (string) $_GET['p'] : (defined('FM_PATH') ? (string) FM_PATH : '');
 $admin_close_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
+$admin_ajax_token = isset($_SESSION['token']) ? (string) $_SESSION['token'] : '';
 
 // Union of all usernames
 $usernames = array();
@@ -100,11 +101,52 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
     <?php endif; ?>
     <div class="mb-3 d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-success" data-admin-user-action="new">New user</button>
+        <?php if ($is_admin_actor): ?>
+            <button type="button" class="btn btn-outline-primary" id="owner-map-preview-btn">Zobraziť mapu zodpovednosti</button>
+            <button type="button" class="btn btn-outline-warning" id="owner-map-apply-btn">Automaticky zmapovať</button>
+            <button type="button" class="btn btn-outline-success" id="owner-map-oneclick-btn">Preview + Apply + Refresh</button>
+        <?php endif; ?>
         <a href="?p=<?php echo urlencode($fm_admin_return_path); ?>" class="btn btn-outline-secondary">
             <i class="fa fa-times-circle" aria-hidden="true"></i>
             <?php echo fm_enc($admin_close_label); ?>
         </a>
     </div>
+
+    <?php if ($is_admin_actor): ?>
+        <div class="card mb-3" id="owner-map-card" style="display:none;">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <strong>Mapa zodpovednosti (owner map)</strong>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="form-check m-0">
+                        <input class="form-check-input" type="checkbox" id="owner-map-rebuild">
+                        <label class="form-check-label" for="owner-map-rebuild">Prepísať aj existujúce owner priradenia (rebuild)</label>
+                    </div>
+                    <div class="form-check m-0">
+                        <input class="form-check-input" type="checkbox" id="owner-map-only-changes">
+                        <label class="form-check-label" for="owner-map-only-changes">Len riadky so zmenou</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="owner-map-export-json-btn">Export JSON</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="owner-map-status" class="p-3 text-muted">Klikni na "Zobraziť mapu zodpovednosti" pre náhľad.</div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped mb-0 align-middle" id="owner-map-table" style="display:none;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Používateľ</th>
+                                <th>Aktuálny owner</th>
+                                <th>Nový owner</th>
+                                <th>Stav</th>
+                                <th>Dôvod</th>
+                            </tr>
+                        </thead>
+                        <tbody id="owner-map-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
     <div class="table-responsive">
         <table class="table table-bordered table-striped table-sm align-middle">
             <thead class="table-light">
@@ -393,6 +435,209 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
             if (!container) {
                 console.error('Missing modal container: #admin-user-modal-container');
                 return;
+            }
+
+            var ownerMapCard = document.getElementById('owner-map-card');
+            var ownerMapPreviewBtn = document.getElementById('owner-map-preview-btn');
+            var ownerMapApplyBtn = document.getElementById('owner-map-apply-btn');
+            var ownerMapOneclickBtn = document.getElementById('owner-map-oneclick-btn');
+            var ownerMapRebuild = document.getElementById('owner-map-rebuild');
+            var ownerMapOnlyChanges = document.getElementById('owner-map-only-changes');
+            var ownerMapExportJsonBtn = document.getElementById('owner-map-export-json-btn');
+            var ownerMapStatus = document.getElementById('owner-map-status');
+            var ownerMapTable = document.getElementById('owner-map-table');
+            var ownerMapBody = document.getElementById('owner-map-body');
+            var ownerMapLastRows = [];
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function renderOwnerMapRows(rows) {
+                if (!ownerMapBody || !ownerMapTable) {
+                    return;
+                }
+
+                ownerMapLastRows = Array.isArray(rows) ? rows.slice() : [];
+                var onlyChanges = !!(ownerMapOnlyChanges && ownerMapOnlyChanges.checked);
+                var visibleRows = onlyChanges
+                    ? ownerMapLastRows.filter(function (row) { return !!row.changed; })
+                    : ownerMapLastRows;
+
+                var html = '';
+                forEachNode(visibleRows, function (row) {
+                    var changed = !!row.changed;
+                    html += '<tr>'
+                        + '<td>' + escapeHtml(row.username || '') + '</td>'
+                        + '<td>' + escapeHtml(row.current_owner || '-') + '</td>'
+                        + '<td>' + escapeHtml(row.new_owner || '-') + '</td>'
+                        + '<td>' + (changed ? '<span class="badge text-bg-warning">zmena</span>' : '<span class="badge text-bg-light border">bez zmeny</span>') + '</td>'
+                        + '<td><small>' + escapeHtml(row.reason || '') + '</small></td>'
+                        + '</tr>';
+                });
+
+                ownerMapBody.innerHTML = html;
+                ownerMapTable.style.display = visibleRows && visibleRows.length ? '' : 'none';
+            }
+
+            function buildOwnerMapJson(rows) {
+                var map = {};
+                forEachNode(rows, function (row) {
+                    var username = String(row && row.username ? row.username : '').trim();
+                    var owner = String(row && row.new_owner ? row.new_owner : '').trim();
+                    if (!username || !owner) {
+                        return;
+                    }
+                    map[username] = owner;
+                });
+                return map;
+            }
+
+            function downloadTextFile(filename, content, mimeType) {
+                var blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8;' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function ownerMapRequest(apply) {
+                if (!ownerMapCard || !ownerMapStatus) {
+                    return;
+                }
+
+                var rebuild = ownerMapRebuild && ownerMapRebuild.checked ? '1' : '0';
+                var path = getCurrentPath();
+                ownerMapCard.style.display = '';
+                ownerMapStatus.textContent = apply ? 'Aplikujem mapovanie...' : 'Načítavam mapu...';
+
+                var url = window.location.pathname + '?p=' + encodeURIComponent(path) + '&admin_users_owner_map=1&rebuild=' + encodeURIComponent(rebuild);
+                var fetchOptions = {
+                    method: apply ? 'POST' : 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                };
+
+                if (apply) {
+                    var fd = new FormData();
+                    fd.append('token', '<?php echo fm_enc($admin_ajax_token); ?>');
+                    fd.append('rebuild', rebuild);
+                    fetchOptions.body = fd;
+                }
+
+                return fetch(url, fetchOptions)
+                    .then(function (resp) {
+                        return resp.json().catch(function () {
+                            return { ok: false, error: 'Unexpected server response' };
+                        });
+                    })
+                    .then(function (payload) {
+                        if (!payload || !payload.ok || !payload.data) {
+                            throw new Error((payload && payload.error) ? payload.error : 'Owner map request failed.');
+                        }
+
+                        var rows = Array.isArray(payload.data.rows) ? payload.data.rows : [];
+                        var summary = payload.data.summary || {};
+                        renderOwnerMapRows(rows);
+
+                        var changed = Number(summary.changed || 0);
+                        var total = Number(summary.users_total || 0);
+                        ownerMapStatus.textContent = (apply ? 'Mapovanie uložené. ' : 'Náhľad mapy. ')
+                            + 'Používatelia: ' + total + ', zmeny: ' + changed + '.';
+
+                        if (apply) {
+                            window.setTimeout(function () {
+                                window.location.reload();
+                            }, 350);
+                        }
+                    })
+                    .catch(function (err) {
+                        ownerMapStatus.textContent = 'Chyba: ' + String(err && err.message ? err.message : err);
+                        if (ownerMapTable) {
+                            ownerMapTable.style.display = 'none';
+                        }
+                    });
+            }
+
+            if (ownerMapPreviewBtn) {
+                ownerMapPreviewBtn.addEventListener('click', function () {
+                    ownerMapRequest(false);
+                });
+            }
+
+            if (ownerMapOnlyChanges) {
+                ownerMapOnlyChanges.addEventListener('change', function () {
+                    renderOwnerMapRows(ownerMapLastRows);
+                });
+            }
+
+            if (ownerMapExportJsonBtn) {
+                ownerMapExportJsonBtn.addEventListener('click', function () {
+                    if (!ownerMapLastRows || !ownerMapLastRows.length) {
+                        ownerMapStatus.textContent = 'Najprv načítaj mapu cez náhľad.';
+                        return;
+                    }
+
+                    var map = buildOwnerMapJson(ownerMapLastRows);
+                    var json = JSON.stringify(map, null, 2) + '\n';
+                    var now = new Date();
+                    var stamp = now.getFullYear().toString()
+                        + String(now.getMonth() + 1).padStart(2, '0')
+                        + String(now.getDate()).padStart(2, '0')
+                        + '_'
+                        + String(now.getHours()).padStart(2, '0')
+                        + String(now.getMinutes()).padStart(2, '0')
+                        + String(now.getSeconds()).padStart(2, '0');
+                    downloadTextFile('manager-assignments_' + stamp + '.json', json, 'application/json;charset=utf-8;');
+                });
+            }
+
+            if (ownerMapApplyBtn) {
+                ownerMapApplyBtn.addEventListener('click', function () {
+                    if (!window.confirm('Naozaj chceš aplikovať automatické mapovanie ownerov?')) {
+                        return;
+                    }
+                    ownerMapRequest(true);
+                });
+            }
+
+            if (ownerMapOneclickBtn) {
+                ownerMapOneclickBtn.addEventListener('click', function () {
+                    if (!window.confirm('Spustiť postup Preview → Apply → Refresh?')) {
+                        return;
+                    }
+
+                    ownerMapRequest(false)
+                        .then(function () {
+                            var changedCount = 0;
+                            forEachNode(ownerMapLastRows, function (row) {
+                                if (row && row.changed) {
+                                    changedCount++;
+                                }
+                            });
+
+                            if (changedCount === 0) {
+                                ownerMapStatus.textContent = 'Náhľad hotový. Žiadne zmeny na aplikovanie.';
+                                return;
+                            }
+
+                            return ownerMapRequest(true);
+                        })
+                        .catch(function (err) {
+                            ownerMapStatus.textContent = 'Chyba one-click: ' + String(err && err.message ? err.message : err);
+                        });
+                });
             }
 
             function showModalError(message) {

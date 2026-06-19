@@ -352,6 +352,10 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 6. Doplniť výber príjemcu pre chat aj pre offline používateľov, pričom každý používateľ vidí iba peerov so spoločným prístupovým rozsahom; backend musí nepovolenú komunikáciu odmietnuť (403) a inbox filtrovať podľa povolených peerov. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
 7. Doplniť automatickú uvítaciu správu po prvom prihlásení pre každého používateľa okrem admina; text nastavovať v Správe užívateľov so zástupným menom `{username}` a jednorazovým odoslaním. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
 8. Upraviť slovenskú diakritiku v predvolenej uvítacej správe a placeholderi v Správe užívateľov. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie) --- HOTOVO, nasadená a ručne overená verzia 3.2.3
+9. Zaviesť mapovanie `user_manager_owners` a pravidlá zodpovednosti: manažér môže vytvoriť iba používateľa (nie manažéra), upravovať/mazať iba svojich používateľov, nie seba ani iných manažérov; admin môže priradiť používateľa konkrétnemu manažérovi. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
+10. Spevniť komunikáciu podľa owner mapy a presných koncových povolených adresárov: peeri iba v rámci rovnakého ownera a presnej zhody absolútnych ciest; backend odmieta nepovolenú komunikáciu (403); inbox filtrovaný na povolených peerov; zachovaná výnimka pre kontakt manažéra, ktorý používateľa oslovil. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
+11. Doplniť migračné nástroje pre owner mapu po resete prostredia: `scripts/migrate-user-manager-owners.php` (heuristické doplnenie/normalizácia), `scripts/apply-manager-ownership-map.php --map <json>` (explicitné priradenie), vzor `scripts/manager-assignments.sample.json` a finálny `scripts/manager-assignments.json`. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
+12. Pridať admin pomôcku v Správe užívateľov pre owner mapu: náhľad mapovania, automatické mapovanie, prepínač rebuild, filter „len zmeny“, export JSON a workflow „Preview + Apply + Refresh“. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
 
 ---
 

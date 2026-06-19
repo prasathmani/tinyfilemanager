@@ -1050,6 +1050,98 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 // instead globals vars
 define('FM_PATH', $p);
 
+// --- ADMIN USERS OWNER MAP (admin only, AJAX GET/POST) ---
+if (isset($_GET['admin_users_owner_map'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!FM_IS_ADMIN) {
+        http_response_code(403);
+        echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
+        exit;
+    }
+
+    $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper((string) $_SERVER['REQUEST_METHOD']) : 'GET';
+    $rebuild = isset($_REQUEST['rebuild']) && (string) $_REQUEST['rebuild'] === '1';
+    $action = ($method === 'POST') ? 'apply' : 'preview';
+
+    if ($action === 'apply') {
+        $token = isset($_POST['token']) ? (string) $_POST['token'] : '';
+        if (!verifyToken($token)) {
+            http_response_code(401);
+            echo json_encode(array('ok' => false, 'error' => 'Invalid token'));
+            exit;
+        }
+    }
+
+    $config_file = __DIR__ . '/config.php';
+    $config_data = fm_admin_load_user_config_arrays($config_file);
+    if (empty($config_data['ok'])) {
+        http_response_code(500);
+        echo json_encode(array('ok' => false, 'error' => isset($config_data['error']) ? (string) $config_data['error'] : 'Failed to load config.'));
+        exit;
+    }
+
+    $auth_users_local = isset($config_data['auth_users']) && is_array($config_data['auth_users']) ? $config_data['auth_users'] : array();
+    $readonly_users_local = isset($config_data['readonly_users']) && is_array($config_data['readonly_users']) ? $config_data['readonly_users'] : array();
+    $upload_only_users_local = isset($config_data['upload_only_users']) && is_array($config_data['upload_only_users']) ? $config_data['upload_only_users'] : array();
+    $manager_users_local = isset($config_data['manager_users']) && is_array($config_data['manager_users']) ? $config_data['manager_users'] : array();
+    $directories_users_local = isset($config_data['directories_users']) && is_array($config_data['directories_users']) ? $config_data['directories_users'] : array();
+    $user_manager_owners_local = isset($config_data['user_manager_owners']) && is_array($config_data['user_manager_owners']) ? $config_data['user_manager_owners'] : array();
+    $user_notes_local = isset($config_data['user_notes']) && is_array($config_data['user_notes']) ? $config_data['user_notes'] : array();
+    $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users']) ? $config_data['bulk_actions_disabled_users'] : array();
+    $user_welcome_messages_local = isset($config_data['user_welcome_messages']) && is_array($config_data['user_welcome_messages']) ? $config_data['user_welcome_messages'] : array();
+    $welcome_message_shown_users_local = isset($config_data['welcome_message_shown_users']) && is_array($config_data['welcome_message_shown_users']) ? $config_data['welcome_message_shown_users'] : array();
+
+    $plan = fm_admin_build_owner_map_plan(
+        $auth_users_local,
+        $manager_users_local,
+        $directories_users_local,
+        $user_manager_owners_local,
+        FM_ROOT_PATH,
+        $rebuild
+    );
+
+    if ($action === 'apply') {
+        $persist_result = fm_admin_persist_user_config_arrays(
+            $config_file,
+            $auth_users_local,
+            $readonly_users_local,
+            $upload_only_users_local,
+            $manager_users_local,
+            $directories_users_local,
+            $user_notes_local,
+            $bulk_actions_disabled_users_local,
+            $user_welcome_messages_local,
+            $welcome_message_shown_users_local,
+            isset($plan['owners']) && is_array($plan['owners']) ? $plan['owners'] : array()
+        );
+
+        if (empty($persist_result['ok'])) {
+            http_response_code(500);
+            echo json_encode(array('ok' => false, 'error' => isset($persist_result['error']) ? (string) $persist_result['error'] : 'Failed to persist owner map.'));
+            exit;
+        }
+
+        $actor = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : 'admin';
+        fm_admin_write_audit_event('owner_map_apply', $actor, 'user_manager_owners', array(
+            'rebuild' => $rebuild,
+            'users_total' => isset($plan['summary']['users_total']) ? (int) $plan['summary']['users_total'] : 0,
+            'changed' => isset($plan['summary']['changed']) ? (int) $plan['summary']['changed'] : 0,
+        ));
+    }
+
+    echo json_encode(array(
+        'ok' => true,
+        'data' => array(
+            'action' => $action,
+            'rebuild' => $rebuild,
+            'rows' => isset($plan['rows']) && is_array($plan['rows']) ? $plan['rows'] : array(),
+            'summary' => isset($plan['summary']) && is_array($plan['summary']) ? $plan['summary'] : array(),
+        ),
+    ));
+    exit;
+}
+
 // --- ADMIN USERS SAVE (admin/manager, AJAX POST) ---
 if (isset($_GET['admin_users_save'])) {
     $is_ajax_request = isset($_SERVER['HTTP_X_REQUESTED_WITH'])
@@ -3251,6 +3343,148 @@ function fm_admin_parse_directories_input($input)
         }
     }
     return array_values(array_unique($out));
+}
+
+/**
+ * Normalize directory list for ownership inference.
+ * @param mixed $dirs_raw
+ * @param string $root_path
+ * @return array
+ */
+function fm_admin_normalize_dirs_for_owner_map($dirs_raw, $root_path)
+{
+    $items = is_array($dirs_raw) ? $dirs_raw : array($dirs_raw);
+    $root_path = rtrim(str_replace('\\', '/', (string) $root_path), '/');
+    $out = array();
+
+    foreach ($items as $entry) {
+        if (!is_string($entry)) {
+            continue;
+        }
+
+        $dir = trim(str_replace('\\', '/', $entry));
+        if ($dir === '') {
+            continue;
+        }
+
+        $is_absolute = preg_match('/^(?:[a-zA-Z]:\/|\/)/', $dir) === 1;
+        $candidate = $is_absolute ? $dir : ($root_path . '/' . ltrim($dir, '/'));
+        $candidate = rtrim(str_replace('\\', '/', $candidate), '/');
+        if ($candidate === '') {
+            continue;
+        }
+
+        $resolved = realpath($candidate);
+        if ($resolved !== false) {
+            $candidate = rtrim(str_replace('\\', '/', $resolved), '/');
+        }
+
+        $out[] = $candidate;
+    }
+
+    $out = array_values(array_unique(array_filter($out, 'strlen')));
+    sort($out, SORT_NATURAL | SORT_FLAG_CASE);
+    return $out;
+}
+
+/**
+ * Build ownership mapping plan used by admin helper UI.
+ * @param array $auth_users
+ * @param array $manager_users
+ * @param array $directories_users
+ * @param array $existing_owners
+ * @param string $root_path
+ * @param bool $rebuild
+ * @return array
+ */
+function fm_admin_build_owner_map_plan(array $auth_users, array $manager_users, array $directories_users, array $existing_owners, $root_path, $rebuild = false)
+{
+    $manager_users = array_values(array_unique(array_map('strval', $manager_users)));
+    sort($manager_users, SORT_NATURAL | SORT_FLAG_CASE);
+    $manager_set = array_fill_keys($manager_users, true);
+
+    $known_users = array_values(array_unique(array_map('strval', array_keys($auth_users))));
+    sort($known_users, SORT_NATURAL | SORT_FLAG_CASE);
+
+    $normalized_existing = fm_admin_normalize_user_manager_owners($existing_owners, $manager_users, $auth_users);
+    $user_dirs = array();
+    foreach ($known_users as $username) {
+        $raw_dirs = array_key_exists($username, $directories_users) ? $directories_users[$username] : array();
+        $user_dirs[$username] = fm_admin_normalize_dirs_for_owner_map($raw_dirs, (string) $root_path);
+    }
+
+    $rows = array();
+    $result_owners = array();
+    $changed = 0;
+
+    foreach ($known_users as $username) {
+        $current_owner = isset($normalized_existing[$username]) ? (string) $normalized_existing[$username] : '-';
+        $reason = '';
+
+        if ($username === 'admin' || isset($manager_set[$username])) {
+            $new_owner = 'admin';
+            $reason = 'forced_admin_or_manager';
+        } elseif (!$rebuild && isset($normalized_existing[$username])) {
+            $new_owner = $normalized_existing[$username];
+            $reason = 'kept_existing';
+        } else {
+            $dirs = isset($user_dirs[$username]) ? $user_dirs[$username] : array();
+            $matches = array();
+
+            if (!empty($dirs)) {
+                $dir_set = array_fill_keys($dirs, true);
+                foreach ($manager_users as $manager_name) {
+                    $manager_dirs = isset($user_dirs[$manager_name]) ? $user_dirs[$manager_name] : array();
+                    $intersects = false;
+                    foreach ($manager_dirs as $manager_dir) {
+                        if (isset($dir_set[$manager_dir])) {
+                            $intersects = true;
+                            break;
+                        }
+                    }
+                    if ($intersects) {
+                        $matches[] = $manager_name;
+                    }
+                }
+            }
+
+            if (count($matches) === 1) {
+                $new_owner = $matches[0];
+                $reason = 'inferred_single_manager_match';
+            } elseif (count($matches) > 1) {
+                $new_owner = 'admin';
+                $reason = 'fallback_ambiguous_managers:' . implode('|', $matches);
+            } else {
+                $new_owner = 'admin';
+                $reason = 'fallback_no_manager_match';
+            }
+        }
+
+        $result_owners[$username] = $new_owner;
+        $is_changed = ($current_owner !== $new_owner);
+        if ($is_changed) {
+            $changed++;
+        }
+
+        $rows[] = array(
+            'username' => $username,
+            'current_owner' => $current_owner,
+            'new_owner' => $new_owner,
+            'reason' => $reason,
+            'changed' => $is_changed,
+        );
+    }
+
+    ksort($result_owners);
+    return array(
+        'owners' => $result_owners,
+        'rows' => $rows,
+        'summary' => array(
+            'users_total' => count($known_users),
+            'changed' => $changed,
+            'rebuild' => (bool) $rebuild,
+        ),
+    );
 }
 
 /**
