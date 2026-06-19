@@ -107,9 +107,8 @@ function fm_show_nav_path($path)
                     <?php endif; ?>
                     <?php if (FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID]['logged'])): ?>
                         <?php
-                        // Zobraziť admin odkaz len pre admina
-                        $current_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : '';
-                        if ($current_user === 'admin') : ?>
+                        // Zobraziť odkaz pre účty, ktoré môžu spravovať používateľov (admin aj manažér).
+                        if (defined('FM_CAN_MANAGE_USERS') && FM_CAN_MANAGE_USERS) : ?>
                             <li class="nav-item">
                                 <a title="Správa používateľov" aria-label="Správa používateľov" class="nav-link fm-header-icon-link" href="?p=<?php echo urlencode(FM_PATH); ?>&amp;admin_users=1"><i class="fa fa-users" aria-hidden="true"></i><span class="visually-hidden">Správa používateľov</span></a>
                             </li>
