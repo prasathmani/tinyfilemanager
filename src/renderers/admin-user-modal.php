@@ -9,6 +9,7 @@ if (!isset($modal_token)) $modal_token = '';
 if (!isset($modal_access_type)) $modal_access_type = 'standard';
 if (!isset($modal_directories)) $modal_directories = '';
 if (!isset($modal_note)) $modal_note = '';
+if (!isset($modal_welcome_message)) $modal_welcome_message = '';
 if (!isset($modal_bulk_actions_enabled)) $modal_bulk_actions_enabled = true;
 
 $readonly = $modal_mode === 'edit' ? 'readonly' : '';
@@ -17,6 +18,12 @@ $title = $modal_mode === 'edit' ? 'Edit user' : 'New user';
 $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
 $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
 $note_value = htmlspecialchars($modal_note, ENT_QUOTES, 'UTF-8');
+$default_welcome_message = 'Ahoj {username}, vitaj v Správcovi súborov. Ak budeš potrebovať pomoc, ozvi sa prosím adminovi.';
+$welcome_message_raw = (string) $modal_welcome_message;
+if ($modal_mode !== 'edit' && trim($welcome_message_raw) === '') {
+  $welcome_message_raw = $default_welcome_message;
+}
+$welcome_message_value = htmlspecialchars($welcome_message_raw, ENT_QUOTES, 'UTF-8');
 $modal_cancel_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
 
 ?>
@@ -66,6 +73,11 @@ $modal_cancel_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
           <div class="mb-3">
             <label for="admin-note" class="form-label">Poznámka</label>
             <textarea class="form-control" id="admin-note" name="note" rows="3"><?php echo $note_value; ?></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="admin-welcome-message" class="form-label">Uvítacia správa (prvé prihlásenie)</label>
+            <textarea class="form-control" id="admin-welcome-message" name="welcome_message" rows="3" placeholder="Ahoj {username}, vitaj v Správcovi súborov."><?php echo $welcome_message_value; ?></textarea>
+            <div class="form-text">Zástupné meno používateľa: {username}. Správa sa odošle iba raz po prvom prihlásení (okrem admina).</div>
           </div>
           <input type="hidden" name="mode" value="<?php echo htmlspecialchars($modal_mode, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="token" value="<?php echo htmlspecialchars($modal_token, ENT_QUOTES, 'UTF-8'); ?>">

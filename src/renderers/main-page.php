@@ -619,7 +619,19 @@
         $fm_bulk_can_delete = $fm_bulk_can_modify && !FM_MANAGER;
         // Chat availability is role-agnostic: every logged-in user can communicate.
         $footerShowUserBadges = !empty($footerLoggedUser);
+        $footerChatPeers = $footerShowUserBadges
+            ? fm_chat_get_visible_peers(
+                $footerLoggedUser,
+                isset($auth_users) && is_array($auth_users) ? $auth_users : array(),
+                isset($directories_users) && is_array($directories_users) ? $directories_users : array(),
+                FM_ROOT_PATH,
+                FM_USER_HOME_ROOT
+            )
+            : array();
         $footerOnlineUsers = $footerShowUserBadges ? fm_online_get_users() : array();
+        if (!empty($footerOnlineUsers) && !empty($footerChatPeers)) {
+            $footerOnlineUsers = array_values(array_intersect($footerOnlineUsers, $footerChatPeers));
+        }
         $footerReleaseVersion = fm_get_release_version();
         if ($footerReleaseVersion === '' || $footerReleaseVersion === 'dev') {
             $footerReleaseVersion = (string) VERSION;
@@ -679,6 +691,17 @@
                         <button type="button" class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;" data-chat-open-unread>
                             <?php echo lng('Unread'); ?>: <span class="fm-chat-unread-count">0</span>
                         </button>
+                        <?php if (!empty($footerChatPeers)): ?>
+                            <div class="input-group input-group-sm fm-chat-peer-picker">
+                                <select class="form-select form-select-sm" data-chat-peer-select aria-label="Vyber používateľa pre správu">
+                                    <option value="">Komu odkaz?</option>
+                                    <?php foreach ($footerChatPeers as $chatPeer): ?>
+                                        <option value="<?php echo fm_enc($chatPeer); ?>"><?php echo fm_enc($chatPeer); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="btn btn-outline-primary" data-chat-open-peer>Napísať</button>
+                            </div>
+                        <?php endif; ?>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
                                 type="button"
@@ -719,6 +742,17 @@
                         <button type="button" class="badge text-bg-warning border fm-chat-unread-badge" style="display:none;" data-chat-open-unread>
                             <?php echo lng('Unread'); ?>: <span class="fm-chat-unread-count">0</span>
                         </button>
+                        <?php if (!empty($footerChatPeers)): ?>
+                            <div class="input-group input-group-sm fm-chat-peer-picker">
+                                <select class="form-select form-select-sm" data-chat-peer-select aria-label="Vyber používateľa pre správu">
+                                    <option value="">Komu odkaz?</option>
+                                    <?php foreach ($footerChatPeers as $chatPeer): ?>
+                                        <option value="<?php echo fm_enc($chatPeer); ?>"><?php echo fm_enc($chatPeer); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="btn btn-outline-primary" data-chat-open-peer>Napísať</button>
+                            </div>
+                        <?php endif; ?>
                         <?php foreach ($footerOnlineUsers as $onlineUser): ?>
                             <button
                                 type="button"
@@ -2393,6 +2427,17 @@
             color: var(--bs-body-color);
         }
 
+        .fm-chat-peer-picker {
+            min-width: 220px;
+            max-width: 320px;
+        }
+
+        .fm-chat-peer-picker .form-select,
+        .fm-chat-peer-picker .btn {
+            font-size: .78rem;
+            min-height: 28px;
+        }
+
         html[data-bs-theme="dark"] .fm-chat-modal .modal-content,
         html[data-bs-theme="dark"] .fm-chat-unread-modal .modal-content {
             background: #1f2328;
@@ -2493,6 +2538,7 @@
             var badges = document.querySelectorAll('.fm-user-chat-badge[data-chat-user]');
             var unreadCountEls = document.querySelectorAll('.fm-chat-unread-count');
             var unreadBadgeEls = document.querySelectorAll('.fm-chat-unread-badge');
+            var peerPickerButtons = document.querySelectorAll('[data-chat-open-peer]');
 
             if (!modalEl || !historyEl || !formEl || !inputEl || !titleEl || !tokenEl) {
                 return;
@@ -2997,6 +3043,23 @@
             unreadBadgeEls.forEach(function (badgeEl) {
                 badgeEl.addEventListener('click', function () {
                     showUnreadListModal();
+                });
+            });
+
+            peerPickerButtons.forEach(function (buttonEl) {
+                buttonEl.addEventListener('click', function () {
+                    var picker = buttonEl.closest('.fm-chat-peer-picker');
+                    if (!picker) {
+                        return;
+                    }
+
+                    var selectEl = picker.querySelector('[data-chat-peer-select]');
+                    var peer = selectEl ? String(selectEl.value || '') : '';
+                    if (!peer) {
+                        return;
+                    }
+
+                    openChatWithPeer(peer);
                 });
             });
 

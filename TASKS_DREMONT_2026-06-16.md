@@ -348,7 +348,10 @@ Domov je spoločný nakonfigurovaný koreň inštancie pre bežných používate
 2. Pripraviť jednoduchú mobilnú inštaláciu aplikácie (PWA): inštalácia na plochu, manifest, service worker a základné mobilné meta nastavenia. --- HOTOVO, nasadená a ručne overená verzia 3.2.1
 3. Upraviť mobilný footer tak, aby zostal čitateľný, a lištu hromadných úprav vyvolávať cez jednu ikonu vo footeri ako vyskakovací panel. --- HOTOVO, nasadená a ručne overená verzia 3.2.1
 4. Doplniť na prihlasovací formulár tlačidlo/ikonu „Pridať aplikáciu do mobilu“ s priamym PWA promptom (Android) a návodom pre Safari na iPhone. --- HOTOVO, nasadená a ručne overená verzia 3.2.1
-5. Sprístupniť lištu hromadných akcií aj pre používateľov s nižšími právami cez nastaviteľný prepínač v Správe užívateľov a umožniť bezpečné hromadné sťahovanie vybraných položiek (ZIP) aj pre read-only účty.
+5. Sprístupniť lištu hromadných akcií aj pre používateľov s nižšími právami cez nastaviteľný prepínač v Správe užívateľov a umožniť bezpečné hromadné sťahovanie vybraných položiek (ZIP) aj pre read-only účty. --- HOTOVO, nasadená a ručne overená verzia 3.2.2
+6. Doplniť výber príjemcu pre chat aj pre offline používateľov, pričom každý používateľ vidí iba peerov so spoločným prístupovým rozsahom; backend musí nepovolenú komunikáciu odmietnuť (403) a inbox filtrovať podľa povolených peerov. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
+7. Doplniť automatickú uvítaciu správu po prvom prihlásení pre každého používateľa okrem admina; text nastavovať v Správe užívateľov so zástupným menom `{username}` a jednorazovým odoslaním. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
+8. Upraviť slovenskú diakritiku v predvolenej uvítacej správe a placeholderi v Správe užívateľov. --- IMPLEMENTOVANÉ A OTESTOVANÉ (čaká na release/nasadenie)
 
 ---
 

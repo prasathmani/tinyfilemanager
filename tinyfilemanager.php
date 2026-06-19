@@ -61,6 +61,13 @@ $manager_users = array();
 // Default behavior: enabled for all authenticated users.
 $bulk_actions_disabled_users = array();
 
+// Per-user welcome message template shown automatically on first login (non-admin only).
+// Supported placeholders: {username}, {{username}}, %username%, :username
+$user_welcome_messages = array();
+
+// Users who have already received their first-login welcome message.
+$welcome_message_shown_users = array();
+
 // Global readonly, including when auth is not being used
 $global_readonly = false;
 
@@ -640,6 +647,8 @@ if ($use_auth) {
                 }
                 $_SESSION[FM_SESSION_ID]['logged'] = $username;
                 fm_online_touch_user($username);
+
+                $first_login_welcome = fm_maybe_issue_first_login_welcome($username);
                 
                 // Audit log
                 if (class_exists('AuditLogger')) {
@@ -655,7 +664,7 @@ if ($use_auth) {
                 // Force one-time redirect to the assigned default user root path.
                 $_SESSION[FM_SESSION_ID]['post_login_redirect'] = true;
                 
-                fm_set_msg(lng('You are logged in'));
+                fm_set_msg($first_login_welcome !== '' ? $first_login_welcome : lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
             } else {
                 // Failed login attempt
@@ -964,6 +973,12 @@ define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 $bulk_actions_disabled_users = isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users)
     ? array_values(array_unique(array_map('strval', $bulk_actions_disabled_users)))
     : array();
+$user_welcome_messages = isset($user_welcome_messages) && is_array($user_welcome_messages)
+    ? $user_welcome_messages
+    : array();
+$welcome_message_shown_users = isset($welcome_message_shown_users) && is_array($welcome_message_shown_users)
+    ? array_values(array_unique(array_map('strval', $welcome_message_shown_users)))
+    : array();
 $fm_bulk_actions_enabled = false;
 if (!$use_auth) {
     $fm_bulk_actions_enabled = !FM_READONLY && !FM_UPLOAD_ONLY;
@@ -1078,6 +1093,7 @@ if (isset($_GET['admin_users_save'])) {
     $access_type = isset($_POST['access_type']) ? trim((string) $_POST['access_type']) : 'standard';
     $directories_raw = isset($_POST['directories']) ? (string) $_POST['directories'] : '';
     $note = isset($_POST['note']) ? trim((string) $_POST['note']) : '';
+    $welcome_message = isset($_POST['welcome_message']) ? trim((string) $_POST['welcome_message']) : '';
     $bulk_actions_enabled = isset($_POST['bulk_actions_enabled']) && (string) $_POST['bulk_actions_enabled'] === '1';
     $change_date = isset($_POST['date']) ? trim((string) $_POST['date']) : '';
 
@@ -1102,6 +1118,12 @@ if (isset($_GET['admin_users_save'])) {
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
     $user_notes_local = $config_data['user_notes'];
+    $user_welcome_messages_local = isset($config_data['user_welcome_messages']) && is_array($config_data['user_welcome_messages'])
+        ? $config_data['user_welcome_messages']
+        : array();
+    $welcome_message_shown_users_local = isset($config_data['welcome_message_shown_users']) && is_array($config_data['welcome_message_shown_users'])
+        ? array_values(array_unique(array_map('strval', $config_data['welcome_message_shown_users'])))
+        : array();
     $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $config_data['bulk_actions_disabled_users'])))
         : array();
@@ -1188,6 +1210,16 @@ if (isset($_GET['admin_users_save'])) {
         $user_notes_local[$username] = $note;
     }
 
+    if ($welcome_message === '') {
+        unset($user_welcome_messages_local[$username]);
+    } else {
+        $user_welcome_messages_local[$username] = $welcome_message;
+    }
+
+    if ($mode === 'new') {
+        $welcome_message_shown_users_local = array_values(array_diff($welcome_message_shown_users_local, array($username)));
+    }
+
     if ($bulk_actions_enabled) {
         $bulk_actions_disabled_users_local = array_values(array_diff($bulk_actions_disabled_users_local, array($username)));
     } else {
@@ -1203,7 +1235,9 @@ if (isset($_GET['admin_users_save'])) {
         $manager_users_local,
         $directories_users_local,
         $user_notes_local,
-        $bulk_actions_disabled_users_local
+        $bulk_actions_disabled_users_local,
+        $user_welcome_messages_local,
+        $welcome_message_shown_users_local
     );
 
     if (!$write_ok['ok']) {
@@ -1223,6 +1257,9 @@ if (isset($_GET['admin_users_save'])) {
     if ($note !== '') {
         $audit_meta['note'] = $note;
     }
+    if ($welcome_message !== '') {
+        $audit_meta['welcome_message'] = $welcome_message;
+    }
     if ($change_date !== '') {
         $audit_meta['change_date'] = $change_date;
     }
@@ -1237,6 +1274,7 @@ if (isset($_GET['admin_users_save'])) {
         'bulk_actions_enabled_old' => isset($audit_meta['bulk_actions_enabled_old']) ? $audit_meta['bulk_actions_enabled_old'] : '',
         'bulk_actions_enabled_new' => isset($audit_meta['bulk_actions_enabled_new']) ? $audit_meta['bulk_actions_enabled_new'] : '',
         'note' => isset($audit_meta['note']) ? $audit_meta['note'] : '',
+        'welcome_message' => isset($audit_meta['welcome_message']) ? $audit_meta['welcome_message'] : '',
         'change_date' => isset($audit_meta['change_date']) ? $audit_meta['change_date'] : '',
     ));
 
@@ -1294,6 +1332,12 @@ if (isset($_GET['admin_users_delete'])) {
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
     $user_notes_local = $config_data['user_notes'];
+    $user_welcome_messages_local = isset($config_data['user_welcome_messages']) && is_array($config_data['user_welcome_messages'])
+        ? $config_data['user_welcome_messages']
+        : array();
+    $welcome_message_shown_users_local = isset($config_data['welcome_message_shown_users']) && is_array($config_data['welcome_message_shown_users'])
+        ? array_values(array_unique(array_map('strval', $config_data['welcome_message_shown_users'])))
+        : array();
     $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $config_data['bulk_actions_disabled_users'])))
         : array();
@@ -1323,6 +1367,8 @@ if (isset($_GET['admin_users_delete'])) {
     unset($auth_users_local[$username]);
     unset($directories_users_local[$username]);
     unset($user_notes_local[$username]);
+    unset($user_welcome_messages_local[$username]);
+    $welcome_message_shown_users_local = array_values(array_diff($welcome_message_shown_users_local, array($username)));
     $bulk_actions_disabled_users_local = array_values(array_diff($bulk_actions_disabled_users_local, array($username)));
     $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
     $upload_only_users_local = array_values(array_diff($upload_only_users_local, array($username)));
@@ -1336,7 +1382,9 @@ if (isset($_GET['admin_users_delete'])) {
         $manager_users_local,
         $directories_users_local,
         $user_notes_local,
-        $bulk_actions_disabled_users_local
+        $bulk_actions_disabled_users_local,
+        $user_welcome_messages_local,
+        $welcome_message_shown_users_local
     );
 
     if (!$write_ok['ok']) {
@@ -1369,6 +1417,7 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_access_type = 'standard';
     $modal_directories = '';
     $modal_note = '';
+    $modal_welcome_message = '';
     $modal_bulk_actions_enabled = true;
 
     $modal_config_file = __DIR__ . '/config.php';
@@ -1378,6 +1427,9 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_manager_users = $modal_config['ok'] ? $modal_config['manager_users'] : (isset($manager_users) && is_array($manager_users) ? $manager_users : array());
     $modal_directories_users = $modal_config['ok'] ? $modal_config['directories_users'] : (isset($directories_users) && is_array($directories_users) ? $directories_users : array());
     $modal_user_notes = $modal_config['ok'] ? $modal_config['user_notes'] : (isset($user_notes) && is_array($user_notes) ? $user_notes : array());
+    $modal_user_welcome_messages = $modal_config['ok'] && isset($modal_config['user_welcome_messages']) && is_array($modal_config['user_welcome_messages'])
+        ? $modal_config['user_welcome_messages']
+        : (isset($user_welcome_messages) && is_array($user_welcome_messages) ? $user_welcome_messages : array());
     $modal_bulk_actions_disabled_users = $modal_config['ok'] && isset($modal_config['bulk_actions_disabled_users']) && is_array($modal_config['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $modal_config['bulk_actions_disabled_users'])))
         : (isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users) ? array_values(array_unique(array_map('strval', $bulk_actions_disabled_users))) : array());
@@ -1402,6 +1454,10 @@ if (isset($_GET['admin_users_modal'])) {
 
         if (!empty($modal_user_notes) && array_key_exists($modal_username, $modal_user_notes)) {
             $modal_note = (string) $modal_user_notes[$modal_username];
+        }
+
+        if (!empty($modal_user_welcome_messages) && array_key_exists($modal_username, $modal_user_welcome_messages)) {
+            $modal_welcome_message = (string) $modal_user_welcome_messages[$modal_username];
         }
 
         $modal_bulk_actions_enabled = !in_array($modal_username, $modal_bulk_actions_disabled_users, true);
@@ -1454,9 +1510,22 @@ if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID
 
     $chat_action = isset($_GET['chat_action']) ? (string) $_GET['chat_action'] : '';
     $chat_current_user = (string) $_SESSION[FM_SESSION_ID]['logged'];
+    $chat_allowed_peers = fm_chat_get_visible_peers(
+        $chat_current_user,
+        isset($auth_users) && is_array($auth_users) ? $auth_users : array(),
+        isset($directories_users) && is_array($directories_users) ? $directories_users : array(),
+        FM_ROOT_PATH,
+        FM_USER_HOME_ROOT
+    );
 
     if ($chat_action === 'inbox') {
         $inbox = fm_chat_get_inbox($chat_current_user, 50);
+        if (!empty($inbox)) {
+            $inbox = array_values(array_filter($inbox, static function ($item) use ($chat_allowed_peers) {
+                $sender = isset($item['sender']) ? (string) $item['sender'] : '';
+                return $sender !== '' && in_array($sender, $chat_allowed_peers, true);
+            }));
+        }
         echo json_encode(array('ok' => true, 'data' => array('inbox' => $inbox)));
         exit;
     }
@@ -1469,6 +1538,12 @@ if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID
     if ($chat_peer === '' || !isset($auth_users[$chat_peer])) {
         http_response_code(400);
         echo json_encode(array('ok' => false, 'error' => 'Invalid chat user.'));
+        exit;
+    }
+
+    if (!in_array($chat_peer, $chat_allowed_peers, true)) {
+        http_response_code(403);
+        echo json_encode(array('ok' => false, 'error' => 'Access denied for this chat peer.'));
         exit;
     }
 
@@ -3107,6 +3182,8 @@ function fm_admin_load_user_config_arrays($config_file)
         $directories_users = array();
         $user_notes = array();
         $bulk_actions_disabled_users = array();
+        $user_welcome_messages = array();
+        $welcome_message_shown_users = array();
         include $__config_file;
         return array(
             'auth_users' => is_array($auth_users) ? $auth_users : array(),
@@ -3116,6 +3193,8 @@ function fm_admin_load_user_config_arrays($config_file)
             'directories_users' => is_array($directories_users) ? $directories_users : array(),
             'user_notes' => is_array($user_notes) ? $user_notes : array(),
             'bulk_actions_disabled_users' => is_array($bulk_actions_disabled_users) ? $bulk_actions_disabled_users : array(),
+            'user_welcome_messages' => is_array($user_welcome_messages) ? $user_welcome_messages : array(),
+            'welcome_message_shown_users' => is_array($welcome_message_shown_users) ? $welcome_message_shown_users : array(),
         );
     };
 
@@ -3249,7 +3328,7 @@ function fm_admin_replace_config_array_assignment($content, $var_name, $new_code
  * @param array $directories_users
  * @return array
  */
-function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array(), array $bulk_actions_disabled_users = array())
+function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array(), array $bulk_actions_disabled_users = array(), array $user_welcome_messages = array(), array $welcome_message_shown_users = array())
 {
     $original_content = @file_get_contents($config_file);
     if ($original_content === false) {
@@ -3267,6 +3346,8 @@ function fm_admin_persist_user_config_arrays($config_file, array $auth_users, ar
         'directories_users' => fm_admin_export_assoc_array_code('directories_users', $directories_users, $config_dir),
         'user_notes' => fm_admin_export_assoc_array_code('user_notes', $user_notes, $config_dir),
         'bulk_actions_disabled_users' => fm_admin_export_list_array_code('bulk_actions_disabled_users', $bulk_actions_disabled_users),
+        'user_welcome_messages' => fm_admin_export_assoc_array_code('user_welcome_messages', $user_welcome_messages, $config_dir),
+        'welcome_message_shown_users' => fm_admin_export_list_array_code('welcome_message_shown_users', $welcome_message_shown_users),
     );
 
     foreach ($replacements as $var_name => $new_code) {
@@ -3812,6 +3893,126 @@ function fm_online_get_users()
 
     sort($users, SORT_NATURAL | SORT_FLAG_CASE);
     return $users;
+}
+
+function fm_chat_resolve_user_scope_dirs($username, array $directories_users, $root_path, $home_root_rel = '')
+{
+    $username = (string) $username;
+    $root_path = rtrim(str_replace('\\', '/', (string) $root_path), '/');
+    if ($username === '' || $root_path === '' || !@is_dir($root_path)) {
+        return array();
+    }
+
+    $out = array();
+    $raw_dirs = array();
+    if (array_key_exists($username, $directories_users)) {
+        $raw_dirs = $directories_users[$username];
+        if (!is_array($raw_dirs)) {
+            $raw_dirs = array($raw_dirs);
+        }
+    }
+
+    foreach ($raw_dirs as $dir) {
+        if (!is_string($dir) || trim($dir) === '') {
+            continue;
+        }
+
+        $dir = str_replace('\\', '/', trim($dir));
+        $is_absolute = preg_match('/^(?:[a-zA-Z]:\/|\/)/', $dir) === 1;
+        $candidate = $is_absolute ? $dir : ($root_path . '/' . ltrim($dir, '/'));
+        $candidate = rtrim(str_replace('\\', '/', $candidate), '/');
+        if ($candidate === '' || !@is_dir($candidate) || !fm_is_path_inside($candidate, $root_path)) {
+            continue;
+        }
+
+        $resolved = realpath($candidate);
+        if ($resolved !== false) {
+            $candidate = rtrim(str_replace('\\', '/', $resolved), '/');
+        }
+        $out[] = $candidate;
+    }
+
+    if (empty($out) && is_string($home_root_rel) && trim($home_root_rel) !== '') {
+        $home_abs = rtrim($root_path, '/\\') . '/' . ltrim((string) $home_root_rel, '/');
+        $home_abs = rtrim(str_replace('\\', '/', $home_abs), '/');
+        if ($home_abs !== '' && @is_dir($home_abs) && fm_is_path_inside($home_abs, $root_path)) {
+            $resolved_home = realpath($home_abs);
+            if ($resolved_home !== false) {
+                $home_abs = rtrim(str_replace('\\', '/', $resolved_home), '/');
+            }
+            $out[] = $home_abs;
+        }
+    }
+
+    if (empty($out)) {
+        $resolved_root = realpath($root_path);
+        $out[] = rtrim(str_replace('\\', '/', $resolved_root !== false ? $resolved_root : $root_path), '/');
+    }
+
+    $out = array_values(array_unique(array_filter($out, 'strlen')));
+    sort($out, SORT_NATURAL | SORT_FLAG_CASE);
+    return $out;
+}
+
+function fm_chat_paths_overlap(array $paths_a, array $paths_b)
+{
+    foreach ($paths_a as $a) {
+        $a = rtrim(str_replace('\\', '/', (string) $a), '/');
+        if ($a === '') {
+            continue;
+        }
+
+        foreach ($paths_b as $b) {
+            $b = rtrim(str_replace('\\', '/', (string) $b), '/');
+            if ($b === '') {
+                continue;
+            }
+
+            if ($a === $b) {
+                return true;
+            }
+
+            if (strpos($a . '/', $b . '/') === 0 || strpos($b . '/', $a . '/') === 0) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+function fm_chat_get_visible_peers($current_user, array $auth_users, array $directories_users, $root_path, $home_root_rel = '')
+{
+    $current_user = (string) $current_user;
+    if ($current_user === '' || !isset($auth_users[$current_user])) {
+        return array();
+    }
+
+    $current_scopes = fm_chat_resolve_user_scope_dirs($current_user, $directories_users, $root_path, $home_root_rel);
+    if (empty($current_scopes)) {
+        return array();
+    }
+
+    $peers = array();
+    foreach ($auth_users as $peer => $unused_hash) {
+        $peer = (string) $peer;
+        if ($peer === '' || $peer === $current_user) {
+            continue;
+        }
+
+        $peer_scopes = fm_chat_resolve_user_scope_dirs($peer, $directories_users, $root_path, $home_root_rel);
+        if (empty($peer_scopes)) {
+            continue;
+        }
+
+        if (fm_chat_paths_overlap($current_scopes, $peer_scopes)) {
+            $peers[] = $peer;
+        }
+    }
+
+    $peers = array_values(array_unique($peers));
+    sort($peers, SORT_NATURAL | SORT_FLAG_CASE);
+    return $peers;
 }
 
 function fm_chat_db_path()
@@ -4694,6 +4895,84 @@ function fm_chat_get_db()
     }
 
     return $db;
+}
+
+function fm_format_welcome_message_for_user($template, $username)
+{
+    $message = trim((string) $template);
+    $username = trim((string) $username);
+    if ($message === '' || $username === '') {
+        return $message;
+    }
+
+    $formatted = strtr($message, array(
+        '{username}' => $username,
+        '{{username}}' => $username,
+        '%username%' => $username,
+        ':username' => $username,
+    ));
+
+    $contains_username = function_exists('mb_stripos')
+        ? (mb_stripos($formatted, $username, 0, 'UTF-8') !== false)
+        : (stripos($formatted, $username) !== false);
+    if (!$contains_username) {
+        $formatted = 'Ahoj ' . $username . ', ' . $formatted;
+    }
+
+    return trim($formatted);
+}
+
+function fm_maybe_issue_first_login_welcome($username)
+{
+    global $auth_users;
+
+    $username = trim((string) $username);
+    if ($username === '' || $username === 'admin' || !isset($auth_users[$username])) {
+        return '';
+    }
+
+    $config_file = __DIR__ . '/config.php';
+    $config_data = fm_admin_load_user_config_arrays($config_file);
+    if (empty($config_data['ok'])) {
+        return '';
+    }
+
+    $shown_users = isset($config_data['welcome_message_shown_users']) && is_array($config_data['welcome_message_shown_users'])
+        ? array_values(array_unique(array_map('strval', $config_data['welcome_message_shown_users'])))
+        : array();
+    if (in_array($username, $shown_users, true)) {
+        return '';
+    }
+
+    $templates = isset($config_data['user_welcome_messages']) && is_array($config_data['user_welcome_messages'])
+        ? $config_data['user_welcome_messages']
+        : array();
+    $template = isset($templates[$username]) ? (string) $templates[$username] : '';
+    $message = fm_format_welcome_message_for_user($template, $username);
+    if ($message === '') {
+        return '';
+    }
+
+    $shown_users[] = $username;
+    $shown_users = array_values(array_unique($shown_users));
+    $persist_result = fm_admin_persist_user_config_arrays(
+        $config_file,
+        isset($config_data['auth_users']) && is_array($config_data['auth_users']) ? $config_data['auth_users'] : array(),
+        isset($config_data['readonly_users']) && is_array($config_data['readonly_users']) ? $config_data['readonly_users'] : array(),
+        isset($config_data['upload_only_users']) && is_array($config_data['upload_only_users']) ? $config_data['upload_only_users'] : array(),
+        isset($config_data['manager_users']) && is_array($config_data['manager_users']) ? $config_data['manager_users'] : array(),
+        isset($config_data['directories_users']) && is_array($config_data['directories_users']) ? $config_data['directories_users'] : array(),
+        isset($config_data['user_notes']) && is_array($config_data['user_notes']) ? $config_data['user_notes'] : array(),
+        isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users']) ? $config_data['bulk_actions_disabled_users'] : array(),
+        $templates,
+        $shown_users
+    );
+
+    if (empty($persist_result['ok'])) {
+        return '';
+    }
+
+    return $message;
 }
 
 function fm_chat_save_message($sender, $recipient, $message)
