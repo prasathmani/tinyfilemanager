@@ -14,6 +14,10 @@
 - Internal runtime records (online users, chat DB, owner metadata, audit and fallback log, per-user settings) now use a persistent state directory.
 - Authentication and online-user tracking were hardened to remove stale user markers when a session account changes.
 - Documentation updated for release/deploy flow to include runtime-state migration and verification.
+- Owner-map save now synchronizes runtime DB config to keep UI and persisted ownership state consistent after reload.
+- Owner-map apply now preserves unchanged users when partial payloads are submitted, preventing accidental reset of owners to `admin`.
+- Admin config loaders now read runtime DB scope for user-management arrays, so snapshot restore is reflected immediately in owner-map/admin views.
+- Snapshot panel now explicitly indicates that rows are ordered newest-first.
 
 ### Removed
 - Removed operational dependency on app-local `.fm_usercfg` as the primary runtime state location.

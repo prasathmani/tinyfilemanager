@@ -123,6 +123,7 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
             </div>
             <div class="card-body">
                 <div id="config-snapshots-status" class="text-muted mb-3">Načítavam snapshoty konfigurácií...</div>
+                <div class="small text-muted mb-2">Poznámka: Zoznam je radený od najnovšieho snapshotu (hore) po najstarší (dole).</div>
                 <div class="table-responsive mb-4">
                     <table class="table table-sm table-bordered table-striped align-middle mb-0" id="config-snapshots-runtime-table" style="display:none;">
                         <thead class="table-light">
