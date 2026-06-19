@@ -3942,6 +3942,51 @@ function fm_admin_persist_user_config_arrays($config_file, array $auth_users, ar
         return array('ok' => false, 'error' => 'Failed to write updated config.php');
     }
 
+    if (function_exists('fm_config_store_save_runtime_config') && function_exists('fm_config_store_runtime_keys')) {
+        $runtime_values = array();
+        $runtime_keys = fm_config_store_runtime_keys();
+        foreach ($runtime_keys as $runtime_key) {
+            $runtime_key = (string) $runtime_key;
+            if ($runtime_key !== '' && array_key_exists($runtime_key, $GLOBALS)) {
+                $runtime_values[$runtime_key] = $GLOBALS[$runtime_key];
+            }
+        }
+
+        $runtime_values['auth_users'] = $auth_users;
+        $runtime_values['readonly_users'] = array_values(array_unique(array_map('strval', $readonly_users)));
+        $runtime_values['upload_only_users'] = array_values(array_unique(array_map('strval', $upload_only_users)));
+        $runtime_values['manager_users'] = array_values(array_unique(array_map('strval', $manager_users)));
+        $runtime_values['directories_users'] = $directories_users;
+        $runtime_values['user_notes'] = $user_notes;
+        $runtime_values['bulk_actions_disabled_users'] = array_values(array_unique(array_map('strval', $bulk_actions_disabled_users)));
+        $runtime_values['user_welcome_messages'] = $user_welcome_messages;
+        $runtime_values['welcome_message_shown_users'] = array_values(array_unique(array_map('strval', $welcome_message_shown_users)));
+        $runtime_values['user_manager_owners'] = $user_manager_owners;
+
+        $actor = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : 'system';
+        $runtime_save = fm_config_store_save_runtime_config($runtime_values, array(
+            'created_by' => $actor,
+            'updated_by' => $actor,
+            'source' => 'admin_users',
+            'label' => 'Admin users config sync',
+            'reason' => 'sync_after_config_php_write',
+            'snapshot_reason' => 'admin_users_sync',
+            'snapshot_label' => 'Admin users sync',
+        ));
+
+        if (!is_array($runtime_save) || empty($runtime_save['ok'])) {
+            return array(
+                'ok' => false,
+                'error' => 'Config file was updated, but runtime config sync failed: ' . (isset($runtime_save['error']) ? (string) $runtime_save['error'] : 'unknown error')
+            );
+        }
+
+        // Keep current request state consistent with persisted runtime values.
+        foreach ($runtime_values as $runtime_key => $runtime_value) {
+            $GLOBALS[(string) $runtime_key] = $runtime_value;
+        }
+    }
+
     return array('ok' => true);
 }
 
