@@ -3783,6 +3783,32 @@ function fm_admin_load_user_config_arrays($config_file)
     };
 
     $data = $loader($config_file);
+
+    // Prefer current runtime scope values when DB-backed runtime config is active.
+    // This keeps admin tools (owner map, user edits, delete) consistent with snapshot restore.
+    if (function_exists('fm_config_store_load_scope')) {
+        $runtime_data = fm_config_store_load_scope('runtime_config', 'global');
+        if (is_array($runtime_data) && !empty($runtime_data)) {
+            $array_keys = array(
+                'auth_users',
+                'readonly_users',
+                'upload_only_users',
+                'manager_users',
+                'directories_users',
+                'user_manager_owners',
+                'user_notes',
+                'bulk_actions_disabled_users',
+                'user_welcome_messages',
+                'welcome_message_shown_users',
+            );
+            foreach ($array_keys as $array_key) {
+                if (isset($runtime_data[$array_key]) && is_array($runtime_data[$array_key])) {
+                    $data[$array_key] = $runtime_data[$array_key];
+                }
+            }
+        }
+    }
+
     $data['ok'] = true;
     return $data;
 }
