@@ -48,7 +48,7 @@ $manager_users = array(
 );
 
 $directories_users = array(
-    'admin' => __DIR__ . '/Mirko/',
+    'admin' => '/public',
     'bilek' => __DIR__ . '/Mirko/',
     'chachula' => __DIR__ . '/Mirko/Nemocnica PP',
     'fero' => __DIR__ . '/Mirko/',
