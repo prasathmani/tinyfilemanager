@@ -1123,10 +1123,32 @@ if (isset($_GET['admin_users_owner_map'])) {
 
     if ($action === 'apply') {
         if (is_array($submitted_owner_map)) {
-            $plan['owners'] = $submitted_owner_map;
-            $plan['rows'] = array_map(static function ($row) use ($submitted_owner_map) {
+            $normalized_existing_local = fm_admin_normalize_user_manager_owners($user_manager_owners_local, $manager_users_local, $auth_users_local);
+            $manager_set_local = array_fill_keys(array_values(array_unique(array_map('strval', $manager_users_local))), true);
+            $merged_owner_map = array();
+            foreach (array_keys($auth_users_local) as $known_username) {
+                $known_username = (string) $known_username;
+                if ($known_username === 'admin' || isset($manager_set_local[$known_username])) {
+                    $merged_owner_map[$known_username] = 'admin';
+                    continue;
+                }
+
+                if (isset($submitted_owner_map[$known_username])) {
+                    $merged_owner_map[$known_username] = (string) $submitted_owner_map[$known_username];
+                    continue;
+                }
+
+                if (isset($normalized_existing_local[$known_username])) {
+                    $merged_owner_map[$known_username] = (string) $normalized_existing_local[$known_username];
+                } else {
+                    $merged_owner_map[$known_username] = 'admin';
+                }
+            }
+            ksort($merged_owner_map);
+            $plan['owners'] = $merged_owner_map;
+            $plan['rows'] = array_map(static function ($row) use ($merged_owner_map) {
                 $username = isset($row['username']) ? (string) $row['username'] : '';
-                $new_owner = isset($submitted_owner_map[$username]) ? (string) $submitted_owner_map[$username] : (isset($row['new_owner']) ? (string) $row['new_owner'] : 'admin');
+                $new_owner = isset($merged_owner_map[$username]) ? (string) $merged_owner_map[$username] : (isset($row['new_owner']) ? (string) $row['new_owner'] : 'admin');
                 $current_owner = isset($row['current_owner']) ? (string) $row['current_owner'] : '-';
                 return array(
                     'username' => $username,
@@ -3629,15 +3651,6 @@ function fm_admin_parse_owner_map_submission($json, array $auth_users, array $ma
         }
 
         $out[$username] = $owner;
-    }
-
-    foreach (array_keys($auth_users) as $username) {
-        $username = (string) $username;
-        if ($username === 'admin' || isset($manager_set[$username])) {
-            $out[$username] = 'admin';
-        } elseif (!isset($out[$username])) {
-            $out[$username] = 'admin';
-        }
     }
 
     ksort($out);

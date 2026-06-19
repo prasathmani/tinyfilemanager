@@ -835,6 +835,10 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
 
             if (ownerMapApplyBtn) {
                 ownerMapApplyBtn.addEventListener('click', function () {
+                    if (!ownerMapLastRows || !ownerMapLastRows.length) {
+                        ownerMapStatus.textContent = 'Najprv načítaj mapu cez náhľad.';
+                        return;
+                    }
                     if (!window.confirm('Naozaj chceš uložiť ručne upravenú mapu ownerov?')) {
                         return;
                     }
