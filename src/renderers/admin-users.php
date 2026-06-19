@@ -583,17 +583,20 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 }
 
                 var html = '';
-                forEachNode(Array.isArray(rows) ? rows : [], function (row) {
+                var normalizedRows = Array.isArray(rows) ? rows : [];
+                for (var i = 0; i < normalizedRows.length; i++) {
+                    var row = normalizedRows[i];
                     var snapshotId = Number(row.snapshot_id || 0);
+                    var newestBadge = (i === 0) ? ' <span class="badge text-bg-primary">Najnovší</span>' : '';
                     html += '<tr>'
-                        + '<td>' + escapeHtml(String(row.snapshot_label || scopeLabel || 'snapshot')) + '</td>'
+                        + '<td>' + escapeHtml(String(row.snapshot_label || scopeLabel || 'snapshot')) + newestBadge + '</td>'
                         + '<td>' + escapeHtml(String(row.revision || '-')) + '</td>'
                         + '<td>' + escapeHtml(formatSnapshotTime(row.created_at || 0)) + '</td>'
                         + '<td>' + escapeHtml(String(row.created_by || '-')) + '</td>'
                         + '<td><code>' + escapeHtml(String(row.payload_hash || '').substring(0, 12)) + '</code></td>'
                         + '<td><button type="button" class="btn btn-sm btn-danger" data-config-restore-snapshot="' + snapshotId + '">Obnoviť</button></td>'
                         + '</tr>';
-                });
+                }
 
                 tbody.innerHTML = html;
                 tableEl.style.display = html ? '' : 'none';
