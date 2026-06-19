@@ -66,5 +66,21 @@ $directories_users = array(
     'znava' => __DIR__ . '/Mirko/',
 );
 
+$user_manager_owners = array(
+    'admin' => 'admin',
+    'bilek' => 'admin',
+    'chachula' => 'admin',
+    'fero' => 'admin',
+    'joyee' => 'admin',
+    'kicin' => 'admin',
+    'kristian' => 'admin',
+    'marian' => 'admin',
+    'rehak' => 'admin',
+    'sano' => 'admin',
+    'supplier1' => 'admin',
+    'supplier2' => 'admin',
+    'znava' => 'admin',
+);
+
 $user_notes = array(
 );

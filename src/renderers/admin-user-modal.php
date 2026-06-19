@@ -11,6 +11,9 @@ if (!isset($modal_directories)) $modal_directories = '';
 if (!isset($modal_note)) $modal_note = '';
 if (!isset($modal_welcome_message)) $modal_welcome_message = '';
 if (!isset($modal_bulk_actions_enabled)) $modal_bulk_actions_enabled = true;
+if (!isset($modal_manager_users) || !is_array($modal_manager_users)) $modal_manager_users = array();
+if (!isset($modal_manager_owner)) $modal_manager_owner = 'admin';
+if (!isset($modal_is_manager_actor)) $modal_is_manager_actor = false;
 
 $readonly = $modal_mode === 'edit' ? 'readonly' : '';
 $now = date('Y-m-d\TH:i');
@@ -25,6 +28,7 @@ if ($modal_mode !== 'edit' && trim($welcome_message_raw) === '') {
 }
 $welcome_message_value = htmlspecialchars($welcome_message_raw, ENT_QUOTES, 'UTF-8');
 $modal_cancel_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
+$can_assign_manager_owner = !$modal_is_manager_actor;
 
 ?>
 <div class="modal fade" id="adminUserModal" tabindex="-1" aria-labelledby="adminUserModalLabel" aria-hidden="true">
@@ -55,9 +59,25 @@ $modal_cancel_label = (isset($lang) && $lang === 'sk') ? 'Zatvoriť' : 'Cancel';
               <option value="standard" <?php echo $modal_access_type === 'standard' ? 'selected' : ''; ?>>Standard</option>
               <option value="read only" <?php echo $modal_access_type === 'read only' ? 'selected' : ''; ?>>Read only</option>
               <option value="upload only" <?php echo $modal_access_type === 'upload only' ? 'selected' : ''; ?>>Upload only</option>
-              <option value="manager" <?php echo $modal_access_type === 'manager' ? 'selected' : ''; ?>>Manager</option>
+              <?php if (!$modal_is_manager_actor): ?>
+                <option value="manager" <?php echo $modal_access_type === 'manager' ? 'selected' : ''; ?>>Manager</option>
+              <?php endif; ?>
             </select>
           </div>
+          <?php if ($can_assign_manager_owner): ?>
+          <div class="mb-3">
+            <label for="admin-manager-owner" class="form-label">Zodpovedný manažér</label>
+            <select class="form-select" id="admin-manager-owner" name="manager_owner">
+              <option value="admin" <?php echo $modal_manager_owner === 'admin' ? 'selected' : ''; ?>>admin</option>
+              <?php foreach ($modal_manager_users as $manager_name): ?>
+                <option value="<?php echo htmlspecialchars((string) $manager_name, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $modal_manager_owner === (string) $manager_name ? 'selected' : ''; ?>><?php echo htmlspecialchars((string) $manager_name, ENT_QUOTES, 'UTF-8'); ?></option>
+              <?php endforeach; ?>
+            </select>
+            <div class="form-text">Pre používateľov (nie manažérov) vyberte, kto za účet zodpovedá.</div>
+          </div>
+          <?php else: ?>
+            <input type="hidden" name="manager_owner" value="<?php echo htmlspecialchars((string) $modal_manager_owner, ENT_QUOTES, 'UTF-8'); ?>">
+          <?php endif; ?>
           <div class="mb-3">
             <label for="admin-dirs" class="form-label">Assigned directories</label>
             <textarea class="form-control" id="admin-dirs" name="directories" rows="3"><?php echo $directories_value; ?></textarea>

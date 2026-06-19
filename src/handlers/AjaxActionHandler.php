@@ -478,7 +478,8 @@ class TFM_AjaxActionHandler {
             isset($configData['user_notes']) && is_array($configData['user_notes']) ? $configData['user_notes'] : array(),
             isset($configData['bulk_actions_disabled_users']) && is_array($configData['bulk_actions_disabled_users']) ? $configData['bulk_actions_disabled_users'] : array(),
             isset($configData['user_welcome_messages']) && is_array($configData['user_welcome_messages']) ? $configData['user_welcome_messages'] : array(),
-            isset($configData['welcome_message_shown_users']) && is_array($configData['welcome_message_shown_users']) ? $configData['welcome_message_shown_users'] : array()
+            isset($configData['welcome_message_shown_users']) && is_array($configData['welcome_message_shown_users']) ? $configData['welcome_message_shown_users'] : array(),
+            isset($configData['user_manager_owners']) && is_array($configData['user_manager_owners']) ? $configData['user_manager_owners'] : array()
         );
 
         if (!empty($persistResult['ok'])) {

@@ -75,6 +75,10 @@ $global_readonly = false;
 // array('Username' => 'Directory path', 'Username2' => array('Dir1', 'Dir2'), ...)
 $directories_users = array();
 
+// Ownership map for user administration and chat scoping.
+// Format: array('username' => 'manager_username|admin')
+$user_manager_owners = array();
+
 // Shared home root for regular users (relative to $root_path or absolute path).
 // This is the UI/Navigation "Home" boundary for non-admin users.
 $user_home_root = '';
@@ -968,6 +972,7 @@ define('FM_IS_ADMIN', $fm_is_super_admin);
 define('FM_READONLY', $global_readonly || (!$fm_is_super_admin && $use_auth && !empty($readonly_users) && in_array($fm_logged_user, $readonly_users, true)));
 define('FM_UPLOAD_ONLY', !$fm_is_super_admin && $use_auth && !empty($upload_only_users) && in_array($fm_logged_user, $upload_only_users, true));
 define('FM_MANAGER', !$fm_is_super_admin && $use_auth && !empty($manager_users) && in_array($fm_logged_user, $manager_users, true));
+define('FM_CAN_MANAGE_USERS', FM_IS_ADMIN || FM_MANAGER);
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
 $bulk_actions_disabled_users = isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users)
@@ -978,6 +983,9 @@ $user_welcome_messages = isset($user_welcome_messages) && is_array($user_welcome
     : array();
 $welcome_message_shown_users = isset($welcome_message_shown_users) && is_array($welcome_message_shown_users)
     ? array_values(array_unique(array_map('strval', $welcome_message_shown_users)))
+    : array();
+$user_manager_owners = isset($user_manager_owners) && is_array($user_manager_owners)
+    ? $user_manager_owners
     : array();
 $fm_bulk_actions_enabled = false;
 if (!$use_auth) {
@@ -1042,7 +1050,7 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 // instead globals vars
 define('FM_PATH', $p);
 
-// --- ADMIN USERS SAVE (admin only, AJAX POST) ---
+// --- ADMIN USERS SAVE (admin/manager, AJAX POST) ---
 if (isset($_GET['admin_users_save'])) {
     $is_ajax_request = isset($_SERVER['HTTP_X_REQUESTED_WITH'])
         && strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
@@ -1072,7 +1080,7 @@ if (isset($_GET['admin_users_save'])) {
         exit;
     };
 
-    if (!FM_IS_ADMIN) {
+    if (!FM_CAN_MANAGE_USERS) {
         $admin_users_respond_error(403, 'Forbidden');
     }
 
@@ -1092,6 +1100,7 @@ if (isset($_GET['admin_users_save'])) {
     $password2 = isset($_POST['password2']) ? (string) $_POST['password2'] : '';
     $access_type = isset($_POST['access_type']) ? trim((string) $_POST['access_type']) : 'standard';
     $directories_raw = isset($_POST['directories']) ? (string) $_POST['directories'] : '';
+    $manager_owner = isset($_POST['manager_owner']) ? trim((string) $_POST['manager_owner']) : '';
     $note = isset($_POST['note']) ? trim((string) $_POST['note']) : '';
     $welcome_message = isset($_POST['welcome_message']) ? trim((string) $_POST['welcome_message']) : '';
     $bulk_actions_enabled = isset($_POST['bulk_actions_enabled']) && (string) $_POST['bulk_actions_enabled'] === '1';
@@ -1117,6 +1126,9 @@ if (isset($_GET['admin_users_save'])) {
     $upload_only_users_local = $config_data['upload_only_users'];
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
+    $user_manager_owners_local = isset($config_data['user_manager_owners']) && is_array($config_data['user_manager_owners'])
+        ? $config_data['user_manager_owners']
+        : array();
     $user_notes_local = $config_data['user_notes'];
     $user_welcome_messages_local = isset($config_data['user_welcome_messages']) && is_array($config_data['user_welcome_messages'])
         ? $config_data['user_welcome_messages']
@@ -1127,6 +1139,7 @@ if (isset($_GET['admin_users_save'])) {
     $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $config_data['bulk_actions_disabled_users'])))
         : array();
+    $user_manager_owners_local = fm_admin_normalize_user_manager_owners($user_manager_owners_local, $manager_users_local, $auth_users_local);
 
     $exists = array_key_exists($username, $auth_users_local)
         || in_array($username, $readonly_users_local, true)
@@ -1144,6 +1157,20 @@ if (isset($_GET['admin_users_save'])) {
 
     if ($mode === 'new' && trim($password) === '') {
         $admin_users_respond_error(400, 'Password is required for new user');
+    }
+
+    if (FM_MANAGER && !FM_IS_ADMIN) {
+        if ($access_type === 'manager') {
+            $admin_users_respond_error(403, 'Manager cannot create or assign manager role.');
+        }
+
+        if ($mode === 'edit' && !fm_admin_manager_can_manage_user($actor, $username, $manager_users_local, $user_manager_owners_local)) {
+            $admin_users_respond_error(403, 'Manager can only edit users assigned to them.');
+        }
+
+        if ($mode === 'new' && ($username === 'admin' || in_array($username, $manager_users_local, true) || $username === $actor)) {
+            $admin_users_respond_error(403, 'Manager cannot create this account.');
+        }
     }
 
     $old_access_type = 'standard';
@@ -1210,6 +1237,22 @@ if (isset($_GET['admin_users_save'])) {
         $user_notes_local[$username] = $note;
     }
 
+    if ($access_type === 'manager' || $username === 'admin') {
+        $user_manager_owners_local[$username] = 'admin';
+    } else {
+        if (FM_MANAGER && !FM_IS_ADMIN) {
+            $user_manager_owners_local[$username] = $actor;
+        } else {
+            if ($manager_owner === '' || $manager_owner === 'admin') {
+                $user_manager_owners_local[$username] = 'admin';
+            } elseif (in_array($manager_owner, $manager_users_local, true)) {
+                $user_manager_owners_local[$username] = $manager_owner;
+            } else {
+                $admin_users_respond_error(400, 'Invalid manager owner selection.');
+            }
+        }
+    }
+
     if ($welcome_message === '') {
         unset($user_welcome_messages_local[$username]);
     } else {
@@ -1237,7 +1280,8 @@ if (isset($_GET['admin_users_save'])) {
         $user_notes_local,
         $bulk_actions_disabled_users_local,
         $user_welcome_messages_local,
-        $welcome_message_shown_users_local
+        $welcome_message_shown_users_local,
+        $user_manager_owners_local
     );
 
     if (!$write_ok['ok']) {
@@ -1253,6 +1297,7 @@ if (isset($_GET['admin_users_save'])) {
         'password_changed' => $password_changed,
         'bulk_actions_enabled_old' => $old_bulk_actions_enabled,
         'bulk_actions_enabled_new' => $bulk_actions_enabled,
+        'manager_owner' => isset($user_manager_owners_local[$username]) ? (string) $user_manager_owners_local[$username] : 'admin',
     );
     if ($note !== '') {
         $audit_meta['note'] = $note;
@@ -1273,6 +1318,7 @@ if (isset($_GET['admin_users_save'])) {
         'password_changed' => $audit_meta['password_changed'],
         'bulk_actions_enabled_old' => isset($audit_meta['bulk_actions_enabled_old']) ? $audit_meta['bulk_actions_enabled_old'] : '',
         'bulk_actions_enabled_new' => isset($audit_meta['bulk_actions_enabled_new']) ? $audit_meta['bulk_actions_enabled_new'] : '',
+        'manager_owner' => isset($audit_meta['manager_owner']) ? $audit_meta['manager_owner'] : '',
         'note' => isset($audit_meta['note']) ? $audit_meta['note'] : '',
         'welcome_message' => isset($audit_meta['welcome_message']) ? $audit_meta['welcome_message'] : '',
         'change_date' => isset($audit_meta['change_date']) ? $audit_meta['change_date'] : '',
@@ -1281,11 +1327,11 @@ if (isset($_GET['admin_users_save'])) {
     $admin_users_respond_success();
 }
 
-// --- ADMIN USERS DELETE (admin only, AJAX POST) ---
+// --- ADMIN USERS DELETE (admin/manager, AJAX POST) ---
 if (isset($_GET['admin_users_delete'])) {
     header('Content-Type: application/json; charset=utf-8');
 
-    if (!FM_IS_ADMIN) {
+    if (!FM_CAN_MANAGE_USERS) {
         http_response_code(403);
         echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
         exit;
@@ -1331,6 +1377,9 @@ if (isset($_GET['admin_users_delete'])) {
     $upload_only_users_local = $config_data['upload_only_users'];
     $manager_users_local = $config_data['manager_users'];
     $directories_users_local = $config_data['directories_users'];
+    $user_manager_owners_local = isset($config_data['user_manager_owners']) && is_array($config_data['user_manager_owners'])
+        ? $config_data['user_manager_owners']
+        : array();
     $user_notes_local = $config_data['user_notes'];
     $user_welcome_messages_local = isset($config_data['user_welcome_messages']) && is_array($config_data['user_welcome_messages'])
         ? $config_data['user_welcome_messages']
@@ -1341,6 +1390,7 @@ if (isset($_GET['admin_users_delete'])) {
     $bulk_actions_disabled_users_local = isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $config_data['bulk_actions_disabled_users'])))
         : array();
+    $user_manager_owners_local = fm_admin_normalize_user_manager_owners($user_manager_owners_local, $manager_users_local, $auth_users_local);
 
     $exists = array_key_exists($username, $auth_users_local)
         || in_array($username, $readonly_users_local, true)
@@ -1354,6 +1404,14 @@ if (isset($_GET['admin_users_delete'])) {
         exit;
     }
 
+    if (FM_MANAGER && !FM_IS_ADMIN) {
+        if (!fm_admin_manager_can_manage_user($actor, $username, $manager_users_local, $user_manager_owners_local)) {
+            http_response_code(403);
+            echo json_encode(array('ok' => false, 'error' => 'Manager can only delete users assigned to them.'));
+            exit;
+        }
+    }
+
     $deleted_access_type = 'standard';
     if (in_array($username, $manager_users_local, true)) {
         $deleted_access_type = 'manager';
@@ -1363,9 +1421,11 @@ if (isset($_GET['admin_users_delete'])) {
         $deleted_access_type = 'read only';
     }
     $deleted_had_dirs = array_key_exists($username, $directories_users_local);
+    $deleted_manager_owner = isset($user_manager_owners_local[$username]) ? (string) $user_manager_owners_local[$username] : 'admin';
 
     unset($auth_users_local[$username]);
     unset($directories_users_local[$username]);
+    unset($user_manager_owners_local[$username]);
     unset($user_notes_local[$username]);
     unset($user_welcome_messages_local[$username]);
     $welcome_message_shown_users_local = array_values(array_diff($welcome_message_shown_users_local, array($username)));
@@ -1373,6 +1433,14 @@ if (isset($_GET['admin_users_delete'])) {
     $readonly_users_local = array_values(array_diff($readonly_users_local, array($username)));
     $upload_only_users_local = array_values(array_diff($upload_only_users_local, array($username)));
     $manager_users_local = array_values(array_diff($manager_users_local, array($username)));
+
+    if ($deleted_access_type === 'manager') {
+        foreach ($user_manager_owners_local as $owned_user => $owner) {
+            if ((string) $owner === $username) {
+                $user_manager_owners_local[$owned_user] = 'admin';
+            }
+        }
+    }
 
     $write_ok = fm_admin_persist_user_config_arrays(
         $config_file,
@@ -1384,7 +1452,8 @@ if (isset($_GET['admin_users_delete'])) {
         $user_notes_local,
         $bulk_actions_disabled_users_local,
         $user_welcome_messages_local,
-        $welcome_message_shown_users_local
+        $welcome_message_shown_users_local,
+        $user_manager_owners_local
     );
 
     if (!$write_ok['ok']) {
@@ -1396,15 +1465,16 @@ if (isset($_GET['admin_users_delete'])) {
     fm_admin_write_audit_event('user_delete', $actor, $username, array(
         'access_type' => $deleted_access_type,
         'had_directories' => $deleted_had_dirs,
+        'manager_owner' => $deleted_manager_owner,
     ));
 
     echo json_encode(array('ok' => true));
     exit;
 }
 
-// --- ADMIN USERS MODAL (admin only, AJAX load) ---
+// --- ADMIN USERS MODAL (admin/manager, AJAX load) ---
 if (isset($_GET['admin_users_modal'])) {
-    if (!FM_IS_ADMIN) {
+    if (!FM_CAN_MANAGE_USERS) {
         http_response_code(403);
         header('Content-Type: text/plain; charset=utf-8');
         echo 'Forbidden';
@@ -1426,6 +1496,9 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_upload_only_users = $modal_config['ok'] ? $modal_config['upload_only_users'] : (isset($upload_only_users) && is_array($upload_only_users) ? $upload_only_users : array());
     $modal_manager_users = $modal_config['ok'] ? $modal_config['manager_users'] : (isset($manager_users) && is_array($manager_users) ? $manager_users : array());
     $modal_directories_users = $modal_config['ok'] ? $modal_config['directories_users'] : (isset($directories_users) && is_array($directories_users) ? $directories_users : array());
+    $modal_user_manager_owners = $modal_config['ok'] && isset($modal_config['user_manager_owners']) && is_array($modal_config['user_manager_owners'])
+        ? $modal_config['user_manager_owners']
+        : (isset($user_manager_owners) && is_array($user_manager_owners) ? $user_manager_owners : array());
     $modal_user_notes = $modal_config['ok'] ? $modal_config['user_notes'] : (isset($user_notes) && is_array($user_notes) ? $user_notes : array());
     $modal_user_welcome_messages = $modal_config['ok'] && isset($modal_config['user_welcome_messages']) && is_array($modal_config['user_welcome_messages'])
         ? $modal_config['user_welcome_messages']
@@ -1433,6 +1506,21 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_bulk_actions_disabled_users = $modal_config['ok'] && isset($modal_config['bulk_actions_disabled_users']) && is_array($modal_config['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $modal_config['bulk_actions_disabled_users'])))
         : (isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users) ? array_values(array_unique(array_map('strval', $bulk_actions_disabled_users))) : array());
+    $modal_user_manager_owners = fm_admin_normalize_user_manager_owners($modal_user_manager_owners, $modal_manager_users, isset($auth_users) && is_array($auth_users) ? $auth_users : array());
+    $modal_is_manager_actor = FM_MANAGER && !FM_IS_ADMIN;
+    $modal_logged_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+    $modal_manager_owner = $modal_mode === 'new'
+        ? ($modal_is_manager_actor ? $modal_logged_user : 'admin')
+        : fm_admin_get_user_manager_owner($modal_username, $modal_user_manager_owners, $modal_manager_users);
+
+    if ($modal_is_manager_actor && $modal_mode === 'edit') {
+        if (!fm_admin_manager_can_manage_user($modal_logged_user, $modal_username, $modal_manager_users, $modal_user_manager_owners)) {
+            http_response_code(403);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Forbidden';
+            exit;
+        }
+    }
 
     if ($modal_mode === 'edit' && $modal_username !== '') {
         if (!empty($modal_manager_users) && in_array($modal_username, $modal_manager_users, true)) {
@@ -1515,7 +1603,9 @@ if (isset($_GET['chat_action']) && FM_USE_AUTH && !empty($_SESSION[FM_SESSION_ID
         isset($auth_users) && is_array($auth_users) ? $auth_users : array(),
         isset($directories_users) && is_array($directories_users) ? $directories_users : array(),
         FM_ROOT_PATH,
-        FM_USER_HOME_ROOT
+        FM_USER_HOME_ROOT,
+        isset($manager_users) && is_array($manager_users) ? $manager_users : array(),
+        isset($user_manager_owners) && is_array($user_manager_owners) ? $user_manager_owners : array()
     );
 
     if ($chat_action === 'inbox') {
@@ -3106,8 +3196,8 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_UPLOAD_ONLY && !FM_IS_WIN && FM
     exit;
 }
 
-// --- ADMIN USERS PAGE (admin only) ---
-if (isset($_GET['admin_users']) && FM_IS_ADMIN) {
+// --- ADMIN USERS PAGE (admin/manager) ---
+if (isset($_GET['admin_users']) && FM_CAN_MANAGE_USERS) {
     fm_show_header();
     fm_show_nav_path(FM_PATH);
     require __DIR__ . '/src/renderers/admin-users.php';
@@ -3164,6 +3254,94 @@ function fm_admin_parse_directories_input($input)
 }
 
 /**
+ * Normalize ownership mapping to valid manager/admin values for known users.
+ * @param array $owners
+ * @param array $manager_users
+ * @param array $auth_users
+ * @return array
+ */
+function fm_admin_normalize_user_manager_owners(array $owners, array $manager_users, array $auth_users)
+{
+    $manager_set = array_fill_keys(array_values(array_unique(array_map('strval', $manager_users))), true);
+    $known_users = array_fill_keys(array_values(array_unique(array_map('strval', array_keys($auth_users)))), true);
+    $normalized = array();
+
+    foreach ($owners as $username => $owner) {
+        $username = trim((string) $username);
+        $owner = trim((string) $owner);
+        if ($username === '' || !isset($known_users[$username])) {
+            continue;
+        }
+
+        if ($owner === 'admin' || isset($manager_set[$owner])) {
+            $normalized[$username] = $owner;
+        }
+    }
+
+    return $normalized;
+}
+
+/**
+ * Resolve user's manager owner id.
+ * Returns manager username or 'admin'.
+ * @param string $username
+ * @param array $owners
+ * @param array $manager_users
+ * @return string
+ */
+function fm_admin_get_user_manager_owner($username, array $owners, array $manager_users)
+{
+    $username = trim((string) $username);
+    if ($username === '' || $username === 'admin') {
+        return 'admin';
+    }
+
+    if (in_array($username, $manager_users, true)) {
+        return 'admin';
+    }
+
+    if (isset($owners[$username])) {
+        $owner = trim((string) $owners[$username]);
+        if ($owner === 'admin' || in_array($owner, $manager_users, true)) {
+            return $owner;
+        }
+    }
+
+    return 'admin';
+}
+
+/**
+ * Manager can only manage non-manager users explicitly owned by that manager.
+ * @param string $manager_username
+ * @param string $target_username
+ * @param array $manager_users
+ * @param array $owners
+ * @return bool
+ */
+function fm_admin_manager_can_manage_user($manager_username, $target_username, array $manager_users, array $owners)
+{
+    $manager_username = trim((string) $manager_username);
+    $target_username = trim((string) $target_username);
+    if ($manager_username === '' || $target_username === '' || $target_username === 'admin') {
+        return false;
+    }
+
+    if (!in_array($manager_username, $manager_users, true)) {
+        return false;
+    }
+
+    if ($target_username === $manager_username) {
+        return false;
+    }
+
+    if (in_array($target_username, $manager_users, true)) {
+        return false;
+    }
+
+    return fm_admin_get_user_manager_owner($target_username, $owners, $manager_users) === $manager_username;
+}
+
+/**
  * Load user-related arrays from config.php in isolated scope.
  * @param string $config_file
  * @return array
@@ -3180,6 +3358,7 @@ function fm_admin_load_user_config_arrays($config_file)
         $upload_only_users = array();
         $manager_users = array();
         $directories_users = array();
+        $user_manager_owners = array();
         $user_notes = array();
         $bulk_actions_disabled_users = array();
         $user_welcome_messages = array();
@@ -3191,6 +3370,7 @@ function fm_admin_load_user_config_arrays($config_file)
             'upload_only_users' => is_array($upload_only_users) ? $upload_only_users : array(),
             'manager_users' => is_array($manager_users) ? $manager_users : array(),
             'directories_users' => is_array($directories_users) ? $directories_users : array(),
+            'user_manager_owners' => is_array($user_manager_owners) ? $user_manager_owners : array(),
             'user_notes' => is_array($user_notes) ? $user_notes : array(),
             'bulk_actions_disabled_users' => is_array($bulk_actions_disabled_users) ? $bulk_actions_disabled_users : array(),
             'user_welcome_messages' => is_array($user_welcome_messages) ? $user_welcome_messages : array(),
@@ -3328,7 +3508,7 @@ function fm_admin_replace_config_array_assignment($content, $var_name, $new_code
  * @param array $directories_users
  * @return array
  */
-function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array(), array $bulk_actions_disabled_users = array(), array $user_welcome_messages = array(), array $welcome_message_shown_users = array())
+function fm_admin_persist_user_config_arrays($config_file, array $auth_users, array $readonly_users, array $upload_only_users, array $manager_users, array $directories_users, array $user_notes = array(), array $bulk_actions_disabled_users = array(), array $user_welcome_messages = array(), array $welcome_message_shown_users = array(), array $user_manager_owners = array())
 {
     $original_content = @file_get_contents($config_file);
     if ($original_content === false) {
@@ -3344,6 +3524,7 @@ function fm_admin_persist_user_config_arrays($config_file, array $auth_users, ar
         'upload_only_users' => fm_admin_export_list_array_code('upload_only_users', $upload_only_users),
         'manager_users' => fm_admin_export_list_array_code('manager_users', $manager_users),
         'directories_users' => fm_admin_export_assoc_array_code('directories_users', $directories_users, $config_dir),
+        'user_manager_owners' => fm_admin_export_assoc_array_code('user_manager_owners', $user_manager_owners, $config_dir),
         'user_notes' => fm_admin_export_assoc_array_code('user_notes', $user_notes, $config_dir),
         'bulk_actions_disabled_users' => fm_admin_export_list_array_code('bulk_actions_disabled_users', $bulk_actions_disabled_users),
         'user_welcome_messages' => fm_admin_export_assoc_array_code('user_welcome_messages', $user_welcome_messages, $config_dir),
@@ -3956,42 +4137,108 @@ function fm_chat_resolve_user_scope_dirs($username, array $directories_users, $r
 
 function fm_chat_paths_overlap(array $paths_a, array $paths_b)
 {
+    $normalized_b = array();
+    foreach ($paths_b as $b) {
+        $b = rtrim(str_replace('\\', '/', (string) $b), '/');
+        if ($b !== '') {
+            $normalized_b[$b] = true;
+        }
+    }
+
+    if (empty($normalized_b)) {
+        return false;
+    }
+
     foreach ($paths_a as $a) {
         $a = rtrim(str_replace('\\', '/', (string) $a), '/');
         if ($a === '') {
             continue;
         }
 
-        foreach ($paths_b as $b) {
-            $b = rtrim(str_replace('\\', '/', (string) $b), '/');
-            if ($b === '') {
-                continue;
-            }
-
-            if ($a === $b) {
-                return true;
-            }
-
-            if (strpos($a . '/', $b . '/') === 0 || strpos($b . '/', $a . '/') === 0) {
-                return true;
-            }
+        if (isset($normalized_b[$a])) {
+            return true;
         }
     }
 
     return false;
 }
 
-function fm_chat_get_visible_peers($current_user, array $auth_users, array $directories_users, $root_path, $home_root_rel = '')
+function fm_chat_get_manager_contact_grants($username, array $manager_users)
+{
+    $username = trim((string) $username);
+    if ($username === '' || empty($manager_users)) {
+        return array();
+    }
+
+    $db = fm_chat_get_db();
+    if (!$db) {
+        return array();
+    }
+
+    $manager_users = array_values(array_unique(array_filter(array_map('strval', $manager_users), 'strlen')));
+    if (empty($manager_users)) {
+        return array();
+    }
+
+    $placeholders = array();
+    foreach ($manager_users as $idx => $unused_name) {
+        $placeholders[] = ':m' . $idx;
+    }
+
+    $sql = 'SELECT DISTINCT sender FROM fm_chat_messages WHERE recipient = :recipient AND sender IN (' . implode(',', $placeholders) . ')';
+    $stmt = $db->prepare($sql);
+    if (!$stmt) {
+        return array();
+    }
+
+    $stmt->bindValue(':recipient', $username, SQLITE3_TEXT);
+    foreach ($manager_users as $idx => $manager_name) {
+        $stmt->bindValue(':m' . $idx, $manager_name, SQLITE3_TEXT);
+    }
+
+    $result = $stmt->execute();
+    if ($result === false) {
+        return array();
+    }
+
+    $grants = array();
+    while (($row = $result->fetchArray(SQLITE3_ASSOC)) !== false) {
+        $sender = isset($row['sender']) ? trim((string) $row['sender']) : '';
+        if ($sender !== '') {
+            $grants[] = $sender;
+        }
+    }
+    $result->finalize();
+
+    $grants = array_values(array_unique($grants));
+    sort($grants, SORT_NATURAL | SORT_FLAG_CASE);
+    return $grants;
+}
+
+function fm_chat_get_visible_peers($current_user, array $auth_users, array $directories_users, $root_path, $home_root_rel = '', array $manager_users = array(), array $user_manager_owners = array())
 {
     $current_user = (string) $current_user;
     if ($current_user === '' || !isset($auth_users[$current_user])) {
         return array();
     }
 
+    $manager_users = array_values(array_unique(array_filter(array_map('strval', $manager_users), 'strlen')));
+    $user_manager_owners = fm_admin_normalize_user_manager_owners($user_manager_owners, $manager_users, $auth_users);
+
+    if ($current_user === 'admin') {
+        $all_peers = array_values(array_diff(array_keys($auth_users), array($current_user)));
+        sort($all_peers, SORT_NATURAL | SORT_FLAG_CASE);
+        return $all_peers;
+    }
+
     $current_scopes = fm_chat_resolve_user_scope_dirs($current_user, $directories_users, $root_path, $home_root_rel);
     if (empty($current_scopes)) {
         return array();
     }
+
+    $current_is_manager = in_array($current_user, $manager_users, true);
+    $current_owner = fm_admin_get_user_manager_owner($current_user, $user_manager_owners, $manager_users);
+    $manager_contact_grants = $current_is_manager ? array() : fm_chat_get_manager_contact_grants($current_user, $manager_users);
 
     $peers = array();
     foreach ($auth_users as $peer => $unused_hash) {
@@ -4005,7 +4252,33 @@ function fm_chat_get_visible_peers($current_user, array $auth_users, array $dire
             continue;
         }
 
-        if (fm_chat_paths_overlap($current_scopes, $peer_scopes)) {
+        $same_scope = fm_chat_paths_overlap($current_scopes, $peer_scopes);
+        $peer_is_manager = in_array($peer, $manager_users, true);
+        $peer_owner = fm_admin_get_user_manager_owner($peer, $user_manager_owners, $manager_users);
+        $allowed = false;
+
+        if ($current_is_manager) {
+            // Manager can see users in exactly same end scopes.
+            $allowed = $same_scope;
+        } else {
+            if ($peer_is_manager) {
+                // Direct superior manager is visible only with exact scope match.
+                if ($peer === $current_owner && $same_scope) {
+                    $allowed = true;
+                }
+                // Special case: once a manager contacted this user, keep chat access.
+                if (in_array($peer, $manager_contact_grants, true)) {
+                    $allowed = true;
+                }
+            } else {
+                // Peer users are visible only under same manager owner and exact same end scope.
+                if ($peer_owner === $current_owner && $same_scope) {
+                    $allowed = true;
+                }
+            }
+        }
+
+        if ($allowed) {
             $peers[] = $peer;
         }
     }
@@ -4965,7 +5238,8 @@ function fm_maybe_issue_first_login_welcome($username)
         isset($config_data['user_notes']) && is_array($config_data['user_notes']) ? $config_data['user_notes'] : array(),
         isset($config_data['bulk_actions_disabled_users']) && is_array($config_data['bulk_actions_disabled_users']) ? $config_data['bulk_actions_disabled_users'] : array(),
         $templates,
-        $shown_users
+        $shown_users,
+        isset($config_data['user_manager_owners']) && is_array($config_data['user_manager_owners']) ? $config_data['user_manager_owners'] : array()
     );
 
     if (empty($persist_result['ok'])) {

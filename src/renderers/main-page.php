@@ -625,7 +625,9 @@
                 isset($auth_users) && is_array($auth_users) ? $auth_users : array(),
                 isset($directories_users) && is_array($directories_users) ? $directories_users : array(),
                 FM_ROOT_PATH,
-                FM_USER_HOME_ROOT
+                FM_USER_HOME_ROOT,
+                isset($manager_users) && is_array($manager_users) ? $manager_users : array(),
+                isset($user_manager_owners) && is_array($user_manager_owners) ? $user_manager_owners : array()
             )
             : array();
         $footerOnlineUsers = $footerShowUserBadges ? fm_online_get_users() : array();

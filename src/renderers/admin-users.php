@@ -8,7 +8,11 @@ $readonly_users = isset($readonly_users) && is_array($readonly_users) ? $readonl
 $upload_only_users = isset($upload_only_users) && is_array($upload_only_users) ? $upload_only_users : array();
 $manager_users = isset($manager_users) && is_array($manager_users) ? $manager_users : array();
 $directories_users = isset($directories_users) && is_array($directories_users) ? $directories_users : array();
-$audit_events = function_exists('fm_admin_read_audit_events') ? fm_admin_read_audit_events(50) : array();
+$user_manager_owners = isset($user_manager_owners) && is_array($user_manager_owners) ? $user_manager_owners : array();
+$is_admin_actor = defined('FM_IS_ADMIN') && FM_IS_ADMIN;
+$is_manager_actor = !$is_admin_actor && defined('FM_MANAGER') && FM_MANAGER;
+$logged_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
+$audit_events = $is_admin_actor && function_exists('fm_admin_read_audit_events') ? fm_admin_read_audit_events(50) : array();
 $config_file_path = dirname(__DIR__, 2) . '/config.php';
 $config_is_writable = is_file($config_file_path) && is_writable($config_file_path);
 $fm_admin_return_path = isset($_GET['p']) ? (string) $_GET['p'] : (defined('FM_PATH') ? (string) FM_PATH : '');
@@ -25,6 +29,18 @@ $usernames = array_merge(
 );
 
 $usernames = array_unique(array_filter($usernames, 'strlen'));
+
+if (function_exists('fm_admin_normalize_user_manager_owners')) {
+    $user_manager_owners = fm_admin_normalize_user_manager_owners($user_manager_owners, $manager_users, $auth_users);
+}
+
+if ($is_manager_actor && function_exists('fm_admin_manager_can_manage_user')) {
+    $usernames = array_values(array_filter($usernames, function ($u) use ($logged_user, $manager_users, $user_manager_owners) {
+        return fm_admin_manager_can_manage_user($logged_user, $u, $manager_users, $user_manager_owners);
+    }));
+}
+
+sort($usernames, SORT_NATURAL | SORT_FLAG_CASE);
 
 // Escaping helper
 if (!function_exists('fm_enc')) {
@@ -64,6 +80,13 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
     return 'N/A';
 }
 
+function user_owner_label($u, $user_manager_owners, $manager_users) {
+    if (!function_exists('fm_admin_get_user_manager_owner')) {
+        return 'admin';
+    }
+    return fm_admin_get_user_manager_owner($u, $user_manager_owners, $manager_users);
+}
+
 ?>
 
 <div class="container mt-4">
@@ -91,19 +114,29 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
                     <th>Heslo v konfigurácii</th>
                     <th>Priradené adresáre</th>
                     <th>Stav / poznámka</th>
+                    <th>Zodpovednosť</th>
                     <th>Akcia</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($usernames as $u): ?>
+                <?php
+                    $can_edit_user = !$is_manager_actor
+                        || (function_exists('fm_admin_manager_can_manage_user') && fm_admin_manager_can_manage_user($logged_user, $u, $manager_users, $user_manager_owners));
+                ?>
                 <tr>
                     <td><?php echo fm_enc($u); ?></td>
                     <td><?php echo fm_enc(user_type($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users)); ?></td>
                     <td><?php echo array_key_exists($u, $auth_users) ? 'áno' : 'nie'; ?></td>
                     <td><?php echo user_dirs($u, $directories_users); ?></td>
                     <td><?php echo fm_enc(user_status($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users)); ?></td>
+                    <td><?php echo fm_enc(user_owner_label($u, $user_manager_owners, $manager_users)); ?></td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-primary" data-admin-user-action="edit" data-username="<?php echo fm_enc($u); ?>">Edit</button>
+                        <?php if ($can_edit_user): ?>
+                            <button type="button" class="btn btn-sm btn-primary" data-admin-user-action="edit" data-username="<?php echo fm_enc($u); ?>">Edit</button>
+                        <?php else: ?>
+                            <span class="text-muted small">Bez oprávnenia</span>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -111,6 +144,13 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
         </table>
     </div>
 
+    <?php if (!$is_admin_actor): ?>
+        <div class="alert alert-info mt-3">
+            Manažér môže vytvárať, upravovať a mazať iba používateľov, ktorí sú priradení pod jeho zodpovednosť.
+        </div>
+    <?php endif; ?>
+
+    <?php if ($is_admin_actor): ?>
     <div class="card mt-4">
         <div class="card-header">
             <strong>Audit</strong> <span class="text-muted">(posledných <?php echo count($audit_events); ?> záznamov)</span>
@@ -192,6 +232,7 @@ function user_status($u, $auth_users, $readonly_users, $upload_only_users, $mana
             <?php endif; ?>
         </div>
     </div>
+    <?php endif; ?>
 
     <div id="admin-user-modal-container"></div>
         <script>
