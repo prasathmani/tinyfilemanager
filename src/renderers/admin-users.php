@@ -13,6 +13,7 @@ $is_admin_actor = defined('FM_IS_ADMIN') && FM_IS_ADMIN;
 $is_manager_actor = !$is_admin_actor && defined('FM_MANAGER') && FM_MANAGER;
 $logged_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
 $audit_events = $is_admin_actor && function_exists('fm_admin_read_audit_events') ? fm_admin_read_audit_events(50) : array();
+$config_snapshots_enabled = $is_admin_actor && function_exists('fm_config_store_list_snapshots');
 $config_file_path = dirname(__DIR__, 2) . '/config.php';
 $config_is_writable = is_file($config_file_path) && is_writable($config_file_path);
 $fm_admin_return_path = isset($_GET['p']) ? (string) $_GET['p'] : (defined('FM_PATH') ? (string) FM_PATH : '');
@@ -106,6 +107,7 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
             <button type="button" class="btn btn-outline-primary" id="owner-map-preview-btn">Zobraziť mapu zodpovednosti</button>
             <button type="button" class="btn btn-outline-warning" id="owner-map-apply-btn">Uložiť upravenú mapu</button>
             <button type="button" class="btn btn-outline-success" id="owner-map-oneclick-btn">Náhľad + Uložiť + Obnoviť</button>
+            <button type="button" class="btn btn-outline-dark" id="config-snapshots-refresh-btn">Snapshoty konfigurácií</button>
         <?php endif; ?>
         <a href="?p=<?php echo urlencode($fm_admin_return_path); ?>" class="btn btn-outline-secondary">
             <i class="fa fa-times-circle" aria-hidden="true"></i>
@@ -114,6 +116,46 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
     </div>
 
     <?php if ($is_admin_actor): ?>
+        <div class="card mb-3" id="config-snapshots-card" style="display:none;">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <strong>Snapshoty konfigurácií</strong>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="config-snapshots-refresh-inline-btn">Obnoviť zoznam</button>
+            </div>
+            <div class="card-body">
+                <div id="config-snapshots-status" class="text-muted mb-3">Načítavam snapshoty konfigurácií...</div>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered table-striped align-middle mb-0" id="config-snapshots-runtime-table" style="display:none;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Snapshot</th>
+                                <th>Rev.</th>
+                                <th>Vytvorené</th>
+                                <th>Kým</th>
+                                <th>Hash</th>
+                                <th>Akcia</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped align-middle mb-0" id="config-snapshots-ui-table" style="display:none;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Snapshot</th>
+                                <th>Rev.</th>
+                                <th>Vytvorené</th>
+                                <th>Kým</th>
+                                <th>Hash</th>
+                                <th>Akcia</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="card mb-3" id="owner-map-card" style="display:none;">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <strong>Mapa zodpovednosti (owner map)</strong>
@@ -444,6 +486,12 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
             var ownerMapPreviewBtn = document.getElementById('owner-map-preview-btn');
             var ownerMapApplyBtn = document.getElementById('owner-map-apply-btn');
             var ownerMapOneclickBtn = document.getElementById('owner-map-oneclick-btn');
+            var configSnapshotsRefreshBtn = document.getElementById('config-snapshots-refresh-btn');
+            var configSnapshotsRefreshInlineBtn = document.getElementById('config-snapshots-refresh-inline-btn');
+            var configSnapshotsCard = document.getElementById('config-snapshots-card');
+            var configSnapshotsStatus = document.getElementById('config-snapshots-status');
+            var configSnapshotsRuntimeTable = document.getElementById('config-snapshots-runtime-table');
+            var configSnapshotsUiTable = document.getElementById('config-snapshots-ui-table');
             var ownerMapRebuild = document.getElementById('owner-map-rebuild');
             var ownerMapOnlyChanges = document.getElementById('owner-map-only-changes');
             var ownerMapExportJsonBtn = document.getElementById('owner-map-export-json-btn');
@@ -451,6 +499,8 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
             var ownerMapTable = document.getElementById('owner-map-table');
             var ownerMapBody = document.getElementById('owner-map-body');
             var ownerMapLastRows = [];
+            var configSnapshotsEnabled = <?php echo $config_snapshots_enabled ? 'true' : 'false'; ?>;
+            var configSnapshotToken = '<?php echo fm_enc($admin_ajax_token); ?>';
 
             function normalizeOwnerValue(value) {
                 var normalized = String(value == null ? '' : value).trim();
@@ -469,6 +519,19 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#39;');
+            }
+
+            function formatSnapshotTime(ts) {
+                var numericTs = Number(ts || 0);
+                if (!numericTs) {
+                    return '-';
+                }
+
+                try {
+                    return new Date(numericTs * 1000).toLocaleString();
+                } catch (e) {
+                    return '-';
+                }
             }
 
             function renderOwnerMapRows(rows) {
@@ -506,6 +569,115 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
 
                 ownerMapBody.innerHTML = html;
                 ownerMapTable.style.display = visibleRows && visibleRows.length ? '' : 'none';
+            }
+
+            function renderConfigSnapshotRows(tableEl, rows, scopeLabel) {
+                if (!tableEl) {
+                    return;
+                }
+
+                var tbody = tableEl.querySelector('tbody');
+                if (!tbody) {
+                    return;
+                }
+
+                var html = '';
+                forEachNode(Array.isArray(rows) ? rows : [], function (row) {
+                    var snapshotId = Number(row.snapshot_id || 0);
+                    html += '<tr>'
+                        + '<td>' + escapeHtml(String(row.snapshot_label || scopeLabel || 'snapshot')) + '</td>'
+                        + '<td>' + escapeHtml(String(row.revision || '-')) + '</td>'
+                        + '<td>' + escapeHtml(formatSnapshotTime(row.created_at || 0)) + '</td>'
+                        + '<td>' + escapeHtml(String(row.created_by || '-')) + '</td>'
+                        + '<td><code>' + escapeHtml(String(row.payload_hash || '').substring(0, 12)) + '</code></td>'
+                        + '<td><button type="button" class="btn btn-sm btn-danger" data-config-restore-snapshot="' + snapshotId + '">Obnoviť</button></td>'
+                        + '</tr>';
+                });
+
+                tbody.innerHTML = html;
+                tableEl.style.display = html ? '' : 'none';
+            }
+
+            function refreshConfigSnapshots() {
+                if (!configSnapshotsCard || !configSnapshotsStatus) {
+                    return;
+                }
+
+                configSnapshotsCard.style.display = '';
+                configSnapshotsStatus.textContent = 'Načítavam snapshoty konfigurácií...';
+
+                var url = window.location.pathname + '?p=' + encodeURIComponent(getCurrentPath()) + '&admin_config_snapshots=1';
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                    .then(function (resp) {
+                        return resp.json().catch(function () {
+                            return { ok: false, error: 'Unexpected server response' };
+                        });
+                    })
+                    .then(function (payload) {
+                        if (!payload || !payload.ok || !payload.data) {
+                            throw new Error((payload && payload.error) ? payload.error : 'Snapshot list failed.');
+                        }
+
+                        var runtimeRows = Array.isArray(payload.data.runtime_config) ? payload.data.runtime_config : [];
+                        var uiRows = Array.isArray(payload.data.ui_preferences) ? payload.data.ui_preferences : [];
+                        renderConfigSnapshotRows(configSnapshotsRuntimeTable, runtimeRows, 'runtime_config');
+                        renderConfigSnapshotRows(configSnapshotsUiTable, uiRows, 'ui_preferences');
+                        configSnapshotsStatus.textContent = 'Snapshoty načítané. Runtime: ' + runtimeRows.length + ', UI: ' + uiRows.length + '.';
+                    })
+                    .catch(function (err) {
+                        configSnapshotsStatus.textContent = 'Chyba: ' + String(err && err.message ? err.message : err);
+                    });
+            }
+
+            function restoreConfigSnapshot(snapshotId) {
+                var id = Number(snapshotId || 0);
+                if (!id) {
+                    return;
+                }
+
+                if (!window.confirm('Naozaj chceš obnoviť tento snapshot konfigurácie?')) {
+                    return;
+                }
+
+                if (configSnapshotsStatus) {
+                    configSnapshotsStatus.textContent = 'Obnovujem snapshot #' + id + '...';
+                }
+
+                var fd = new FormData();
+                fd.append('token', configSnapshotToken);
+                fd.append('snapshot_id', String(id));
+
+                var url = window.location.pathname + '?p=' + encodeURIComponent(getCurrentPath()) + '&admin_config_snapshots=1';
+                fetch(url, {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                    .then(function (resp) {
+                        return resp.json().catch(function () {
+                            return { ok: false, error: 'Unexpected server response' };
+                        });
+                    })
+                    .then(function (payload) {
+                        if (!payload || !payload.ok) {
+                            throw new Error((payload && payload.error) ? payload.error : 'Restore failed.');
+                        }
+
+                        if (configSnapshotsStatus) {
+                            configSnapshotsStatus.textContent = 'Snapshot obnovený.';
+                        }
+                        window.location.reload();
+                    })
+                    .catch(function (err) {
+                        if (configSnapshotsStatus) {
+                            configSnapshotsStatus.textContent = 'Chyba: ' + String(err && err.message ? err.message : err);
+                        }
+                    });
             }
 
             function buildOwnerMapJson(rows) {
@@ -624,6 +796,14 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 });
             }
 
+            if (configSnapshotsRefreshBtn) {
+                configSnapshotsRefreshBtn.addEventListener('click', refreshConfigSnapshots);
+            }
+
+            if (configSnapshotsRefreshInlineBtn) {
+                configSnapshotsRefreshInlineBtn.addEventListener('click', refreshConfigSnapshots);
+            }
+
             if (ownerMapOnlyChanges) {
                 ownerMapOnlyChanges.addEventListener('change', function () {
                     syncOwnerMapModelFromDom();
@@ -701,6 +881,25 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                     syncOwnerMapModelFromDom();
                     renderOwnerMapRows(ownerMapLastRows);
                 });
+            }
+
+            document.addEventListener('click', function (e) {
+                var target = e.target;
+                if (!target || typeof target.closest !== 'function') {
+                    return;
+                }
+
+                var restoreBtn = target.closest('[data-config-restore-snapshot]');
+                if (!restoreBtn) {
+                    return;
+                }
+
+                e.preventDefault();
+                restoreConfigSnapshot(restoreBtn.getAttribute('data-config-restore-snapshot'));
+            });
+
+            if (configSnapshotsEnabled && configSnapshotsCard) {
+                refreshConfigSnapshots();
             }
 
             function showModalError(message) {

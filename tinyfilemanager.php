@@ -211,6 +211,7 @@ if (is_readable($security_file)) {
 require_once __DIR__ . '/src/ArchiveHelpers.php';
 require_once __DIR__ . '/src/BootstrapHelpers.php';
 require_once __DIR__ . '/src/FM_Config.php';
+require_once __DIR__ . '/src/ConfigStore.php';
 require_once __DIR__ . '/src/PathHelpers.php';
 require_once __DIR__ . '/src/RuntimeErrorHelpers.php';
 require_once __DIR__ . '/src/TemplateHelpers.php';
@@ -226,6 +227,10 @@ require_once __DIR__ . '/src/services/ChmodPageContextService.php';
 require_once __DIR__ . '/src/services/FileEditorContextService.php';
 require_once __DIR__ . '/src/services/FileViewContextService.php';
 require_once __DIR__ . '/src/services/FileViewInfoService.php';
+
+if (function_exists('fm_config_store_apply_scope_to_globals')) {
+    fm_config_store_apply_scope_to_globals('runtime_config', 'global', fm_config_store_runtime_keys());
+}
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
@@ -1174,6 +1179,60 @@ if (isset($_GET['admin_users_owner_map'])) {
             'rebuild' => $rebuild,
             'rows' => isset($plan['rows']) && is_array($plan['rows']) ? $plan['rows'] : array(),
             'summary' => isset($plan['summary']) && is_array($plan['summary']) ? $plan['summary'] : array(),
+        ),
+    ));
+    exit;
+}
+
+// --- ADMIN CONFIG SNAPSHOTS (admin only, AJAX GET/POST) ---
+if (isset($_GET['admin_config_snapshots'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!FM_IS_ADMIN) {
+        http_response_code(403);
+        echo json_encode(array('ok' => false, 'error' => 'Forbidden'));
+        exit;
+    }
+
+    $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper((string) $_SERVER['REQUEST_METHOD']) : 'GET';
+    if ($method === 'POST') {
+        $token = isset($_POST['token']) ? (string) $_POST['token'] : '';
+        if (!verifyToken($token)) {
+            http_response_code(401);
+            echo json_encode(array('ok' => false, 'error' => 'Invalid token'));
+            exit;
+        }
+
+        $snapshot_id = isset($_POST['snapshot_id']) ? (int) $_POST['snapshot_id'] : 0;
+        if ($snapshot_id < 1) {
+            http_response_code(400);
+            echo json_encode(array('ok' => false, 'error' => 'Missing snapshot id.'));
+            exit;
+        }
+
+        $restore_result = fm_config_store_restore_snapshot($snapshot_id, array(
+            'created_by' => isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : 'admin',
+            'updated_by' => isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : 'admin',
+        ));
+
+        if (empty($restore_result['ok'])) {
+            http_response_code(500);
+            echo json_encode(array('ok' => false, 'error' => isset($restore_result['error']) ? (string) $restore_result['error'] : 'Restore failed.'));
+            exit;
+        }
+
+        echo json_encode(array('ok' => true, 'data' => $restore_result));
+        exit;
+    }
+
+    $runtimeSnapshots = function_exists('fm_config_store_list_snapshots') ? fm_config_store_list_snapshots('runtime_config', 'global', 10) : array();
+    $uiSnapshots = function_exists('fm_config_store_list_snapshots') ? fm_config_store_list_snapshots('ui_preferences', 'global', 10) : array();
+
+    echo json_encode(array(
+        'ok' => true,
+        'data' => array(
+            'runtime_config' => $runtimeSnapshots,
+            'ui_preferences' => $uiSnapshots,
         ),
     ));
     exit;

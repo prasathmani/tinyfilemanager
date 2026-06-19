@@ -46,3 +46,42 @@
   - `php scripts/migrate-legacy-state.php --apply`
 - Skontroluj cielovy adresar:
   - `ls -la uploads/.tfm-state`
+
+## Migracia konfiguracie do SQLite
+
+- Prekopiruj runtime konfiguraciu aj UI predvolby do databazy:
+  - `php scripts/migrate-config-to-db.php`
+  - `php scripts/migrate-config-to-db.php --apply`
+- Skript prenasa:
+  - runtime config z `config.php` do `runtime_config/global`
+  - globalne UI predvolby z `$CONFIG` do `ui_preferences/global`
+  - stare profilove JSON nastavenia pouzivatelov do `ui_preferences/<username>`
+- Po migracii uz budu nove ulozenia smerovat do SQLite config store, ale filesystem fallback zostane ako poistka.
+
+## Bezpecny postup pred release (server je zdroj pravdy)
+
+Ak sa na nasadenom serveri medzicasom menili konfiguracie alebo pouzivatelia v Sprave uzivatelov, pred release ich najprv stiahni zo servera do workspace a az potom vytvaraj release balik.
+
+### Odporucany postup
+
+1. Zisti aktualny stav na serveri a sprav si zalohu lokalnych configov:
+  - `cp config.php config.php.bak.$(date +%Y%m%d_%H%M%S)`
+  - `cp api.config.php api.config.php.bak.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true`
+  - `cp joyee-bridge.config.php joyee-bridge.config.php.bak.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true`
+
+2. Stiahni serverove konfiguracie do workspace cez `rsync` alebo `scp`:
+  - `rsync -avz user@server:/var/www/html/config.php ./config.php`
+  - `rsync -avz user@server:/var/www/html/api.config.php ./api.config.php 2>/dev/null || true`
+  - `rsync -avz user@server:/var/www/html/joyee-bridge.config.php ./joyee-bridge.config.php 2>/dev/null || true`
+
+3. Over rozdiely pred release:
+  - `git diff -- config.php api.config.php joyee-bridge.config.php`
+
+4. Ak su zmeny spravne, commitni ich a az potom pust release:
+  - `./release.sh patch --auto-push`
+
+### Poznamka
+
+- `.gitignore` chraní len neversionované lokalne subory.
+- Trackovany `config.php` sa do release prenesie iba vtedy, ked je skutocne aktualizovany vo workspace.
+- Týmto je serverova konfiguracia zdroj pravdy a release ju neprepise naslepo.

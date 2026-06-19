@@ -41,6 +41,11 @@ class FM_Config
             $this->save();
         }
 
+        $dbData = $this->loadDatabaseSettings('ui_preferences', 'global');
+        if (is_array($dbData) && !empty($dbData)) {
+            $this->data = array_merge($this->data, $dbData);
+        }
+
         // Override with per-user settings if a user is already logged in (session started early).
         $logged = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : null;
         if ($logged) {
@@ -168,6 +173,11 @@ class FM_Config
      */
     function loadUserSettings($username)
     {
+        $dbData = $this->loadDatabaseSettings('ui_preferences', $username);
+        if (is_array($dbData) && !empty($dbData)) {
+            return $dbData;
+        }
+
         $path = $this->userCfgPath($username);
         if (!is_readable($path)) {
             $defaultPath = $this->defaultUserCfgDir() . DIRECTORY_SEPARATOR . md5($username) . '.json';
@@ -183,6 +193,23 @@ class FM_Config
         }
         $decoded = json_decode(@file_get_contents($path), true);
         return is_array($decoded) ? $decoded : false;
+    }
+
+    /**
+     * Load scoped configuration from the SQLite config store.
+     *
+     * @param string $scopeType
+     * @param string $scopeKey
+     * @return array|false
+     */
+    private function loadDatabaseSettings($scopeType, $scopeKey)
+    {
+        if (!function_exists('fm_config_store_load_scope')) {
+            return false;
+        }
+
+        $data = fm_config_store_load_scope($scopeType, $scopeKey);
+        return is_array($data) ? $data : false;
     }
 
     /**
@@ -210,7 +237,32 @@ class FM_Config
     function save()
     {
         $this->last_error = '';
-        // If a user is logged in, save to their personal settings file only.
+
+        // If the SQLite config store is available, persist there first.
+        $logged = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : null;
+        $scopeType = 'ui_preferences';
+        $scopeKey = $logged ? (string) $logged : 'global';
+        if (function_exists('fm_config_store_save_scope')) {
+            $saveResult = fm_config_store_save_scope($scopeType, $scopeKey, $this->data, array(
+                'label' => $logged ? ('profile:' . $logged) : 'ui_preferences_global',
+                'reason' => 'FM_Config save()',
+                'source' => 'runtime',
+                'created_by' => $logged ? (string) $logged : 'system',
+                'updated_by' => $logged ? (string) $logged : 'system',
+                'snapshot_label' => $logged ? ('profile:' . $logged) : 'ui_preferences_global',
+                'snapshot_reason' => $logged ? 'Saved profile settings' : 'Saved global UI preferences',
+            ));
+            if (is_array($saveResult) && !empty($saveResult['ok'])) {
+                return true;
+            }
+
+            if ($logged) {
+                $this->last_error = isset($saveResult['error']) ? (string) $saveResult['error'] : 'Could not write profile settings to database.';
+                return false;
+            }
+        }
+
+        // If a user is logged in, save to their personal settings file only as fallback.
         $logged = isset($_SESSION[FM_SESSION_ID]['logged']) ? $_SESSION[FM_SESSION_ID]['logged'] : null;
         if ($logged) {
             $dir = $this->ensureUserCfgDir();

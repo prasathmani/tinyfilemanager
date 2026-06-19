@@ -10,6 +10,7 @@ uploads/
 /Mirko/
 
 # Local Joyee bridge secrets (server-only)
+api.config.php
 joyee-bridge.config.php
 
 # Generated ChatGPT source manifest with live machine token
