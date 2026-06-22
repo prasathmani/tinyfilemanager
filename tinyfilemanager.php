@@ -2588,7 +2588,6 @@ function fm_get_mime_type($file_path)
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file_path);
-        finfo_close($finfo);
         return $mime;
     } elseif (function_exists('mime_content_type')) {
         return mime_content_type($file_path);
