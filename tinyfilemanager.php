@@ -8691,6 +8691,12 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
                 line-height: 1.2 !important;
             }
 
+            .main-nav .nav-item.avatar .dropdown-toggle,
+            .main-nav .nav-item.avatar .dropdown-item {
+                font-size: 0.75rem !important;
+                line-height: 1.2 !important;
+            }
+
             .main-nav .fm-nav-search-group {
                 width: clamp(11rem, 21vw, 19rem) !important;
                 min-width: 14ch !important;

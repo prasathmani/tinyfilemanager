@@ -68,6 +68,12 @@ body.theme-dark .main-nav.navbar {
   line-height: 1.2;
 }
 
+.main-nav .nav-item.avatar .dropdown-toggle,
+.main-nav .nav-item.avatar .dropdown-item {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
 .main-nav .navbar-nav .input-group {
   width: clamp(11rem, 21vw, 19rem);
   min-width: 14ch;
