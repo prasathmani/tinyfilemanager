@@ -2379,7 +2379,14 @@
         "TinyFileManager": "TinyFileManager",
         "NON_JSON_RESPONSE": "NON_JSON_RESPONSE",
         "user_delete": "Zmazanie používateľa",
-        "user_save": "Uloženie používateľa"
+        "user_save": "Uloženie používateľa",
+        "Show": "Ukáž",
+        "Hide": "Skryť",
+        "Show password": "Ukáž heslo",
+        "Hide password": "Skryť heslo",
+        "At least one directory must be assigned.": "Musí byť zadaný aspoň jeden priečinok.",
+        "Directory field cannot be empty.": "Pole priečinkov nesmie byť prázdne.",
+        "Nastaviť predvolený": "Nastaviť predvolený (/uploads/free)"
       }
     },
     {

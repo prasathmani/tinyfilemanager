@@ -79,8 +79,9 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
             <input type="hidden" name="manager_owner" value="<?php echo htmlspecialchars((string) $modal_manager_owner, ENT_QUOTES, 'UTF-8'); ?>">
           <?php endif; ?>
           <div class="mb-3">
-            <label for="admin-dirs" class="form-label"><?php echo lng('Assigned directories'); ?></label>
-            <textarea class="form-control" id="admin-dirs" name="directories" rows="3"><?php echo $directories_value; ?></textarea>
+            <label for="admin-dirs" class="form-label"><?php echo lng('Assigned directories'); ?> <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="admin-dirs" name="directories" rows="3" required><?php echo $directories_value; ?></textarea>
+            <div class="form-text"><?php echo lng('Directory field cannot be empty.'); ?> <button type="button" class="btn btn-link btn-sm p-0 ms-1" id="admin-dirs-default"><?php echo lng('Nastaviť predvolený'); ?></button></div>
           </div>
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="admin-bulk-actions-enabled" name="bulk_actions_enabled" value="1" <?php echo $modal_bulk_actions_enabled ? 'checked' : ''; ?>>
@@ -117,6 +118,17 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
 (function() {
   var form = document.getElementById('admin-user-modal-form');
   var errorBox = document.getElementById('admin-user-modal-error');
+  var dirsField = document.getElementById('admin-dirs');
+  var dirsDefaultBtn = document.getElementById('admin-dirs-default');
+  var defaultDir = '<?php echo addslashes(rtrim(__DIR__, '/') . '/uploads/free'); ?>';
+
+  if (dirsDefaultBtn && dirsField) {
+    dirsDefaultBtn.addEventListener('click', function() {
+      if (dirsField.value.trim() === '') {
+        dirsField.value = defaultDir;
+      }
+    });
+  }
 
   function showError(message) {
     if (!errorBox) return;
@@ -146,6 +158,19 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
       var fd = new FormData(form);
       var pwd = String(fd.get('password') || '');
       var pwd2 = String(fd.get('password2') || '');
+      var dirs = String(fd.get('directories') || '').trim();
+      if (dirs === '') {
+        if (dirsField) {
+          dirsField.value = defaultDir;
+          fd.set('directories', defaultDir);
+          dirs = defaultDir;
+        }
+        if (dirs === '') {
+          showError('<?php echo addslashes(lng('Directory field cannot be empty.')); ?>');
+          if (dirsField) dirsField.focus();
+          return;
+        }
+      }
       if (pwd !== pwd2) {
         showError('<?php echo addslashes(lng('Passwords do not match.')); ?>');
         return;

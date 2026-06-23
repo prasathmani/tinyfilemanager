@@ -731,7 +731,7 @@ if ($use_auth) {
                                         <label for="fm_pwd" class="pb-2"><?php echo lng('Password'); ?></label>
                                         <div class="input-group">
                                             <input type="password" class="form-control" id="fm_pwd" name="fm_pwd" required>
-                                            <button type="button" class="btn btn-outline-secondary" id="fm_pwd_toggle" aria-label="Show password">Show</button>
+                                            <button type="button" class="btn btn-outline-secondary" id="fm_pwd_toggle" aria-label="<?php echo lng('Show password'); ?>"><?php echo lng('Show'); ?></button>
                                         </div>
                                     </div>
 
@@ -816,8 +816,8 @@ if ($use_auth) {
                                     button.addEventListener('click', function () {
                                         var isHidden = input.getAttribute('type') === 'password';
                                         input.setAttribute('type', isHidden ? 'text' : 'password');
-                                        button.textContent = isHidden ? 'Hide' : 'Show';
-                                        button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                                        button.textContent = isHidden ? '<?php echo addslashes(lng('Hide')); ?>' : '<?php echo addslashes(lng('Show')); ?>';
+                                        button.setAttribute('aria-label', isHidden ? '<?php echo addslashes(lng('Hide password')); ?>' : '<?php echo addslashes(lng('Show password')); ?>');
                                         input.focus();
                                     });
 
@@ -1434,7 +1434,7 @@ if (isset($_GET['admin_users_save'])) {
     $parsed_dirs = fm_admin_parse_directories_input($directories_raw);
     $new_dirs_count = count($parsed_dirs);
     if (count($parsed_dirs) === 0) {
-        unset($directories_users_local[$username]);
+        $admin_users_respond_error(400, lng('At least one directory must be assigned.'));
     } elseif (count($parsed_dirs) === 1) {
         $directories_users_local[$username] = $parsed_dirs[0];
     } else {
