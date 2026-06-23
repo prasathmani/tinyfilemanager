@@ -17,7 +17,7 @@ if (!isset($modal_is_manager_actor)) $modal_is_manager_actor = false;
 
 $readonly = $modal_mode === 'edit' ? 'readonly' : '';
 $now = date('Y-m-d\TH:i');
-$title = $modal_mode === 'edit' ? 'Edit user' : 'New user';
+$title = $modal_mode === 'edit' ? lng('Edit user') : lng('New user');
 $username_value = htmlspecialchars($modal_username, ENT_QUOTES, 'UTF-8');
 $directories_value = htmlspecialchars($modal_directories, ENT_QUOTES, 'UTF-8');
 $note_value = htmlspecialchars($modal_note, ENT_QUOTES, 'UTF-8');
@@ -42,25 +42,25 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
         <div class="modal-body">
           <div id="admin-user-modal-error" class="alert alert-danger d-none" role="alert"></div>
           <div class="mb-3">
-            <label for="admin-username" class="form-label">Username</label>
+            <label for="admin-username" class="form-label"><?php echo lng('Username'); ?></label>
             <input type="text" class="form-control" id="admin-username" name="username" value="<?php echo $username_value; ?>" <?php echo $readonly; ?> required>
           </div>
           <div class="mb-3">
-            <label for="admin-password" class="form-label">Password</label>
+            <label for="admin-password" class="form-label"><?php echo lng('Password'); ?></label>
             <input type="password" class="form-control" id="admin-password" name="password" autocomplete="new-password">
           </div>
           <div class="mb-3">
-            <label for="admin-password2" class="form-label">Confirm password</label>
+            <label for="admin-password2" class="form-label"><?php echo lng('Confirm password'); ?></label>
             <input type="password" class="form-control" id="admin-password2" name="password2" autocomplete="new-password">
           </div>
           <div class="mb-3">
-            <label for="admin-access-type" class="form-label">Access type</label>
+            <label for="admin-access-type" class="form-label"><?php echo lng('Access type'); ?></label>
             <select class="form-select" id="admin-access-type" name="access_type">
-              <option value="standard" <?php echo $modal_access_type === 'standard' ? 'selected' : ''; ?>>Standard</option>
-              <option value="read only" <?php echo $modal_access_type === 'read only' ? 'selected' : ''; ?>>Read only</option>
-              <option value="upload only" <?php echo $modal_access_type === 'upload only' ? 'selected' : ''; ?>>Upload only</option>
+              <option value="standard" <?php echo $modal_access_type === 'standard' ? 'selected' : ''; ?>><?php echo lng('Standard'); ?></option>
+              <option value="read only" <?php echo $modal_access_type === 'read only' ? 'selected' : ''; ?>><?php echo lng('Read only'); ?></option>
+              <option value="upload only" <?php echo $modal_access_type === 'upload only' ? 'selected' : ''; ?>><?php echo lng('Upload only'); ?></option>
               <?php if (!$modal_is_manager_actor): ?>
-                <option value="manager" <?php echo $modal_access_type === 'manager' ? 'selected' : ''; ?>>Manager</option>
+                <option value="manager" <?php echo $modal_access_type === 'manager' ? 'selected' : ''; ?>><?php echo lng('Manager'); ?></option>
               <?php endif; ?>
             </select>
           </div>
@@ -79,7 +79,7 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
             <input type="hidden" name="manager_owner" value="<?php echo htmlspecialchars((string) $modal_manager_owner, ENT_QUOTES, 'UTF-8'); ?>">
           <?php endif; ?>
           <div class="mb-3">
-            <label for="admin-dirs" class="form-label">Assigned directories</label>
+            <label for="admin-dirs" class="form-label"><?php echo lng('Assigned directories'); ?></label>
             <textarea class="form-control" id="admin-dirs" name="directories" rows="3"><?php echo $directories_value; ?></textarea>
           </div>
           <div class="mb-3 form-check">
@@ -104,9 +104,9 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo fm_enc($modal_cancel_label); ?></button>
-          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="submit" class="btn btn-primary"><?php echo lng('Save'); ?></button>
           <?php if ($modal_mode === 'edit'): ?>
-          <button type="button" class="btn btn-danger ms-2" id="admin-user-delete-btn">Zmazať</button>
+          <button type="button" class="btn btn-danger ms-2" id="admin-user-delete-btn"><?php echo lng('Delete'); ?></button>
           <?php endif; ?>
         </div>
       </form>
@@ -147,7 +147,7 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
       var pwd = String(fd.get('password') || '');
       var pwd2 = String(fd.get('password2') || '');
       if (pwd !== pwd2) {
-        showError('Passwords do not match.');
+        showError('<?php echo addslashes(lng('Passwords do not match.')); ?>');
         return;
       }
 
@@ -161,17 +161,17 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
         credentials: 'same-origin'
       })
         .then(function(resp) {
-          return resp.json().catch(function() { return { ok: false, error: 'Unexpected server response' }; });
+          return resp.json().catch(function() { return { ok: false, error: '<?php echo addslashes(lng('Unexpected server response')); ?>' }; });
         })
         .then(function(data) {
           if (!data || !data.ok) {
-            showError((data && data.error) ? data.error : 'Save failed.');
+            showError((data && data.error) ? data.error : '<?php echo addslashes(lng('Save failed.')); ?>');
             return;
           }
           window.location.reload();
         })
         .catch(function() {
-          showError('Save request failed.');
+          showError('<?php echo addslashes(lng('Save request failed.')); ?>');
         });
     };
   }
@@ -186,13 +186,13 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
       confirmBox.innerHTML = '<div class="modal-dialog">'
         + '<div class="modal-content">'
         + '<div class="modal-header">'
-        + '<h5 class="modal-title">Potvrdenie vymazania</h5>'
+        + '<h5 class="modal-title"><?php echo addslashes(lng('Potvrdenie vymazania')); ?></h5>'
         + '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>'
         + '</div>'
-        + '<div class="modal-body">Naozaj chceš vymazať užívateľa <strong>' + String(username).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong>?</div>'
+        + '<div class="modal-body"><?php echo addslashes(lng('Naozaj chceš vymazať užívateľa')); ?> <strong>' + String(username).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong>?</div>'
         + '<div class="modal-footer">'
-        + '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="admin-user-delete-no">No</button>'
-        + '<button type="button" class="btn btn-danger" id="admin-user-delete-yes">Yes</button>'
+        + '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="admin-user-delete-no"><?php echo addslashes(lng('No')); ?></button>'
+        + '<button type="button" class="btn btn-danger" id="admin-user-delete-yes"><?php echo addslashes(lng('Yes')); ?></button>'
         + '</div>'
         + '</div>'
         + '</div>';
@@ -219,18 +219,18 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
           credentials: 'same-origin'
         })
           .then(function(resp) {
-            return resp.json().catch(function() { return { ok: false, error: 'Unexpected server response' }; });
+            return resp.json().catch(function() { return { ok: false, error: '<?php echo addslashes(lng('Unexpected server response')); ?>' }; });
           })
           .then(function(data) {
             if (!data || !data.ok) {
-              showError((data && data.error) ? data.error : 'Delete failed.');
+              showError((data && data.error) ? data.error : '<?php echo addslashes(lng('Delete failed.')); ?>');
               bsModal.hide();
               return;
             }
             window.location.reload();
           })
           .catch(function() {
-            showError('Delete request failed.');
+            showError('<?php echo addslashes(lng('Delete request failed.')); ?>');
             bsModal.hide();
           });
       });

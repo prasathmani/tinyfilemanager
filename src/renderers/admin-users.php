@@ -102,7 +102,7 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
         </div>
     <?php endif; ?>
     <div class="mb-3 d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-success" data-admin-user-action="new">New user</button>
+        <button type="button" class="btn btn-success" data-admin-user-action="new"><?php echo lng('New user'); ?></button>
         <?php if ($is_admin_actor): ?>
             <button type="button" class="btn btn-outline-primary" id="owner-map-preview-btn">Zobraziť mapu zodpovednosti</button>
             <button type="button" class="btn btn-outline-warning" id="owner-map-apply-btn">Uložiť upravenú mapu</button>
@@ -213,15 +213,15 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                 <tr>
                     <td><?php echo fm_enc($u); ?></td>
                     <td><?php echo fm_enc(user_type($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users)); ?></td>
-                    <td><?php echo array_key_exists($u, $auth_users) ? 'áno' : 'nie'; ?></td>
+                    <td><?php echo array_key_exists($u, $auth_users) ? lng('áno') : lng('nie'); ?></td>
                     <td><?php echo user_dirs($u, $directories_users); ?></td>
                     <td><?php echo fm_enc(user_status($u, $auth_users, $readonly_users, $upload_only_users, $manager_users, $directories_users)); ?></td>
                     <td><?php echo fm_enc(user_owner_label($u, $user_manager_owners, $manager_users)); ?></td>
                     <td>
                         <?php if ($can_edit_user): ?>
-                            <button type="button" class="btn btn-sm btn-primary" data-admin-user-action="edit" data-username="<?php echo fm_enc($u); ?>">Edit</button>
+                            <button type="button" class="btn btn-sm btn-primary" data-admin-user-action="edit" data-username="<?php echo fm_enc($u); ?>"><?php echo lng('Edit'); ?></button>
                         <?php else: ?>
-                            <span class="text-muted small">Bez oprávnenia</span>
+                            <span class="text-muted small"><?php echo lng('Bez oprávnenia'); ?></span>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -232,37 +232,37 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
 
     <?php if (!$is_admin_actor): ?>
         <div class="alert alert-info mt-3">
-            Manažér môže vytvárať, upravovať a mazať iba používateľov, ktorí sú priradení pod jeho zodpovednosť.
+            <?php echo lng('Manažér môže vytvárať, upravovať a mazať iba používateľov, ktorí sú priradení pod jeho zodpovednosť.'); ?>
         </div>
     <?php endif; ?>
 
     <?php if ($is_admin_actor): ?>
     <div class="card mt-4">
         <div class="card-header">
-            <strong>Audit</strong> <span class="text-muted">(posledných <?php echo count($audit_events); ?> záznamov)</span>
+            <strong><?php echo lng('Audit'); ?></strong> <span class="text-muted">(<?php echo sprintf('%s %d %s', 'posledných', count($audit_events), lng('záznamov')); ?>)</span>
         </div>
         <div class="card-body p-0">
             <?php if (empty($audit_events)): ?>
-                <div class="p-3 text-muted">Zatiaľ nie sú dostupné žiadne audit záznamy.</div>
+                <div class="p-3 text-muted"><?php echo lng('Zatiaľ nie sú dostupné žiadne audit záznamy.'); ?></div>
             <?php else: ?>
                 <div class="p-3 border-bottom bg-light-subtle">
                     <div class="row g-2 align-items-end">
                         <div class="col-sm-4 col-md-3">
-                            <label for="audit-filter-action" class="form-label mb-1">Akcia</label>
+                            <label for="audit-filter-action" class="form-label mb-1"><?php echo lng('Akcia'); ?></label>
                             <select id="audit-filter-action" class="form-select form-select-sm">
-                                <option value="">Všetky</option>
-                                <option value="user_save">user_save</option>
-                                <option value="user_delete">user_delete</option>
+                                <option value=""><?php echo lng('Všetky'); ?></option>
+                                <option value="user_save"><?php echo lng('user_save'); ?></option>
+                                <option value="user_delete"><?php echo lng('user_delete'); ?></option>
                             </select>
                         </div>
                         <div class="col-sm-8 col-md-5">
-                            <label for="audit-filter-text" class="form-label mb-1">Hľadať</label>
-                            <input id="audit-filter-text" type="text" class="form-control form-control-sm" placeholder="meno, IP, meta...">
+                            <label for="audit-filter-text" class="form-label mb-1"><?php echo lng('Hľadať'); ?></label>
+                            <input id="audit-filter-text" type="text" class="form-control form-control-sm" placeholder="<?php echo lng('meno, IP, meta...'); ?>">
                         </div>
                         <div class="col-md-4 text-md-end">
                             <div class="d-flex gap-2 justify-content-md-end">
-                                <button type="button" id="audit-filter-clear" class="btn btn-sm btn-outline-secondary">Vyčistiť filtre</button>
-                                <button type="button" id="audit-export-csv" class="btn btn-sm btn-outline-primary">Export CSV</button>
+                                <button type="button" id="audit-filter-clear" class="btn btn-sm btn-outline-secondary"><?php echo lng('Vyčistiť filtre'); ?></button>
+                                <button type="button" id="audit-export-csv" class="btn btn-sm btn-outline-primary"><?php echo lng('Export CSV'); ?></button>
                             </div>
                             <small id="audit-filter-count" class="text-muted d-block mt-1"></small>
                         </div>
@@ -272,12 +272,12 @@ function user_owner_label($u, $user_manager_owners, $manager_users) {
                     <table class="table table-sm table-bordered table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Čas</th>
-                                <th>Akcia</th>
-                                <th>Kto</th>
-                                <th>Cieľový používateľ</th>
-                                <th>IP</th>
-                                <th>Meta</th>
+                                <th><?php echo lng('Čas'); ?></th>
+                                <th><?php echo lng('Akcia'); ?></th>
+                                <th><?php echo lng('Kto'); ?></th>
+                                <th><?php echo lng('Cieľový používateľ'); ?></th>
+                                <th><?php echo lng('IP'); ?></th>
+                                <th><?php echo lng('Meta'); ?></th>
                             </tr>
                         </thead>
                         <tbody id="audit-table-body">

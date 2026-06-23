@@ -9,19 +9,19 @@
             <span class="badge text-bg-light fm-toolbar-badge"><?php echo lng('Folder') ?>: <?php echo (int) $num_folders; ?></span>
             <span class="badge text-bg-light fm-toolbar-badge"><?php echo lng('FullSize') ?>: <?php echo fm_get_filesize($all_files_size); ?></span>
         </div>
-        <div class="btn-group btn-group-sm fm-view-switch" role="group" aria-label="View mode">
+        <div class="btn-group btn-group-sm fm-view-switch" role="group" aria-label="<?php echo lng('View mode'); ?>">
             <button type="button" class="btn btn-outline-primary js-view-mode active" data-view-mode="list">
-                <i class="fa fa-list" aria-hidden="true"></i> Zoznam
+                <i class="fa fa-list" aria-hidden="true"></i> <?php echo lng('Zoznam'); ?>
             </button>
             <button type="button" class="btn btn-outline-primary js-view-mode" data-view-mode="grid">
-                <i class="fa fa-th-large" aria-hidden="true"></i> Mriežka
+                <i class="fa fa-th-large" aria-hidden="true"></i> <?php echo lng('Mriežka'); ?>
             </button>
         </div>
         <?php if (!FM_IS_WIN && !$hide_Cols): ?>
             <div class="fm-owner-filter-wrap">
-                <label for="fm-owner-source-filter" class="fm-owner-filter-label">Vlastnik:</label>
-                <select id="fm-owner-source-filter" class="form-select form-select-sm fm-owner-filter" aria-label="Filter owner source">
-                    <option value="all">Vsetko</option>
+                <label for="fm-owner-source-filter" class="fm-owner-filter-label"><?php echo lng('Vlastnik:'); ?></label>
+                <select id="fm-owner-source-filter" class="form-select form-select-sm fm-owner-filter" aria-label="<?php echo lng('Filter owner source'); ?>">
+                    <option value="all"><?php echo lng('Vsetko'); ?></option>
                     <option value="app">App</option>
                     <option value="system">System</option>
                 </select>
@@ -2835,7 +2835,7 @@
 
             function renderMessages(messages) {
                 if (!Array.isArray(messages) || messages.length === 0) {
-                    historyEl.innerHTML = '<div class="text-muted small p-2">No messages yet.</div>';
+                    historyEl.innerHTML = '<div class="text-muted small p-2"><?php echo addslashes(lng('No messages yet.')); ?></div>';
                     return;
                 }
 
