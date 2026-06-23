@@ -651,7 +651,7 @@
                     <strong>Hromadné akcie</strong>
                     <button type="button" class="btn-close btn-close-sm" data-fm-bulk-close aria-label="Close"></button>
                 </div>
-                <small class="text-muted d-none d-md-block" style="display: block !important; margin-bottom: 0.5rem; font-size: 0.75em;">Lišta hromadných akcií</small>
+                <small class="text-muted d-none d-md-block fm-bulk-toolbar-label">Lišta hromadných akcií</small>
                 <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
                     <span id="fm-selection-count" class="btn btn-small btn-outline-secondary btn-2 pe-none" style="display:none;">0</span>
                     <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a>
