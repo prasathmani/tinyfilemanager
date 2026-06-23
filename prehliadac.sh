@@ -93,4 +93,14 @@ else
 fi
 
 cd "$WORKTREE_DIR"
-exec php -S 0.0.0.0:"$PORT" -t .
+
+function cleanup_worktree() {
+	echo ""
+	echo "[cleanup] Odstraňujem .bak súbory z worktree..."
+	find "$WORKTREE_DIR" -maxdepth 1 -name 'config.php.bak.*' -delete
+	git -C "$WORKTREE_DIR" restore config.php 2>/dev/null || true
+	echo "[cleanup] Hotovo."
+}
+trap cleanup_worktree EXIT INT TERM
+
+php -S 0.0.0.0:"$PORT" -t .
