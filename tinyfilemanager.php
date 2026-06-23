@@ -1432,6 +1432,10 @@ if (isset($_GET['admin_users_save'])) {
     $manager_users_local = array_values(array_unique($manager_users_local));
 
     $parsed_dirs = fm_admin_parse_directories_input($directories_raw);
+    $default_assigned_dir = fm_admin_resolve_default_user_directory($directories_users_local, FM_ROOT_PATH);
+    if (count($parsed_dirs) === 0 && $default_assigned_dir !== '') {
+        $parsed_dirs = array($default_assigned_dir);
+    }
     $new_dirs_count = count($parsed_dirs);
     if (count($parsed_dirs) === 0) {
         $admin_users_respond_error(400, lng('At least one directory must be assigned.'));
@@ -1696,6 +1700,7 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_token = isset($_SESSION['token']) ? $_SESSION['token'] : '';
     $modal_access_type = 'standard';
     $modal_directories = '';
+    $modal_default_directory = '';
     $modal_note = '';
     $modal_welcome_message = '';
     $modal_bulk_actions_enabled = true;
@@ -1716,6 +1721,7 @@ if (isset($_GET['admin_users_modal'])) {
     $modal_bulk_actions_disabled_users = $modal_config['ok'] && isset($modal_config['bulk_actions_disabled_users']) && is_array($modal_config['bulk_actions_disabled_users'])
         ? array_values(array_unique(array_map('strval', $modal_config['bulk_actions_disabled_users'])))
         : (isset($bulk_actions_disabled_users) && is_array($bulk_actions_disabled_users) ? array_values(array_unique(array_map('strval', $bulk_actions_disabled_users))) : array());
+    $modal_default_directory = fm_admin_resolve_default_user_directory($modal_directories_users, FM_ROOT_PATH);
     $modal_user_manager_owners = fm_admin_normalize_user_manager_owners($modal_user_manager_owners, $modal_manager_users, isset($auth_users) && is_array($auth_users) ? $auth_users : array());
     $modal_is_manager_actor = FM_MANAGER && !FM_IS_ADMIN;
     $modal_logged_user = isset($_SESSION[FM_SESSION_ID]['logged']) ? (string) $_SESSION[FM_SESSION_ID]['logged'] : '';
@@ -3461,6 +3467,66 @@ function fm_admin_parse_directories_input($input)
         }
     }
     return array_values(array_unique($out));
+}
+
+/**
+ * Resolve a sensible default directory for newly created users.
+ * Priority:
+ *  1) Any configured directory that ends with /Mirko/free
+ *  2) Any configured directory that ends with /free
+ *  3) root_path/Mirko/free
+ *  4) root_path/free
+ *
+ * @param array $directories_users
+ * @param string $root_path
+ * @return string
+ */
+function fm_admin_resolve_default_user_directory($directories_users, $root_path)
+{
+    $root_path = rtrim(str_replace('\\', '/', (string) $root_path), '/');
+    $candidates = array();
+
+    if (is_array($directories_users)) {
+        foreach ($directories_users as $dirs_raw) {
+            $dirs = is_array($dirs_raw) ? $dirs_raw : array($dirs_raw);
+            foreach ($dirs as $dir_entry) {
+                if (!is_string($dir_entry)) {
+                    continue;
+                }
+                $dir = trim(str_replace('\\', '/', $dir_entry));
+                if ($dir === '') {
+                    continue;
+                }
+
+                $is_absolute = preg_match('/^(?:[a-zA-Z]:\/|\/)/', $dir) === 1;
+                $candidate = $is_absolute ? $dir : ($root_path . '/' . ltrim($dir, '/'));
+                $candidate = rtrim(str_replace('\\', '/', $candidate), '/');
+                if ($candidate !== '') {
+                    $candidates[] = $candidate;
+                }
+            }
+        }
+    }
+
+    $candidates = array_values(array_unique($candidates));
+
+    foreach ($candidates as $candidate) {
+        if (preg_match('#/Mirko/free$#i', $candidate) === 1) {
+            return $candidate;
+        }
+    }
+
+    foreach ($candidates as $candidate) {
+        if (preg_match('#/free$#i', $candidate) === 1) {
+            return $candidate;
+        }
+    }
+
+    if ($root_path !== '') {
+        return $root_path . '/Mirko/free';
+    }
+
+    return '/Mirko/free';
 }
 
 /**

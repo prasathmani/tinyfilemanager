@@ -120,7 +120,7 @@ $can_assign_manager_owner = !$modal_is_manager_actor;
   var errorBox = document.getElementById('admin-user-modal-error');
   var dirsField = document.getElementById('admin-dirs');
   var dirsDefaultBtn = document.getElementById('admin-dirs-default');
-  var defaultDir = '<?php echo addslashes(rtrim(__DIR__, '/') . '/uploads/free'); ?>';
+  var defaultDir = <?php echo json_encode(isset($modal_default_directory) ? (string) $modal_default_directory : '', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
 
   if (dirsDefaultBtn && dirsField) {
     dirsDefaultBtn.addEventListener('click', function() {
