@@ -58,9 +58,12 @@ git -C "$ROOT_DIR" fetch origin
 
 if git -C "$WORKTREE_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 	echo "[2/4] Reusing existing git checkout: $WORKTREE_DIR"
+	echo "      Cleaning up stale files and changes..."
+	git -C "$WORKTREE_DIR" reset --hard HEAD >/dev/null 2>&1 || true
+	git -C "$WORKTREE_DIR" clean -fd >/dev/null 2>&1 || true
 	STATUS="$(git -C "$WORKTREE_DIR" status --porcelain)"
 	if [[ -n "$STATUS" ]]; then
-		echo "Worktree has local changes. Please clean it first:" >&2
+		echo "Worktree still has local changes. Please inspect:" >&2
 		echo "$STATUS" >&2
 		exit 1
 	fi
