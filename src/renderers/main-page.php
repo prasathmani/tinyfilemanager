@@ -651,8 +651,9 @@
                     <strong>Hromadné akcie</strong>
                     <button type="button" class="btn-close btn-close-sm" data-fm-bulk-close aria-label="Close"></button>
                 </div>
-                <small class="text-muted d-none d-md-block fm-bulk-toolbar-label">Lišta hromadných akcií</small>
-                <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
+                <div class="fm-bulk-toolbar-wrapper d-none d-md-block">
+                    <small class="text-muted fm-bulk-toolbar-label">Lišta hromadných akcií</small>
+                    <div id="fm-selection-bar" class="btn-group flex-wrap" data-toggle="buttons" role="toolbar">
                     <span id="fm-selection-count" class="btn btn-small btn-outline-secondary btn-2 pe-none" style="display:none;">0</span>
                     <a href="#/select-all" class="btn btn-small btn-outline-primary btn-2" onclick="select_all();return false;"><i class="fa fa-check-square"></i> <?php echo lng('SelectAll') ?> </a>
                     <a href="#/unselect-all" class="btn btn-small btn-outline-primary btn-2" onclick="unselect_all();return false;"><i class="fa fa-window-close"></i> <?php echo lng('UnSelectAll') ?> </a>
@@ -673,6 +674,7 @@
                     <a href="javascript:(function(){var f=document.getElementById('fm-bulk-move-flag');if(f){f.removeAttribute('name');}document.getElementById('a-copy').click();})();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
                     <a href="javascript:(function(){var f=document.getElementById('fm-bulk-move-flag');if(f){f.setAttribute('name','move');}document.getElementById('a-copy').click();})();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-arrows"></i> <?php echo lng('Move') ?> </a>
                     <?php endif; ?>
+                    </div>
                 </div>
             </div>
             <div class="fm-footer-online-col">

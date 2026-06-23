@@ -268,9 +268,6 @@ body.theme-dark .main-nav .fm-brand-logo-dark {
   flex-wrap: wrap;
   gap: 6px;
   padding: 6px;
-  border: 1px solid var(--fmx-border);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(36, 99, 235, 0.06), rgba(36, 99, 235, 0.02));
 }
 
 #fm-selection-bar .btn.btn-2,
@@ -302,7 +299,7 @@ body.theme-dark .main-nav .fm-brand-logo-dark {
 }
 
 html[data-bs-theme="dark"] #fm-selection-bar {
-  background: linear-gradient(180deg, rgba(110, 162, 255, 0.13), rgba(110, 162, 255, 0.05));
+  background: none;
 }
 
 html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2,
@@ -319,17 +316,26 @@ html[data-bs-theme="dark"] #fm-selection-bar .btn.btn-2:focus-visible {
   color: var(--fmx-accent);
 }
 
-.fm-bulk-toolbar-label {
-  display: block !important;
-  margin-bottom: 0.5rem;
-  font-size: 0.75em;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(36, 99, 235, 0.06), rgba(36, 99, 235, 0.02));
+.fm-bulk-toolbar-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 8px;
   border: 1px solid var(--fmx-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(36, 99, 235, 0.06), rgba(36, 99, 235, 0.02));
 }
 
-html[data-bs-theme="dark"] .fm-bulk-toolbar-label {
+.fm-bulk-toolbar-label {
+  font-size: 0.75em;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+html[data-bs-theme="dark"] .fm-bulk-toolbar-wrapper {
   background: linear-gradient(180deg, rgba(110, 162, 255, 0.13), rgba(110, 162, 255, 0.05));
 }
 
@@ -716,9 +722,9 @@ body.fm-density-normal .inline-actions > a > i {
   }
 
   #fm-selection-bar {
-    border-radius: 16px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.96);
+    border-radius: 0;
+    padding: 6px;
+    background: none;
   }
 
   #fm-selection-bar .btn.btn-2,
