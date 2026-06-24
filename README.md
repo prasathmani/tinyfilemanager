@@ -22,6 +22,30 @@ Featuring syntax highlighting for over 150 languages and more than 35 themes, Ti
 
 Tinyfilemanager is highly documented on the [wiki pages](https://github.com/prasathmani/tinyfilemanager/wiki).
 
+## Joyee Bridge
+
+For clients that cannot send custom HTTP headers (for example Joyee), use `joyee-bridge.php` with a dedicated bridge key.
+
+- `joyee-bridge.php?action=ping&bridge_key=...`
+- `joyee-bridge.php?action=list&path=&bridge_key=...`
+- The real API token stays only in `joyee-bridge.config.php`.
+- The bridge key must never be the same value as the API token.
+- Joyee Bridge uses a dedicated workspace root (default `Joyee/`) configured by `$joyee_bridge_root_path`.
+- Use only over HTTPS.
+
+## Joyee Probe
+
+- `joyee-probe.php` is a public diagnostic endpoint without token/auth.
+- It does not grant any permissions and does not expose secrets.
+- It is used only to verify domain reachability for ChatGPT/Joyee runtime.
+
+## OpenAI Assistant
+
+- Use `api.php?action=assistant` with a bearer token that has the `assistant` capability enabled in `api.config.php`.
+- Add your OpenAI key and assistant settings to local `api.config.php`; do not paste the key into the repository.
+- Send JSON like `{"message":"Review these files","files":["src/Router.php","README.md"]}` to have the assistant inspect selected project files.
+- The assistant reads only files inside the configured API root and only supports text-oriented file types by default.
+
 [![Tiny File Manager](screenshot.gif)](screenshot.gif)
 
 ## Requirements
@@ -65,6 +89,84 @@ To enable/disable authentication set `$use_auth` to true or false.
 - :bangbang: **And Much More!**
 
 ### [Deploy by Docker](https://github.com/prasathmani/tinyfilemanager/wiki/Deploy-by-Docker)
+
+---
+
+## Rozšírenie oprávnení a rolí (vlastné úpravy)
+
+Tento fork pridáva systém rolí pre zdieľanie súborov medzi klientmi a dodávateľmi projektu.
+
+### Roly a oprávnenia
+
+| Rola | Upload | Download | Rename / Zip / Copy | Mazať | Vidí |
+|---|:---:|:---:|:---:|:---:|---|
+| `admin` | ✅ | ✅ | ✅ | ✅ | celý root priečinok |
+| `manager` | ✅ | ✅ | ✅ | ❌ | celý root priečinok |
+| `client` | ✅ | ✅ | ❌ | ❌ | len svoj priečinok |
+| `supplier` | ✅ | ✅ | ❌ | ❌ | len svoj priečinok |
+
+### Konfigurácia
+
+Všetky nastavenia sa nachádzajú v súbore **`config.php`** v rovnakom priečinku ako `tinyfilemanager.php`. Hlavný súbor `tinyfilemanager.php` **neupravujte** – `config.php` jeho hodnoty automaticky prepíše.
+
+```php
+// Používatelia a heslá (bcrypt hash)
+$auth_users = array(
+    'admin'    => '$2y$10$...', // admin@123
+    'manager1' => '$2y$10$...', // 12345
+    'client1'  => '$2y$10$...', // 12345
+    'supplier1'=> '$2y$10$...', // 12345
+);
+
+// Roly
+$readonly_users     = array();                           // len sťahovanie
+$upload_only_users  = array('client1', 'supplier1');     // upload + download
+$manager_users      = array('manager1');                 // všetko okrem mazania
+
+// Izolované priečinky (klienti/dodávatelia vidia len svoj)
+$directories_users = array(
+    'client1'   => '/var/www/html/uploads/client1',
+    'supplier1' => '/var/www/html/uploads/supplier1',
+);
+```
+
+### Pridanie nového používateľa
+
+1. **Vygenerovať hash hesla** (v termináli na serveri):
+   ```bash
+   php -r "echo password_hash('vase_heslo', PASSWORD_BCRYPT) . PHP_EOL;"
+   ```
+   Prípadne online: https://tinyfilemanager.github.io/docs/pwd.html
+
+2. **Doplniť do `config.php`:**
+   ```php
+   // 1. pridať používateľa
+   $auth_users['client3'] = '$2y$10$...hash...';
+
+   // 2. priradiť rolu
+   $upload_only_users[] = 'client3';
+
+   // 3. nastaviť izolovaný priečinok
+   $directories_users['client3'] = '/var/www/html/uploads/client3';
+   ```
+
+3. **Vytvoriť priečinok na disku:**
+   ```bash
+   mkdir /var/www/html/uploads/client3
+   ```
+
+## Release 1.6
+
+### Novinky
+
+- Stabilnejšie uloženie nastavení s JSON odpoveďou a lepšou detekciou chýb pri zápise konfigurácie.
+- Po uložení nastavení sa zobrazí potvrdenie a používateľ sa automaticky presmeruje späť na zoznam súborov.
+- Vylepšené prepínanie témy (light/dark) vrátane konzistentného zebra štýlu tabuľky.
+- Mobilné UX zlepšenia: rýchle akcie v navigácii, väčšie dotykové ciele, sticky panel pre multi-výber.
+- Automatický grid režim na mobile, ak nie je uložená preferencia používateľa.
+- Kompaktný režim tabuľky pod 480 px (skrytie menej dôležitých stĺpcov).
+- Lokalizácia textu „Selected“ pre nové mobilné počítadlo výberu (vrátane `translation.json`).
+- Pripravený release balík `tinyfilemanager-1.6.zip`.
 
 ### <a name=license></a>License, Credit
 

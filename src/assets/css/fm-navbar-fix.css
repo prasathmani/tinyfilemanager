@@ -1,0 +1,21 @@
+/* Custom fix: always keep navbar on top and clickable */
+.main-nav.navbar {
+  z-index: 1050 !important;
+  position: relative;
+}
+
+/* Remove pointer-events:none from any overlay above navbar */
+body .main-nav, body .navbar {
+  pointer-events: auto !important;
+}
+
+/* Fix for any .container or .card overlapping the navbar */
+.container, .card, .path, .table-responsive {
+  z-index: 1;
+  position: relative;
+}
+
+/* If any overlay exists, push it below navbar */
+.overlay, .modal-backdrop {
+  z-index: 1040 !important;
+}

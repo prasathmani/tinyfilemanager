@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Diagnóza vyhľadávania - TinyFileManager</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; max-width: 900px; }
+        .test-section { border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 6px; }
+        .test-section.pass { border-color: #28a745; background: #f0fdf4; }
+        .test-section.fail { border-color: #dc3545; background: #fdf8f8; }
+        h2 { margin-top: 0; }
+        .status { font-weight: bold; }
+        .pass .status { color: #28a745; }
+        .fail .status { color: #dc3545; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: "Courier New", monospace; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .instructions { background: #e7f3ff; border-left: 4px solid #0066cc; padding: 12px; margin: 15px 0; border-radius: 3px; }
+        button { background: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0052a3; }
+    </style>
+</head>
+<body>
+
+<h1>Diagnóza vyhľadávacího systému</h1>
+
+<div class="instructions">
+    <strong>Instrukcie:</strong>
+    <ol>
+        <li>Otvorte si vývojárske nástroje (F12) a prejdite na kartu <strong>Console</strong></li>
+        <li>Kliknite na tlačidlo "Spustiť diagnózu"</li>
+        <li>Podľa výstupov v konzole diagnostikujte problém</li>
+        <li>Skúste vyhľadávať v súborovom manažéri</li>
+    </ol>
+</div>
+
+<button onclick="runDiagnostics()">Spustiť diagnózu vyhľadávania</button>
+
+<div id="results"></div>
+
+<script>
+function runDiagnostics() {
+    console.clear();
+    console.log('%c=== DIAGNÓZA VYHĽADÁVANIA ===', 'font-size: 14px; font-weight: bold; color: #0066cc;');
+    
+    var results = {};
+    var resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+
+    // Test 1: Search input element
+    console.log('%c1. Testovanie HTML elementov', 'font-weight: bold;');
+    var searchInput = document.getElementById('search-addon');
+    var pass1 = !!searchInput;
+    console.log('   Vstup #search-addon: ' + (pass1 ? '✓ Nájdený' : '✗ NENÁJDENÝ'));
+    addResult('Search Input Element', pass1, 'Vstup #search-addon je dostupný na stránke', !pass1 ? 'Vstup neexistuje. Kontrola: Navbar musí byť viditeľný' : '');
+
+    // Test 2: Search button
+    var searchBtn = document.getElementById('search-addon2');
+    var pass2 = !!searchBtn;
+    console.log('   Tlačidlo #search-addon2: ' + (pass2 ? '✓ Nájdené' : '✗ NENÁJDENÉ'));
+    addResult('Search Button', pass2, 'Tlačidlo vyhľadávania je dostupné', !pass2 ? 'Tlačidlo neexistuje' : '');
+
+    // Test 3: Main table
+    var mainTable = document.getElementById('main-table');
+    var pass3 = !!mainTable;
+    var rowCount = pass3 ? mainTable.querySelectorAll('tbody tr').length : 0;
+    console.log('   Tabuľka #main-table: ' + (pass3 ? '✓ Nájdená' : '✗ NENÁJDENÁ'));
+    if (pass3) console.log('   Riadky v tabuľke: ' + rowCount);
+    addResult('Main Table', pass3, 'Tabuľka je dostupná s ' + rowCount + ' riadkami', !pass3 ? 'Tabuľka neexistuje' : '');
+
+    // Test 4: JavaScript functions
+    console.log('%c2. Testovanie JavaScript funkcií', 'font-weight: bold;');
+    var hasApplySearch = typeof window.applyMainTableSearch !== 'undefined' || (window.jQuery && typeof window.jQuery.fn.dataTable !== 'undefined');
+    console.log('   Funkcia applyMainTableSearch: ' + (hasApplySearch ? '✓ Dostupná' : '✗ NEDOSTUPNÁ'));
+    addResult('Search Functions', hasApplySearch, 'Vyhľadávacie funkcie sú načítané', !hasApplySearch ? 'Funkcie nemusia byť úplne načítané' : '');
+
+    // Test 5: DataTable
+    var hasDataTable = window.mainTable ? '✓ Inicializovaná' : '✗ Neinicializovaná';
+    console.log('   DataTable: ' + hasDataTable);
+    addResult('DataTable Plugin', window.mainTable ? true : false, 'DataTable je inicializovaná', !window.mainTable ? 'DataTable sa neinicializovala, tabuľka bude filtrovaná ručne' : '');
+
+    // Test 6: Try search
+    console.log('%c3. Testovanie vyhľadávania', 'font-weight: bold;');
+    if (searchInput && mainTable && rowCount > 0) {
+        // Test search
+        searchInput.value = 'test';
+        var event = new Event('input', { bubbles: true });
+        searchInput.dispatchEvent(event);
+        
+        var visibleRows = mainTable.querySelectorAll('tbody tr:not([style*="display: none"])').length;
+        console.log('   Vyhľadávanie "test": ' + visibleRows + ' zobrazených riadkov z ' + rowCount);
+        
+        // Reset
+        searchInput.value = '';
+        var resetEvent = new Event('input', { bubbles: true });
+        searchInput.dispatchEvent(resetEvent);
+        
+        var resetRows = mainTable.querySelectorAll('tbody tr:not([style*="display: none"])').length;
+        console.log('   Reset vyhľadávania: ' + resetRows + ' zobrazených riadkov (mala by byť ' + rowCount + ')');
+        
+        addResult('Search Functionality', resetRows === rowCount, 'Vyhľadávanie funguje správne', 'Filtrovanie sa nevrátilo do pôvodného stavu');
+    }
+
+    // Test 7: Search enhancements
+    console.log('%c4. Testovanie vylepšení', 'font-weight: bold;');
+    var hasDebug = typeof window.fm_search_debug !== 'undefined';
+    console.log('   fm_search_debug: ' + (hasDebug ? '✓ Dostupná' : '✗ NEDOSTUPNÁ'));
+    addResult('Search Enhancements', hasDebug, 'Vylepšeny vyhľadávací modul je načítaný', !hasDebug ? 'Vylepšeny modul sa nenačítal' : '');
+
+    // Final summary
+    console.log('%c=== ZÁVER ===', 'font-size: 14px; font-weight: bold; color: #0066cc;');
+    var allPass = pass1 && pass2 && pass3;
+    if (allPass) {
+        console.log('✓ Všetky komponenty vyhľadávania sú prítomné a funkčné!');
+        console.log('Ak vyhľadávanie stále nefunguje:');
+        console.log('  1. Skúste obnoviť stránku (Ctrl+Shift+R)');
+        console.log('  2. Skúste vyčistiť cache prehliadača');
+        console.log('  3. Skúste iný prehliadač');
+    } else {
+        console.log('✗ Niektoré komponenty chýbajú. Skontrolujte výstup vyššie.');
+    }
+    console.log('');
+    console.log('Ďalšia diagnostika: window.fm_search_debug.test()');
+}
+
+function addResult(name, pass, message, failMessage) {
+    var div = document.createElement('div');
+    div.className = 'test-section ' + (pass ? 'pass' : 'fail');
+    div.innerHTML = '<h3>' + name + '</h3>' +
+                    '<p class="status">' + (pass ? '✓ OK' : '✗ CHYBA') + '</p>' +
+                    '<p>' + message + '</p>' +
+                    (failMessage ? '<p><strong>Odporúčanie:</strong> ' + failMessage + '</p>' : '');
+    document.getElementById('results').appendChild(div);
+}
+
+// Auto-run diagnostics when page loads
+window.addEventListener('load', function() {
+    console.log('Diagnostická stránka načítaná. Kliknite na tlačidlo alebo zadajte do konzoly: runDiagnostics()');
+});
+</script>
+
+</body>
+</html>

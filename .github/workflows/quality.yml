@@ -1,0 +1,62 @@
+name: Quality
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run dependency audit
+        run: composer audit
+
+      - name: PHP syntax check
+        run: find src tests -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Run unit tests
+        run: composer test:unit
+
+      - name: Run integration tests
+        run: composer test:integration
+
+      - name: Run static analysis
+        run: composer analyze
+
+      - name: Run coding standards
+        run: composer lint
+
+      - name: Run performance benchmark
+        run: php tests/performance/benchmark.php --format=github
+
+      - name: Build Docker image
+        run: docker build -t tinyfilemanager:test .
+
+      - name: Run smoke checks in container
+        run: |
+          docker run -d --rm --name tinyfilemanager-ci -p 8080:8080 tinyfilemanager:test
+          ./tests/smoke-tests.sh http://127.0.0.1:8080
+
+      - name: Stop test container
+        if: always()
+        run: docker stop tinyfilemanager-ci || true

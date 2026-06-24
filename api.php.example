@@ -1,0 +1,97 @@
+<?php
+/**
+ * TinyFileManager - API Entry Point (Phase 3)
+ * 
+ * This is an example of how to use the new modular architecture:
+ * Router + Middleware + Services + Handlers
+ * 
+ * Usage: Integrate with tinyfilemanager.php or use standalone
+ * 
+ * API Endpoints:
+ *  GET /api.php?action=list&p=path              - List directory
+ *  POST /api.php?action=delete                  - Delete file
+ *  POST /api.php?action=rename                  - Rename file
+ *  POST /api.php?action=upload&p=path           - Upload file
+ *  GET /api.php?action=info&file=name           - Get file info
+ *  GET /api.php?action=read&file=name           - Read file
+ *  POST /api.php?action=write                   - Write file
+ *  POST /api.php?action=mkdir                   - Create directory
+ *  GET /api.php?action=download&file=name       - Download file
+ */
+
+// Load bootstrap and initialize
+require_once __DIR__ . '/bootstrap.php';
+
+// Configuration
+$config = [
+    'root_path' => __DIR__ . '/../uploads',  // Change to your root
+    
+    // Auth config
+    'auth' => [
+        'enabled' => true,
+        'users' => [
+            // 'user' => password_hash('password', PASSWORD_BCRYPT)
+        ],
+        'readonly' => [],
+        'upload_only' => [],
+        'managers' => [],
+    ],
+    
+    // File operations config
+    'files' => [
+        'max_upload_size' => 5000000000,  // 5GB
+        'chunk_size' => 5242880,           // 5MB
+        'allowed_extensions' => '',         // Empty = all allowed
+    ],
+];
+
+try {
+    // Initialize middleware
+    $csrf = new TFM_CSRFMiddleware(Bootstrap::getLogger());
+    $auth = new TFM_AuthMiddleware($config['auth'], Bootstrap::getLogger());
+    
+    // Protect state-changing operations
+    if (TFM_CSRFMiddleware::needsProtection()) {
+        $csrf->protect();
+    }
+    
+    // Check authentication if enabled
+    if ($config['auth']['enabled']) {
+        // If not logged in, deny access
+        if (!$auth->isLoggedIn() && !in_array($_GET['action'] ?? '', ['login'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Authentication required', 'redirect' => 'index.php']);
+            exit;
+        }
+    }
+    
+    // Check permission for action
+    $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
+    if ($auth->isLoggedIn() && !$auth->checkPermission($action)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Permission denied for action: ' . $action]);
+        exit;
+    }
+    
+    // Initialize and dispatch router
+    $root_path = $config['root_path'];
+    if (!is_dir($root_path)) {
+        throw new Exception("Root path does not exist: $root_path");
+    }
+    
+    // Get logger
+    $logger = Bootstrap::getLogger();
+    
+    // Create and dispatch router
+    $router = new TFM_Router($root_path, $logger);
+    $router->dispatch();
+    
+} catch (Exception $e) {
+    // Error response
+    http_response_code(500);
+    echo json_encode([
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+    ]);
+}

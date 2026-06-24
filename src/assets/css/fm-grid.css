@@ -1,0 +1,36 @@
+.fm-grid-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  margin-bottom: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.fw-bold.fm-grid-thumb img,
+.fw-bold.fm-grid-thumb video,
+.fm-grid-thumb img,
+.fm-grid-thumb video {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  transition: box-shadow 0.2s;
+}
+.fm-grid-thumb:hover,
+.fm-grid-thumb:focus {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+.fm-grid-thumb:hover img,
+.fm-grid-thumb:focus img,
+.fm-grid-thumb:hover video,
+.fm-grid-thumb:focus video {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
+.fm-grid-thumb img,
+.fm-grid-thumb video {
+  cursor: pointer;
+}

@@ -1,0 +1,20 @@
+# Generated release archives
+releases/tinyfilemanager-*.zip
+
+# Runtime uploads and ad-hoc local test files
+uploads/
+.fm_usercfg/*
+!.fm_usercfg/.htaccess
+
+# Runtime-created top-level user roots (local only)
+/Mirko/
+
+# Local Joyee bridge secrets (server-only)
+api.config.php
+joyee-bridge.config.php
+
+# Generated ChatGPT source manifest with live machine token
+chatgpt-source-joyee.md
+
+# Local VS Code user settings (machine-specific)
+.vscode/settings.json
