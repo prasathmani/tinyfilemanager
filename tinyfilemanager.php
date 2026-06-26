@@ -2727,7 +2727,7 @@ function fm_is_exclude_items($name, $path)
 function fm_get_translations($tr)
 {
     try {
-        $content = @file_get_contents('translation.json');
+        static $content = @file_get_contents('translation.json');
         if ($content !== FALSE) {
             $lng = json_decode($content, TRUE);
             global $lang_list;
