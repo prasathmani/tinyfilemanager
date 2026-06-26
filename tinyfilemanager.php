@@ -330,7 +330,7 @@ if ($use_auth) {
         string $password,
         #[\SensitiveParameter]
         string $hash
-    ): bool {
+    )/*: bool*/ {
         // CRYPT_MD5: $1$
         // CRYPT_BLOWFISH: $2a$, $2x$, $2y$
         // CRYPT_SHA256: $5$
