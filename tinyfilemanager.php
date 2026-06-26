@@ -327,9 +327,9 @@ if ($ip_ruleset != 'OFF') {
 if ($use_auth) {
     function tfm_password_verify(
         #[\SensitiveParameter]
-        string $password,
+        /*string*/ $password,
         #[\SensitiveParameter]
-        string $hash
+        /*string*/ $hash
     )/*: bool*/ {
         // CRYPT_MD5: $1$
         // CRYPT_BLOWFISH: $2a$, $2x$, $2y$
