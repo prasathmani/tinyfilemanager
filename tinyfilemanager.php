@@ -1702,8 +1702,8 @@ if (isset($_GET['help'])) {
                         <p>
                         <h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> <?php echo lng("AppName")." ".VERSION; ?></a></h3>
                         </p>
-                        <p>Author: PRAŚATH MANİ</p>
-                        <p>Mail Us: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers [at] gmail [dot] com</a> </p>
+                        <p><strong><?php echo lng('Author') ?></strong>: PRAŚATH MANİ</p>
+                        <p><strong><?php echo lng('Mail Us') ?></strong>: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers [at] gmail [dot] com</a></p>
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
@@ -5571,7 +5571,6 @@ function fm_show_header_login()
         $tr['en']['BackUp']         = 'Back Up';
         $tr['en']['SourceFolder']   = 'Source Folder';
         $tr['en']['Files']          = 'Files';
-        $tr['en']['Move']           = 'Move';
         $tr['en']['Change']         = 'Change';
         $tr['en']['Settings']       = 'Settings';
         $tr['en']['Language']       = 'Language';
@@ -5633,6 +5632,55 @@ function fm_show_header_login()
         $tr['en']['File size']                                      = 'File size';
         $tr['en']['MIME-type']                                      = 'MIME-type';
         $tr['en']['a files']                                        = 'files';
+// Pre-existing inputs that were never inserted into the lng() function
+        $tr['en']['Cannot open file! Aborting download'] = 'Cannot open file! Aborting download';
+        $tr['en']['Charset']            = 'Charset';
+        $tr['en']['Compression']        = 'Compression';
+        $tr['en']['dark']               = 'dark';
+        $tr['en']['light']              = 'light';
+        $tr['en']['ERROR: Try again later!'] = 'ERROR: Try again later!';
+        $tr['en']['Enter here...']      = 'Enter here...';
+        $tr['en']['Enter new file name'] = 'Enter new file name';
+        $tr['en']['Error']              = 'Error';
+        $tr['en']['Error while copying items'] = 'Error while copying items';
+        $tr['en']['Error while moving items']  = 'Error while moving items';
+        $tr['en']['Error: try again']   = 'Error: try again';
+        $tr['en']['Execute']            = 'Execute';
+        $tr['en']['Files in archive']   = 'Files in archive';
+        $tr['en']['Fullscreen']         = 'Fullscreen';
+        $tr['en']['Group']              = 'Group';
+        $tr['en']['Image size']         = 'Image size';
+        $tr['en']['Invalid Token.']     = 'Invalid Token.';
+        $tr['en']['No result found!']   = 'No result found!';
+        $tr['en']['not created']        = 'not created';
+        $tr['en']['not deleted']        = 'not deleted';
+        $tr['en']['OOPS: minimum 3 characters required!'] = 'OOPS: minimum 3 characters required!';
+        $tr['en']['Okay']               = 'Okay';
+        $tr['en']['Other']              = 'Other';
+        $tr['en']['Read']               = 'Read';
+        $tr['en']['Redo']               = 'Redo';
+        $tr['en']['Select Document Type'] = 'Select Document Type';
+        $tr['en']['Select Font Size']   = 'Select Font Size';
+        $tr['en']['Select Mode']        = 'Select Mode';
+        $tr['en']['Select Theme']       = 'Select Theme';
+        $tr['en']['Selected files and folders copied'] = 'Selected files and folders copied';
+        $tr['en']['Selected files and folders moved']  = 'Selected files and folders moved';
+        $tr['en']['Size in archive']    = 'Size in archive';
+        $tr['en']['Sometimes the save action may not work on the first try, so please attempt it again'] = 'Sometimes the save action may not work on the first try, so please attempt it again';
+        $tr['en']['Tar']                = 'Tar';
+        $tr['en']['Theme']              = 'Theme';
+        $tr['en']['Total size']         = 'Total size';
+        $tr['en']['Unable to create destination folder'] = 'Unable to create destination folder';
+        $tr['en']['Undo']               = 'Undo';
+        $tr['en']['Upload from URL']    = 'Upload from URL';
+        $tr['en']['Uploaded Successful'] = 'Uploaded Successful';
+        $tr['en']['Word Wrap']          = 'Word Wrap';
+        $tr['en']['Write']              = 'Write';
+        $tr['en']['Zero byte file! Aborting download'] = 'Zero byte file! Aborting download';
+        $tr['en']['Zip']                = 'Zip';
+// New entries, which deserve to be translated
+        $tr['en']['Author']             = 'Author';
+        $tr['en']['Mail Us']            = 'Mail Us';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
