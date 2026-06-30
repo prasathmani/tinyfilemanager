@@ -3726,17 +3726,36 @@ class FM_Config
         $fm_file = is_readable($config_file) ? $config_file : __FILE__;
         $var_name = '$CONFIG';
         $var_value = var_export(json_encode($this->data), true);
-        $config_string = "<?php" . chr(13) . chr(10) . "//Default Configuration" . chr(13) . chr(10) . "$var_name = $var_value;" . chr(13) . chr(10);
+        $new_line = "$var_name = $var_value;";
+
         if (is_writable($fm_file)) {
-            $lines = file($fm_file);
-            if ($fh = @fopen($fm_file, "w")) {
-                @fputs($fh, $config_string, strlen($config_string));
-                for ($x = 3; $x < count($lines); $x++) {
-                    @fputs($fh, $lines[$x], strlen($lines[$x]));
+            $content = file_get_contents($fm_file);
+            $pattern = '/^[ \t]*\$CONFIG[ \t]*=[ \t]*.+?;[ \t]*$/m';
+
+            if (preg_match($pattern, $content)) {
+                // Replaces only the existing line, preserving the rest of the file.
+                $new_content = preg_replace($pattern, $new_line, $content, 1);
+            } else {
+                // $CONFIG not found: insert immediately after the tag <?php,
+                // without removing any of the original content
+                $new_content = preg_replace(
+                    '/^<\?php\s*?(\r\n|\n|\r)/',
+                    "<?php" . PHP_EOL . $new_line . PHP_EOL,
+                    $content,
+                    1
+                );
+
+                // If the file doesn't even have "<?php" at the beginning (extreme scenario),
+                // insert the tag + the line at the top, leaving the rest intact.
+                if ($new_content === null || $new_content === $content) {
+                    $new_content = "<?php" . PHP_EOL . $new_line . PHP_EOL . $content;
                 }
-                @fclose($fh);
             }
+
+            @file_put_contents($fm_file, $new_content);
         }
+
+        return true;
     }
 }
 
