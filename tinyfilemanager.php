@@ -3753,32 +3753,30 @@ function fm_show_nav_path($path)
 ?>
     <nav class="navbar navbar-expand-lg mb-4 main-nav <?php echo $isStickyNavBar ?> bg-body-tertiary" data-bs-theme="<?php echo FM_THEME; ?>">
         <a class="navbar-brand"> <?php echo lng('AppTitle') ?> </a>
+        <?php
+        $path = fm_clean_path($path);
+        $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
+        $sep = '<i class="bread-crumb"> / </i>';
+        if ($path != '') {
+            $exploded = explode('/', $path);
+            $count = count($exploded);
+            $array = array();
+            $parent = '';
+            for ($i = 0; $i < $count; $i++) {
+                $parent = trim($parent . '/' . $exploded[$i], '/');
+                $parent_enc = urlencode($parent);
+                $array[] = "<a href='?p={$parent_enc}'>" . fm_enc(fm_convert_win($exploded[$i])) . "</a>";
+            }
+            $root_url .= $sep . implode($sep, $array);
+        }
+        echo '<div class="navbar-path">' . $root_url . $editFile . '</div>';
+        ?>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
-            <?php
-            $path = fm_clean_path($path);
-            $root_url = "<a href='?p='><i class='fa fa-home' aria-hidden='true' title='" . FM_ROOT_PATH . "'></i></a>";
-            $sep = '<i class="bread-crumb"> / </i>';
-            if ($path != '') {
-                $exploded = explode('/', $path);
-                $count = count($exploded);
-                $array = array();
-                $parent = '';
-                for ($i = 0; $i < $count; $i++) {
-                    $parent = trim($parent . '/' . $exploded[$i], '/');
-                    $parent_enc = urlencode($parent);
-                    $array[] = "<a href='?p={$parent_enc}'>" . fm_enc(fm_convert_win($exploded[$i])) . "</a>";
-                }
-                $root_url .= $sep . implode($sep, $array);
-            }
-            echo '<div class="col-xs-6 col-sm-5">' . $root_url . $editFile . '</div>';
-            ?>
-
-            <div class="col-xs-6 col-sm-7">
-                <ul class="navbar-nav justify-content-end" data-bs-theme="<?php echo FM_THEME; ?>">
+            <div class="navbar-path-mobile d-lg-none"><?php echo $root_url . $editFile; ?></div>
+            <ul class="navbar-nav justify-content-end" data-bs-theme="<?php echo FM_THEME; ?>">
                     <li class="nav-item mr-2">
                         <div class="input-group input-group-sm mr-1" style="margin-top:4px;">
                             <input type="text" class="form-control" placeholder="<?php echo lng('Search') ?>" aria-label="<?php echo lng('Search') ?>" aria-describedby="search-addon2" id="search-addon">
@@ -3822,8 +3820,7 @@ function fm_show_nav_path($path)
                             </li>
                         <?php endif; ?>
                     <?php endif; ?>
-                </ul>
-            </div>
+            </ul>
         </div>
     </nav>
 <?php
@@ -4081,6 +4078,29 @@ function fm_show_header_login()
 
             .navbar-brand {
                 font-weight: bold;
+            }
+
+            .navbar-path {
+                flex: 1 1 0;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .navbar-path-mobile {
+                width: 100%;
+                overflow-wrap: anywhere;
+            }
+
+            .main-nav .navbar-nav>.nav-item>.nav-link {
+                white-space: nowrap;
+            }
+
+            @media (min-width:992px) {
+                .main-nav .navbar-collapse {
+                    flex: 0 0 auto;
+                }
             }
 
             .nav-item.avatar a {
