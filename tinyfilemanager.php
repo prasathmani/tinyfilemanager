@@ -277,6 +277,15 @@ if (empty($_SESSION['token'])) {
     }
 }
 
+// Parse JSON AJAX save requests before checking authentication
+$contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+if (stripos($contentType, 'application/json') !== false) {
+    $jsonPost = json_decode(file_get_contents('php://input'), true);
+    if (is_array($jsonPost) && !empty($jsonPost['ajax']) && isset($jsonPost['type']) && $jsonPost['type'] === 'save') {
+        $_POST = $jsonPost;
+    }
+}
+
 if (empty($auth_users)) {
     $use_auth = false;
 }
@@ -370,6 +379,12 @@ if ($use_auth) {
     } else {
         // Form
         unset($_SESSION[FM_SESSION_ID]['logged']);
+        if (!empty($_POST['ajax']) && isset($_POST['type']) && $_POST['type'] === 'save') {
+            header('HTTP/1.1 401 Unauthorized');
+            header('Content-Type: text/plain; charset=UTF-8');
+            header('Cache-Control: no-store');
+            die("Session expired. The file was not saved. Log in again in another tab, then click Save again.");
+        }
         fm_show_header_login();
 ?>
         <section class="h-100">
@@ -465,10 +480,6 @@ $p = isset($_GET['p']) ? $_GET['p'] : (isset($_POST['p']) ? $_POST['p'] : '');
 // clean path
 $p = fm_clean_path($p);
 
-// for ajax request - save
-$input = file_get_contents('php://input');
-$_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? json_decode($input, true) : $_POST;
-
 // instead globals vars
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
@@ -485,6 +496,13 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 // Handle all AJAX Request
 if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']]) || !FM_USE_AUTH) && isset($_POST['ajax'], $_POST['token'])) {
     if (!verifyToken($_POST['token'])) {
+        if (isset($_POST['type']) && $_POST['type'] === 'save') {
+            header('HTTP/1.1 409 Conflict');
+            header('Content-Type: text/plain; charset=UTF-8');
+            header('Cache-Control: no-store');
+            header('X-CSRF-Token: ' . $_SESSION['token']);
+            die("Invalid Token.");
+        }
         header('HTTP/1.0 401 Unauthorized');
         die("Invalid Token.");
     }
@@ -531,7 +549,10 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             header("HTTP/1.1 500 Internal Server Error");
             die("Could Not Write File! - Check Permissions / Ownership");
         }
-        die(true);
+        header('X-TFM-Save-Success: 1');
+        header('Content-Type: text/plain; charset=UTF-8');
+        header('Cache-Control: no-store');
+        die('1');
     }
 
     // backup files
@@ -4950,16 +4971,31 @@ function fm_show_header_login()
                             url: window.location,
                             data: JSON.stringify(data),
                             contentType: "application/json; charset=utf-8",
-                            success: function(mes) {
-                                toast("<?php echo lng("Saved Successfully"); ?>");
-                                window.onbeforeunload = function() {
-                                    return
+                            success: function(mes, textStatus, xhr) {
+                                var saveConfirmed = xhr.getResponseHeader("X-TFM-Save-Success") === "1" || String(mes).trim() === "1";
+                                if (saveConfirmed) {
+                                    toast("<?php echo lng("Saved Successfully"); ?>");
+                                    window.onbeforeunload = function() {
+                                        return
+                                    }
+                                } else {
+                                    alert("The file was not saved. The server returned an unexpected response:\n\n" + String(mes).trim().substring(0, 500));
                                 }
                             },
                             failure: function(mes) {
                                 toast("<?php echo lng("Error: try again"); ?>");
                             },
                             error: function(mes) {
+                                var refreshedToken = mes.getResponseHeader("X-CSRF-Token");
+                                if (mes.status === 409 && refreshedToken) {
+                                    window.csrf = refreshedToken;
+                                    alert("Your session was renewed. The file was not saved. The security token has been refreshed. Click Save again to confirm.");
+                                    return;
+                                }
+                                if (mes.status === 401) {
+                                    alert("Session expired. The file was not saved. Log in again in another tab, then click Save again.");
+                                    return;
+                                }
                                 toast(`<p style="background-color:red">${mes.responseText}</p>`);
                             }
                         });
