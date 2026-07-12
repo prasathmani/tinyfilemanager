@@ -1,0 +1,20 @@
+services:
+  tinyfilemanager:
+    build: .                                            # Uncomment if you want to build locally instead of pulling
+#    image: tinyfilemanager/tinyfilemanager:latest      ###  If you want to run a Docker container on an image from Docker Hub, comment on the upper line 'build: .'
+    container_name: tinyfilemanager
+    restart: unless-stopped
+    ports:
+      - "8080:80"                               
+    volumes:
+      - ./data:/var/www/html/data                       ### You can change "./data:" to your path if you want to keep your data in a dedicated directory.  
+      - ./config.php:/var/www/html/config.php           ### Uncomment if you are using config.php
+   
+    environment:
+      TZ: UTC
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
