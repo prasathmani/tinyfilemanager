@@ -986,7 +986,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $chunkIndex = $_POST['dzchunkindex'];
     $chunkTotal = $_POST['dztotalchunkcount'];
-    $fullPathInput = fm_clean_path($_REQUEST['fullpath']);
+    $fullPathInput = isset($_REQUEST['fullpath']) ? fm_clean_path($_REQUEST['fullpath']) : '';
 
     $f = $_FILES;
     $path = FM_ROOT_PATH;
@@ -1003,12 +1003,18 @@ if (!empty($_FILES) && !FM_READONLY) {
         'info'   => 'Oops! Try again'
     );
 
-    $filename = $f['file']['name'];
+    $filename = basename($f['file']['name']);
     $tmp_name = $f['file']['tmp_name'];
-    $ext = pathinfo($filename, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($filename, PATHINFO_EXTENSION)) : '';
+    $filename_base = pathinfo($filename, PATHINFO_FILENAME);
+    $ext = '';
+    if ($filename_base != '') {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    }
+    $ext_1 = $ext ? '.' . $ext : '';
+    $validated_filename = $filename_base . $ext_1;
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
-    if (!fm_isvalid_filename($filename) && !fm_isvalid_filename($fullPathInput)) {
+    if (!fm_isvalid_filename($validated_filename) || $validated_filename == '') {
         $response = array(
             'status'    => 'error',
             'info'      => "Invalid File name!",
@@ -1019,13 +1025,57 @@ if (!empty($_FILES) && !FM_READONLY) {
 
     $targetPath = $path . $ds;
     if (is_writable($targetPath)) {
-        $fullPath = $path . '/' . $fullPathInput;
-        $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
+        $request_dir = '';
+        if ($fullPathInput != '') {
+            $request_basename = basename($fullPathInput);
+            if ($request_basename == $filename) {
+                $request_dir = fm_get_parent_path($fullPathInput);
+            } else {
+                $request_dir = $fullPathInput;
+            }
+            $request_dir = $request_dir === false ? '' : $request_dir;
+        }
+
+        $folder = $request_dir == '' ? $path : $path . '/' . $request_dir;
 
         if (!is_dir($folder)) {
             $old = umask(0);
             mkdir($folder, 0777, true);
             umask($old);
+        }
+
+        $root_path = realpath(FM_ROOT_PATH);
+        $folder_path = realpath($folder);
+        if ($root_path === false || $folder_path === false) {
+            $response = array(
+                'status'    => 'error',
+                'info'      => "Invalid upload path!",
+            );
+            echo json_encode($response);
+            exit();
+        }
+
+        $root_check = rtrim(str_replace('\\', '/', $root_path), '/') . '/';
+        $folder_check = rtrim(str_replace('\\', '/', $folder_path), '/') . '/';
+
+        if (strpos($folder_check, $root_check) !== 0) {
+            $response = array(
+                'status'    => 'error',
+                'info'      => "Invalid upload path!",
+            );
+            echo json_encode($response);
+            exit();
+        }
+
+        $fullPath = $folder_path . '/' . $validated_filename;
+        $full_path_check = str_replace('\\', '/', $fullPath);
+        if (strpos($full_path_check, $root_check) !== 0) {
+            $response = array(
+                'status'    => 'error',
+                'info'      => "Invalid upload path!",
+            );
+            echo json_encode($response);
+            exit();
         }
 
         if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
@@ -1076,8 +1126,7 @@ if (!empty($_FILES) && !FM_READONLY) {
 
                 if ($chunkIndex == $chunkTotal - 1) {
                     if (file_exists($fullPath)) {
-                        $ext_1 = $ext ? '.' . $ext : '';
-                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                        $fullPathTarget = $folder_path . '/' . $filename_base . '_' . date('ymdHis') . $ext_1;
                     } else {
                         $fullPathTarget = $fullPath;
                     }
