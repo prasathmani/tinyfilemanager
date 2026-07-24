@@ -142,6 +142,10 @@ $ip_blacklist = array(
     '::'            // non-routable meta ipv6
 );
 
+// default mode
+$filemode = 0644;
+$dirmode = 0755;
+
 // extension => language for advanced editor
 $ext_language = array(
     'js' => 'javascript',
@@ -682,6 +686,9 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         }
 
         if ($success) {
+            $success = chmod($temp_file, $filemode);
+        }
+        if ($success) {
             $success = rename($temp_file, strtok(get_file_path(), '?'));
         }
 
@@ -734,6 +741,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
             if (!file_exists($path . '/' . $new)) {
                 if (fm_is_valid_ext($new)) {
                     @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
+                    chmod($path . '/' . $new, $filemode);
                     fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
                 } else {
                     fm_set_msg(lng('File extension is not allowed'), 'error');
@@ -743,6 +751,7 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
             }
         } else {
             if (fm_mkdir($path . '/' . $new, false) === true) {
+                chmod($path . '/' . $new, $dirmode);
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('Created'), $new));
             } elseif (fm_mkdir($path . '/' . $new, false) === $path . '/' . $new) {
                 fm_set_msg(sprintf(lng('Folder') . ' <b>%s</b> ' . lng('already exists'), fm_enc($new)), 'alert');
@@ -2522,6 +2531,10 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
         if (!fm_mkdir($dest, $force)) {
             return false;
         }
+        $mode = fileperms($path);
+        if ($mode !== false) {
+            chmod($dest, $mode);
+        }
 
         $objects = array_diff(scandir($path), ['.', '..']);
 
@@ -2572,6 +2585,11 @@ function fm_copy($f1, $f2, $upd)
         $time2 = filemtime($f2);
         if ($time2 >= $time1 && $upd) {
             return false;
+        }
+    } else{
+        $mode = fileperms($f1);
+        if ($mode !== false) {
+            chmod($f2, $mode);
         }
     }
     $ok = copy($f1, $f2);
