@@ -49,6 +49,7 @@ $use_highlightjs = true;
 // highlight.js style
 // for dark theme use 'ir-black'
 $highlightjs_style = 'vs';
+$highlightjs_style_dark = 'vs2015';
 
 // Enable ace.js (https://ace.c9.io/) on view's page
 $edit_files = true;
@@ -171,7 +172,7 @@ if (is_readable($config_file)) {
 }
 
 define('ACE_FONTSIZE', isset($ace_fontsize) ? $ace_fontsize : 12);
-define('ACE_THEME', isset($ace_theme) ? $ace_theme : 'textmate');
+define('ACE_THEME', isset($ace_theme) ? $ace_theme : (FM_THEME == 'dark' ? 'twilight' : 'textmate'));
 
 // External CDN resources that can be used in the HTML (replace for GDPR compliance)
 $external = array(
@@ -179,6 +180,7 @@ $external = array(
     'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
     'css-font-awesome' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">',
     'css-highlightjs' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/' . $highlightjs_style . '.min.css">',
+    'css-highlightjs-dark' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/' . $highlightjs_style_dark . '.min.css">',
     'js-ace' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>',
     'js-bootstrap' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>',
     'js-dropzone' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>',
@@ -1934,7 +1936,7 @@ if (isset($_GET['view'])) {
                         // php highlight
                         $content = highlight_string($content, true);
                     } else {
-                        $content = '<pre>' . fm_enc($content) . '</pre>';
+                        $content = '<pre class="plain-text-preview">' . fm_enc($content) . '</pre>';
                     }
                     echo $content;
                 }
@@ -4036,7 +4038,7 @@ function fm_show_header_login()
         <?php print_external('css-bootstrap'); ?>
         <?php print_external('css-font-awesome'); ?>
         <?php if (FM_USE_HIGHLIGHTJS && isset($_GET['view'])): ?>
-            <?php print_external('css-highlightjs'); ?>
+            <?php print_external(FM_THEME == 'dark' ? 'css-highlightjs-dark' : 'css-highlightjs'); ?>
         <?php endif; ?>
         <script type="text/javascript">
             window.csrf = '<?php echo $_SESSION['token']; ?>';
@@ -4734,6 +4736,12 @@ function fm_show_header_login()
 
                 form.dropzone {
                     border-color: #79755e;
+                }
+
+                .theme-dark pre.plain-text-preview {
+                    background-color: #101518;
+                    color: #CFD8DC;
+                    padding: 1rem;
                 }
             </style>
         <?php endif; ?>
