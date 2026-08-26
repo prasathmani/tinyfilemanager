@@ -163,6 +163,10 @@ $ext_language = array(
     'htaccess' => 'apache_conf',
 );
 
+// Proxy for URL Download Support (hostname:port)
+// Note: configure the proxy for the URLs the server is allowed to reach.
+//$proxyServer = 'proxy.url.tld:8080';
+
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__ . '/config.php';
@@ -674,7 +678,12 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $fileinfo->size = $curl_info["size_download"];
             $fileinfo->type = $curl_info["content_type"];
         } else {
-            $ctx = stream_context_create();
+            if (isset($proxyServer)) {
+                $opts = array('http' => array('proxy' => 'tcp://' . $proxyServer, 'request_fulluri' => true));
+                $ctx = stream_context_create($opts);
+            } else {
+                $ctx = stream_context_create();
+            }
             @$success = copy($url, $temp_file, $ctx);
             if (!$success) {
                 $err = error_get_last();
