@@ -163,11 +163,116 @@ $ext_language = array(
     'htaccess' => 'apache_conf',
 );
 
+// Proxy for URL Download Support (hostname:port)
+// Note: configure the proxy for the URLs the server is allowed to reach.
+//$proxyServer = 'proxy.url.tld:8080';
+
+// OpenAFS / AuriStor support. Enable this in config.php on an AFS-backed host.
+$afsSupport = false;
+
+// AFS production uses authentication performed by the reviewed web-server
+// lane. Local Tiny File Manager credentials must be removed, not merely
+// bypassed, before the immutable production profile can activate.
+$afs_external_auth = false;
+
+// Feature switches retain upstream behavior by default. The immutable AFS
+// production profile requires all five to be disabled.
+$settings_enabled = true;
+$direct_links_enabled = true;
+$raw_previews_enabled = true;
+$url_upload_enabled = true;
+
+// AFS production mode requires a native descriptor-backed provider.  The
+// bundled PHP AfsDataPlane is an offline/path-policy preview and deliberately
+// reports itself as not production-ready.
+$afsDataPlaneFactory = null;
+$afs_expected_factory_class = '';
+$afs_expected_factory_id = '';
+$afs_expected_provider_class = '';
+$afs_expected_provider_id = '';
+
+// Optional raw-tag overrides for non-AFS deployments.
+$external_resources = array();
+
+// AFS production assets come from one versioned JSON artifact consumed by
+// both the application and container lock. It binds the ten logical resource
+// keys to type, local path, SHA-256, license, and optional defer state.
+$afs_asset_manifest_file = '';
+$afs_asset_manifest_sha256 = '';
+$external_asset_root = __DIR__;
+$favicon_sha256 = '';
+$content_security_policy = '';
+$content_security_policy_approved = false;
+
+// The provider contract has no runtime or AFS side effects. Loading it before
+// config.php lets a production configuration construct its reviewed factory.
+if (is_readable(__DIR__ . '/afs_contract.php')) {
+    require_once __DIR__ . '/afs_contract.php';
+}
+
 // if User has the external config file, try to use it to override the default config above [config.php]
 // sample config - https://tinyfilemanager.github.io/config-sample.txt
 $config_file = __DIR__ . '/config.php';
 if (is_readable($config_file)) {
     @include($config_file);
+}
+
+if (($afsSupport || defined('AFS_PRODUCTION_PROFILE'))
+    && !interface_exists('AfsDataPlaneProviderFactory', false)) {
+    fm_afs_readiness_error(
+        'AFS production requires the packaged provider contract.');
+}
+
+if ($afsSupport || defined('AFS_PRODUCTION_PROFILE')) {
+    require_once __DIR__ . '/afs.php';
+}
+
+if ($afsSupport || defined('AFS_PRODUCTION_PROFILE')) {
+    $afsSelfUrl = isset($_SERVER['SCRIPT_NAME'])
+        ? $_SERVER['SCRIPT_NAME'] : (isset($_SERVER['PHP_SELF'])
+            ? $_SERVER['PHP_SELF'] : '');
+    $afsRequestIdentity = isset($_SERVER['REMOTE_USER'])
+        ? $_SERVER['REMOTE_USER'] : '';
+    $afsDataRoot = $root_path;
+    $afsProfileState = array(
+        'profile' => defined('AFS_PRODUCTION_PROFILE')
+            ? AFS_PRODUCTION_PROFILE : null,
+        'afs_enabled' => $afsSupport,
+        'external_auth' => $afs_external_auth,
+        'request_identity' => $afsRequestIdentity,
+        'local_auth' => $use_auth,
+        'local_users_empty' => is_array($auth_users)
+            && is_array($readonly_users) && is_array($directories_users)
+            && empty($auth_users) && empty($readonly_users)
+            && empty($directories_users),
+        'settings_enabled' => $settings_enabled,
+        'embed_enabled' => defined('FM_EMBED'),
+        'direct_links_enabled' => $direct_links_enabled,
+        'raw_previews_enabled' => $raw_previews_enabled,
+        'url_upload_enabled' => $url_upload_enabled,
+        'root_url' => $root_url,
+        'self_url' => $afsSelfUrl,
+        'data_root' => $afsDataRoot,
+        'asset_manifest_sha256' => $afs_asset_manifest_sha256,
+        'expected_factory_class' => $afs_expected_factory_class,
+        'expected_factory_id' => $afs_expected_factory_id,
+        'expected_provider_class' => $afs_expected_provider_class,
+        'expected_provider_id' => $afs_expected_provider_id
+    );
+    $afsProfileError = '';
+    if (!AfsProductionReadiness::validateProductionProfile(
+            $afsProfileState, $afsProfileError)) {
+        fm_afs_readiness_error($afsProfileError);
+    }
+    if (defined('FM_ROOT_PATH') && FM_ROOT_PATH !== $afsDataRoot) {
+        fm_afs_readiness_error(
+            'Pre-defined FM_ROOT_PATH does not match the production profile.');
+    }
+    unset($afsProfileState, $afsProfileError);
+
+    // Protected file URLs must never be delegated to an external document
+    // viewer in AFS mode, even if config.php requested one.
+    $online_viewer = false;
 }
 
 define('ACE_FONTSIZE', isset($ace_fontsize) ? $ace_fontsize : 12);
@@ -188,6 +293,57 @@ $external = array(
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
 );
+
+$afsReadinessError = '';
+if ($afsSupport) {
+    $external = AfsProductionReadiness::buildLocalAssetTagsFromManifestFile(
+        $afs_asset_manifest_file, $external_asset_root,
+        $afs_asset_manifest_sha256, $afsReadinessError);
+    if ($external === false) {
+        fm_afs_readiness_error($afsReadinessError);
+    }
+} elseif (is_array($external_resources) && !empty($external_resources)) {
+    $external = array_replace($external, $external_resources);
+}
+
+if ($afsSupport && $favicon_path !== ''
+    && !AfsProductionReadiness::validateLocalAsset(
+        $favicon_path, $external_asset_root, $favicon_sha256,
+        $afsReadinessError)) {
+    fm_afs_readiness_error($afsReadinessError);
+}
+
+if ($afsSupport && !fm_content_security_policy_is_ready(
+        $content_security_policy, $afsReadinessError)) {
+    fm_afs_readiness_error($afsReadinessError);
+}
+if ($afsSupport && $content_security_policy_approved !== true) {
+    fm_afs_readiness_error(
+        'AFS production mode requires explicit review approval for its CSP.');
+}
+if ($content_security_policy !== '') {
+    if (!fm_content_security_policy_is_ready(
+            $content_security_policy, $afsReadinessError)) {
+        fm_afs_readiness_error('Invalid Content-Security-Policy configuration.');
+    }
+    if ($afsSupport) {
+        foreach (headers_list() as $configuredHeader) {
+            if (stripos($configuredHeader, 'Content-Security-Policy:') === 0) {
+                fm_afs_readiness_error(
+                    'Duplicate Content-Security-Policy response header.');
+            }
+        }
+    }
+    // PHP is the sole CSP source of truth. The container must not add a
+    // second policy; exact-image validation checks the rendered response.
+    header('Content-Security-Policy: ' . $content_security_policy, true);
+}
+if ($afsSupport
+    && AfsProductionReadiness::applicationTemplatesSupportStrictCsp()
+        !== true) {
+    fm_afs_readiness_error(
+        'AFS production mode requires nonce/hash CSP template support.');
+}
 
 // --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---
 
@@ -292,12 +448,38 @@ if (isset($_SESSION[FM_SESSION_ID]['logged']) && !empty($directories_users[$_SES
 // clean $root_url
 $root_url = fm_clean_path($root_url);
 
-// abs path for site
-defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
-defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
+// abs path for site. AFS mode uses a same-origin relative controller URL and
+// deliberately has no raw managed-root URL; it never trusts the request Host
+// or forwarded protocol for protected redirects and links.
+if ($afsSupport) {
+    if (!is_string($afsSelfUrl) || $afsSelfUrl === ''
+        || substr($afsSelfUrl, 0, 1) !== '/'
+        || strpos($afsSelfUrl, "\0") !== false
+        || preg_match('/[\r\n?#]/', $afsSelfUrl)
+        || strpos($afsSelfUrl, '//') !== false) {
+        fm_afs_readiness_error('Invalid same-origin controller path.');
+    }
+    if (defined('FM_ROOT_URL') && FM_ROOT_URL !== '') {
+        fm_afs_readiness_error('AFS mode forbids a raw FM_ROOT_URL.');
+    }
+    if (defined('FM_SELF_URL') && FM_SELF_URL !== $afsSelfUrl) {
+        fm_afs_readiness_error(
+            'AFS mode requires the same-origin controller path.');
+    }
+    defined('FM_ROOT_URL') || define('FM_ROOT_URL', '');
+    defined('FM_SELF_URL') || define('FM_SELF_URL', $afsSelfUrl);
+} else {
+    defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
+    defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
+}
 
 // logout
-if (isset($_GET['logout'])) {
+if (isset($_POST['logout'])) {
+    if (!isset($_POST['token']) || !is_string($_POST['token'])
+        || !verifyToken($_POST['token'])) {
+        header('HTTP/1.1 403 Forbidden');
+        die('Invalid Token.');
+    }
     unset($_SESSION[FM_SESSION_ID]['logged']);
     unset($_SESSION['token']);
     fm_redirect(FM_SELF_URL);
@@ -437,22 +619,108 @@ if ($use_auth && isset($_SESSION[FM_SESSION_ID]['logged'])) {
 }
 
 // clean and check $root_path
+if ($afsSupport) {
+    // Use the single post-config profile snapshot; no later request or
+    // per-user state may select a different provider root.
+    $root_path = $afsDataRoot;
+}
+if (!is_string($root_path)) {
+    if ($afsSupport) {
+        fm_afs_readiness_error('AFS root path must be a string.');
+    }
+    die('Invalid root path configuration.');
+}
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
-if (!@is_dir($root_path)) {
+if (!$afsSupport && !@is_dir($root_path)) {
     echo "<h1>" . lng('Root path') . " \"{$root_path}\" " . lng('not found!') . " </h1>";
     exit;
+}
+if ($afsSupport && (!is_string($root_path)
+    || substr($root_path, 0, 1) !== '/'
+    || strpos($root_path, "\0") !== false)) {
+    fm_afs_readiness_error('AFS root path must be an absolute pathname.');
 }
 
 defined('FM_SHOW_HIDDEN') || define('FM_SHOW_HIDDEN', $show_hidden_files);
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
+if ($afsSupport && FM_ROOT_PATH !== $afsDataRoot) {
+    fm_afs_readiness_error(
+        'FM_ROOT_PATH did not remain bound to the production profile.');
+}
 defined('FM_LANG') || define('FM_LANG', $lang);
 defined('FM_FILE_EXTENSION') || define('FM_FILE_EXTENSION', $allowed_file_extensions);
 defined('FM_UPLOAD_EXTENSION') || define('FM_UPLOAD_EXTENSION', $allowed_upload_extensions);
 defined('FM_EXCLUDE_ITEMS') || define('FM_EXCLUDE_ITEMS', (version_compare(PHP_VERSION, '7.0.0', '<') ? serialize($exclude_items) : $exclude_items));
+if ($afsSupport && defined('FM_DOC_VIEWER') && FM_DOC_VIEWER !== false) {
+    fm_afs_readiness_error(
+        'AFS production mode requires FM_DOC_VIEWER to be false.');
+}
 defined('FM_DOC_VIEWER') || define('FM_DOC_VIEWER', $online_viewer);
 define('FM_READONLY', $global_readonly || ($use_auth && !empty($readonly_users) && isset($_SESSION[FM_SESSION_ID]['logged']) && in_array($_SESSION[FM_SESSION_ID]['logged'], $readonly_users)));
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
+if ($afsSupport && ((defined('FM_SETTINGS_ENABLED')
+        && FM_SETTINGS_ENABLED !== false)
+    || (defined('FM_DIRECT_LINKS_ENABLED')
+        && FM_DIRECT_LINKS_ENABLED !== false)
+    || (defined('FM_RAW_PREVIEWS_ENABLED')
+        && FM_RAW_PREVIEWS_ENABLED !== false)
+    || (defined('FM_URL_UPLOAD_ENABLED')
+        && FM_URL_UPLOAD_ENABLED !== false))) {
+    fm_afs_readiness_error(
+        'AFS production feature constants must remain disabled.');
+}
+defined('FM_SETTINGS_ENABLED') || define('FM_SETTINGS_ENABLED', $settings_enabled);
+defined('FM_DIRECT_LINKS_ENABLED') || define('FM_DIRECT_LINKS_ENABLED', $direct_links_enabled);
+defined('FM_RAW_PREVIEWS_ENABLED') || define('FM_RAW_PREVIEWS_ENABLED', $raw_previews_enabled);
+defined('FM_URL_UPLOAD_ENABLED') || define('FM_URL_UPLOAD_ENABLED', $url_upload_enabled);
+if ($afsSupport && (FM_SETTINGS_ENABLED !== false
+    || FM_DIRECT_LINKS_ENABLED !== false
+    || FM_RAW_PREVIEWS_ENABLED !== false
+    || FM_URL_UPLOAD_ENABLED !== false)) {
+    fm_afs_readiness_error(
+        'AFS production features did not remain fail-closed.');
+}
+
+$afsDataPlane = null;
+if ($afsSupport) {
+    if (!($afsDataPlaneFactory instanceof AfsDataPlaneProviderFactory)) {
+        fm_afs_readiness_error(
+            'AFS production mode requires an AfsDataPlaneProviderFactory.');
+    }
+    if (get_class($afsDataPlaneFactory) !== $afs_expected_factory_class
+        || $afsDataPlaneFactory->getFactoryIdentity()
+            !== $afs_expected_factory_id) {
+        fm_afs_readiness_error(
+            'The configured AFS factory identity does not match the profile.');
+    }
+    $afsDataPlane = $afsDataPlaneFactory->createProvider(
+        FM_ROOT_PATH, $afsRequestIdentity);
+    if (!($afsDataPlane instanceof AfsDataPlaneProvider)) {
+        fm_afs_readiness_error(
+            'The configured AFS factory did not return an AfsDataPlaneProvider.');
+    }
+    if (get_class($afsDataPlane) !== $afs_expected_provider_class
+        || $afsDataPlane->getProviderIdentity()
+            !== $afs_expected_provider_id
+        || $afsDataPlane->getCredentialIdentity()
+            !== $afsRequestIdentity) {
+        fm_afs_readiness_error(
+            'The AFS provider or credential identity does not match the profile.');
+    }
+    if ($afsDataPlane->isProductionReady() !== true) {
+        fm_afs_readiness_error($afsDataPlane->getReadinessFailure());
+    }
+    if ($afsDataPlane->getSecurityBoundary()
+        !== AfsDataPlaneProvider::SECURITY_BOUNDARY_DESCRIPTOR_BENEATH_V1) {
+        fm_afs_readiness_error(
+            'AFS production mode requires the descriptor-beneath-v1 boundary.');
+    }
+    if ($afsDataPlane->initializeDataPlane(FM_ROOT_PATH) !== true) {
+        fm_afs_readiness_error('Unable to initialize the AFS data-plane provider.');
+    }
+    unset($afsRequestIdentity);
+}
 
 // always use ?p=
 if (!isset($_GET['p']) && empty($_FILES)) {
@@ -509,25 +777,23 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $path .= '/' . FM_PATH;
         }
         // check path
-        if (!is_dir($path)) {
+        $path = fm_resolve_existing_path($path, 'dir');
+        if ($path === false) {
             fm_redirect(FM_SELF_URL . '?p=');
         }
         $file = $_GET['edit'];
         $file = fm_clean_path($file);
         $file = str_replace('/', '', $file);
-        if ($file == '' || !is_file($path . '/' . $file)) {
+        $file_path = $file == '' ? false
+            : fm_resolve_existing_path($path . '/' . $file, 'file');
+        if ($file_path === false) {
             fm_set_msg(lng('File not found'), 'error');
             $FM_PATH = FM_PATH;
             fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
         }
         header('X-XSS-Protection:0');
-        $file_path = $path . '/' . $file;
-
         $writedata = $_POST['content'];
-        $fd = fopen($file_path, "w");
-        $write_results = @fwrite($fd, $writedata);
-        fclose($fd);
-        if ($write_results === false) {
+        if (!fm_write_file_contents($file_path, $writedata)) {
             header("HTTP/1.1 500 Internal Server Error");
             die("Could Not Write File! - Check Permissions / Ownership");
         }
@@ -546,10 +812,12 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $newFileName = "{$fileName}-{$date}.bak";
         $fullyQualifiedFileName = $fullPath . $fileName;
         try {
-            if (!file_exists($fullyQualifiedFileName)) {
+            if (fm_resolve_existing_path(
+                    $fullyQualifiedFileName, 'file') === false) {
                 throw new Exception("File {$fileName} not found");
             }
-            if (copy($fullyQualifiedFileName, $fullPath . $newFileName)) {
+            if (fm_copy($fullyQualifiedFileName,
+                    $fullPath . $newFileName, false)) {
                 echo "Backup {$newFileName} created";
             } else {
                 throw new Exception("Could not copy file {$fileName}");
@@ -561,6 +829,10 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
+        if (!FM_SETTINGS_ENABLED || fm_is_afs_mode()) {
+            header('HTTP/1.1 403 Forbidden');
+            die('Runtime configuration changes are disabled.');
+        }
         global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
@@ -603,12 +875,25 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
     // new password hash
     if (isset($_POST['type']) && $_POST['type'] == "pwdhash") {
+        if (!FM_SETTINGS_ENABLED) {
+            header('HTTP/1.1 403 Forbidden');
+            die('Runtime configuration utilities are disabled.');
+        }
         $res = isset($_POST['inputPassword2']) && !empty($_POST['inputPassword2']) ? password_hash($_POST['inputPassword2'], PASSWORD_DEFAULT) : '';
         echo $res;
     }
 
     //upload using url
-    if (isset($_POST['type']) && $_POST['type'] == "upload" && !empty($_REQUEST["uploadurl"])) {
+    $urlUploadRequested = isset($_POST['type'])
+        && $_POST['type'] === 'upload'
+        && array_key_exists('uploadurl', $_REQUEST);
+    if ($urlUploadRequested && FM_URL_UPLOAD_ENABLED !== true) {
+        header('HTTP/1.1 403 Forbidden');
+        echo json_encode(array('fail' => array(
+            'message' => 'URL upload is disabled')));
+        exit();
+    }
+    if ($urlUploadRequested && !empty($_REQUEST['uploadurl'])) {
         $path = FM_ROOT_PATH;
         if (FM_PATH != '') {
             $path .= '/' . FM_PATH;
@@ -656,6 +941,15 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             exit();
         }
 
+        if (fm_is_afs_mode()
+            && fm_resolve_write_path(
+                strtok(get_file_path(), '?'), true) === false) {
+            @unlink($temp_file);
+            event_callback(array('fail' => array(
+                'message' => 'AFS upload destination failed confinement')));
+            exit();
+        }
+
         if (!$url) {
             $success = false;
         } else if ($use_curl) {
@@ -674,7 +968,12 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $fileinfo->size = $curl_info["size_download"];
             $fileinfo->type = $curl_info["content_type"];
         } else {
-            $ctx = stream_context_create();
+            if (isset($proxyServer)) {
+                $opts = array('http' => array('proxy' => 'tcp://' . $proxyServer, 'request_fulluri' => true));
+                $ctx = stream_context_create($opts);
+            } else {
+                $ctx = stream_context_create();
+            }
             @$success = copy($url, $temp_file, $ctx);
             if (!$success) {
                 $err = error_get_last();
@@ -682,13 +981,20 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         }
 
         if ($success) {
-            $success = rename($temp_file, strtok(get_file_path(), '?'));
+            $success = fm_import_file(
+                $temp_file, strtok(get_file_path(), '?'), true, false);
+            if ($success && file_exists($temp_file) && !@unlink($temp_file)) {
+                $success = false;
+                $err = array('message' => 'Unable to remove the URL-upload temporary file');
+            }
         }
 
         if ($success) {
             event_callback(array("done" => $fileinfo));
         } else {
-            unlink($temp_file);
+            if (file_exists($temp_file)) {
+                @unlink($temp_file);
+            }
             if (!$err) {
                 $err = array("message" => "Invalid url parameter");
             }
@@ -706,7 +1012,8 @@ if (isset($_GET['del'], $_POST['token']) && !FM_READONLY) {
         if (FM_PATH != '') {
             $path .= '/' . FM_PATH;
         }
-        $is_dir = is_dir($path . '/' . $del);
+        $is_dir = fm_resolve_existing_path(
+            $path . '/' . $del, 'dir') !== false;
         if (fm_rdelete($path . '/' . $del)) {
             $msg = $is_dir ? lng('Folder') . ' <b>%s</b> ' . lng('Deleted') : lng('File') . ' <b>%s</b> ' . lng('Deleted');
             fm_set_msg(sprintf($msg, fm_enc($del)));
@@ -731,10 +1038,13 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
             $path .= '/' . FM_PATH;
         }
         if ($type == "file") {
-            if (!file_exists($path . '/' . $new)) {
+            if (!fm_path_exists($path . '/' . $new, true)) {
                 if (fm_is_valid_ext($new)) {
-                    @fopen($path . '/' . $new, 'w') or die('Cannot open file:  ' . $new);
-                    fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
+                    if (fm_create_file($path . '/' . $new)) {
+                        fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('Created'), fm_enc($new)));
+                    } else {
+                        fm_set_msg(sprintf(lng('File') . ' <b>%s</b> ' . lng('not created'), fm_enc($new)), 'error');
+                    }
                 } else {
                     fm_set_msg(lng('File extension is not allowed'), 'error');
                 }
@@ -758,9 +1068,20 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
 }
 
 // Copy folder / file
-if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
+// Complete a single copy/move with a token-verified POST. This upstream route
+// previously mutated state from a GET request.
+if (isset($_POST['copy'], $_POST['finish'], $_POST['token']) && !FM_READONLY) {
+    if (!is_string($_POST['token']) || !verifyToken($_POST['token'])) {
+        fm_set_msg(lng('Invalid Token.'), 'error');
+        die('Invalid Token.');
+    }
+    if (!is_string($_POST['copy']) || $_POST['finish'] !== '1') {
+        fm_set_msg(lng('Invalid file or folder name'), 'error');
+        die('Invalid copy request.');
+    }
+
     // from
-    $copy = urldecode($_GET['copy']);
+    $copy = urldecode($_POST['copy']);
     $copy = fm_clean_path($copy);
     // empty path
     if ($copy == '') {
@@ -777,8 +1098,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     }
     $dest .= '/' . basename($from);
     // move?
-    $move = isset($_GET['move']);
-    $move = fm_clean_path(urldecode($move));
+    $move = isset($_POST['move']) && $_POST['move'] === '1';
     // copy/move/duplicate
     if ($from != $dest) {
         $msg_from = trim(FM_PATH . '/' . basename($from), '/');
@@ -803,7 +1123,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             $msg_from = trim(FM_PATH . '/' . basename($from), '/');
             $fn_parts = pathinfo($from);
             $extension_suffix = '';
-            if (!is_dir($from)) {
+            if (fm_resolve_existing_path($from, 'dir') === false) {
                 $extension_suffix = '.' . $fn_parts['extension'];
             }
             //Create new name for duplicate
@@ -811,7 +1131,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
             $loop_count = 0;
             $max_loop = 1000;
             // Check if a file with the duplicate name already exists, if so, make new name (edge case...)
-            while (file_exists($fn_duplicate) & $loop_count < $max_loop) {
+            while (fm_path_exists($fn_duplicate, true) && $loop_count < $max_loop) {
                 $fn_parts = pathinfo($fn_duplicate);
                 $fn_duplicate = $fn_parts['dirname'] . '/' . $fn_parts['filename'] . '-copy' . $extension_suffix;
                 $loop_count++;
@@ -853,7 +1173,7 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'], $_POST['token']) 
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
-    if (!is_dir($copy_to_path)) {
+    if (fm_resolve_existing_path($copy_to_path, 'dir') === false) {
         if (!fm_mkdir($copy_to_path, true)) {
             fm_set_msg(lng('Unable to create destination folder'), 'error');
             $FM_PATH = FM_PATH;
@@ -953,14 +1273,16 @@ if (isset($_GET['dl'], $_POST['token'])) {
     }
 
     // Check if the file exists and is valid
-    if ($dl != '' && is_file($path . '/' . $dl)) {
+    $downloadPath = $dl == '' ? false
+        : fm_resolve_existing_path($path . '/' . $dl, 'file');
+    if ($downloadPath !== false) {
         // Close the session to prevent session locking
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
         }
 
         // Call the download function
-        fm_download_file($path . '/' . $dl, $dl, 1024); // Download with a buffer size of 1024 bytes
+        fm_download_file($downloadPath, $dl, 1024); // Download with a buffer size of 1024 bytes
         exit;
     } else {
         // Handle the case where the file is not found
@@ -1008,7 +1330,7 @@ if (!empty($_FILES) && !FM_READONLY) {
     $ext = pathinfo($filename, PATHINFO_FILENAME) != '' ? strtolower(pathinfo($filename, PATHINFO_EXTENSION)) : '';
     $isFileAllowed = ($allowed) ? in_array($ext, $allowed) : true;
 
-    if (!fm_isvalid_filename($filename) && !fm_isvalid_filename($fullPathInput)) {
+    if (!fm_isvalid_filename($filename) || !fm_isvalid_filename($fullPathInput)) {
         $response = array(
             'status'    => 'error',
             'info'      => "Invalid File name!",
@@ -1018,89 +1340,69 @@ if (!empty($_FILES) && !FM_READONLY) {
     }
 
     $targetPath = $path . $ds;
-    if (is_writable($targetPath)) {
+    $targetReady = fm_is_afs_mode()
+        ? fm_resolve_existing_path($path, 'dir') !== false
+        : is_writable($targetPath);
+    if ($targetReady) {
         $fullPath = $path . '/' . $fullPathInput;
         $folder = substr($fullPath, 0, strrpos($fullPath, "/"));
 
-        if (!is_dir($folder)) {
-            $old = umask(0);
-            mkdir($folder, 0777, true);
-            umask($old);
+        $folderExists = fm_is_afs_mode()
+            ? fm_resolve_existing_path($folder, 'dir') !== false
+            : is_dir($folder);
+        if (!$folderExists) {
+            fm_mkdir($folder, true);
         }
 
-        if (empty($f['file']['error']) && !empty($tmp_name) && $tmp_name != 'none' && $isFileAllowed) {
+        if (fm_resolve_existing_path($folder, 'dir') !== false
+            && empty($f['file']['error']) && !empty($tmp_name)
+            && $tmp_name != 'none' && $isFileAllowed) {
             if ($chunkTotal) {
-                $out = @fopen("{$fullPath}.part", $chunkIndex == 0 ? "wb" : "ab");
-                if ($out) {
-                    $in = @fopen($tmp_name, "rb");
-                    if ($in) {
-                        if (PHP_VERSION_ID < 80009) {
-                            // workaround https://bugs.php.net/bug.php?id=81145
-                            do {
-                                for (;;) {
-                                    $buff = fread($in, 4096);
-                                    if ($buff === false || $buff === '') {
-                                        break;
-                                    }
-                                    fwrite($out, $buff);
-                                }
-                            } while (!feof($in));
-                        } else {
-                            stream_copy_to_stream($in, $out);
-                        }
-                        $response = array(
-                            'status'    => 'success',
-                            'info' => "file upload successful"
-                        );
-                    } else {
-                        $response = array(
-                            'status'    => 'error',
-                            'info' => "failed to open output stream",
-                            'errorDetails' => error_get_last()
-                        );
-                    }
-                    @fclose($in);
-                    @fclose($out);
-                    @unlink($tmp_name);
-
-                    $response = array(
-                        'status'    => 'success',
-                        'info' => "file upload successful"
-                    );
-                } else {
-                    $response = array(
-                        'status'    => 'error',
-                        'info' => "failed to open output stream"
-                    );
+                $partPath = "{$fullPath}.part";
+                $ordered = $chunkIndex == 0
+                    || fm_resolve_existing_path($partPath, 'file') !== false;
+                $stored = $ordered && fm_import_file(
+                    $tmp_name, $partPath, true, $chunkIndex != 0);
+                if ($stored && file_exists($tmp_name) && !@unlink($tmp_name)) {
+                    $stored = false;
                 }
 
-                if ($chunkIndex == $chunkTotal - 1) {
-                    if (file_exists($fullPath)) {
+                if ($stored && $chunkIndex == $chunkTotal - 1) {
+                    if (fm_resolve_existing_path($fullPath, 'file') !== false) {
                         $ext_1 = $ext ? '.' . $ext : '';
-                        $fullPathTarget = $path . '/' . basename($fullPathInput, $ext_1) . '_' . date('ymdHis') . $ext_1;
+                        $fullPathTarget = dirname($fullPath) . '/'
+                            . basename($fullPathInput, $ext_1) . '_'
+                            . date('ymdHis') . $ext_1;
                     } else {
                         $fullPathTarget = $fullPath;
                     }
-                    rename("{$fullPath}.part", $fullPathTarget);
+                    $stored = fm_rename($partPath, $fullPathTarget) === true;
                 }
-            } else if (move_uploaded_file($tmp_name, $fullPath)) {
-                // Be sure that the file has been uploaded
-                if (file_exists($fullPath)) {
-                    $response = array(
-                        'status'    => 'success',
-                        'info' => "file upload successful"
-                    );
-                } else {
-                    $response = array(
-                        'status' => 'error',
-                        'info'   => 'Couldn\'t upload the requested file.'
-                    );
-                }
+
+                $response = $stored
+                    ? array('status' => 'success',
+                        'info' => 'file upload successful')
+                    : array('status' => 'error',
+                        'info' => 'failed to store or finalize upload chunk');
             } else {
-                $response = array(
-                    'status'    => 'error',
-                    'info'      => "Error while uploading files. Uploaded files $uploads",
-                );
+                if (fm_is_afs_mode()) {
+                    $stored = fm_import_file(
+                        $tmp_name, $fullPath, true, false);
+                    if ($stored && file_exists($tmp_name)
+                        && !@unlink($tmp_name)) {
+                        $stored = false;
+                    }
+                } else {
+                    $stored = move_uploaded_file($tmp_name, $fullPath);
+                }
+
+                $stored = $stored
+                    && fm_resolve_existing_path($fullPath, 'file') !== false;
+                $response = $stored
+                    ? array('status' => 'success',
+                        'info' => 'file upload successful')
+                    : array('status' => 'error',
+                        'info' => "Error while uploading files. Uploaded files $uploads");
             }
         }
     } else {
@@ -1157,6 +1459,12 @@ if (isset($_POST['group'], $_POST['token']) && (isset($_POST['zip']) || isset($_
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
         die("Invalid Token.");
+    }
+
+    if (!fm_afs_archives_supported()) {
+        fm_set_msg(lng('Operations with archives are not available'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
     }
 
     $path = FM_ROOT_PATH;
@@ -1224,6 +1532,12 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
         die("Invalid Token.");
     }
 
+    if (!fm_afs_archives_supported()) {
+        fm_set_msg(lng('Operations with archives are not available'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+
     $unzip = urldecode($_POST['unzip']);
     $unzip = fm_clean_path($unzip);
     $unzip = str_replace('/', '', $unzip);
@@ -1287,8 +1601,8 @@ if (isset($_POST['unzip'], $_POST['token']) && !FM_READONLY) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
-// Change Perms (not for Windows)
-if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
+// Change POSIX permissions (not for Windows or AFS)
+if (!$afsSupport && isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
 
     if (!verifyToken($_POST['token'])) {
         fm_set_msg(lng("Invalid Token."), 'error');
@@ -1348,6 +1662,88 @@ if (isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
 }
 
+// Change AFS ACLs (not for Windows)
+if ($afsSupport && isset($_POST['chmod'], $_POST['token']) && !FM_READONLY && !FM_IS_WIN) {
+    if (!verifyToken($_POST['token'])) {
+        fm_set_msg(lng('Invalid Token.'), 'error');
+        die('Invalid Token.');
+    }
+
+    $path = FM_ROOT_PATH;
+    if (FM_PATH != '') {
+        $path .= '/' . FM_PATH;
+    }
+
+    $file = fm_clean_path($_POST['chmod']);
+    $file = str_replace('/', '', $file);
+    $aclPath = $file == '' ? false
+        : fm_resolve_existing_path($path . '/' . $file);
+    if ($aclPath === false) {
+        fm_set_msg(lng('File not found'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+
+    $ret = true;
+    $currentAcl = fm_read_afs_acl($aclPath);
+    if (!is_array($currentAcl)) {
+        fm_set_msg(lng('Unable to read the current AFS ACL'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+    if (!empty($currentAcl['inherited'])) {
+        fm_set_msg(lng('Inherited AuriStor ACLs are read-only here'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+
+    $allowedRights = array('l', 'r', 'w', 'i', 'd', 'k', 'a',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H');
+    $aclSets = array('normal' => false, 'negative' => true);
+    if ((!isset($_POST['normal']) || !is_array($_POST['normal']))
+        && (!isset($_POST['negative']) || !is_array($_POST['negative']))) {
+        fm_set_msg(lng('Permissions not changed'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+
+    $aclBatches = array('normal' => array(), 'negative' => array());
+    foreach ($aclSets as $setName => $negative) {
+        if (!isset($_POST[$setName]) || !is_array($_POST[$setName])) {
+            continue;
+        }
+
+        foreach ($_POST[$setName] as $user => $perms) {
+            if (!is_array($perms)) {
+                $ret = false;
+                continue;
+            }
+
+            $newAcl = '';
+            foreach ($allowedRights as $right) {
+                if (isset($perms[$right])) {
+                    $newAcl .= $right;
+                }
+            }
+            $newAcl = $newAcl == '' ? 'none' : $newAcl;
+            $aclBatches[$setName][$user] = $newAcl;
+        }
+
+        if (!empty($aclBatches[$setName])) {
+            $ret = fm_change_afs_acl_entries(
+                $aclBatches[$setName], $aclPath, $negative) && $ret;
+        }
+    }
+
+    if (empty($aclBatches['normal']) && empty($aclBatches['negative'])) {
+        $ret = false;
+    }
+
+    fm_set_msg(lng($ret ? 'Permissions changed' : 'Permissions not changed'), $ret ? 'ok' : 'error');
+    $FM_PATH = FM_PATH;
+    fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+}
+
 /*************************** ACTIONS ***************************/
 
 // get current path
@@ -1357,16 +1753,30 @@ if (FM_PATH != '') {
 }
 
 // check path
-if (!is_dir($path)) {
+$path = fm_resolve_existing_path($path, 'dir');
+if ($path === false) {
     fm_redirect(FM_SELF_URL . '?p=');
 }
 
 // get parent folder
 $parent = fm_get_parent_path(FM_PATH);
 
-$objects = is_readable($path) ? scandir($path) : array();
+if ($afsSupport) {
+    $objects = fm_afs_provider()->listDirectory($path);
+    $objects = is_array($objects) ? array_values(array_filter(
+        $objects, function ($item) {
+            return is_string($item) && $item !== ''
+                && $item !== '.' && $item !== '..'
+                && strpos($item, '/') === false
+                && strpos($item, '\\') === false
+                && strpos($item, "\0") === false;
+        })) : array();
+} else {
+    $objects = is_readable($path) ? scandir($path) : array();
+}
 $folders = array();
 $files = array();
+$objectInfo = array();
 $current_path = array_slice(explode("/", $path), -1)[0];
 if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
     foreach ($objects as $file) {
@@ -1377,9 +1787,21 @@ if (is_array($objects) && fm_is_exclude_items($current_path, $path)) {
             continue;
         }
         $new_path = $path . '/' . $file;
-        if (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
+        if ($afsSupport) {
+            $info = fm_inspect_path($new_path, true);
+            if ($info === false || !fm_is_exclude_items($file, $new_path)) {
+                continue;
+            }
+            $objectInfo[$file] = $info;
+            if ($info['type'] === 'dir') {
+                $folders[] = $file;
+            } elseif ($info['type'] === 'file' || $info['type'] === 'link') {
+                $files[] = $file;
+            }
+        } elseif (@is_file($new_path) && fm_is_exclude_items($file, $new_path)) {
             $files[] = $file;
-        } elseif (@is_dir($new_path) && $file != '.' && $file != '..' && fm_is_exclude_items($file, $new_path)) {
+        } elseif (@is_dir($new_path) && $file != '.' && $file != '..'
+            && fm_is_exclude_items($file, $new_path)) {
             $folders[] = $file;
         }
     }
@@ -1418,9 +1840,11 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     <li class="nav-item">
                         <a class="nav-link active" href="#fileUploader" data-target="#fileUploader"><i class="fa fa-arrow-circle-o-up"></i> <?php echo lng('UploadingFiles') ?></a>
                     </li>
+                    <?php if (FM_URL_UPLOAD_ENABLED === true): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="#urlUploader" class="js-url-upload" data-target="#urlUploader"><i class="fa fa-link"></i> <?php echo lng('Upload from URL') ?></a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </div>
             <div class="card-body">
@@ -1438,6 +1862,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     </div>
                 </form>
 
+                <?php if (FM_URL_UPLOAD_ENABLED === true): ?>
                 <div class="upload-url-wrapper card-tabs-container hidden" id="urlUploader">
                     <form id="js-form-url-upload" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return upload_from_url(this);" method="POST" action="">
                         <input type="hidden" name="type" value="upload" aria-label="hidden" aria-hidden="true">
@@ -1452,6 +1877,7 @@ if (isset($_GET['upload']) && !FM_READONLY) {
                     </form>
                     <div id="js-url-upload__list" class="col-9 mt-3"></div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -1548,7 +1974,8 @@ if (isset($_POST['copy']) && !FM_READONLY) {
 if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
-    if ($copy == '' || !file_exists(FM_ROOT_PATH . '/' . $copy)) {
+    if ($copy == ''
+        || fm_resolve_existing_path(FM_ROOT_PATH . '/' . $copy) === false) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1563,11 +1990,15 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
             <strong>Source path:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
             <strong>Destination folder:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
         </p>
-        <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> Move</a></b> &nbsp;
+        <form action="" method="post" class="d-inline">
+            <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+            <input type="hidden" name="copy" value="<?php echo fm_enc($copy) ?>">
+            <input type="hidden" name="finish" value="1">
+            <input type="hidden" name="token" value="<?php echo fm_enc($_SESSION['token']) ?>">
+            <button type="submit" class="btn btn-link p-0 align-baseline"><i class="fa fa-check-circle"></i> Copy</button> &nbsp;
+            <button type="submit" name="move" value="1" class="btn btn-link p-0 align-baseline"><i class="fa fa-check-circle"></i> Move</button> &nbsp;
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="text-danger"><i class="fa fa-times-circle"></i> Cancel</a></b>
-        </p>
+        </form>
         <p><i><?php echo lng('Select folder') ?></i></p>
         <ul class="folders break-word">
             <?php
@@ -1591,7 +2022,12 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
     exit;
 }
 
-if (isset($_GET['settings']) && !FM_READONLY) {
+if (isset($_GET['settings']) && !FM_SETTINGS_ENABLED) {
+    header('HTTP/1.1 403 Forbidden');
+    die('Runtime configuration changes are disabled.');
+}
+
+if (isset($_GET['settings']) && !FM_READONLY && FM_SETTINGS_ENABLED) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     global $cfg, $lang, $lang_list;
@@ -1746,7 +2182,9 @@ if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    $file_path = $file == '' ? false
+        : fm_resolve_existing_path($path . '/' . $file, 'file');
+    if ($file_path === false || !fm_is_exclude_items($file, $file_path)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1755,12 +2193,18 @@ if (isset($_GET['view'])) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
-    $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
-    $file_path = $path . '/' . $file;
+    $file_url = $afsSupport
+        ? FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&view=' . urlencode($file)
+        : FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+    $fileInfo = fm_inspect_path($file_path);
+    if ($fileInfo === false) {
+        fm_set_msg(lng('File not found'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
     $mime_type = fm_get_mime_type($file_path);
-    $filesize_raw = fm_get_size($file_path);
+    $filesize_raw = $fileInfo['size'];
     $filesize = fm_get_filesize($filesize_raw);
 
     $is_zip = false;
@@ -1778,7 +2222,7 @@ if (isset($_GET['view'])) {
 
     if ($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())) {
         $is_onlineViewer = true;
-    } elseif ($ext == 'zip' || $ext == 'tar') {
+    } elseif (!$afsSupport && ($ext == 'zip' || $ext == 'tar')) {
         $is_zip = true;
         $view_title = 'Archive';
         $filenames = fm_get_zip_info($file_path, $ext);
@@ -1793,7 +2237,11 @@ if (isset($_GET['view'])) {
         $view_title = 'Video';
     } elseif (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
         $is_text = true;
-        $content = file_get_contents($file_path);
+        $content = fm_read_file_contents($file_path);
+        if ($content === false) {
+            fm_set_msg(lng('File not found'), 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+        }
     }
 
 ?>
@@ -1803,7 +2251,7 @@ if (isset($_GET['view'])) {
                 <li class="list-group-item active" aria-current="true"><strong><?php echo lng($view_title) ?>:</strong> <?php echo fm_enc(fm_convert_win($file)) ?></li>
                 <?php $display_path = fm_get_display_path($file_path); ?>
                 <li class="list-group-item"><strong><?php echo $display_path['label']; ?>:</strong> <?php echo $display_path['path']; ?></li>
-                <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, filemtime($file_path)); ?></li>
+                <li class="list-group-item"><strong><?php echo lng('Date Modified') ?>:</strong> <?php echo date(FM_DATETIME_FORMAT, $fileInfo['mtime']); ?></li>
                 <li class="list-group-item"><strong><?php echo lng('File size') ?>:</strong> <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?></li>
                 <li class="list-group-item"><strong><?php echo lng('MIME-type') ?>:</strong> <?php echo $mime_type ?></li>
                 <?php
@@ -1827,7 +2275,7 @@ if (isset($_GET['view'])) {
                 <?php
                 }
                 // Image info
-                if ($is_image) {
+                if (!$afsSupport && FM_RAW_PREVIEWS_ENABLED && $is_image) {
                     $image_size = getimagesize($file_path);
                     echo '<li class="list-group-item"><strong>' . lng('Image size') . ':</strong> ' . (isset($image_size[0]) ? $image_size[0] : '0') . ' x ' . (isset($image_size[1]) ? $image_size[1] : '0') . '</li>';
                 }
@@ -1851,10 +2299,13 @@ if (isset($_GET['view'])) {
                 <?php if (!FM_READONLY): ?>
                     <a class="fw-bold btn btn-outline-primary" title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($file) ?>" onclick="confirmDialog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($file); ?>', this.href);"> <i class="fa fa-trash"></i> Delete</a>
                 <?php endif; ?>
-                <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                <?php if (!$afsSupport && FM_DIRECT_LINKS_ENABLED): ?>
+                    <a class="fw-bold btn btn-outline-primary" href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+                <?php endif; ?>
                 <?php
                 // ZIP actions
-                if (!FM_READONLY && ($is_zip || $is_gzip) && $filenames !== false) {
+                if (!FM_READONLY && fm_afs_archives_supported()
+                    && ($is_zip || $is_gzip) && $filenames !== false) {
                     $zip_name = pathinfo($file_path, PATHINFO_FILENAME);
                 ?>
                     <form method="post" class="d-inline btn btn-outline-primary mb-0">
@@ -1883,7 +2334,7 @@ if (isset($_GET['view'])) {
             </div>
             <div class="row mt-3">
                 <?php
-                if ($is_onlineViewer) {
+                if (!$afsSupport && $is_onlineViewer) {
                     if ($online_viewer == 'google') {
                         echo '<iframe src="https://docs.google.com/viewer?embedded=true&hl=en&url=' . fm_enc($file_url) . '" frameborder="no" style="width:100%;min-height:460px"></iframe>';
                     } else if ($online_viewer == 'microsoft') {
@@ -1904,15 +2355,15 @@ if (isset($_GET['view'])) {
                     } else {
                         echo '<p>' . lng('Error while fetching archive info') . '</p>';
                     }
-                } elseif ($is_image) {
+                } elseif (!$afsSupport && FM_RAW_PREVIEWS_ENABLED && $is_image) {
                     // Image content
                     if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
                         echo '<p><input type="checkbox" id="preview-img-zoomCheck"><label for="preview-img-zoomCheck"><img src="' . fm_enc($file_url) . '" alt="image" class="preview-img"></label></p>';
                     }
-                } elseif ($is_audio) {
+                } elseif (!$afsSupport && FM_RAW_PREVIEWS_ENABLED && $is_audio) {
                     // Audio content
                     echo '<p><audio src="' . fm_enc($file_url) . '" controls preload="metadata"></audio></p>';
-                } elseif ($is_video) {
+                } elseif (!$afsSupport && FM_RAW_PREVIEWS_ENABLED && $is_video) {
                     // Video content
                     echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
                 } elseif ($is_text) {
@@ -1952,7 +2403,9 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     $file = $_GET['edit'];
     $file = fm_clean_path($file, false);
     $file = str_replace('/', '', $file);
-    if ($file == '' || !is_file($path . '/' . $file) || !fm_is_exclude_items($file, $path . '/' . $file)) {
+    $file_path = $file == '' ? false
+        : fm_resolve_existing_path($path . '/' . $file, 'file');
+    if ($file_path === false || !fm_is_exclude_items($file, $file_path)) {
         fm_set_msg(lng('File not found'), 'error');
         $FM_PATH = FM_PATH;
         fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
@@ -1962,8 +2415,9 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
 
-    $file_url = FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
-    $file_path = $path . '/' . $file;
+    $file_url = $afsSupport
+        ? FM_SELF_URL . '?p=' . urlencode(FM_PATH) . '&view=' . urlencode($file)
+        : FM_ROOT_URL . fm_convert_win((FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $file);
 
     // normal editer
     $isNormalEditor = true;
@@ -1975,22 +2429,37 @@ if (isset($_GET['edit']) && !FM_READONLY) {
 
     // Save File
     if (isset($_POST['savedata'])) {
+        if (!isset($_POST['token']) || !is_string($_POST['token'])
+            || !verifyToken($_POST['token'])) {
+            fm_set_msg(lng('Invalid Token.'), 'error');
+            die('Invalid Token.');
+        }
         $writedata = $_POST['savedata'];
-        $fd = fopen($file_path, "w");
-        @fwrite($fd, $writedata);
-        fclose($fd);
-        fm_set_msg(lng('File Saved Successfully'));
+        if (fm_write_file_contents($file_path, $writedata)) {
+            fm_set_msg(lng('File Saved Successfully'));
+        } else {
+            fm_set_msg(lng('Error: try again'), 'error');
+        }
     }
 
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+    $fileInfo = fm_inspect_path($file_path);
+    if ($fileInfo === false) {
+        fm_set_msg(lng('File not found'), 'error');
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+    }
     $mime_type = fm_get_mime_type($file_path);
-    $filesize = filesize($file_path);
+    $filesize = $fileInfo['size'];
     $is_text = false;
     $content = ''; // for text
 
     if (in_array($ext, fm_get_text_exts()) || substr($mime_type, 0, 4) == 'text' || in_array($mime_type, fm_get_text_mimes())) {
         $is_text = true;
-        $content = file_get_contents($file_path);
+        $content = fm_read_file_contents($file_path);
+        if ($content === false) {
+            fm_set_msg(lng('File not found'), 'error');
+            fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
+        }
     }
 
 ?>
@@ -2052,8 +2521,8 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     exit;
 }
 
-// chmod (not for Windows)
-if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
+// chmod (not for Windows or AFS)
+if (!$afsSupport && isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     $file = $_GET['chmod'];
     $file = fm_clean_path($file);
     $file = str_replace('/', '', $file);
@@ -2126,6 +2595,122 @@ if (isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
     exit;
 }
 
+// Edit AFS ACLs (not for Windows)
+if ($afsSupport && isset($_GET['chmod']) && !FM_READONLY && !FM_IS_WIN) {
+    $file = fm_clean_path($_GET['chmod']);
+    $file = str_replace('/', '', $file);
+    $file_path = $file == '' ? false
+        : fm_resolve_existing_path($path . '/' . $file);
+    if ($file_path === false) {
+        fm_set_msg(lng('File not found'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+    }
+
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
+
+    $mode = fm_read_afs_acl($file_path);
+    $acl_readable = is_array($mode);
+    $normal_acl = $acl_readable && isset($mode['normal']) ? $mode['normal'] : array();
+    $negative_acl = $acl_readable && isset($mode['negative']) ? $mode['negative'] : array();
+    $acl_inherited = $acl_readable && !empty($mode['inherited']);
+    $acl_readonly = !$acl_readable || $acl_inherited;
+?>
+    <div class="path">
+        <div class="card mb-2" data-bs-theme="<?php echo FM_THEME; ?>">
+            <h6 class="card-header"><?php echo lng('ChangePermissions') ?></h6>
+            <div class="card-body">
+                <p class="card-text">
+                    <?php $display_path = fm_get_display_path($file_path); ?>
+                    <?php echo $display_path['label']; ?>: <?php echo fm_enc($display_path['path']); ?><br>
+                </p>
+                <?php if (!$acl_readable): ?>
+                    <div class="alert alert-danger"><?php echo lng('Unable to read the current AFS ACL') ?></div>
+                <?php elseif ($acl_inherited): ?>
+                    <div class="alert alert-warning"><?php echo lng('Inherited AuriStor ACLs are read-only here') ?></div>
+                <?php endif; ?>
+                <form action="" method="post">
+                    <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+                    <input type="hidden" name="chmod" value="<?php echo fm_enc($file) ?>">
+                    <input type="hidden" name="token" value="<?php echo fm_enc($_SESSION['token']); ?>">
+                    <fieldset<?php echo $acl_readonly ? ' disabled' : ''; ?>>
+                    <table class="table compact-table" data-bs-theme="<?php echo FM_THEME; ?>">
+                        <tr>
+                            <td><b><?php echo lng('User') ?>/<?php echo lng('Group') ?></b></td>
+                            <td><b><?php echo lng('lookup') ?></b></td>
+                            <td><b><?php echo lng('read') ?></b></td>
+                            <td><b><?php echo lng('write') ?></b></td>
+                            <td><b><?php echo lng('insert') ?></b></td>
+                            <td><b><?php echo lng('delete') ?></b></td>
+                            <td><b><?php echo lng('lock') ?></b></td>
+                            <td><b><?php echo lng('admin') ?></b></td>
+                            <td><b>A</b></td>
+                            <td><b>B</b></td>
+                            <td><b>C</b></td>
+                            <td><b>D</b></td>
+                            <td><b>E</b></td>
+                            <td><b>F</b></td>
+                            <td><b>G</b></td>
+                            <td><b>H</b></td>
+                        </tr>
+                        <tr><td colspan="16"><b><?php echo lng('normalRights') ?></b></td></tr>
+                        <?php foreach ($normal_acl as $user => $perms) { $encoded_user = fm_enc($user); ?>
+                            <tr>
+                                <td class="text-end"><b><?php echo $encoded_user; ?></b></td>
+                                <td><input type="hidden" name="normal[<?php echo $encoded_user; ?>][acl]" value=""><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][l]" value="1"<?php echo !empty($perms['l']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][r]" value="1"<?php echo !empty($perms['r']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][w]" value="1"<?php echo !empty($perms['w']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][i]" value="1"<?php echo !empty($perms['i']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][d]" value="1"<?php echo !empty($perms['d']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][k]" value="1"<?php echo !empty($perms['k']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][a]" value="1"<?php echo !empty($perms['a']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][A]" value="1"<?php echo !empty($perms['A']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][B]" value="1"<?php echo !empty($perms['B']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][C]" value="1"<?php echo !empty($perms['C']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][D]" value="1"<?php echo !empty($perms['D']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][E]" value="1"<?php echo !empty($perms['E']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][F]" value="1"<?php echo !empty($perms['F']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][G]" value="1"<?php echo !empty($perms['G']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="normal[<?php echo $encoded_user; ?>][H]" value="1"<?php echo !empty($perms['H']) ? ' checked' : ''; ?>></label></td>
+                            </tr>
+                        <?php } ?>
+                        <tr><td colspan="16"><b><?php echo lng('negativeRights') ?></b></td></tr>
+                        <?php foreach ($negative_acl as $user => $perms) { $encoded_user = fm_enc($user); ?>
+                            <tr>
+                                <td class="text-end"><b><?php echo $encoded_user; ?></b></td>
+                                <td><input type="hidden" name="negative[<?php echo $encoded_user; ?>][acl]" value=""><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][l]" value="1"<?php echo !empty($perms['l']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][r]" value="1"<?php echo !empty($perms['r']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][w]" value="1"<?php echo !empty($perms['w']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][i]" value="1"<?php echo !empty($perms['i']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][d]" value="1"<?php echo !empty($perms['d']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][k]" value="1"<?php echo !empty($perms['k']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][a]" value="1"<?php echo !empty($perms['a']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][A]" value="1"<?php echo !empty($perms['A']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][B]" value="1"<?php echo !empty($perms['B']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][C]" value="1"<?php echo !empty($perms['C']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][D]" value="1"<?php echo !empty($perms['D']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][E]" value="1"<?php echo !empty($perms['E']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][F]" value="1"<?php echo !empty($perms['F']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][G]" value="1"<?php echo !empty($perms['G']) ? ' checked' : ''; ?>></label></td>
+                                <td><label><input type="checkbox" name="negative[<?php echo $encoded_user; ?>][H]" value="1"<?php echo !empty($perms['H']) ? ' checked' : ''; ?>></label></td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+                    </fieldset>
+                    <p>
+                        <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="btn btn-outline-primary"><i class="fa fa-times-circle"></i> <?php echo lng('Cancel') ?></a></b>&nbsp;
+                        <?php if (!$acl_readonly): ?><button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> <?php echo lng('Change') ?></button><?php endif; ?>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+<?php
+    fm_show_footer();
+    exit;
+}
+
 // --- TINYFILEMANAGER MAIN ---
 fm_show_header(); // HEADER
 fm_show_nav_path(FM_PATH); // current path
@@ -2136,6 +2721,9 @@ fm_show_message();
 $num_files = count($files);
 $num_folders = count($folders);
 $all_files_size = 0;
+$metadata_column_count = (!FM_IS_WIN && !$hide_Cols) ? ($afsSupport ? 1 : 2) : 0;
+$table_column_count = 4 + $metadata_column_count + (FM_READONLY ? 0 : 1);
+$content_column_count = $table_column_count - (FM_READONLY ? 0 : 1);
 ?>
 <form action="" method="post" class="pt-3">
     <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
@@ -2157,7 +2745,8 @@ $all_files_size = 0;
                     <th><?php echo lng('Modified') ?></th>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
                         <th><?php echo lng('Perms') ?></th>
-                        <th><?php echo lng('Owner') ?></th><?php endif; ?>
+                        <?php if (!$afsSupport): ?><th><?php echo lng('Owner') ?></th><?php endif; ?>
+                    <?php endif; ?>
                     <th><?php echo lng('Actions') ?></th>
                 </tr>
             </thead>
@@ -2173,24 +2762,29 @@ $all_files_size = 0;
                     <td class="border-0"></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols) { ?>
                         <td class="border-0"></td>
-                        <td class="border-0"></td>
+                        <?php if (!$afsSupport) { ?><td class="border-0"></td><?php } ?>
                     <?php } ?>
                 </tr>
             <?php
             }
             $ii = 3399;
             foreach ($folders as $f) {
-                $is_link = is_link($path . '/' . $f);
+                $info = $afsSupport ? $objectInfo[$f]
+                    : fm_inspect_path($path . '/' . $f, true);
+                $is_link = is_array($info) && $info['type'] === 'link';
                 $img = $is_link ? 'icon-link_folder' : 'fa fa-folder-o';
-                $modif_raw = filemtime($path . '/' . $f);
+                $modif_raw = is_array($info) ? $info['mtime'] : 0;
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 $date_sorting = strtotime(date("F d Y H:i:s.", $modif_raw));
                 $filesize_raw = "";
                 $filesize = lng('Folder');
-                $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
-                $owner = array('name' => '?'); 
+                $perms = is_array($info)
+                    ? substr(decoct($info['mode']), -4) : '----';
+                $owner = array('name' => '?');
                 $group = array('name' => '?');
-                if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
+                if ($afsSupport && !FM_IS_WIN && !$hide_Cols) {
+                    $perms = fm_get_afs_acl_access($path . '/' . $f);
+                } elseif (!$afsSupport && function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     try {
                         $owner_id = fileowner($path . '/' . $f);
                         if ($owner_id != 0) {
@@ -2221,7 +2815,7 @@ $all_files_size = 0;
                     <td data-sort=<?php echo fm_convert_win(fm_enc($f)) ?>>
                         <div class="filename">
                             <a href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?></a>
-                            <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                            <?php echo ($is_link ? ' &rarr; <i>' . fm_enc($info['link_target']) . '</i>' : '') ?>
                         </div>
                     </td>
                     <td data-order="a-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>">
@@ -2232,16 +2826,20 @@ $all_files_size = 0;
                         <td>
                             <?php if (!FM_READONLY): ?><a title="Change Permissions" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td>
+                        <?php if (!$afsSupport): ?><td>
                             <?php echo $owner['name'] . ':' . $group['name'] ?>
-                        </td>
+                        </td><?php endif; ?>
                     <?php endif; ?>
                     <td class="inline-actions"><?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDialog(event, '1028','<?php echo lng('Delete') . ' ' . lng('Folder'); ?>','<?php echo urlencode($f) ?>', this.href);"> <i class="fa fa-trash-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                             <a title="<?php echo lng('CopyTo') ?>..." href="?p=&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o" aria-hidden="true"></i></a>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        <?php if ($afsSupport && FM_DIRECT_LINKS_ENABLED): ?>
+                            <a title="<?php echo lng('DirectLink') ?>" href="?p=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        <?php elseif (!$afsSupport && FM_DIRECT_LINKS_ENABLED): ?>
+                            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f . '/') ?>" target="_blank"><i class="fa fa-link" aria-hidden="true"></i></a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php
@@ -2250,19 +2848,24 @@ $all_files_size = 0;
             }
             $ik = 8002;
             foreach ($files as $f) {
-                $is_link = is_link($path . '/' . $f);
+                $info = $afsSupport ? $objectInfo[$f]
+                    : fm_inspect_path($path . '/' . $f, true);
+                $is_link = is_array($info) && $info['type'] === 'link';
                 $img = $is_link ? 'fa fa-file-text-o' : fm_get_file_icon_class($path . '/' . $f);
-                $modif_raw = filemtime($path . '/' . $f);
+                $modif_raw = is_array($info) ? $info['mtime'] : 0;
                 $modif = date(FM_DATETIME_FORMAT, $modif_raw);
                 $date_sorting = strtotime(date("F d Y H:i:s.", $modif_raw));
-                $filesize_raw = fm_get_size($path . '/' . $f);
+                $filesize_raw = is_array($info) ? $info['size'] : 0;
                 $filesize = fm_get_filesize($filesize_raw);
                 $filelink = '?p=' . urlencode(FM_PATH) . '&amp;view=' . urlencode($f);
                 $all_files_size += $filesize_raw;
-                $perms = substr(decoct(fileperms($path . '/' . $f)), -4);
-                $owner = array('name' => '?'); 
+                $perms = is_array($info)
+                    ? substr(decoct($info['mode']), -4) : '----';
+                $owner = array('name' => '?');
                 $group = array('name' => '?');
-                if (function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
+                if ($afsSupport && !$is_link && !FM_IS_WIN && !$hide_Cols) {
+                    $perms = fm_get_afs_acl_access($path . '/' . $f);
+                } elseif (!$afsSupport && function_exists('posix_getpwuid') && function_exists('posix_getgrgid')) {
                     try {
                         $owner_id = fileowner($path . '/' . $f);
                         if ($owner_id != 0) {
@@ -2292,15 +2895,18 @@ $all_files_size = 0;
                     <td data-sort=<?php echo fm_enc($f) ?>>
                         <div class="filename">
                             <?php
-                            if (in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))): ?>
-                                <?php $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f); ?>
-                                <a href="<?php echo $filelink ?>" data-preview-image="<?php echo $imagePreview ?>" title="<?php echo fm_enc($f) ?>">
-                                <?php else: ?>
-                                    <a href="<?php echo $filelink ?>" title="<?php echo $f ?>">
-                                    <?php endif; ?>
-                                    <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
-                                    </a>
-                                    <?php echo ($is_link ? ' &rarr; <i>' . readlink($path . '/' . $f) . '</i>' : '') ?>
+                            if (!$is_link) {
+                                if (!$afsSupport && FM_RAW_PREVIEWS_ENABLED && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'svg', 'webp', 'avif'))) {
+                                    $imagePreview = fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f);
+                                    echo '<a href="' . $filelink . '" data-preview-image="' . $imagePreview . '" title="' . fm_enc($f) . '">';
+                                } else {
+                                    echo '<a href="' . $filelink . '" title="' . fm_enc($f) . '">';
+                                }
+                            }
+                            ?>
+                            <i class="<?php echo $img ?>"></i> <?php echo fm_convert_win(fm_enc($f)) ?>
+                            <?php if (!$is_link): ?></a><?php endif; ?>
+                            <?php echo ($is_link ? ' &rarr; <i>' . fm_enc($info['link_target']) . '</i>' : '') ?>
                         </div>
                     </td>
                     <td data-order="b-<?php echo str_pad($filesize_raw, 18, "0", STR_PAD_LEFT); ?>"><span title="<?php printf('%s bytes', $filesize_raw) ?>">
@@ -2308,19 +2914,24 @@ $all_files_size = 0;
                         </span></td>
                     <td data-order="b-<?php echo $date_sorting; ?>"><?php echo $modif ?></td>
                     <?php if (!FM_IS_WIN && !$hide_Cols): ?>
-                        <td><?php if (!FM_READONLY): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
+                        <td><?php if (!FM_READONLY && !$is_link): ?><a title="<?php echo 'Change Permissions' ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;chmod=<?php echo urlencode($f) ?>"><?php echo $perms ?></a><?php else: ?><?php echo $perms ?><?php endif; ?>
                         </td>
-                        <td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td>
+                        <?php if (!$afsSupport): ?><td><?php echo fm_enc($owner['name'] . ':' . $group['name']) ?></td><?php endif; ?>
                     <?php endif; ?>
                     <td class="inline-actions">
                         <?php if (!FM_READONLY): ?>
                             <a title="<?php echo lng('Delete') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;del=<?php echo urlencode($f) ?>" onclick="confirmDialog(event, 1209, '<?php echo lng('Delete') . ' ' . lng('File'); ?>','<?php echo urlencode($f); ?>', this.href);"> <i class="fa fa-trash-o"></i></a>
                             <a title="<?php echo lng('Rename') ?>" href="#" onclick="rename('<?php echo fm_enc(addslashes(FM_PATH)) ?>', '<?php echo fm_enc(addslashes($f)) ?>');return false;"><i class="fa fa-pencil-square-o"></i></a>
-                            <a title="<?php echo lng('CopyTo') ?>..."
+                            <?php if (!$is_link): ?><a title="<?php echo lng('CopyTo') ?>..."
                                 href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode(trim(FM_PATH . '/' . $f, '/')) ?>"><i class="fa fa-files-o"></i></a>
+                            <?php endif; ?>
                         <?php endif; ?>
-                        <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
-                        <a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDialog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a>
+                        <?php if ($afsSupport && !$is_link && FM_DIRECT_LINKS_ENABLED): ?>
+                            <a title="<?php echo lng('DirectLink') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;view=<?php echo urlencode($f) ?>"><i class="fa fa-link"></i></a>
+                        <?php elseif (!$afsSupport && FM_DIRECT_LINKS_ENABLED): ?>
+                            <a title="<?php echo lng('DirectLink') ?>" href="<?php echo fm_enc(FM_ROOT_URL . (FM_PATH != '' ? '/' . FM_PATH : '') . '/' . $f) ?>" target="_blank"><i class="fa fa-link"></i></a>
+                        <?php endif; ?>
+                        <?php if (!$is_link): ?><a title="<?php echo lng('Download') ?>" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($f) ?>" onclick="confirmDialog(event, 1211, '<?php echo lng('Download'); ?>','<?php echo urlencode($f); ?>', this.href);"><i class="fa fa-download"></i></a><?php endif; ?>
                     </td>
                 </tr>
             <?php
@@ -2332,14 +2943,14 @@ $all_files_size = 0;
                 <tfoot>
                     <tr><?php if (!FM_READONLY): ?>
                             <td></td><?php endif; ?>
-                        <td colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? '6' : '4' ?>"><em><?php echo lng('Folder is empty') ?></em></td>
+                        <td colspan="<?php echo $content_column_count ?>"><em><?php echo lng('Folder is empty') ?></em></td>
                     </tr>
                 </tfoot>
             <?php
             } else { ?>
                 <tfoot>
                     <tr>
-                        <td class="gray fs-7" colspan="<?php echo (!FM_IS_WIN && !$hide_Cols) ? (FM_READONLY ? '6' : '7') : (FM_READONLY ? '4' : '5') ?>">
+                        <td class="gray fs-7" colspan="<?php echo $table_column_count ?>">
                             <?php echo lng('FullSize') . ': <span class="badge text-bg-light border-radius-0">' . fm_get_filesize($all_files_size) . '</span>' ?>
                             <?php echo lng('File') . ': <span class="badge text-bg-light border-radius-0">' . $num_files . '</span>' ?>
                             <?php echo lng('Folder') . ': <span class="badge text-bg-light border-radius-0">' . $num_folders . '</span>' ?>
@@ -2359,10 +2970,12 @@ $all_files_size = 0;
                     <a href="#/invert-all" class="btn btn-small btn-outline-primary btn-2" onclick="invert_all();return false;"><i class="fa fa-th-list"></i> <?php echo lng('InvertSelection') ?> </a>
                     <input type="submit" class="hidden" name="delete" id="a-delete" value="Delete" onclick="return confirm('<?php echo lng('Delete selected files and folders?'); ?>')">
                     <a href="javascript:document.getElementById('a-delete').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-trash"></i> <?php echo lng('Delete') ?> </a>
-                    <input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
-                    <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Zip') ?> </a>
-                    <input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
-                    <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a>
+                    <?php if (fm_afs_archives_supported()): ?>
+                        <input type="submit" class="hidden" name="zip" id="a-zip" value="zip" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
+                        <a href="javascript:document.getElementById('a-zip').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Zip') ?> </a>
+                        <input type="submit" class="hidden" name="tar" id="a-tar" value="tar" onclick="return confirm('<?php echo lng('Create archive?'); ?>')">
+                        <a href="javascript:document.getElementById('a-tar').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-file-archive-o"></i> <?php echo lng('Tar') ?> </a>
+                    <?php endif; ?>
                     <input type="submit" class="hidden" name="copy" id="a-copy" value="Copy">
                     <a href="javascript:document.getElementById('a-copy').click();" class="btn btn-small btn-outline-primary btn-2"><i class="fa fa-files-o"></i> <?php echo lng('Copy') ?> </a>
                 </div>
@@ -2411,6 +3024,250 @@ function verifyToken($token)
     return false;
 }
 
+function fm_content_security_policy_is_ready($policy, &$error = null)
+{
+    if (class_exists('AfsProductionReadiness')) {
+        return AfsProductionReadiness::validateContentSecurityPolicy(
+            $policy, $error);
+    }
+    if (!is_string($policy) || trim($policy) === ''
+        || preg_match('/[\x00\r\n]/', $policy)) {
+        $error = 'Invalid Content-Security-Policy configuration.';
+        return false;
+    }
+    return true;
+}
+
+function fm_afs_readiness_error($message)
+{
+    if (!headers_sent()) {
+        header('HTTP/1.1 503 Service Unavailable');
+        header('Content-Type: text/plain; charset=UTF-8');
+    }
+    echo "AFS readiness failure: " . (string)$message;
+    exit;
+}
+
+function fm_is_afs_mode()
+{
+    global $afsSupport;
+    return !empty($afsSupport);
+}
+
+function fm_afs_provider()
+{
+    global $afsDataPlane;
+    return ($afsDataPlane instanceof AfsDataPlaneProvider)
+        ? $afsDataPlane : false;
+}
+
+function fm_read_afs_acl($path)
+{
+    $provider = fm_afs_provider();
+    $acl = $provider !== false ? $provider->readAcl($path) : false;
+    return is_array($acl) && isset($acl['normal'], $acl['negative'])
+        && is_array($acl['normal']) && is_array($acl['negative'])
+        ? $acl : false;
+}
+
+function fm_change_afs_acl_entries($entries, $path, $negative = false)
+{
+    $provider = fm_afs_provider();
+    return $provider !== false
+        && $provider->changeAclEntries(
+            $entries, $path, $negative) === true;
+}
+
+function fm_get_afs_acl_access($path)
+{
+    $provider = fm_afs_provider();
+    $rights = $provider !== false ? $provider->getACLAccess($path) : '';
+    return is_string($rights)
+        && preg_match('/^[lrwidkaA-H]{0,15}$/', $rights)
+        ? $rights : '';
+}
+
+function fm_resolve_existing_path($path, $type = 'any')
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $resolved = $provider !== false
+            ? $provider->resolveExistingPath($path, $type) : false;
+        return is_string($resolved) && $resolved !== '' ? $resolved : false;
+    }
+    if (($type === 'file' && !is_file($path))
+        || ($type === 'dir' && !is_dir($path))
+        || ($type === 'any' && !is_file($path) && !is_dir($path))) {
+        return false;
+    }
+    return $path;
+}
+
+function fm_resolve_write_path($path, $allowExisting = true)
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $resolved = $provider !== false
+            ? $provider->resolveWritePath($path, $allowExisting) : false;
+        return is_string($resolved) && $resolved !== '' ? $resolved : false;
+    }
+    return $path;
+}
+
+function fm_inspect_path($path, $allowLinkObject = false)
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $info = $provider !== false
+            ? $provider->inspectPath($path, $allowLinkObject) : false;
+        if (!is_array($info) || !isset(
+                $info['path'], $info['type'], $info['size'],
+                $info['mtime'], $info['mode'])
+            || !is_string($info['path'])
+            || !in_array($info['type'], array('file', 'dir', 'link'), true)
+            || !is_numeric($info['size']) || !is_numeric($info['mtime'])
+            || !is_int($info['mode'])) {
+            return false;
+        }
+        if ($info['type'] === 'link'
+            && (!array_key_exists('link_target', $info)
+                || !is_string($info['link_target']))) {
+            return false;
+        }
+        return $info;
+    }
+
+    $stat = $allowLinkObject ? @lstat($path) : @stat($path);
+    if (!is_array($stat) || !isset($stat['mode'])) {
+        return false;
+    }
+    $kind = $stat['mode'] & 0170000;
+    if ($kind === 0120000 && $allowLinkObject) {
+        $type = 'link';
+        $target = @readlink($path);
+        if ($target === false) {
+            return false;
+        }
+    } elseif ($kind === 0040000) {
+        $type = 'dir';
+        $target = false;
+    } elseif ($kind === 0100000) {
+        $type = 'file';
+        $target = false;
+    } else {
+        return false;
+    }
+    return array(
+        'path' => $path,
+        'type' => $type,
+        'size' => isset($stat['size']) ? $stat['size'] : 0,
+        'mtime' => isset($stat['mtime']) ? $stat['mtime'] : 0,
+        'mode' => $stat['mode'],
+        'link_target' => $target
+    );
+}
+
+function fm_path_exists($path, $allowLinkObject = false)
+{
+    if (fm_is_afs_mode()) {
+        return fm_inspect_path($path, $allowLinkObject) !== false;
+    }
+    return file_exists($path);
+}
+
+function fm_read_file_contents($path)
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $contents = $provider !== false
+            ? $provider->readContents($path) : false;
+        return is_string($contents) ? $contents : false;
+    }
+    return @file_get_contents($path);
+}
+
+function fm_write_file_contents($path, $contents)
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        return $provider !== false
+            && $provider->writeFile($path, $contents) === true;
+    }
+
+    $handle = @fopen($path, 'w');
+    if ($handle === false) {
+        return false;
+    }
+    $length = strlen($contents);
+    $written = 0;
+    while ($written < $length) {
+        $bytes = @fwrite($handle, substr($contents, $written));
+        if ($bytes === false || $bytes === 0) {
+            @fclose($handle);
+            return false;
+        }
+        $written += $bytes;
+    }
+    $ok = @fflush($handle);
+    if (!@fclose($handle)) {
+        $ok = false;
+    }
+    return $ok;
+}
+
+function fm_create_file($path)
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        return $provider !== false && $provider->createFile($path) === true;
+    }
+    $handle = @fopen($path, 'w');
+    return $handle !== false && @fclose($handle);
+}
+
+function fm_import_file($source, $destination, $overwrite = true,
+                        $append = false)
+{
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        return $provider !== false && $provider->importFile(
+            $source, $destination, $overwrite, $append) === true;
+    }
+
+    if ($append) {
+        $input = @fopen($source, 'rb');
+        $output = @fopen($destination, 'ab');
+        if ($input === false || $output === false) {
+            if (is_resource($input)) @fclose($input);
+            if (is_resource($output)) @fclose($output);
+            return false;
+        }
+        $ok = stream_copy_to_stream($input, $output) !== false;
+        if (!@fclose($input)) {
+            $ok = false;
+        }
+        if (!@fflush($output)) {
+            $ok = false;
+        }
+        if (!@fclose($output)) {
+            $ok = false;
+        }
+        return $ok;
+    }
+    if (!$overwrite && file_exists($destination)) {
+        return false;
+    }
+    return @copy($source, $destination);
+}
+
+function fm_afs_archives_supported()
+{
+    // No current provider API owns archive enumeration and extraction one
+    // entry at a time. Never let a capability flag re-enable generic archive
+    // helpers in AFS mode.
+    return !fm_is_afs_mode();
+}
+
 /**
  * Delete  file or folder (recursively)
  * @param string $path
@@ -2418,6 +3275,11 @@ function verifyToken($token)
  */
 function fm_rdelete($path)
 {
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        return $provider !== false && $provider->removePath($path) === true;
+    }
+
     if (is_link($path)) {
         return unlink($path);
     } elseif (is_dir($path)) {
@@ -2497,6 +3359,17 @@ function fm_rename($old, $new)
 {
     $isFileAllowed = fm_is_valid_ext($new);
 
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $info = fm_inspect_path($old, true);
+        if ($info === false
+            || ($info['type'] !== 'dir' && !$isFileAllowed)) {
+            return false;
+        }
+        $result = $provider->renamePath($old, $new);
+        return $result === true ? true : ($result === null ? null : false);
+    }
+
     if (!is_dir($old)) {
         if (!$isFileAllowed) return false;
     }
@@ -2514,6 +3387,12 @@ function fm_rename($old, $new)
  */
 function fm_rcopy($path, $dest, $upd = true, $force = true)
 {
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        return $provider !== false
+            && $provider->copyPath($path, $dest, $upd, $force) === true;
+    }
+
     if (!is_dir($path) && !is_file($path)) {
         return false;
     }
@@ -2547,6 +3426,19 @@ function fm_rcopy($path, $dest, $upd = true, $force = true)
  */
 function fm_mkdir($dir, $force)
 {
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        if ($provider === false) {
+            return false;
+        }
+        $existing = fm_resolve_existing_path($dir, 'dir');
+        if ($existing !== false) {
+            return $dir;
+        }
+        // AFS mode never deletes an existing non-directory to satisfy force.
+        return $provider->makeDirectory($dir, true) === true;
+    }
+
     if (file_exists($dir)) {
         if (is_dir($dir)) {
             return $dir;
@@ -2567,6 +3459,12 @@ function fm_mkdir($dir, $force)
  */
 function fm_copy($f1, $f2, $upd)
 {
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        return $provider !== false
+            && $provider->copyPath($f1, $f2, $upd, false) === true;
+    }
+
     $time1 = filemtime($f1);
     if (file_exists($f2)) {
         $time2 = filemtime($f2);
@@ -2588,6 +3486,14 @@ function fm_copy($f1, $f2, $upd)
  */
 function fm_get_mime_type($file_path)
 {
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $mime = $provider !== false
+            ? $provider->detectMimeType($file_path) : false;
+        return is_string($mime) && $mime !== ''
+            ? $mime : 'application/octet-stream';
+    }
+
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file_path);
@@ -2758,6 +3664,11 @@ function fm_get_translations($tr)
  */
 function fm_get_size($file)
 {
+    if (fm_is_afs_mode()) {
+        $info = fm_inspect_path($file);
+        return is_array($info) ? $info['size'] : 0;
+    }
+
     static $iswin = null;
     static $isdarwin = null;
     static $exec_works = null;
@@ -3373,6 +4284,12 @@ function fm_get_file_mimes($extension)
 function scan($dir = '', $filter = '')
 {
     $path = FM_ROOT_PATH . '/' . $dir;
+    if (fm_is_afs_mode()) {
+        $provider = fm_afs_provider();
+        $results = $provider !== false
+            ? $provider->searchFiles($path, $filter) : false;
+        return is_array($results) ? $results : null;
+    }
     if ($path) {
         $ite = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
         $rii = new RegexIterator($ite, "/(" . $filter . ")/i");
@@ -3400,8 +4317,89 @@ function scan($dir = '', $filter = '')
  * instead of download prompt
  * https://stackoverflow.com/a/13821992/1164642
  */
+function fm_afs_download_file($fileLocation, $fileName, $chunkSize = 1024)
+{
+    $provider = fm_afs_provider();
+    $handle = $provider !== false ? $provider->openRead($fileLocation) : false;
+    $stat = is_resource($handle) ? @fstat($handle) : false;
+    if ($handle === false || !is_array($stat)) {
+        if (is_resource($handle)) @fclose($handle);
+        return false;
+    }
+
+    $size = $stat['size'];
+    if ($size === 0) {
+        @fclose($handle);
+        fm_set_msg(lng('Zero byte file! Aborting download'), 'error');
+        $FM_PATH = FM_PATH;
+        fm_redirect(FM_SELF_URL . '?p=' . urlencode($FM_PATH));
+        return false;
+    }
+
+    $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+    $contentType = fm_get_file_mimes($extension);
+    if (is_array($contentType)) {
+        $contentType = implode(' ', $contentType);
+    }
+
+    $start = 0;
+    $end = $size - 1;
+    $partial = false;
+    if (isset($_SERVER['HTTP_RANGE'])) {
+        if (!preg_match('/^bytes=([0-9]+)-([0-9]*)$/',
+                $_SERVER['HTTP_RANGE'], $matches)) {
+            @fclose($handle);
+            header('HTTP/1.1 416 Range Not Satisfiable');
+            return false;
+        }
+        $start = (int)$matches[1];
+        $end = $matches[2] === '' ? $end : (int)$matches[2];
+        if ($start > $end || $end >= $size || @fseek($handle, $start) !== 0) {
+            @fclose($handle);
+            header('HTTP/1.1 416 Range Not Satisfiable');
+            return false;
+        }
+        $partial = true;
+    }
+
+    header('Content-Description: File Transfer');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Pragma: public');
+    header('Content-Transfer-Encoding: binary');
+    header("Content-Type: $contentType");
+    header('Content-Disposition: attachment;filename="' .
+        str_replace(array("\r", "\n", '"'), '', $fileName) . '"');
+    header('Accept-Ranges: bytes');
+    header('Content-Length: ' . ($end - $start + 1));
+    header("Content-Range: bytes $start-$end/$size");
+    if ($partial) {
+        header('HTTP/1.1 206 Partial Content');
+    }
+
+    while (ob_get_level()) ob_end_clean();
+    $remaining = $end - $start + 1;
+    $ok = true;
+    while ($remaining > 0 && !feof($handle)) {
+        $buffer = fread($handle, min($chunkSize, $remaining));
+        if ($buffer === false || $buffer === '') {
+            $ok = false;
+            break;
+        }
+        echo $buffer;
+        $remaining -= strlen($buffer);
+    }
+    if ($remaining !== 0 || !@fclose($handle)) {
+        $ok = false;
+    }
+    return $ok && connection_status() == 0 && !connection_aborted();
+}
+
 function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 {
+    if (fm_is_afs_mode()) {
+        return fm_afs_download_file($fileLocation, $fileName, $chunkSize);
+    }
     if (connection_status() != 0)
         return (false);
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
@@ -3717,11 +4715,20 @@ class FM_Config
             die($msg);
         }
         if (is_array($data) && count($data)) $this->data = $data;
-        else $this->save();
+        else {
+            if (fm_is_afs_mode()) {
+                fm_afs_readiness_error(
+                    'AFS production configuration is invalid and immutable.');
+            }
+            $this->save();
+        }
     }
 
     function save()
     {
+        if (fm_is_afs_mode()) {
+            return false;
+        }
         global $config_file;
         $fm_file = is_readable($config_file) ? $config_file : __FILE__;
         $var_name = '$CONFIG';
@@ -3808,15 +4815,18 @@ function fm_show_nav_path($path)
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="navbarDropdownMenuLink-5" data-bs-theme="<?php echo FM_THEME; ?>">
-                                <?php if (!FM_READONLY): ?>
+                                <?php if (!FM_READONLY && FM_SETTINGS_ENABLED): ?>
                                     <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                                 <?php endif ?>
                                 <a title="<?php echo lng('Help') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;help=2"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?php echo lng('Help') ?></a>
-                                <a title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link" href="?logout=1"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></a>
+                                <form method="post" action="<?php echo fm_enc(FM_SELF_URL) ?>" class="m-0">
+                                    <input type="hidden" name="token" value="<?php echo fm_enc($_SESSION['token']) ?>">
+                                    <button type="submit" name="logout" value="1" title="<?php echo lng('Logout') ?>" class="dropdown-item nav-link text-start"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php echo lng('Logout') ?></button>
+                                </form>
                             </div>
                         </li>
                     <?php else: ?>
-                        <?php if (!FM_READONLY): ?>
+                        <?php if (!FM_READONLY && FM_SETTINGS_ENABLED): ?>
                             <li class="nav-item">
                                 <a title="<?php echo lng('Settings') ?>" class="dropdown-item nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;settings=1"><i class="fa fa-cog" aria-hidden="true"></i> <?php echo lng('Settings') ?></a>
                             </li>
@@ -5016,6 +6026,7 @@ function fm_show_header_login()
                 return false;
             }
 
+            <?php if (FM_URL_UPLOAD_ENABLED === true): ?>
             // Upload files using URL @param {Object}
             function upload_from_url($this) {
                 let form = $($this),
@@ -5052,6 +6063,7 @@ function fm_show_header_login()
                 });
                 return false;
             }
+            <?php endif; ?>
 
             // Search template
             function search_template(data) {
@@ -5552,6 +6564,17 @@ function fm_show_header_login()
         $tr['en']['DirectLink']     = 'Direct link';
         $tr['en']['UploadingFiles'] = 'Upload Files';
         $tr['en']['ChangePermissions']  = 'Change Permissions';
+        $tr['en']['lookup']          = 'lookup';
+        $tr['en']['read']            = 'read';
+        $tr['en']['write']           = 'write';
+        $tr['en']['insert']          = 'insert';
+        $tr['en']['delete']          = 'delete';
+        $tr['en']['lock']            = 'lock';
+        $tr['en']['admin']           = 'admin';
+        $tr['en']['normalRights']    = 'Normal Rights';
+        $tr['en']['negativeRights']  = 'Negative Rights';
+        $tr['en']['Unable to read the current AFS ACL'] = 'Unable to read the current AFS ACL';
+        $tr['en']['Inherited AuriStor ACLs are read-only here'] = 'Inherited AuriStor ACLs are read-only here';
         $tr['en']['Copying']        = 'Copying';
         $tr['en']['CreateNewItem']  = 'Create New Item';
         $tr['en']['Name']           = 'Name';

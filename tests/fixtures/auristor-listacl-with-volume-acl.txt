@@ -1,0 +1,12 @@
+Access list for /afs/example is
+Normal rights:
+  system:anyuser rl
+  alice rlidwkaABCDEFGH
+Negative rights:
+  blocked lk
+Volume access list for example.volume is
+Normal rights:
+  system:anyuser rl
+  compliance A
+Negative rights:
+  blocked r

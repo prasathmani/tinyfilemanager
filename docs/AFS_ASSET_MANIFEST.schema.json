@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tinyfilemanager.local/schemas/afs-assets-v1.json",
+  "title": "Tiny File Manager AFS production asset manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "assets"],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "css-bootstrap",
+        "css-dropzone",
+        "css-font-awesome",
+        "css-highlightjs",
+        "js-ace",
+        "js-bootstrap",
+        "js-dropzone",
+        "js-jquery",
+        "js-jquery-datatables",
+        "js-highlightjs"
+      ],
+      "properties": {
+        "css-bootstrap": { "$ref": "#/$defs/style" },
+        "css-dropzone": { "$ref": "#/$defs/style" },
+        "css-font-awesome": { "$ref": "#/$defs/style" },
+        "css-highlightjs": { "$ref": "#/$defs/style" },
+        "js-ace": { "$ref": "#/$defs/script" },
+        "js-bootstrap": { "$ref": "#/$defs/script" },
+        "js-dropzone": { "$ref": "#/$defs/script" },
+        "js-jquery": { "$ref": "#/$defs/script" },
+        "js-jquery-datatables": { "$ref": "#/$defs/script" },
+        "js-highlightjs": { "$ref": "#/$defs/script" }
+      }
+    }
+  },
+  "$defs": {
+    "common": {
+      "type": "object",
+      "required": ["type", "path", "sha256", "license", "defer"],
+      "properties": {
+        "type": { "enum": ["style", "script"] },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[%?#\\\\])[!-~]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "license": {
+          "enum": ["MIT", "BSD-3-Clause", "Apache-2.0", "OFL-1.1"]
+        },
+        "defer": { "type": "boolean" }
+      }
+    },
+    "style": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "properties": {
+            "type": { "const": "style" },
+            "defer": { "const": false }
+          }
+        }
+      ]
+    },
+    "script": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "properties": {
+            "type": { "const": "script" }
+          }
+        }
+      ]
+    }
+  }
+}
