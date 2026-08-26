@@ -7,7 +7,7 @@
 [![Paypal](https://img.shields.io/badge/Donate-Paypal-lightgrey.svg?style=flat-square)](https://www.paypal.me/prasathmani)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/prasathmani)
 
-> TinyFileManager is a versatile web-based PHP file manager designed for simplicity and efficiency. This lightweight single-file PHP application can be effortlessly integrated into any server directory, allowing users to store, upload, edit, and manage files and folders directly through their web browser.
+> TinyFileManager is a versatile web-based PHP file manager designed for simplicity and efficiency. This lightweight PHP application can be integrated into a server directory, allowing users to store, upload, edit, and manage files and folders directly through their web browser.
 With multi-language support and compatibility with PHP 5.5+, TinyFileManager enables the creation of individual user accounts, each with its dedicated directory. The platform also includes built-in functionality for handling text files using the Cloud9 IDE.
 Featuring syntax highlighting for over 150 languages and more than 35 themes, TinyFileManager offers a comprehensive solution for file management in an online environment.
 
@@ -33,8 +33,13 @@ Tinyfilemanager is highly documented on the [wiki pages](https://github.com/pras
 
 Download ZIP with latest version from master branch.
 
-Just copy the tinyfilemanager.php to your webspace - thats all :)
+Copy `tinyfilemanager.php`, `lib`, and `assets` to your webspace. The root-confinement and mutation-request libraries and hash-pinned local browser assets are required and must remain next to the script. Deployments serving assets from another same-origin path may set `$asset_base_url` in `config.php`.
 You can also change the file name from "tinyfilemanager.php" to something else, you know what i meant for.
+
+The compatibility-pilot profile intentionally disables server-side URL upload,
+recursive search, archive create/extract, remote viewers, active inline preview,
+and the Ace editor. Ordinary list, create, upload, edit, copy, move, rename,
+delete, and attachment download operations remain available.
 
 Default username/password: **admin/admin@123** and **user/12345**.
 
@@ -43,6 +48,20 @@ Default username/password: **admin/admin@123** and **user/12345**.
 To enable/disable authentication set `$use_auth` to true or false.
 
 :information_source: Add your own configuration file [config.php](https://tinyfilemanager.github.io/config-sample.txt) in the same folder to use as additional configuration file.
+
+Reverse-proxy or SSO deployments can require every POST and every recognized
+mutation attempt to carry the current session CSRF token and one exact HTTPS
+origin:
+
+```php
+$require_post_for_mutations = true;
+$required_mutation_origin = 'https://files.example.org';
+```
+
+The web server or CGI launcher must preserve the browser's `Origin` header as
+`HTTP_ORIGIN`. Missing, duplicated, or non-exact origins and missing or stale
+tokens are rejected before route dispatch. The policy defaults off for
+backward compatibility; individual legacy route checks remain in place.
 
 :information_source: To work offline without CDN resources, use [offline](https://github.com/prasathmani/tinyfilemanager/tree/offline) branch
 
