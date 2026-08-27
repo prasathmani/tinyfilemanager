@@ -29,6 +29,11 @@ Tinyfilemanager is highly documented on the [wiki pages](https://github.com/pras
 - PHP 5.5.0 or higher.
 - Fileinfo, iconv, zip, tar and mbstring extensions are strongly recommended.
 
+## Containers
+
+The maintained Apache/PHP container, Compose file, and quick start are in
+[`contrib/container`](contrib/container/README.md).
+
 ## How to use
 
 Download ZIP with latest version from master branch.

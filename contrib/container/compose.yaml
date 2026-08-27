@@ -1,0 +1,42 @@
+name: ${TFM_PROJECT:?Set TFM_PROJECT to a unique Compose project name}
+
+services:
+  tinyfilemanager:
+    image: tinyfilemanager:${TFM_PROJECT}
+    build:
+      context: ../..
+      dockerfile: contrib/container/Dockerfile
+    init: true
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - KILL
+      - NET_BIND_SERVICE
+      - SETGID
+      - SETUID
+    ports:
+      - "127.0.0.1:${TFM_PORT:-8080}:80"
+    volumes:
+      - type: bind
+        source: ./config.php
+        target: /var/www/html/config.php
+        read_only: true
+        bind:
+          create_host_path: false
+          selinux: Z
+      - type: volume
+        source: data
+        target: /srv/tinyfilemanager/data
+    tmpfs:
+      - /run:rw,nosuid,nodev,size=16m,mode=0755
+      - /tmp:rw,noexec,nosuid,nodev,size=256m,mode=1777
+    stop_grace_period: 20s
+
+volumes:
+  data:

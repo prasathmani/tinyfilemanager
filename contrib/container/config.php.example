@@ -1,0 +1,37 @@
+<?php
+
+// Keep application redirects relative and independent of request Host headers.
+define('FM_SELF_URL', '/index.php');
+define('FM_ROOT_URL', '');
+
+// Generate this value with the command documented in README.md.
+$auth_users = array(
+    'admin' => 'REPLACE_WITH_PASSWORD_HASH',
+);
+
+$use_auth = true;
+$readonly_users = array();
+$directories_users = array();
+$global_readonly = false;
+
+// Managed data stays outside Apache's document root.
+$root_path = '/srv/tinyfilemanager/data';
+$root_url = '';
+$path_display_mode = 'relative';
+
+$default_timezone = 'Etc/UTC';
+$max_upload_size_bytes = 268435456; // 256 MiB
+$upload_chunk_size_bytes = 2097152; // 2 MiB
+
+// Set true only when every browser request arrives through a TLS proxy.
+$container_tls_proxy = false;
+if ($container_tls_proxy) {
+    ini_set('session.cookie_secure', '1');
+}
+
+// Safer defaults for a self-hosted local-filesystem service.
+$online_viewer = false;
+$settings_enabled = false;
+$direct_links_enabled = false;
+$raw_previews_enabled = false;
+$url_upload_enabled = false;

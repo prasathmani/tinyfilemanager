@@ -1,2 +1,6 @@
 *.php text eol=lf
 *.json text eol=lf
+contrib/container/Dockerfile text eol=lf
+contrib/container/container-entrypoint text eol=lf
+contrib/container/container-healthcheck text eol=lf
+contrib/container/hash-password text eol=lf

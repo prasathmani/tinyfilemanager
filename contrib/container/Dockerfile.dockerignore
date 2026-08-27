@@ -1,0 +1,21 @@
+**
+
+!tinyfilemanager.php
+!translation.json
+!LICENSE
+!contrib/
+!contrib/container/
+!contrib/container/apache.conf
+!contrib/container/container-entrypoint
+!contrib/container/container-healthcheck
+!contrib/container/hash-password
+!contrib/container/healthz.php
+!contrib/container/php.ini
+!contrib/container/validate-config.php
+!contrib/container/vhost.conf
+
+# Runtime configuration and credentials must never enter the build context.
+contrib/container/config.php
+**/*.key
+**/*.pem
+**/secrets/**

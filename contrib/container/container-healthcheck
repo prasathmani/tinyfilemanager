@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+exec php -r '
+$socket = @fsockopen("127.0.0.1", 80, $errorCode, $errorMessage, 2);
+if ($socket === false) {
+    exit(1);
+}
+fwrite($socket, "GET /healthz.php HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+$status = fgets($socket);
+fclose($socket);
+exit(is_string($status) && preg_match("~^HTTP/[0-9.]+ 204 ~", $status) ? 0 : 1);
+'

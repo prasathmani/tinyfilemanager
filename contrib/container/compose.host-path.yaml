@@ -1,0 +1,9 @@
+services:
+  tinyfilemanager:
+    volumes:
+      - type: bind
+        source: "${TFM_DATA_PATH:?Set TFM_DATA_PATH to an existing absolute host directory}"
+        target: /srv/tinyfilemanager/data
+        bind:
+          create_host_path: false
+          selinux: Z

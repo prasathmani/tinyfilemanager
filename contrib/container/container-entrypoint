@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+fail() {
+    printf 'tinyfilemanager: %s\n' "$1" >&2
+    exit 1
+}
+
+if [ "${1:-}" = "apache2-foreground" ]; then
+    config=/var/www/html/config.php
+    data_root=/srv/tinyfilemanager/data
+
+    [ -s "$config" ] \
+        || fail 'mount a non-empty config.php at /var/www/html/config.php'
+    runuser -u www-data -- test -r "$config" \
+        || fail 'config.php must be readable by the Apache worker'
+    if runuser -u www-data -- test -w "$config"; then
+        fail 'config.php must be mounted read-only'
+    fi
+    if grep -Fq 'REPLACE_WITH_PASSWORD_HASH' "$config"; then
+        fail 'replace the placeholder password hash in config.php'
+    fi
+
+    php -l "$config" > /dev/null
+    runuser -u www-data -- php \
+        /usr/local/lib/tinyfilemanager/validate-config.php "$config"
+
+    [ -d "$data_root" ] || fail 'the data volume is not mounted'
+    runuser -u www-data -- test -r "$data_root" \
+        || fail 'the data directory is not readable by UID 33'
+    runuser -u www-data -- test -w "$data_root" \
+        || fail 'the data directory is not writable by UID 33'
+    runuser -u www-data -- test -x "$data_root" \
+        || fail 'the data directory is not searchable by UID 33'
+
+    install -d -m 0755 /run/apache2 /run/lock/apache2
+    install -d -o www-data -g www-data -m 0700 \
+        /tmp/tinyfilemanager-sessions /tmp/tinyfilemanager-uploads
+fi
+
+exec "$@"
