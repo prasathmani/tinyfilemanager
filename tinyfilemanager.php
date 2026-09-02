@@ -43,6 +43,12 @@ $global_readonly = false;
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
 $directories_users = array();
 
+// Enable Markdown files (.md) preview in view's page
+$use_markdown = true;
+
+// Enable Mermaid diagrams (https://mermaid.js.org/) in markdown files
+$use_mermaid = true;
+
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 
@@ -185,6 +191,8 @@ $external = array(
     'js-jquery' => '<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>',
     'js-jquery-datatables' => '<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js" crossorigin="anonymous" defer></script>',
     'js-highlightjs' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>',
+    'js-marked' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/18.0.11/lib/marked.umd.min.js" integrity="sha512-spWXz/aNScpDSOz0auQxbzVBx6LmlxjgH7zilyCenKLGEyBje0iSJiLGsdPlrfNqFitWXRDdAXo1Bi7bonkZ6A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
+    'js-mermaid' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.15.0/mermaid.min.js" integrity="sha512-HH52omhHpZF6RfVnGiQwYgYm4H/ya2xsZYLl5xJ4+tLfX+rN4+8zF7V/H/KLeicPrKZYi1g6iBmVkk2AhXTGlg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
 );
@@ -473,6 +481,8 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
 define('FM_EDIT_FILE', $edit_files);
+define('FM_USE_MARKDOWN', $use_markdown);
+define('FM_USE_MERMAID', $use_mermaid);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
 defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
@@ -1765,6 +1775,7 @@ if (isset($_GET['view'])) {
 
     $is_zip = false;
     $is_gzip = false;
+    $is_md = false;
     $is_image = false;
     $is_audio = false;
     $is_video = false;
@@ -1778,6 +1789,14 @@ if (isset($_GET['view'])) {
 
     if ($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())) {
         $is_onlineViewer = true;
+    } elseif ($ext == 'md' || $ext == 'markdown') {
+        if ( FM_USE_MARKDOWN ) {
+            $is_md = true;
+            $view_title = 'Markdown';
+        } else {
+            $is_text = true;
+        }
+        $content = file_get_contents($file_path);
     } elseif ($ext == 'zip' || $ext == 'tar') {
         $is_zip = true;
         $view_title = 'Archive';
@@ -1915,6 +1934,14 @@ if (isset($_GET['view'])) {
                 } elseif ($is_video) {
                     // Video content
                     echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
+                } elseif (FM_USE_MARKDOWN && $is_md) {
+                    // Markdown content
+                    echo '<div id="markdown-content">'. fm_enc($content) . '</div>';
+                    echo '<script>document.getElementById("markdown-content").innerHTML=marked.parse(document.getElementById("markdown-content").innerHTML);';
+                    if (FM_USE_MERMAID):
+                        echo 'mermaid.run({querySelector:".mermaid",suppressErrors:true});';
+                    endif;
+                    echo '</script>';
                 } elseif ($is_text) {
                     if (FM_USE_HIGHLIGHTJS) {
                         // highlight
@@ -2969,7 +2996,7 @@ function fm_get_file_icon_class($path)
         case 'config':
         case 'twig':
         case 'tpl':
-        case 'md':
+        // case 'md':
         case 'gitignore':
         case 'c':
         case 'cpp':
@@ -3128,6 +3155,9 @@ function fm_get_file_icon_class($path)
         case 'bat':
             $img = 'fa fa-terminal';
             break;
+        case 'md':
+            $img = 'fa fa-markdown';
+            break;
         default:
             $img = 'fa fa-info-circle';
     }
@@ -3209,7 +3239,7 @@ function fm_get_text_exts()
         'bat',
         'twig',
         'tpl',
-        'md',
+        // 'md',
         'gitignore',
         'less',
         'sass',
@@ -4038,8 +4068,23 @@ function fm_show_header_login()
         <?php if (FM_USE_HIGHLIGHTJS && isset($_GET['view'])): ?>
             <?php print_external('css-highlightjs'); ?>
         <?php endif; ?>
+        <?php if (FM_USE_MARKDOWN && isset($_GET['view'])): ?>
+            <?php print_external('js-marked'); ?>
+            <?php if (FM_USE_MERMAID): ?>
+                <?php print_external('js-mermaid'); ?>
+            <?php endif; ?>
+        <?php endif; ?>
         <script type="text/javascript">
             window.csrf = '<?php echo $_SESSION['token']; ?>';
+
+            marked.use({
+                renderer: {
+                    code: function ({text: code, lang}) {
+                        if (lang == 'mermaid') return `<pre class="mermaid">${code}</pre>`;
+                        return `<pre>${code}</pre>`;
+                    }
+                }
+            });
         </script>
         <style>
             html {
