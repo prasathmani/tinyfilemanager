@@ -356,6 +356,9 @@ if ($use_auth) {
         sleep(1);
         if (function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']]) && verifyToken($_POST['token'])) {
+                // Prevent session fixation: issue a fresh session id on successful login
+                // so a pre-authentication session cookie cannot be replayed afterwards.
+                session_regenerate_id(true);
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL);
