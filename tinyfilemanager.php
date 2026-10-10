@@ -2758,6 +2758,14 @@ function fm_get_translations($tr)
  */
 function fm_get_size($file)
 {
+    // 64-bit PHP: filesize() is exact for any size, no need to spawn a process per file
+    if (PHP_INT_SIZE >= 8) {
+        $size = @filesize($file);
+        if ($size !== false) {
+            return $size;
+        }
+    }
+
     static $iswin = null;
     static $isdarwin = null;
     static $exec_works = null;
