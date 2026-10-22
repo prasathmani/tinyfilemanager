@@ -12,6 +12,7 @@ services:
    
     environment:
       TZ: UTC
+      PHP_OPCACHE_ENABLE: 1
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]

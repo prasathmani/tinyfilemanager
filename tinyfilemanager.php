@@ -2707,15 +2707,19 @@ function fm_get_display_path($file_path)
  */
 function fm_is_exclude_items($name, $path)
 {
-    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-    if (isset($exclude_items) and sizeof($exclude_items)) {
-        unset($exclude_items);
-    }
-
-    $exclude_items = FM_EXCLUDE_ITEMS;
-    if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+   $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    
+    // Explicitly define fallback to prevent PHP 8.x undefined variable panics
+    $exclude_items = defined('FM_EXCLUDE_ITEMS') ? FM_EXCLUDE_ITEMS : array();
+    
+    if (is_string($exclude_items) && version_compare(PHP_VERSION, '7.0.0', '<')) {
         $exclude_items = unserialize($exclude_items);
     }
+    
+    if (!is_array($exclude_items)) {
+        $exclude_items = array();
+    }
+
     if (!in_array($name, $exclude_items) && !in_array("*.$ext", $exclude_items) && !in_array($path, $exclude_items)) {
         return true;
     }
@@ -2819,22 +2823,21 @@ function fm_get_filesize($size)
  */
 function fm_get_zip_info($path, $ext)
 {
-    if ($ext == 'zip' && function_exists('zip_open')) {
-        $arch = @zip_open($path);
-        if ($arch) {
+    if ($ext == 'zip' && class_exists('ZipArchive')) {
+        $zip = new ZipArchive();
+        if ($zip->open($path) === true) {
             $filenames = array();
-            while ($zip_entry = @zip_read($arch)) {
-                $zip_name = @zip_entry_name($zip_entry);
-                $zip_folder = substr($zip_name, -1) == '/';
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $stat = $zip->statIndex($i);
+                $zip_folder = substr($stat['name'], -1) == '/';
                 $filenames[] = array(
-                    'name' => $zip_name,
-                    'filesize' => @zip_entry_filesize($zip_entry),
-                    'compressed_size' => @zip_entry_compressedsize($zip_entry),
+                    'name' => $stat['name'],
+                    'filesize' => $stat['size'],
+                    'compressed_size' => $stat['comp_size'],
                     'folder' => $zip_folder
-                    //'compression_method' => zip_entry_compressionmethod($zip_entry),
                 );
             }
-            @zip_close($arch);
+            $zip->close();
             return $filenames;
         }
     } elseif ($ext == 'tar' && class_exists('PharData')) {
