@@ -48,7 +48,7 @@ $use_highlightjs = true;
 
 // highlight.js style
 // for dark theme use 'ir-black'
-$highlightjs_style = 'vs';
+$highlightjs_style = 'github-dark';
 
 // Enable ace.js (https://ace.c9.io/) on view's page
 $edit_files = true;
@@ -75,7 +75,9 @@ $iconv_input_encoding = 'UTF-8';
 
 // date() format for file modification date
 // Doc - https://www.php.net/manual/en/function.date.php
-$datetime_format = 'm/d/Y g:i A';
+// NOTE: now taken from translation key 'DateTimeFormat' (see FM_DATETIME_FORMAT below).
+// The line below is kept as a reference for the old default.
+//$datetime_format = 'm/d/Y g:i A';
 
 // Path display mode when viewing file information
 // 'full' => show full path
@@ -94,7 +96,7 @@ $allowed_upload_extensions = '';
 // Favicon path. This can be either a full url to an .PNG image, or a path based on the document root.
 // full path, e.g http://example.com/favicon.png
 // local path, e.g images/icons/favicon.png
-$favicon_path = '';
+$favicon_path = 'https://avatars.githubusercontent.com/u/11345598?s=60&v=4';
 
 // Files and folders to excluded from listing
 // e.g. array('myfile.html', 'personal-folder', '*.php', '/path/to/folder', ...)
@@ -416,9 +418,16 @@ if ($use_auth) {
                                 </form>
                             </div>
                         </div>
-                        <div class="footer text-center">
-                            &mdash;&mdash; &copy;
+                        <div class="footer text-center" data-bs-theme="<?php echo FM_THEME; ?>">
+                            <br>
+                            <br>
+                            &mdash;&mdash; &copy; 2017-<?php echo date('Y'); ?>
                             <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-decoration-none text-muted" data-version="<?php echo VERSION; ?>">CCP Programmers</a> &mdash;&mdash;
+                            <br>
+                            <br>
+                            <br>
+                            <br>
+                            <br> 
                         </div>
                     </div>
                 </div>
@@ -476,8 +485,11 @@ define('FM_EDIT_FILE', $edit_files);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
 defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
-defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
-
+$i18n_datetime_format = function_exists('lng') ? lng('DateTimeFormat') : '';
+if (empty($i18n_datetime_format) || $i18n_datetime_format === 'DateTimeFormat') {
+    $i18n_datetime_format = 'm/d/Y g:i A';
+}
+defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $i18n_datetime_format);
 unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
 
 /*************************** ACTIONS ***************************/
@@ -580,10 +592,6 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         if ($cfg->data['error_reporting'] != $erp) {
             $cfg->data['error_reporting'] = $erp;
             $report_errors = $erp;
-        }
-        if ($cfg->data['show_hidden'] != $shf) {
-            $cfg->data['show_hidden'] = $shf;
-            $show_hidden_files = $shf;
         }
         if ($cfg->data['show_hidden'] != $shf) {
             $cfg->data['show_hidden'] = $shf;
@@ -1669,12 +1677,15 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     </div>
 
                     <div class="mb-3 row">
-                        <div class="col-sm-10">
-                            <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?></button>
+                        <div class="col-sm-10 d-flex gap-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?>
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="window.location.href='?p='">
+                                <i class="fa fa-reply-all"></i> <?php echo lng('Back'); ?>
+                            </button>
                         </div>
                     </div>
-
-                    <small class="text-body-secondary">* <?php echo lng('Sometimes the save action may not work on the first try, so please attempt it again') ?>.</small>
                 </form>
             </div>
         </div>
@@ -1703,7 +1714,7 @@ if (isset($_GET['help'])) {
                         <h3><a href="https://github.com/prasathmani/tinyfilemanager" target="_blank" class="app-v-title"> <?php echo lng("AppName")." ".VERSION; ?></a></h3>
                         </p>
                         <p><strong><?php echo lng('Author') ?></strong>: PRAŚATH MANİ</p>
-                        <p><strong><?php echo lng('Mail Us') ?></strong>: <a href="mailto:ccpprogrammers@gmail.com">ccpprogrammers [at] gmail [dot] com</a></p>
+                        <p><strong><?php echo lng('Mail Us') ?></strong>: <a href="mailto:ccpprogrammers@gmail.com">📧<?php echo lng('ContactAuthorEmail') ?></a></p>
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="card">
@@ -2391,11 +2402,11 @@ function print_external($key)
 
     if (!array_key_exists($key, $external)) {
         // throw new Exception('Key missing in external: ' . key);
-        echo "<!-- EXTERNAL: MISSING KEY $key -->";
+        echo "<!-- EXTERNAL: MISSING KEY $key -->\n";
         return;
     }
 
-    echo "$external[$key]";
+    echo $external[$key] . "\n";
 }
 
 /**
@@ -3836,10 +3847,42 @@ function fm_show_message()
 {
     if (isset($_SESSION[FM_SESSION_ID]['message'])) {
         $class = isset($_SESSION[FM_SESSION_ID]['status']) ? $_SESSION[FM_SESSION_ID]['status'] : 'ok';
-        echo '<p class="message ' . $class . '">' . $_SESSION[FM_SESSION_ID]['message'] . '</p>';
+        echo '<p class="message ' . $class . ' auto-dismiss-message">' . $_SESSION[FM_SESSION_ID]['message'] . '</p>';
+        echo '<script>
+            setTimeout(function() {
+                document.querySelectorAll(".auto-dismiss-message").forEach(function(msg) {
+                    msg.style.transition = "opacity 0.5s ease";
+                    msg.style.opacity = "0";
+                    setTimeout(function() { msg.remove(); }, 500);
+                });
+            }, 3000);
+        </script>';
         unset($_SESSION[FM_SESSION_ID]['message']);
         unset($_SESSION[FM_SESSION_ID]['status']);
     }
+}
+
+/**
+ * Return a <link rel="icon"> tag based on the favicon path/extension
+ */
+function fm_favicon_link($favicon_path)
+{
+    if (!$favicon_path) return '';
+    $path_only = parse_url($favicon_path, PHP_URL_PATH);
+    $ext = strtolower(pathinfo($path_only, PATHINFO_EXTENSION));
+    $mime_map = array(
+        'png'  => 'image/png',
+        'svg'  => 'image/svg+xml',
+        'ico'  => 'image/x-icon',
+        'gif'  => 'image/gif',
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp',
+        'avif' => 'image/avif',
+    );
+    $favicon_type = isset($mime_map[$ext]) ? $mime_map[$ext] : '';
+    $type_attr = $favicon_type ? ' type="' . $favicon_type . '"' : '';
+    return '<link rel="icon" href="' . fm_enc($favicon_path) . '"' . $type_attr . '>' . "\n";
 }
 
 /**
@@ -3852,10 +3895,10 @@ function fm_show_header_login()
     header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
     header("Pragma: no-cache");
 
-    global $favicon_path;
+    global $favicon_path, $lang;
 ?>
     <!DOCTYPE html>
-    <html lang="en" data-bs-theme="<?php echo (FM_THEME == "dark") ? 'dark' : 'light' ?>">
+    <html lang="<?php echo htmlspecialchars($lang ?: 'en'); ?>" data-bs-theme="<?php echo FM_THEME; ?>">
 
     <head>
         <meta charset="utf-8">
@@ -3864,121 +3907,97 @@ function fm_show_header_login()
         <meta name="author" content="CCP Programmers">
         <meta name="robots" content="noindex, nofollow">
         <meta name="googlebot" content="noindex">
-        <?php if ($favicon_path) {
-            echo '<link rel="icon" href="' . fm_enc($favicon_path) . '" type="image/png">';
-        } ?>
+        <?php echo fm_favicon_link($favicon_path); ?>
         <title><?php echo fm_enc(APP_TITLE) ?></title>
         <?php print_external('pre-jsdelivr'); ?>
         <?php print_external('css-bootstrap'); ?>
         <style>
-            body.fm-login-page {
-                background-color: #f7f9fb;
-                font-size: 14px;
-                background-color: #f7f9fb;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%23e2e9f1' fill-opacity='0.4' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E");
-            }
+        body.fm-login-page {
+            background-color: #f7f9fb;
+            font-size: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%23e2e9f1' fill-opacity='0.4' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E");
+        }
 
-            .fm-login-page .brand {
-                width: 121px;
-                overflow: hidden;
-                margin: 0 auto;
-                position: relative;
-                z-index: 1
-            }
+        .fm-login-page .brand {
+            width: 121px;
+            overflow: hidden;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1
+        }
+        .fm-login-page .brand img { width: 100% }
+        .fm-login-page .card-wrapper { width: 360px; }
+        .fm-login-page .card {
+            border-color: transparent;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .05)
+        }
+        .fm-login-page .card-title {
+            margin-bottom: 1.5rem;
+            font-size: 24px;
+            font-weight: 400;
+        }
+        .fm-login-page .form-control { border-width: 2.3px }
+        .fm-login-page .form-group label { width: 100% }
+        .fm-login-page .btn.btn-block { padding: 12px 10px }
+        .fm-login-page .footer {
+            margin: 20px 0;
+            color: #888;
+            text-align: center
+        }
 
-            .fm-login-page .brand img {
-                width: 100%
-            }
+        @media screen and (max-width:425px) {
+            .fm-login-page .card-wrapper { width: 90%; margin: 0 auto; margin-top: 10%; }
+        }
+        @media screen and (max-width:320px) {
+            .fm-login-page .card.fat { padding: 0 }
+            .fm-login-page .card.fat .card-body { padding: 15px }
+        }
 
-            .fm-login-page .card-wrapper {
-                width: 360px;
-            }
+        .message {
+            padding: 4px 7px;
+            border: 1px solid #ddd;
+            background-color: #fff
+        }
+        .message.ok    { border-color: green;  color: green }
+        .message.error { border-color: red;    color: red }
+        .message.alert { border-color: orange; color: orange }
 
-            .fm-login-page .card {
-                border-color: transparent;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, .05)
-            }
+        .h-100vh { min-height: 100vh; }
 
-            .fm-login-page .card-title {
-                margin-bottom: 1.5rem;
-                font-size: 24px;
-                font-weight: 400;
-            }
 
-            .fm-login-page .form-control {
-                border-width: 2.3px
-            }
+        body.fm-login-page.theme-dark {
+            background-color: #1c2429;
+            color: #CFD8DC;
+        }
 
-            .fm-login-page .form-group label {
-                width: 100%
-            }
-
-            .fm-login-page .btn.btn-block {
-                padding: 12px 10px
-            }
-
-            .fm-login-page .footer {
-                margin: 20px 0;
-                color: #888;
-                text-align: center
-            }
-
-            @media screen and (max-width:425px) {
-                .fm-login-page .card-wrapper {
-                    width: 90%;
-                    margin: 0 auto;
-                    margin-top: 10%;
-                }
-            }
-
-            @media screen and (max-width:320px) {
-                .fm-login-page .card.fat {
-                    padding: 0
-                }
-
-                .fm-login-page .card.fat .card-body {
-                    padding: 15px
-                }
-            }
-
-            .message {
-                padding: 4px 7px;
-                border: 1px solid #ddd;
-                background-color: #fff
-            }
-
-            .message.ok {
-                border-color: green;
-                color: green
-            }
-
-            .message.error {
-                border-color: red;
-                color: red
-            }
-
-            .message.alert {
-                border-color: orange;
-                color: orange
-            }
-
-            body.fm-login-page.theme-dark {
-                background-color: #2f2a2a;
-            }
-
-            .theme-dark svg g,
-            .theme-dark svg path {
-                fill: #ffffff;
-            }
-
-            .theme-dark .form-control {
-                color: #fff;
-                background-color: #403e3e;
-            }
-
-            .h-100vh {
-                min-height: 100vh;
-            }
+        .theme-dark svg g,
+        .theme-dark svg path { fill: #ffffff; }
+        .theme-dark .card,
+        .theme-dark .card.fat {
+            background-color: #1c2429 !important;
+            border-color: #343434 !important;
+            color: #CFD8DC !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .theme-dark .card-body {
+            background-color: #1c2429 !important;
+            color: #CFD8DC !important;
+        }
+        .theme-dark .card-title { color: #CFD8DC !important; }
+        .theme-dark .form-control {
+            color: #CFD8DC;
+            background-color: #101518;
+            border-color: #343434;
+        }
+        .theme-dark .form-control::placeholder { color: #8892a0; }
+        .theme-dark label { color: #CFD8DC; }
+        .theme-dark .footer { color: #fff; }
+        .theme-dark .footer a { color: #66b2ff; }
+        .theme-dark .footer a:hover { color: #fff; }
+        .theme-dark .message { background-color: #212529; color: #CFD8DC; border-color: #343434; }
+        .theme-dark .message.ok    { color: #4ade80; border-color: #4ade80; }
+        .theme-dark .message.error { color: #f87171; border-color: #f87171; }
+        .theme-dark .message.alert { color: #fbbf24; border-color: #fbbf24; }
         </style>
     </head>
 
@@ -4027,9 +4046,7 @@ function fm_show_header_login()
         <meta name="author" content="CCP Programmers">
         <meta name="robots" content="noindex, nofollow">
         <meta name="googlebot" content="noindex">
-        <?php if ($favicon_path) {
-            echo '<link rel="icon" href="' . fm_enc($favicon_path) . '" type="image/png">';
-        } ?>
+        <?php echo fm_favicon_link($favicon_path); ?>
         <title><?php echo fm_enc(APP_TITLE) ?> | <?php echo (isset($_GET['view']) ? $_GET['view'] : ((isset($_GET['edit'])) ? $_GET['edit'] : "H3K")); ?></title>
         <?php print_external('pre-jsdelivr'); ?>
         <?php print_external('pre-cloudflare'); ?>
@@ -4226,8 +4243,15 @@ function fm_show_header_login()
             .preview-img {
                 max-width: 100%;
                 max-height: 80vh;
-                background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAKklEQVR42mL5//8/Azbw+PFjrOJMDCSCUQ3EABZc4S0rKzsaSvTTABBgAMyfCMsY4B9iAAAAAElFTkSuQmCC);
-                cursor: zoom-in
+                cursor: zoom-in;
+                background-color: #fff;
+                background-image: 
+                    linear-gradient(45deg, #eee 25%, transparent 25%), 
+                    linear-gradient(-45deg, #eee 25%, transparent 25%), 
+                    linear-gradient(45deg, transparent 75%, #eee 75%), 
+                    linear-gradient(-45deg, transparent 75%, #eee 75%);
+                background-size: 16px 16px;
+                background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
             }
 
             input#preview-img-zoomCheck[type=checkbox] {
@@ -4283,7 +4307,6 @@ function fm_show_header_login()
             }
 
             .filename {
-                max-width: 420px;
                 overflow: hidden;
                 text-overflow: ellipsis
             }
@@ -4403,25 +4426,29 @@ function fm_show_header_login()
                 display: none;
             }
 
-            table.dataTable thead .sorting {
-                cursor: pointer;
-                background-repeat: no-repeat;
-                background-position: center right;
-                background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAQAAADYWf5HAAAAkElEQVQoz7XQMQ5AQBCF4dWQSJxC5wwax1Cq1e7BAdxD5SL+Tq/QCM1oNiJidwox0355mXnG/DrEtIQ6azioNZQxI0ykPhTQIwhCR+BmBYtlK7kLJYwWCcJA9M4qdrZrd8pPjZWPtOqdRQy320YSV17OatFC4euts6z39GYMKRPCTKY9UnPQ6P+GtMRfGtPnBCiqhAeJPmkqAAAAAElFTkSuQmCC');
+            table.dataTable thead .sorting::after {
+                content: ' ⇅';
+                font-size: 13px;
+                color: #c0c0c0;
+                margin-left: 4px;
+                font-family: sans-serif;
             }
-
-            table.dataTable thead .sorting_asc {
-                cursor: pointer;
-                background-repeat: no-repeat;
-                background-position: center right;
-                background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAByUDbMAAAAZ0lEQVQ4y2NgGLKgquEuFxBPAGI2ahhWCsS/gDibUoO0gPgxEP8H4ttArEyuQYxAPBdqEAxPBImTY5gjEL9DM+wTENuQahAvEO9DMwiGdwAxOymGJQLxTyD+jgWDxCMZRsEoGAVoAADeemwtPcZI2wAAAABJRU5ErkJggg==');
+            table.dataTable thead .sorting_asc::after {
+                content: ' ▲';
+                font-size: 13px;
+                color: #007bff;
+                margin-left: 4px;
+                font-family: sans-serif;
             }
-
-            table.dataTable thead .sorting_desc {
-                cursor: pointer;
-                background-repeat: no-repeat;
-                background-position: center right;
-                background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAByUDbMAAAAZUlEQVQ4y2NgGAWjYBSggaqGu5FA/BOIv2PBIPFEUgxjB+IdQPwfC94HxLykus4GiD+hGfQOiB3J8SojEE9EM2wuSJzcsFMG4ttQgx4DsRalkZENxL+AuJQaMcsGxBOAmGvopk8AVz1sLZgg0bsAAAAASUVORK5CYII=');
+            table.dataTable thead .sorting_desc::after {
+                content: ' ▼';
+                font-size: 13px;
+                color: #007bff;
+                margin-left: 4px;
+                font-family: sans-serif;
+            }
+            table.dataTable thead th {
+                user-select: none;
             }
 
             table.dataTable thead tr:first-child th.custom-checkbox-header:first-child {
@@ -4654,87 +4681,127 @@ function fm_show_header_login()
         </style>
         <?php
         if (FM_THEME == "dark"): ?>
-            <style>
-                :root {
-                    --bs-bg-opacity: 1;
-                    --bg-color: #f3daa6;
-                    --bs-dark-rgb: 28, 36, 41 !important;
-                    --bs-bg-opacity: 1;
-                }
+        <style>
+            :root {
+                --bs-bg-opacity: 1;
+                --bg-color: #f3daa6;
+                --bs-dark-rgb: 28, 36, 41 !important;
+                --bs-bg-opacity: 1;
+            }
 
-                body.theme-dark {
-                    background-image: linear-gradient(90deg, #1c2429, #263238);
-                    color: #CFD8DC;
-                }
+            body.theme-dark {
+                background-image: linear-gradient(90deg, #1c2429, #263238);
+                color: #CFD8DC;
+            }
+            
+            .theme-dark a { color: #66b2ff; }
+            .theme-dark a:hover { color: #fff; }
 
-                .list-group .list-group-item {
-                    background: #343a40;
-                }
+            .theme-dark .table { color: #CFD8DC; }
+            .theme-dark .table td, .theme-dark .table th { border-color: #343434; }
+            .theme-dark .table-hover>tbody>tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            .theme-dark .table-hover>tbody>tr:hover>td {
+                color: #CFD8DC !important;
+                background-color: rgba(255, 255, 255, 0.08) !important;
+            }
+            .theme-dark #main-table .filename a { color: #CFD8DC; }
+            .theme-dark #main-table .filename a:hover { color: var(--bg-color); }
+            #main-table tr.even { background-color: #263238; }
 
-                .theme-dark .navbar-nav i,
-                .navbar-nav .dropdown-toggle,
-                .break-word {
-                    color: #CFD8DC;
-                }
+            .theme-dark .main-nav .navbar-brand { color: #ffffff !important; }
+            .theme-dark .navbar-nav i,
+            .theme-dark .navbar-nav .nav-link,
+            .theme-dark .navbar-nav .dropdown-toggle,
+            .theme-dark .break-word { color: #CFD8DC; }
+            .theme-dark .bread-crumb { color: #6c757d; }
+            .theme-dark i.fa.fa-folder-o,
+            .theme-dark i.go-back { color: var(--bg-color); }
 
-                a,
-                a:hover,
-                a:visited,
-                a:active,
-                #main-table .filename a,
-                i.fa.fa-folder-o,
-                i.go-back {
-                    color: var(--bg-color);
-                }
+            .theme-dark #search-addon,
+            .theme-dark #search-addon2,
+            .theme-dark .input-group-text.dropdown-toggle {
+                background-color: #101518 !important;
+                color: #CFD8DC !important;
+                border-color: #343434 !important;
+            }
+            .theme-dark #search-addon::placeholder { color: #8892a0 !important; }
 
-                ul#search-wrapper li:nth-child(odd) {
-                    background: #212a2f;
-                }
+            .theme-dark .dropdown-menu {
+                background-color: #1c2429 !important;
+                border-color: #343434 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            }
+            .theme-dark .dropdown-item { color: #CFD8DC !important; }
+            .theme-dark .dropdown-item:hover {
+                background-color: #2d3740 !important;
+                color: #fff !important;
+            }
 
-                .theme-dark .btn-outline-primary {
-                    color: #b8e59c;
-                    border-color: #b8e59c;
-                }
+            .theme-dark .card {
+                background-color: #1c2429 !important;
+                border-color: #343434 !important;
+                color: #CFD8DC !important;
+            }
+            .theme-dark .card-header {
+                background-color: #263238 !important;
+                border-color: #343434 !important;
+                color: #CFD8DC !important;
+            }
+            .theme-dark .card-body { color: #CFD8DC !important; }
+            .theme-dark .list-group-item {
+                background-color: #1c2429 !important;
+                color: #CFD8DC !important;
+                border-color: #343434 !important;
+            }
+            .theme-dark .list-group-item a { color: #66b2ff !important; }
+            .theme-dark .list-group-item a:hover { color: #fff !important; }
 
-                .theme-dark .btn-outline-primary:hover,
-                .theme-dark .btn-outline-primary:active {
-                    background-color: #2d4121;
-                }
+            .theme-dark .form-control,
+            .theme-dark .form-select {
+                background-color: #101518 !important;
+                color: #CFD8DC !important;
+                border-color: #343434 !important;
+            }
+            .theme-dark .form-control::placeholder { color: #8892a0 !important; }
+            .theme-dark .form-select option {
+                background-color: #1c2429 !important;
+                color: #CFD8DC !important;
+            }
+            .theme-dark .col-form-label { color: #CFD8DC !important; }
+            .theme-dark .text-body-secondary { color: #8892a0 !important; }
+            .theme-dark .text-danger { color: #f87171 !important; }
 
-                .theme-dark input.form-control {
-                    background-color: #101518;
-                    color: #CFD8DC;
-                }
+            .theme-dark .modal-content {
+                background-color: #1c2429 !important;
+                color: #CFD8DC !important;
+                border-color: #343434 !important;
+            }
+            .theme-dark .modal-header,
+            .theme-dark .modal-footer { border-color: #343434 !important; }
+            .theme-dark .modal-title { color: #CFD8DC !important; }
+            .theme-dark .btn-close { filter: invert(1) !important; }
+            .theme-dark .btn-link { color: #66b2ff !important; }
+            .theme-dark .btn-link:hover { color: #fff !important; }
 
-                .theme-dark .dropzone {
-                    background: transparent;
-                }
+            .theme-dark td.gray, .theme-dark .fs-7 { color: #adb5bd !important; }
+            .theme-dark .badge.text-bg-light {
+                background-color: #2d3740 !important;
+                color: #CFD8DC !important;
+                border: 1px solid #495057 !important;
+            }
 
-                .theme-dark .inline-actions>a>i {
-                    background: #79755e;
-                }
+            table.dataTable thead .sorting::after { color: #6c757d; }
+            table.dataTable thead .sorting_asc::after,
+            table.dataTable thead .sorting_desc::after { color: #66b2ff; }
+            .theme-dark .message { background-color: #212529; color: #CFD8DC; }
+            .theme-dark .message.ok { color: #4ade80; border-color: #4ade80; }
+            .theme-dark .message.error { color: #f87171; border-color: #f87171; }
+            .theme-dark .message.alert { color: #fbbf24; border-color: #fbbf24; }
 
-                .theme-dark .text-white {
-                    color: #CFD8DC !important;
-                }
-
-                .theme-dark .table-bordered td,
-                .table-bordered th {
-                    border-color: #343434;
-                }
-
-                .theme-dark .table-bordered td .custom-control-input,
-                .theme-dark .table-bordered th .custom-control-input {
-                    opacity: 0.678;
-                }
-
-                .message {
-                    background-color: #212529;
-                }
-
-                form.dropzone {
-                    border-color: #79755e;
-                }
+            .theme-dark .dropzone { background: transparent; border-color: #79755e; }
+            .theme-dark .inline-actions>a>i { background: #79755e; color: #fff; }
             </style>
         <?php endif; ?>
     </head>
@@ -4991,7 +5058,11 @@ function fm_show_header_login()
                     data: form.serialize() + "&token=" + window.csrf + "&ajax=" + true,
                     success: function(data) {
                         if (data) {
-                            window.location.reload();
+                            var url = new URL(window.location.href);
+                            url.searchParams.set('t', Date.now());
+                            setTimeout(function () {
+                                window.location.replace(url.toString());
+                            }, 2600);
                         }
                     }
                 });
@@ -5635,7 +5706,7 @@ function fm_show_header_login()
         $tr['en']['File size']                                      = 'File size';
         $tr['en']['MIME-type']                                      = 'MIME-type';
         $tr['en']['a files']                                        = 'files';
-// Pre-existing inputs that were never inserted into the lng() function
+        // Pre-existing inputs that were never inserted into the lng() function
         $tr['en']['Cannot open file! Aborting download'] = 'Cannot open file! Aborting download';
         $tr['en']['Charset']            = 'Charset';
         $tr['en']['Compression']        = 'Compression';
@@ -5669,7 +5740,6 @@ function fm_show_header_login()
         $tr['en']['Selected files and folders copied'] = 'Selected files and folders copied';
         $tr['en']['Selected files and folders moved']  = 'Selected files and folders moved';
         $tr['en']['Size in archive']    = 'Size in archive';
-        $tr['en']['Sometimes the save action may not work on the first try, so please attempt it again'] = 'Sometimes the save action may not work on the first try, so please attempt it again';
         $tr['en']['Tar']                = 'Tar';
         $tr['en']['Theme']              = 'Theme';
         $tr['en']['Total size']         = 'Total size';
@@ -5681,9 +5751,11 @@ function fm_show_header_login()
         $tr['en']['Write']              = 'Write';
         $tr['en']['Zero byte file! Aborting download'] = 'Zero byte file! Aborting download';
         $tr['en']['Zip']                = 'Zip';
-// New entries, which deserve to be translated
+        // New entries, which deserve to be translated
         $tr['en']['Author']             = 'Author';
         $tr['en']['Mail Us']            = 'Mail Us';
+        $tr['en']['ContactAuthorEmail'] = 'Email the author';
+        $tr['en']['DateTimeFormat'] = 'm/d/Y g:i A';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
