@@ -66,6 +66,11 @@ To enable/disable authentication set `$use_auth` to true or false.
 
 ### [Deploy by Docker](https://github.com/prasathmani/tinyfilemanager/wiki/Deploy-by-Docker)
 
+### One-Click Deploy
+
+<a href="https://repocloud.io/details/Tiny%20File%20Manager/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+<a href="https://railway.com/deploy/tinyfilemanager"><img src="https://railway.com/button.svg" alt="Deploy on Railway" height="42"></a>
+
 ### <a name=license></a>License, Credit
 
 - Available under the [GNU license](https://github.com/prasathmani/tinyfilemanager/blob/master/LICENSE)
