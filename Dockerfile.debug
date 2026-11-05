@@ -1,4 +1,4 @@
-FROM php:8.2.13-zts-alpine3.18
+FROM php:8.2.35-zts-alpine3.24
 
 STOPSIGNAL SIGINT
 
@@ -6,7 +6,7 @@ WORKDIR /var/www/html
 
 RUN apk add --no-cache zip libzip openssl bzip2 \
 &&  apk add --no-cache --virtual .build-deps libzip-dev openssl-dev bzip2-dev oniguruma-dev openldap-dev build-base autoconf linux-headers \
-&&  pecl install xattr-1.4.0 xdebug-3.2.0 \
+&&  pecl install xattr-1.4.0 xdebug-3.4.7 \
 &&      docker-php-ext-enable xattr \
 &&      docker-php-ext-enable xdebug \
 &&  rm -rf /tmp/pear \
