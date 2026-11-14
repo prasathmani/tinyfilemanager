@@ -3,6 +3,8 @@
 
 FROM php:8.4.27-cli-alpine
 
+# if run in China
+# RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk update && apk upgrade --no-cache
 
 RUN apk add --no-cache \
