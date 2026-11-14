@@ -2875,7 +2875,7 @@ function fm_enc($text)
  */
 function fm_isvalid_filename($text)
 {
-    return (strpbrk($text, '/?%*:|"<>') === FALSE) ? true : false;
+    return (strpbrk($text, '/?%*:|"<>' . chr(0)) === FALSE) ? true : false;
 }
 
 /**
