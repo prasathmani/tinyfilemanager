@@ -193,6 +193,7 @@ $external = array(
     'js-highlightjs' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>',
     'js-marked' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/18.0.11/lib/marked.umd.min.js" integrity="sha512-spWXz/aNScpDSOz0auQxbzVBx6LmlxjgH7zilyCenKLGEyBje0iSJiLGsdPlrfNqFitWXRDdAXo1Bi7bonkZ6A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
     'js-mermaid' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.15.0/mermaid.min.js" integrity="sha512-HH52omhHpZF6RfVnGiQwYgYm4H/ya2xsZYLl5xJ4+tLfX+rN4+8zF7V/H/KLeicPrKZYi1g6iBmVkk2AhXTGlg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
+    'js-dompurify' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.18/purify.min.js" integrity="sha512-rdR9GuV0xLpA0LBDRiu2Ei3wOgPbvzJIc7elYsvuRj9T/vdhXfJr9mcC8xoyuXoDHyZuisD9CJ6QhdBm48HENg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
 );
@@ -481,14 +482,14 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
 define('FM_EDIT_FILE', $edit_files);
-define('FM_USE_MARKDOWN', $use_markdown);
-define('FM_USE_MERMAID', $use_mermaid);
+defined('FM_USE_MARKDOWN') || define('FM_USE_MARKDOWN', $use_markdown);
+defined('FM_USE_MERMAID') || define('FM_USE_MERMAID', $use_mermaid);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
 defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
 defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
-unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
+unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style, $use_markdown, $use_mermaid);
 
 /*************************** ACTIONS ***************************/
 
@@ -1935,9 +1936,27 @@ if (isset($_GET['view'])) {
                     // Video content
                     echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
                 } elseif (FM_USE_MARKDOWN && $is_md) {
+                    // Include the necessary JavaScript libraries for Markdown rendering and sanitization
+                    print_external('js-marked');
+                    print_external('js-dompurify');
+                    if (FM_USE_MERMAID) {
+                        print_external('js-mermaid');
+                    }
+                    echo <<<HTML
+                    <script type="text/javascript">
+                        marked.use({
+                            renderer: {
+                                code: function ({text: code, lang}) {
+                                    if (lang == 'mermaid') return `<pre class="mermaid">${code}</pre>`;
+                                    return false;
+                                }
+                            }
+                        });
+                    </script>
+                    HTML;
                     // Markdown content
-                    echo '<div id="markdown-content">'. fm_enc($content) . '</div>';
-                    echo '<script>document.getElementById("markdown-content").innerHTML=marked.parse(document.getElementById("markdown-content").innerHTML);';
+                    echo '<div id="markdown-content">'. json_encode($content, JSON_HEX_TAG|JSON_HEX_AMP) . '</div>';
+                    echo '<script>document.getElementById("markdown-content").innerHTML=DOMPurify.sanitize(marked.parse(JSON.parse(document.getElementById("markdown-content").textContent)));';
                     if (FM_USE_MERMAID):
                         echo 'mermaid.run({querySelector:".mermaid",suppressErrors:true});';
                     endif;
@@ -2996,7 +3015,7 @@ function fm_get_file_icon_class($path)
         case 'config':
         case 'twig':
         case 'tpl':
-        // case 'md':
+        case 'md':
         case 'gitignore':
         case 'c':
         case 'cpp':
@@ -3155,9 +3174,6 @@ function fm_get_file_icon_class($path)
         case 'bat':
             $img = 'fa fa-terminal';
             break;
-        case 'md':
-            $img = 'fa fa-markdown';
-            break;
         default:
             $img = 'fa fa-info-circle';
     }
@@ -3239,7 +3255,7 @@ function fm_get_text_exts()
         'bat',
         'twig',
         'tpl',
-        // 'md',
+        'md',
         'gitignore',
         'less',
         'sass',
@@ -4068,23 +4084,8 @@ function fm_show_header_login()
         <?php if (FM_USE_HIGHLIGHTJS && isset($_GET['view'])): ?>
             <?php print_external('css-highlightjs'); ?>
         <?php endif; ?>
-        <?php if (FM_USE_MARKDOWN && isset($_GET['view'])): ?>
-            <?php print_external('js-marked'); ?>
-            <?php if (FM_USE_MERMAID): ?>
-                <?php print_external('js-mermaid'); ?>
-            <?php endif; ?>
-        <?php endif; ?>
         <script type="text/javascript">
             window.csrf = '<?php echo $_SESSION['token']; ?>';
-
-            marked.use({
-                renderer: {
-                    code: function ({text: code, lang}) {
-                        if (lang == 'mermaid') return `<pre class="mermaid">${code}</pre>`;
-                        return `<pre>${code}</pre>`;
-                    }
-                }
-            });
         </script>
         <style>
             html {
