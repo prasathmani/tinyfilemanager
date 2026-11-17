@@ -43,6 +43,12 @@ $global_readonly = false;
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
 $directories_users = array();
 
+// Enable Markdown files (.md) preview in view's page
+$use_markdown = true;
+
+// Enable Mermaid diagrams (https://mermaid.js.org/) in markdown files
+$use_mermaid = true;
+
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 
@@ -185,6 +191,9 @@ $external = array(
     'js-jquery' => '<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>',
     'js-jquery-datatables' => '<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js" crossorigin="anonymous" defer></script>',
     'js-highlightjs' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>',
+    'js-marked' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/18.0.11/lib/marked.umd.min.js" integrity="sha512-spWXz/aNScpDSOz0auQxbzVBx6LmlxjgH7zilyCenKLGEyBje0iSJiLGsdPlrfNqFitWXRDdAXo1Bi7bonkZ6A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
+    'js-mermaid' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.15.0/mermaid.min.js" integrity="sha512-HH52omhHpZF6RfVnGiQwYgYm4H/ya2xsZYLl5xJ4+tLfX+rN4+8zF7V/H/KLeicPrKZYi1g6iBmVkk2AhXTGlg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
+    'js-dompurify' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.18/purify.min.js" integrity="sha512-rdR9GuV0xLpA0LBDRiu2Ei3wOgPbvzJIc7elYsvuRj9T/vdhXfJr9mcC8xoyuXoDHyZuisD9CJ6QhdBm48HENg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>',
     'pre-jsdelivr' => '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>',
     'pre-cloudflare' => '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin/><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/>'
 );
@@ -473,12 +482,26 @@ $_POST = (strpos($input, 'ajax') != FALSE && strpos($input, 'save') != FALSE) ? 
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
 define('FM_EDIT_FILE', $edit_files);
+defined('FM_USE_MARKDOWN') || define('FM_USE_MARKDOWN', $use_markdown);
+defined('FM_USE_MERMAID') || define('FM_USE_MERMAID', $use_mermaid);
+
+// DOMPurify configuration used to sanitize the HTML rendered from Markdown files. An uploaded
+// .md file is untrusted input, and the DOMPurify defaults keep HTML we have no use for in a
+// rendered document: <style>, <form> and its controls, <audio>/<video>, <canvas>, and shadow DOM.
+// Kept as a JavaScript object literal so it can be handed to DOMPurify.sanitize() as-is.
+// This does not block Mermaid: Mermaid runs after sanitization, and its own SVG output never
+// goes through DOMPurify.
+defined('FM_MARKDOWN_SANITIZE_CONFIG') || define('FM_MARKDOWN_SANITIZE_CONFIG', "{ALLOWED_TAGS:['a','abbr','b','blockquote','br','caption','code','col','colgroup','dd','del','details','dfn','div','dl','dt','em','figcaption','figure','h1','h2','h3','h4','h5','h6','hr','i','img','ins','kbd','li','mark','ol','p','pre','q','rp','rt','ruby','s','samp','section','small','span','strong','sub','summary','sup','table','tbody','td','tfoot','th','thead','tr','ul','var','wbr'],"
+    . "ALLOWED_ATTR:['href','src','alt','title','class','id','colspan','rowspan','start','reversed','width','height'],"
+    . "FORBID_TAGS:['shadow','marquee','audio','video','canvas','source','track','picture','portal','math','svg','iframe','object','embed','applet','form','input','button','select','option','optgroup','textarea','datalist','label','fieldset','legend','dialog','slot','base','link','meta','style','script','noscript','template','frame','frameset','noembed','noframes','xml'],"
+    . "FORBID_ATTR:['style','srcset','formaction','formenctype','ping','target','contenteditable','spellcheck','translate','popover','popoverhintfor','interestfor','longdesc','usemap','border','hspace','vspace','background','dynsrc','lowsrc'],"
+    . "ALLOW_DATA_ATTR:false,ALLOW_ARIA_ATTR:false,ALLOW_UNKNOWN_PROTOCOLS:false,WHOLE_DOCUMENT:false}");
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
 defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
 defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
-unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
+unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style, $use_markdown, $use_mermaid);
 
 /*************************** ACTIONS ***************************/
 
@@ -1765,6 +1788,7 @@ if (isset($_GET['view'])) {
 
     $is_zip = false;
     $is_gzip = false;
+    $is_md = false;
     $is_image = false;
     $is_audio = false;
     $is_video = false;
@@ -1778,6 +1802,14 @@ if (isset($_GET['view'])) {
 
     if ($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())) {
         $is_onlineViewer = true;
+    } elseif ($ext == 'md' || $ext == 'markdown') {
+        if (FM_USE_MARKDOWN) {
+            $is_md = true;
+            $view_title = 'Markdown';
+        } else {
+            $is_text = true;
+        }
+        $content = (string) file_get_contents($file_path);
     } elseif ($ext == 'zip' || $ext == 'tar') {
         $is_zip = true;
         $view_title = 'Archive';
@@ -1870,7 +1902,7 @@ if (isset($_GET['view'])) {
                     </form>
                 <?php
                 }
-                if ($is_text && !FM_READONLY) {
+                if (($is_text || $is_md) && !FM_READONLY) {
                 ?>
                     <a class="fw-bold btn btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file">
                         <i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
@@ -1915,6 +1947,54 @@ if (isset($_GET['view'])) {
                 } elseif ($is_video) {
                     // Video content
                     echo '<div class="preview-video"><video src="' . fm_enc($file_url) . '" width="640" height="360" controls preload="metadata"></video></div>';
+                } elseif (FM_USE_MARKDOWN && $is_md) {
+                    // Markdown content, rendered client-side and sanitized with DOMPurify.
+                    // The file is treated as untrusted input: never put it in the markup,
+                    // it is handed to the renderer as data only.
+                    if (function_exists('iconv') && !fm_is_utf8($content)) {
+                        // a file in another encoding would make json_encode() below return false
+                        $converted = iconv(FM_ICONV_INPUT_ENC, 'UTF-8//IGNORE', $content);
+                        if ($converted !== false) {
+                            $content = $converted;
+                        }
+                    }
+                    // Include the necessary JavaScript libraries for Markdown rendering and sanitization
+                    print_external('js-marked');
+                    print_external('js-dompurify');
+                    // Mermaid is by far the heaviest of these libraries, so it is only loaded when
+                    // the file actually has a mermaid fence.
+                    $has_mermaid = FM_USE_MERMAID && preg_match('/^[ ]{0,3}(?:`{3,}|~{3,})[ \t]*mermaid\b/m', $content) === 1;
+                    if ($has_mermaid) {
+                        print_external('js-mermaid');
+                        echo '<script>' . 'mermaid.initialize({startOnLoad:false});' . '</script>';
+                        // registered with a nowdoc: a double-quoted heredoc would let PHP
+                        // interpolate the JavaScript template literal below
+                        echo <<<'HTML'
+                        <script>
+                            marked.use({
+                                renderer: {
+                                    code: function ({text: code, lang}) {
+                                        if (lang != 'mermaid') return false;
+                                        // escaped, so it stays inert text until DOMPurify has run;
+                                        // mermaid.run() then reads it back with textContent
+                                        return '<pre class="mermaid">' + code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+                                    }
+                                }
+                            });
+                        </script>
+                        HTML;
+                    }
+                    echo '<div id="markdown-content" hidden><script type="application/json">' . fm_json_for_js_script($content) . '</script></div>';
+                    echo '<script>';
+                    echo 'var el = document.getElementById("markdown-content");';
+                    echo 'var src = JSON.parse(el.querySelector("script").textContent) || "";';
+                    echo 'el.innerHTML = DOMPurify.sanitize(marked.parse(src), ' . FM_MARKDOWN_SANITIZE_CONFIG . ');';
+                    echo 'el.hidden = false;';
+                    if ($has_mermaid):
+                        echo 'mermaid.run({querySelector: ".mermaid", suppressErrors: true, suppressErrorRendering: true});';
+                    endif;
+                    echo '</script>';
+                    echo '<noscript><pre>' . fm_enc($content) . '</pre></noscript>';
                 } elseif ($is_text) {
                     if (FM_USE_HIGHLIGHTJS) {
                         // highlight
@@ -2866,6 +2946,31 @@ function fm_get_zip_info($path, $ext)
 function fm_enc($text)
 {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Encode data for a <script type="application/json"> block, e.g. the contents of a
+ * Markdown file that is rendered client-side.
+ *
+ * json_encode() alone is not enough here: without JSON_HEX_TAG the string "</script>"
+ * would close the block, and it returns false as soon as the input is not valid UTF-8,
+ * which would silently blank the whole block instead of failing loudly.
+ * @param string $text
+ * @return string
+ */
+function fm_json_for_js_script($text)
+{
+    $options = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES;
+    if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+        // PHP 7.2+, and the only flag that keeps json_encode() from returning false here
+        $options |= JSON_INVALID_UTF8_SUBSTITUTE;
+    }
+    $json = json_encode($text, $options);
+    if ($json === false) {
+        return 'null';
+    }
+    // "<" is what actually opens a new tag or a comment, so make sure none survives
+    return str_replace('<', '\u003C', $json);
 }
 
 /**
@@ -5684,6 +5789,7 @@ function fm_show_header_login()
 // New entries, which deserve to be translated
         $tr['en']['Author']             = 'Author';
         $tr['en']['Mail Us']            = 'Mail Us';
+        $tr['en']['Markdown']           = 'Markdown';
 
         $i18n = fm_get_translations($tr);
         $tr = $i18n ? $i18n : $tr;
