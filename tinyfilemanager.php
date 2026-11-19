@@ -758,9 +758,20 @@ if (isset($_POST['newfilename'], $_POST['newfile'], $_POST['token']) && !FM_READ
 }
 
 // Copy folder / file
-if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
+// Complete a single copy/move with a token-verified POST. This upstream route
+// previously mutated state from a GET request.
+if (isset($_POST['copy'], $_POST['finish'], $_POST['token']) && !FM_READONLY) {
+    if (!is_string($_POST['token']) || !verifyToken($_POST['token'])) {
+        fm_set_msg(lng('Invalid Token.'), 'error');
+        die('Invalid Token.');
+    }
+    if (!is_string($_POST['copy']) || $_POST['finish'] !== '1') {
+        fm_set_msg(lng('Invalid file or folder name'), 'error');
+        die('Invalid copy request.');
+    }
+
     // from
-    $copy = urldecode($_GET['copy']);
+    $copy = urldecode($_POST['copy']);
     $copy = fm_clean_path($copy);
     // empty path
     if ($copy == '') {
@@ -777,8 +788,7 @@ if (isset($_GET['copy'], $_GET['finish']) && !FM_READONLY) {
     }
     $dest .= '/' . basename($from);
     // move?
-    $move = isset($_GET['move']);
-    $move = fm_clean_path(urldecode($move));
+    $move = isset($_POST['move']) && $_POST['move'] === '1';
     // copy/move/duplicate
     if ($from != $dest) {
         $msg_from = trim(FM_PATH . '/' . basename($from), '/');
@@ -1563,11 +1573,15 @@ if (isset($_GET['copy']) && !isset($_GET['finish']) && !FM_READONLY) {
             <strong>Source path:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . $copy)) ?><br>
             <strong>Destination folder:</strong> <?php echo fm_enc(fm_convert_win(FM_ROOT_PATH . '/' . FM_PATH)) ?>
         </p>
-        <p>
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1"><i class="fa fa-check-circle"></i> Copy</a></b> &nbsp;
-            <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;copy=<?php echo urlencode($copy) ?>&amp;finish=1&amp;move=1"><i class="fa fa-check-circle"></i> Move</a></b> &nbsp;
+        <form action="" method="post" class="d-inline">
+            <input type="hidden" name="p" value="<?php echo fm_enc(FM_PATH) ?>">
+            <input type="hidden" name="copy" value="<?php echo fm_enc($copy) ?>">
+            <input type="hidden" name="finish" value="1">
+            <input type="hidden" name="token" value="<?php echo fm_enc($_SESSION['token']) ?>">
+            <button type="submit" class="btn btn-link p-0 align-baseline"><i class="fa fa-check-circle"></i> Copy</button> &nbsp;
+            <button type="submit" name="move" value="1" class="btn btn-link p-0 align-baseline"><i class="fa fa-check-circle"></i> Move</button> &nbsp;
             <b><a href="?p=<?php echo urlencode(FM_PATH) ?>" class="text-danger"><i class="fa fa-times-circle"></i> Cancel</a></b>
-        </p>
+        </form>
         <p><i><?php echo lng('Select folder') ?></i></p>
         <ul class="folders break-word">
             <?php
