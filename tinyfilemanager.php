@@ -121,6 +121,10 @@ $max_upload_size_bytes = 5000000000; // size 5,000,000,000 bytes (~5GB)
 // eg. decrease to 1MB if nginx reports problem 413 entity too large
 $upload_chunk_size_bytes = 2000000; // chunk size 2,000,000 bytes (~2MB)
 
+// Optional HTTP proxy for "Upload from URL", as host:port
+// e.g. 'proxy.example.com:3128'. Leave empty to connect directly.
+$upload_url_proxy = '';
+
 // Possible rules are 'OFF', 'AND' or 'OR'
 // OFF => Don't check connection IP, defaults to OFF
 // AND => Connection must be on the whitelist, and not on the blacklist
@@ -196,6 +200,10 @@ define('MAX_UPLOAD_SIZE', $max_upload_size_bytes);
 
 // upload chunk size
 define('UPLOAD_CHUNK_SIZE', $upload_chunk_size_bytes);
+
+// proxy used by "Upload from URL"
+defined('FM_UPLOAD_URL_PROXY') || define('FM_UPLOAD_URL_PROXY',
+    is_string($upload_url_proxy) ? trim($upload_url_proxy) : '');
 
 // private key and session name to store to the session
 if (!defined('FM_SESSION_ID')) {
@@ -662,6 +670,9 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             @$fp = fopen($temp_file, "w");
             @$ch = curl_init($url);
             curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+            if (FM_UPLOAD_URL_PROXY !== '') {
+                curl_setopt($ch, CURLOPT_PROXY, FM_UPLOAD_URL_PROXY);
+            }
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_FILE, $fp);
             @$success = curl_exec($ch);
@@ -674,7 +685,16 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $fileinfo->size = $curl_info["size_download"];
             $fileinfo->type = $curl_info["content_type"];
         } else {
-            $ctx = stream_context_create();
+            if (FM_UPLOAD_URL_PROXY !== '') {
+                $ctx = stream_context_create(array(
+                    'http' => array(
+                        'proxy' => 'tcp://' . FM_UPLOAD_URL_PROXY,
+                        'request_fulluri' => true,
+                    ),
+                ));
+            } else {
+                $ctx = stream_context_create();
+            }
             @$success = copy($url, $temp_file, $ctx);
             if (!$success) {
                 $err = error_get_last();
